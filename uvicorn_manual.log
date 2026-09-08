@@ -1,0 +1,18 @@
+INFO:     Started server process [1173383]
+INFO:     Waiting for application startup.
+2026-07-23 19:34:39,308 [INFO] backend.main: BORJA starting — env=dev db=./data/borja.db model=claude-opus-4-8
+2026-07-23 19:34:39,653 [INFO] backend.scheduler: scheduler — 17 jobs registrados
+2026-07-23 19:34:39,694 [INFO] backend.scheduler: scheduler — started
+2026-07-23 19:34:39,694 [INFO] backend.main: BORJA — scheduler autostart activado
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:4151 (Press CTRL+C to quit)
+INFO:     ('200.70.33.90', 0) - "WebSocket /ws/consola/terminal" [accepted]
+INFO:     connection open
+INFO:     200.70.33.90:0 - "GET /login HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     connection closed
+INFO:     Waiting for application shutdown.
+2026-07-23 19:39:07,947 [INFO] backend.main: BORJA shutting down
+2026-07-23 19:39:07,948 [INFO] backend.scheduler: scheduler — stopped
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1173383]

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Hoja de evidencia{% endblock %}
+{% block heading %}Hoja de evidencia · universo rankeado{% endblock %}
+
+{% block content %}
+<div class="space-y-6" style="font-variant-numeric: tabular-nums;">
+
+  <div class="flex items-center gap-3 text-[11px] text-slate-500">
+    <span>{{ universo_n }} nombres</span>
+    <span class="text-slate-300">·</span>
+    <span>generado {{ (generado or '—')[:19].replace('T', ' ') }} UTC</span>
+    <span class="text-slate-300">·</span>
+    <span class="text-slate-400">precomputado — <code>python -m ops.generar_hoja</code></span>
+  </div>
+
+  {% macro flag_chips(flags) %}
+    {% for f in flags %}
+      {% if 'runway_critico' in f or 'severidad:alta' in f or 'shares=' in f %}
+        <span class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-rose-100 text-rose-700 rounded px-1.5 py-0.5 mr-1">{{ f.split('=')[0].split(':')[0] }}</span>
+      {% elif 'sbc_dep' in f or 'gp_inferido' in f or 'xbrl' in f %}
+        <span class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 mr-1">{{ f.split('=')[0].split(':')[0] }}</span>
+      {% endif %}
+    {% endfor %}
+  {% endmacro %}
+
+  {% macro tier_chip(t) %}
+    {% if t == 'A' %}<span class="inline-block text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded px-1.5 py-0.5">A</span>
+    {% elif t == 'B' %}<span class="inline-block text-[10px] font-bold bg-amber-100 text-amber-700 rounded px-1.5 py-0.5">B</span>
+    {% elif t == 'C' %}<span class="inline-block text-[10px] font-bold bg-rose-100 text-rose-700 rounded px-1.5 py-0.5">C</span>
+    {% else %}<span class="text-slate-300">—</span>{% endif %}
+  {% endmacro %}
+
+  {% macro anchor_chip(s) %}
+    {% if s == 'ANCHORED' %}<span class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-sky-100 text-sky-700 rounded px-1.5 py-0.5">anclado</span>
+    {% elif s == 'PURE_OPTION' %}<span class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-violet-100 text-violet-700 rounded px-1.5 py-0.5">opción pura</span>
+    {% else %}<span class="text-slate-300 text-[10px]">n/a</span>{% endif %}
+  {% endmacro %}
+
+  {# Demanda CITADA (display-only, NO rankea): tier del filing + quote verbatim en hover #}
+  {% macro demanda_chip(t, q) %}
+    {% if t == 3 %}<span title="{{ q or '' }}" class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 rounded px-1.5 py-0.5 cursor-help">realizada</span>
+    {% elif t == 2 %}<span title="{{ q or '' }}" class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-sky-100 text-sky-700 rounded px-1.5 py-0.5 cursor-help">comprometida</span>
+    {% elif t == 1 %}<span title="{{ q or '' }}" class="inline-block text-[9px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 cursor-help">validada</span>
+    {% else %}<span class="text-slate-300 text-[10px]">s/d</span>{% endif %}
+  {% endmacro %}
+
+  <!-- RANKEADO: FCFE, ordinales justificados -->
+  <div class="bb-card">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-baseline gap-3">
+      <h2 class="font-serif text-base font-semibold text-navy-900">Rankeado · genera caja (FCFE)</h2>
+      <span class="text-[11px] text-slate-500">ordenado por menor múltiplo sobre operable = menos apuesta</span>
+    </div>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
+          <th class="text-left font-semibold px-5 py-2 w-8">#</th>
+          <th class="text-left font-semibold py-2">Ticker</th>
+          <th class="text-left font-semibold py-2">Etapa</th>
+          <th class="text-left font-semibold py-2" title="demanda citada del filing (validada/comprometida/realizada) — hover para la cita">Demanda</th>
+          <th class="text-right font-semibold py-2">Precio</th>
+          <th class="text-right font-semibold py-2">Operable</th>
+          <th class="text-right font-semibold py-2">×</th>
+          <th class="text-right font-semibold py-2">Opción</th>
+          <th class="text-right font-semibold py-2 pr-5">Burden GP</th>
+          <th class="text-left font-semibold py-2">Flags</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in rankeado %}
+        <tr class="border-b border-slate-50 hover:bg-slate-50">
+          <td class="px-5 py-2.5 text-slate-400 font-mono text-xs">{{ loop.index }}</td>
+          <td class="py-2.5 font-semibold text-navy-900">{{ h.ticker }}</td>
+          <td class="py-2.5 text-xs text-slate-500">{{ h.stage or '—' }}</td>
+          <td class="py-2.5">{{ demanda_chip(h.demanda_tier, h.demanda_quote) }}</td>
+          <td class="py-2.5 text-right font-mono text-xs text-slate-600">{{ '%.2f'|format(h.precio) if h.precio is not none else '—' }}</td>
+          <td class="py-2.5 text-right font-mono text-xs text-navy-900">{{ '%.1f'|format(h.operable) if h.operable is not none else '—' }}</td>
+          <td class="py-2.5 text-right font-mono text-xs font-semibold {{ 'text-rose-600' if h.multiplo_sobre_operable and h.multiplo_sobre_operable > 15 else 'text-navy-900' }}">{{ '%.1f'|format(h.multiplo_sobre_operable) if h.multiplo_sobre_operable is not none else '—' }}×</td>
+          <td class="py-2.5 text-right font-mono text-xs text-slate-500">{{ '%.0f'|format(h.option_premium_pct*100) ~ '%' if h.option_premium_pct is not none else '—' }}</td>
+          <td class="py-2.5 pr-5 text-right font-mono text-xs text-slate-500">{{ '%.1f'|format(h.burden_gp) ~ '×' if h.burden_gp is not none else '—' }}</td>
+          <td class="py-2.5">{{ flag_chips(h.flags) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="px-5 py-6 text-center text-slate-400 text-sm">Sin datos — corré <code>python -m ops.generar_hoja</code></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BUCKETS DESCRIPTIVOS: pre-revenue / immaterial / data-check, SIN puestos -->
+  {% for estado, hs in descriptivo.items() %}
+  <div class="bb-card">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-baseline gap-3">
+      <h2 class="font-serif text-base font-semibold text-navy-900">
+        {% if estado == 'UNANCHORED' %}Pre-revenue · precio no anclado
+        {% elif estado == 'OPERABLE_IMMATERIAL' %}Operable ≈ 0 · precio todo opción
+        {% elif estado == 'MANUAL_DATA_CHECK' %}Chequeo de datos manual
+        {% else %}{{ estado }}{% endif %}
+      </h2>
+      <span class="text-[11px] text-slate-500">
+        {% if estado == 'UNANCHORED' %}peer-rank DENTRO de arquetipo por menor reverse burden (ρ=1, sin dilución) · dilución = eje aparte (burn/runway)
+        {% elif estado == 'MANUAL_DATA_CHECK' %}fuera del ranking — verificar inputs contra el filing{% endif %}
+      </span>
+    </div>
+    <div class="overflow-x-auto">
+    <table class="w-full text-sm min-w-[720px]">
+      <thead>
+        <tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
+          <th class="text-right font-semibold px-5 py-2 w-8" title="peer-rank dentro del arquetipo (menor reverse burden)">#</th>
+          <th class="text-left font-semibold py-2">Ticker</th>
+          <th class="text-left font-semibold py-2">Arquetipo</th>
+          <th class="text-left font-semibold py-2">Ancla</th>
+          <th class="text-center font-semibold py-2" title="tier de riesgo de capital (runway + burn)">Tier</th>
+          <th class="text-left font-semibold py-2" title="demanda citada del filing (validada/comprometida/realizada) — hover para la cita">Demanda</th>
+          <th class="text-right font-semibold py-2" title="(opex_cash + FCFE_req)/gross profit · t por arquetipo · ρ=1 (sin dilución)">Burden</th>
+          <th class="text-right font-semibold py-2">Precio</th>
+          <th class="text-right font-semibold py-2">Operable</th>
+          <th class="text-right font-semibold py-2">Burn/año</th>
+          <th class="text-right font-semibold py-2 pr-5">Runway</th>
+          <th class="text-left font-semibold py-2">Flags</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in hs %}
+        <tr class="border-b border-slate-50 hover:bg-slate-50">
+          <td class="px-5 py-2.5 text-right font-mono text-xs {{ 'text-navy-900 font-semibold' if h.peer_rank else 'text-slate-300' }}">{{ h.peer_rank if h.peer_rank else '—' }}</td>
+          <td class="py-2.5 font-semibold text-navy-900">{{ h.ticker }}</td>
+          <td class="py-2.5 text-[11px] text-slate-500">{{ h.arquetipo }}<span class="text-slate-300"> · {{ h.stage or '—' }}</span></td>
+          <td class="py-2.5">{{ anchor_chip(h.price_anchor_status) }}</td>
+          <td class="py-2.5 text-center">{{ tier_chip(h.capital_risk_tier) }}</td>
+          <td class="py-2.5">{{ demanda_chip(h.demanda_tier, h.demanda_quote) }}</td>
+          <td class="py-2.5 text-right font-mono text-xs {{ 'text-rose-600 font-semibold' if h.burden_gp and h.burden_gp > 8 else 'text-navy-900' }}">{{ '%.1f'|format(h.burden_gp) ~ '×' if h.burden_gp is not none else '—' }}</td>
+          <td class="py-2.5 text-right font-mono text-xs text-slate-600">{{ '%.2f'|format(h.precio) if h.precio is not none else '—' }}</td>
+          <td class="py-2.5 text-right font-mono text-xs text-navy-900">{{ '%.1f'|format(h.operable) if h.operable is not none else '—' }}</td>
+          <td class="py-2.5 text-right font-mono text-xs {{ 'text-rose-600 font-semibold' if h.banda_dilucion in ('severo','extraordinario') else 'text-slate-600' }}">{{ '%.0f'|format(h.burn_yield*100) ~ '%' if h.burn_yield else '—' }}</td>
+          <td class="py-2.5 pr-5 text-right font-mono text-xs {{ 'text-rose-600 font-semibold' if h.runway_anos and h.runway_anos < 1.5 else 'text-slate-600' }}">{{ '%.1f'|format(h.runway_anos) ~ 'a' if h.runway_anos is not none else '—' }}</td>
+          <td class="py-2.5">{{ flag_chips(h.flags) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="text-[11px] text-slate-400 leading-relaxed">
+    <strong class="text-slate-500">Cómo leer:</strong> el bucket FCFE (genera caja, owner-FCF = FCF − SBC) recibe ranking ordinal global.
+    Los pre-revenue con economía real (GP&gt;0) reciben <strong>reverse underwriting</strong> (doc 31): <em>Burden</em> = cuántas veces
+    debe multiplicarse el gross profit para explicar el precio a <code>t</code> años — con <strong>ρ=1 (piso optimista, sin dilución)</strong>;
+    la dilución va como eje SEPARADO (<em>Burn/año · Runway</em>), no dentro del burden, para no inventar el gap de financiación (G) que el
+    filing no divulga. El <em>#</em> es peer-rank DENTRO de arquetipo (no comparás un nuclear con un biotech). <em>Tier A/B/C</em> = riesgo
+    de capital (runway + burn). <em>Demanda</em> = evidencia CITADA del filing (<span class="text-amber-700">validada</span>=cliente nombrado ·
+    <span class="text-sky-700">comprometida</span>=mínimo/take-or-pay · <span class="text-emerald-700">realizada</span>=revenue reconocido) — hover para la cita verbatim; es contexto, NO rankea.
+    Los <span class="text-violet-700">opción pura</span> (R0 sin economía) no reciben puesto.
+    <span class="text-rose-600">Rojo</span> = presión alta. Market cap del feed (no XBRL); De-SPAC/Up-C: shares FD a mano.
+    Diferido a Fase 2: ρ real desde G, R0 físico q×u×P, funded critical path.
+  </div>
+
+</div>
+{% endblock %}

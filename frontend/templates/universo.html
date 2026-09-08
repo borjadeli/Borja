@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado_badge, momentum_badge, nivel_r_badge, score_cell %}
+
+{% block heading %}Universo de empresas{% endblock %}
+
+{% block content %}
+<div class="bb-card">
+  <div class="bb-card-header">
+    <h3>{{ fichas | length }} empresas</h3>
+    <button @click="$dispatch('open-intake')" class="bb-btn bb-btn-primary">+ Nueva Candidata</button>
+  </div>
+
+  <form method="get" class="px-5 py-4 border-b border-slate-200 grid grid-cols-6 gap-3">
+    <input name="q" value="{{ filtros.q }}" placeholder="Ticker o nombre…" class="bb-input col-span-2">
+    <select name="estado" class="bb-input">
+      <option value="">Todos estados</option>
+      {% for e in estados_posibles %}
+        <option value="{{ e }}" {% if filtros.estado == e %}selected{% endif %}>{{ e }}</option>
+      {% endfor %}
+    </select>
+    <select name="sector" class="bb-input">
+      <option value="">Todos sectores</option>
+      {% for s in sectores_lista %}
+        <option value="{{ s }}" {% if filtros.sector == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="nivel_r" class="bb-input">
+      <option value="">Nivel R</option>
+      {% for r in ['R1','R2','R3','R4'] %}
+        <option value="{{ r }}" {% if filtros.nivel_r == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+    <div class="flex gap-2">
+      <input name="score_min" type="number" step="0.5" value="{{ filtros.score_min or '' }}" placeholder="Score ≥" class="bb-input flex-1">
+      <button type="submit" class="bb-btn bb-btn-primary">Filtrar</button>
+    </div>
+  </form>
+
+  <table class="bb-table">
+    <thead><tr>
+      <th>Ticker</th><th>Nombre</th><th>Sector</th><th>Driver Macro</th>
+      <th>Estado</th><th>Score</th><th>Nivel R</th><th>Sizing</th><th>Catalizador</th>
+    </tr></thead>
+    <tbody>
+    {% for f in fichas %}
+      <tr onclick="location='/fichas/{{ f.ticker }}/view'">
+        <td><span class="font-mono-tight font-bold text-navy-900">{{ f.ticker }}</span></td>
+        <td class="text-slate-700 max-w-xs truncate" title="{{ f.nombre }}">{{ f.nombre }}</td>
+        <td class="text-xs text-slate-600">{{ f.sector }}</td>
+        <td class="text-xs text-slate-500 max-w-xs truncate" title="{{ f.driver_macro or '' }}">{{ f.driver_macro or '—' }}</td>
+        <td>{{ estado_badge(f.estado) }}</td>
+        <td>{{ score_cell(f.score) }}</td>
+        <td>{{ nivel_r_badge(f.nivel_r) }}</td>
+        <td class="font-mono-tight text-sm">{% if f.sizing %}{{ '%.1f' % f.sizing }}%{% else %}—{% endif %}</td>
+        <td class="text-xs">
+          {% if f.tipo_catalizador and f.tipo_catalizador != 'ninguno' %}
+            <span class="font-mono-tight">{{ f.proximo_catalizador or 'TBD' }}</span>
+            <span class="text-[10px] text-slate-500 ml-1">({{ f.tipo_catalizador }})</span>
+          {% else %}<span class="text-slate-400">—</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal intake (Alpine.js) -->
+<div x-data="{ show: false }" @open-intake.window="show = true" x-cloak>
+  <div x-show="show" @click.self="show = false" class="fixed inset-0 bg-navy-900/70 z-50 flex items-start justify-center pt-20" x-transition.opacity>
+    <div class="bb-card w-full max-w-xl" @click.stop>
+      <div class="bb-card-header">
+        <h3>Nueva Candidata</h3>
+        <button @click="show = false" class="text-slate-500 text-xl">&times;</button>
+      </div>
+      <form action="/descubrimiento/crear-candidatas" method="post" class="p-6 space-y-4"
+            hx-post="/descubrimiento/crear-candidatas-form" hx-encoding="multipart/form-data" hx-swap="none" hx-on::after-request="location.reload()">
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Ticker</label>
+          <input name="ticker" required class="bb-input w-full mt-1 font-mono uppercase" placeholder="COHR">
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Nombre</label>
+          <input name="nombre" required class="bb-input w-full mt-1">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Sector</label>
+            <select name="sector" class="bb-input w-full mt-1">
+              {% for s in sectores_lista %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Urgencia</label>
+            <select name="urgencia" class="bb-input w-full mt-1">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta (dispara Analista)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Driver macro</label>
+          <input name="driver_macro" class="bb-input w-full mt-1" placeholder="Ej: AI infrastructure buildout — fotónica">
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Tesis inicial (3 líneas)</label>
+          <textarea name="tesis_inicial" rows="3" class="bb-input w-full mt-1"></textarea>
+        </div>
+        <div class="flex gap-2 justify-end">
+          <button type="button" @click="show = false" class="bb-btn bb-btn-ghost">Cancelar</button>
+          <button type="submit" class="bb-btn bb-btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

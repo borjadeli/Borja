@@ -1,0 +1,22 @@
+{% extends "_base.html" %}
+{% block head %}
+  <h1>STOP LOSS bucket · {{ ticker }}</h1>
+  <div class="sub">Caída {{ '%.1f' % caida_pct }}% · stop {{ stop_pct }}%</div>
+{% endblock %}
+{% block content %}
+  <div class="section">
+    <h2>Acción requerida</h2>
+    <p style="font-size:13px;">
+      <span class="badge badge-critical">STOP LOSS</span>
+      La posición del bucket <code>{{ ticker }}</code> alcanzó el stop-loss predefinido.
+      Según doc 01 sec 7, el stop loss del bucket es una <strong>alerta que requiere acción humana</strong> — no es venta automática.
+    </p>
+    <div class="kv"><span class="k">Precio entrada</span><span class="v">{% if precio_entrada %}${{ '%.2f' % precio_entrada }}{% else %}N/D{% endif %}</span></div>
+    <div class="kv"><span class="k">Caída acumulada</span><span class="v" style="color:#dc2626;">{{ '%.2f' % caida_pct }}%</span></div>
+    <div class="kv"><span class="k">Stop loss configurado</span><span class="v">-{{ stop_pct }}%</span></div>
+  </div>
+  <div class="section">
+    <a class="btn" href="{{ base_url or 'http://localhost:8000' }}/fichas/{{ ticker }}/view">Abrir ficha {{ ticker }}</a>
+    <a class="btn" style="background:#dc2626;" href="{{ base_url or 'http://localhost:8000' }}/portfolio/evaluar/{{ ticker }}">Re-evaluar Portfolio</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block heading %}Eventos · Cola del Radar{% endblock %}
+
+{% block content %}
+<div x-data="{ tab: 'eventos' }" class="space-y-5">
+
+  <!-- Tabs -->
+  <div class="flex gap-1 border-b border-slate-200">
+    <button @click="tab='eventos'" :class="tab==='eventos' ? 'border-accent text-navy-900' : 'border-transparent text-slate-500'" class="px-4 py-2 text-sm font-semibold border-b-2">Eventos ({{ eventos | length }})</button>
+    <button @click="tab='dispatch'" :class="tab==='dispatch' ? 'border-accent text-navy-900' : 'border-transparent text-slate-500'" class="px-4 py-2 text-sm font-semibold border-b-2">Dispatch Log ({{ dispatch_log | length }})</button>
+  </div>
+
+  <div x-show="tab==='eventos'" class="bb-card">
+    <form method="get" class="px-5 py-3 border-b border-slate-200 flex gap-3 items-center flex-wrap">
+      <select name="estado" class="bb-input">
+        <option value="">Todos</option>
+        <option value="pendiente" {% if filtros.estado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+        <option value="procesado" {% if filtros.estado == 'procesado' %}selected{% endif %}>Procesados</option>
+        <option value="descartado" {% if filtros.estado == 'descartado' %}selected{% endif %}>Descartados</option>
+      </select>
+      <select name="tipo" class="bb-input">
+        <option value="">Todos los tipos</option>
+        {% for t in tipos_evento %}
+          <option value="{{ t }}" {% if filtros.tipo == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+      <input name="ticker" value="{{ filtros.ticker }}" placeholder="Ticker…" class="bb-input font-mono uppercase">
+      <button class="bb-btn bb-btn-primary">Filtrar</button>
+      <div class="flex-1"></div>
+      <button hx-post="/research/run-manual" hx-swap="none" hx-on::after-request="setTimeout(() => location.reload(), 1000)" class="bb-btn bb-btn-ghost">Run Research manual</button>
+      <button hx-post="/dispatcher/process-queue" hx-swap="none" hx-on::after-request="location.reload()" class="bb-btn bb-btn-ghost">Process queue</button>
+    </form>
+
+    <table class="bb-table">
+      <thead><tr>
+        <th>Timestamp</th><th>Ticker</th><th>Tipo</th><th>Tier</th><th>Estado</th>
+        <th>Descripción</th><th>Fuente</th><th class="text-right">Acciones</th>
+      </tr></thead>
+      <tbody>
+      {% for e in eventos %}
+        <tr>
+          <td class="font-mono-tight text-[11px] text-slate-500">{{ e.timestamp }}</td>
+          <td><a href="/fichas/{{ e.ticker }}/view" class="font-mono-tight font-bold">{{ e.ticker }}</a></td>
+          <td><span class="badge bg-slate-100 text-slate-700 border-slate-300">{{ e.tipo }}</span></td>
+          <td><span class="badge {% if e.tier == 1 %}bg-rose-50 text-rose-700 border-rose-400{% else %}bg-slate-100 text-slate-600 border-slate-300{% endif %}">T{{ e.tier }}</span></td>
+          <td>
+            {% if e.estado == 'pendiente' %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">pendiente</span>
+            {% elif e.estado == 'procesado' %}<span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">procesado</span>
+            {% else %}<span class="badge bg-slate-100 text-slate-600 border-slate-300">descartado</span>{% endif %}
+          </td>
+          <td class="text-xs text-slate-700 max-w-md truncate" title="{{ e.descripcion }}">{{ e.descripcion[:120] }}</td>
+          <td class="text-[11px] text-slate-500">{{ e.fuente or '—' }}</td>
+          <td class="text-right whitespace-nowrap">
+            {% if e.estado == 'pendiente' %}
+              <button hx-post="/analizar/{{ e.ticker }}" hx-swap="none" hx-on::after-request="alert('Análisis encolado'); location.reload()" class="bb-btn bb-btn-primary">Analizar</button>
+              <button hx-post="/eventos/{{ e.id }}/descartar" hx-swap="none" hx-on::after-request="location.reload()" class="bb-btn bb-btn-ghost">Descartar</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div x-show="tab==='dispatch'" class="bb-card">
+    <div class="bb-card-header"><h3>Decisiones del Dispatcher</h3><span class="text-xs text-slate-500">Últimas 50</span></div>
+    <table class="bb-table">
+      <thead><tr>
+        <th>Timestamp</th><th>Ticker</th><th>Tipo evento</th><th>Destino</th>
+        <th>Urgencia</th><th>Regla</th><th>Cooldown</th>
+      </tr></thead>
+      <tbody>
+      {% for l in dispatch_log %}
+        <tr>
+          <td class="font-mono-tight text-[11px] text-slate-500">{{ l.timestamp }}</td>
+          <td class="font-mono-tight font-bold">{{ l.ticker }}</td>
+          <td class="text-xs"><span class="badge bg-slate-100 text-slate-600 border-slate-300">{{ l.tipo_evento }}</span></td>
+          <td class="text-xs">
+            {% if 'DESCARTADO' in l.destino %}<span class="badge bg-slate-100 text-slate-500 border-slate-300">{{ l.destino }}</span>
+            {% elif 'ANALISTA' in l.destino %}<span class="badge bg-indigo-50 text-indigo-700 border-indigo-400">{{ l.destino }}</span>
+            {% elif 'PORTFOLIO' in l.destino or 'JUEZ' in l.destino %}<span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">{{ l.destino }}</span>
+            {% else %}<span class="badge bg-slate-100 text-slate-600 border-slate-300">{{ l.destino }}</span>{% endif %}
+          </td>
+          <td class="text-xs">
+            <span class="badge bg-{{ {'alta':'rose','media':'amber','baja':'slate'}.get(l.urgencia, 'slate') }}-50 text-{{ {'alta':'rose','media':'amber','baja':'slate'}.get(l.urgencia, 'slate') }}-700 border-{{ {'alta':'rose','media':'amber','baja':'slate'}.get(l.urgencia, 'slate') }}-400">{{ l.urgencia }}</span>
+          </td>
+          <td class="text-[11px] text-slate-600">{{ l.regla }}</td>
+          <td>{% if l.cooldown %}<span class="text-amber-600 text-xs font-semibold">🔒</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

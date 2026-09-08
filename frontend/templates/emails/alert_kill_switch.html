@@ -1,0 +1,29 @@
+{% extends "_base.html" %}
+{% block head %}
+  <h1>KILL SWITCH · {{ ticker }}</h1>
+  <div class="sub">{{ red_flags }}/3 red flags · salida urgente</div>
+{% endblock %}
+{% block content %}
+  <div class="section">
+    <h2>Acción requerida</h2>
+    <p style="font-size:13px;">
+      <span class="badge badge-critical">KILL SWITCH</span>
+      La posición <code>{{ ticker }}</code> acumuló <strong>{{ red_flags }} red flags activos</strong>. Según doc 01 sec 3 Regla 2:
+    </p>
+    <ul>
+      <li>Score automáticamente bajado 2 puntos.</li>
+      <li>Estado debe pasar a <code>Suspendida</code>.</li>
+      <li>Se recomienda salida urgente — revisar la recomendación generada.</li>
+    </ul>
+  </div>
+  {% if detalle %}
+  <div class="section">
+    <h2>Red flags activos</h2>
+    <p style="font-size:13px; white-space:pre-line; color:#475569;">{{ detalle }}</p>
+  </div>
+  {% endif %}
+  <div class="section">
+    <a class="btn" href="{{ base_url or 'http://localhost:8000' }}/fichas/{{ ticker }}/view">Abrir ficha {{ ticker }}</a>
+    {% if rec_id %}<a class="btn" style="background:#059669;" href="{{ base_url or 'http://localhost:8000' }}/">Ver recomendación</a>{% endif %}
+  </div>
+{% endblock %}

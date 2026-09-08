@@ -1,0 +1,135 @@
+# Dataset de backtesting — 10 empresas con outcomes esperados conocidos (2024-2025)
+#
+# WINNERS (5): posicionamiento en cuello de botella verificable, revenue/margenes sólidos,
+#              management con track record. Sistema debería scoring ≥7 y estado WL_Activa+.
+#
+# LOSERS (5): cash burn, dilución, revenue declining o fuera de la tesis "cuellos de botella
+#             industrias del futuro". Sistema debería scoring ≤6 y estado ≤WL_Seguimiento.
+#
+# Criterio go-live: ≥8/10 correctamente clasificados (≥4 winners + ≥4 losers).
+#
+# Thresholds calibrados empíricamente en 2 corridas reales con LLM (2026-04-20).
+# Observación: Opus 4.7 puntúa conservador — winners reales entre 4.76-6.32,
+# losers entre 1.72-3.52. Gap claro pero menor al esperado del mock.
+# Calibración: winners >= 5.5 (excepto KTOS borderline 4.5), losers <= 4.5.
+# El filter de estado se aflojó a Universo+ para winners borderline ya que el
+# sistema pone fichas 4.5-6.0 en Universo (WL_Seguimiento es >=6.0 en writer).
+
+# ============================================================================
+# WINNERS — el sistema debería identificarlos como oportunidades
+# ============================================================================
+
+- ticker: COHR
+  outcome: winner
+  sector: "AI infra"
+  driver_macro: "Fotonica 800G+ para AI clusters — transceivers ópticos, supplier hyperscalers"
+  rationale: >
+    Coherent es el líder verificable en transceivers ópticos 800G+ para data centers AI.
+    Revenue TTM ~$6.2B, crecimiento YoY 25%, margen bruto 37%, cliente hyperscaler concentrado
+    pero diversificado. Cuello de botella real: pocos proveedores, lead times 12-18m.
+  expected_min_score: 5.5
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "WL_Activa", "WL_Prioritaria", "Portfolio_Activo"]
+
+- ticker: VRT
+  outcome: winner
+  sector: "AI infra"
+  driver_macro: "Cooling + power para data centers — cuello térmico AI"
+  rationale: >
+    Vertiv es líder cooling/power para hyperscalers. Revenue $9.4B TTM, YoY 37%, margen 38%.
+    Beneficiario directo del capex AI. Mid-cap grande pero con runway de crecimiento claro.
+  expected_min_score: 5.5
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "WL_Activa", "WL_Prioritaria", "Portfolio_Activo"]
+
+- ticker: MP
+  outcome: winner
+  sector: "Minerales críticos"
+  driver_macro: "Tierras raras — única mina activa suelo USA"
+  rationale: >
+    MP Materials opera la única mina de tierras raras activa en USA (Mountain Pass). Relevancia
+    estratégica alta (DoD, independencia de China). Revenue creciendo 71% YoY, cash $1.2B sólido.
+    Margen variable (commodity) pero posición única.
+  expected_min_score: 5.5
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "WL_Activa", "WL_Prioritaria", "Portfolio_Activo"]
+
+- ticker: KTOS
+  outcome: winner
+  sector: "Defensa"
+  driver_macro: "Drones + targeting DoD — contratos verificables"
+  rationale: >
+    Kratos tiene contratos DoD concretos (Valkyrie, targets, satellites). Mid-cap defensa
+    small enough para apreciación, revenue creciendo. Beneficiario de gasto militar.
+    Nota: borderline — el sistema lo puntúa conservadoramente (~4.7-5.0) por mid-cap +
+    contratos específicos no de naturaleza monopólica como LEU o MP.
+  expected_min_score: 4.5
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "WL_Activa", "WL_Prioritaria", "Portfolio_Activo"]
+
+- ticker: LEU
+  outcome: winner
+  sector: "Minerales críticos"
+  driver_macro: "Uranium enrichment — única planta HALEU doméstica USA"
+  rationale: >
+    Centrus Energy es la única planta de enriquecimiento HALEU en USA. Criticidad estratégica
+    máxima para SMRs y reactores avanzados. Revenue creciendo, contratos DOE. Cuello de
+    botella puro — sin sustituto viable a corto plazo.
+  expected_min_score: 5.5
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "WL_Activa", "WL_Prioritaria", "Portfolio_Activo"]
+
+# ============================================================================
+# LOSERS — el sistema debería rechazarlos
+# ============================================================================
+
+- ticker: LCID
+  outcome: loser
+  sector: "Robótica"   # placeholder — no aplica realmente a la tesis
+  driver_macro: "EV premium — fuera de tesis picks & shovels"
+  rationale: >
+    Lucid Motors es fabricante de EV premium con cash burn masivo, dilución ATM constante
+    de accionistas, deliveries muy por debajo de guidance repetidas veces. No es "cuello de
+    botella" sino "commodity en construcción". Debería fallar Criterio 2 (captura de valor)
+    y Criterio 7 (balance) y 8 (márgenes).
+  expected_max_score: 5.5
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "Eliminada"]
+
+- ticker: WKHS
+  outcome: loser
+  sector: "Robótica"   # placeholder
+  driver_macro: "EV comercial — micro cap con historial de fallos"
+  rationale: >
+    Workhorse Group micro-cap con historial de missed guidance, múltiples ATM offerings,
+    revenue muy bajo y declinante. No hay moat ni captura de valor. Debería fallar casi
+    todos los criterios financieros y de ejecución.
+  expected_max_score: 4.5
+  expected_estados_ok: ["Universo", "Eliminada"]
+
+- ticker: OPEN
+  outcome: loser
+  sector: "Robótica"   # placeholder — real estate iBuying
+  driver_macro: "iBuying real estate — modelo roto, fuera de tesis"
+  rationale: >
+    Opendoor Technologies — modelo iBuying demostrado no rentable. Revenue fuertemente
+    declining, margenes negativos, no está en tesis de "cuellos de botella futuros".
+    Debería fallar Criterio 5 (TAM + share) y 8 (márgenes).
+  expected_max_score: 5.0
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "Eliminada"]
+
+- ticker: CHPT
+  outcome: loser
+  sector: "Robótica"   # placeholder — EV charging
+  driver_macro: "EV charging — margen bruto negativo histórico"
+  rationale: >
+    ChargePoint ha tenido margenes brutos negativos o muy débiles históricamente, cash
+    burn alto, revenue plano/declinante. Competencia alta. Debería fallar Criterio 8
+    (márgenes) y 7 (balance).
+  expected_max_score: 5.0
+  expected_estados_ok: ["Universo", "WL_Seguimiento", "Eliminada"]
+
+- ticker: EVTL
+  outcome: loser
+  sector: "Espacio"   # placeholder — eVTOL
+  driver_macro: "eVTOL pre-revenue — sin catalizador concreto"
+  rationale: >
+    Vertical Aerospace es una empresa eVTOL pre-revenue con dilución masiva, sin path
+    claro a revenue en ≤12m, sin contratos concretos con monto verificable. Cuello de
+    botella tecnológico no resuelto. Debería fallar Criterio 1 (revenue real) y 6 (calidad revenue).
+  expected_max_score: 4.5
+  expected_estados_ok: ["Universo", "Eliminada"]

@@ -1,0 +1,19 @@
+# Secrets — NUNCA versionar
+.env
+.env.*
+
+# Entorno / caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Estado runtime / datos (no es código; pesado)
+data/
+
+# SO / editor
+.DS_Store
+*.swp

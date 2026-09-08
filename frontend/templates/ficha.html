@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado_badge, momentum_badge, nivel_r_badge, score_cell, accion_badge %}
+
+{% block heading %}{{ f.ticker }} · {{ f.nombre }}{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <!-- Header -->
+  <div class="bb-card">
+    <div class="px-6 py-5 flex items-start gap-6">
+      <div>
+        <div class="font-mono-tight font-bold text-4xl text-navy-900">{{ f.ticker }}</div>
+        <div class="text-slate-600 mt-1">{{ f.nombre }}</div>
+        <div class="text-xs text-slate-500 mt-2">{{ f.sector }} · {{ f.driver_macro or 'sin driver' }}</div>
+      </div>
+      <div class="flex-1 flex flex-wrap gap-3 items-start">
+        {{ estado_badge(f.estado) }}
+        {{ nivel_r_badge(f.nivel_r) }}
+        {% if f.tipo_cat and f.tipo_cat != 'ninguno' %}
+          <span class="badge bg-sky-50 text-sky-700 border-sky-400">Cat {{ f.tipo_cat }} · {{ f.cat_fecha or 'TBD' }}</span>
+        {% endif %}
+        {% if f.red_flags > 0 %}
+          <span class="badge bg-rose-50 text-rose-700 border-rose-400">{{ f.red_flags }}/3 RF</span>
+        {% endif %}
+      </div>
+      <div class="text-right">
+        <div class="text-xs uppercase tracking-widest text-slate-500">Score</div>
+        <div class="font-serif text-4xl font-bold
+          {% if f.score and f.score >= 8 %}text-emerald-600
+          {% elif f.score and f.score >= 7 %}text-indigo-600
+          {% elif f.score and f.score >= 6 %}text-amber-600
+          {% else %}text-slate-500{% endif %}">
+          {% if f.score %}{{ '%.2f' % f.score }}{% else %}—{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-3 border-t border-slate-200 flex gap-2">
+      <button hx-post="/analizar/{{ f.ticker }}" hx-swap="none" hx-on::after-request="alert('Análisis encolado — recargá en 60s'); this.disabled=false" class="bb-btn bb-btn-primary">
+        <span class="htmx-indicator spinner"></span> Ejecutar Analista
+      </button>
+      <button hx-post="/portfolio/evaluar/{{ f.ticker }}" hx-swap="none" hx-on::after-request="location.reload()" class="bb-btn bb-btn-ghost">
+        Re-evaluar Portfolio+Juez
+      </button>
+      <a href="/eventos?ticker={{ f.ticker }}" class="bb-btn bb-btn-ghost">Ver eventos</a>
+    </div>
+  </div>
+
+  <!-- Recomendación pendiente -->
+  {% if rec %}
+  <div class="bb-card border-2 {% if rec.estado_rec == 'CUESTIONADA' %}border-amber-400{% else %}border-emerald-400{% endif %}">
+    <div class="bb-card-header">
+      <h3>Recomendación pendiente · {{ accion_badge(rec.accion) }}</h3>
+      <div class="flex gap-2">
+        <form hx-post="/aprobar/{{ rec.id }}" hx-swap="none" hx-on::after-request="location.reload()" class="inline">
+          <button class="bb-btn bb-btn-success">Aprobar</button>
+        </form>
+        <form hx-post="/rechazar/{{ rec.id }}" hx-swap="none" hx-on::after-request="location.reload()" class="inline">
+          <button class="bb-btn bb-btn-ghost">Rechazar</button>
+        </form>
+      </div>
+    </div>
+    <div class="px-6 py-4 grid grid-cols-4 gap-4 text-sm">
+      <div>
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest">Sizing sugerido</div>
+        <div class="font-mono-tight text-xl font-bold">{% if rec.sizing_sugerido %}{{ '%.1f' % rec.sizing_sugerido }}%{% else %}—{% endif %}</div>
+        {% if rec.capacidad_maxima %}<div class="text-[10px] text-slate-500">max {{ '%.1f' % rec.capacidad_maxima }}%</div>{% endif %}
+      </div>
+      <div>
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest">Asimetría</div>
+        <div class="font-mono-tight text-xl font-bold
+          {% if rec.asimetria and rec.asimetria >= 3 %}text-emerald-600
+          {% elif rec.asimetria and rec.asimetria < 1 %}text-rose-600{% endif %}">
+          {% if rec.asimetria %}{{ '%.2f' % rec.asimetria }}x{% else %}—{% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest">Momentum</div>
+        <div class="mt-1">{{ momentum_badge(rec.momentum) }}</div>
+      </div>
+      <div>
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest">Estado</div>
+        <div class="mt-1">
+          {% if rec.estado_rec == 'CUESTIONADA' %}
+            <span class="badge bg-amber-50 text-amber-700 border-amber-400" title="{{ rec.motivo_cuestionada }}">CUESTIONADA</span>
+          {% else %}
+            <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">VALIDADA</span>
+          {% endif %}
+          {% if rec.prioridad_capital == 'alta' %}
+            <span class="ml-1 badge bg-amber-100 text-amber-800 border-amber-400" title="Exposición {{ rec.exposicion_pct_al_evaluar }}% < piso 80%">★ ALTA</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="px-6 pb-4 text-sm text-slate-700 italic">{{ rec.justificacion }}</div>
+    {% if rec.motivo_cuestionada %}
+      <div class="px-6 pb-4 text-xs text-amber-700 bg-amber-50 -mx-6 mt-0 pt-3 px-6">Motivo cuestionada: {{ rec.motivo_cuestionada }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Tesis + Asimetría -->
+  <div class="grid grid-cols-3 gap-5">
+    <div class="bb-card col-span-2">
+      <div class="bb-card-header"><h3>Tesis vigente</h3></div>
+      <div class="px-6 py-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{{ f.tesis or '(sin tesis — correr Analista)' }}</div>
+      <div class="px-6 pb-4 grid grid-cols-3 gap-4 text-xs">
+        <div>
+          <div class="text-[11px] text-slate-500 uppercase tracking-widest">Posición ciclo</div>
+          <div class="mt-1 font-semibold">{{ f.posicion_ciclo or '—' }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-500 uppercase tracking-widest">Duración edge</div>
+          <div class="mt-1 font-semibold">{{ f.duracion_edge or '—' }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-500 uppercase tracking-widest">Liquidez &gt;$1M</div>
+          <div class="mt-1">{% if f.liquidez %}<span class="text-emerald-600 font-semibold">✓ suficiente</span>{% else %}<span class="text-rose-600 font-semibold">✗ insuficiente</span>{% endif %}</div>
+        </div>
+      </div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Asimetría R/R</h3></div>
+      <div class="px-6 py-4 space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-emerald-700 font-semibold">Bull case</span>
+          <span class="font-mono-tight font-bold">{% if f.bull %}${{ '%.2f' % f.bull }}{% else %}—{% endif %}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-navy-800 font-semibold">Precio actual</span>
+          <span class="font-mono-tight font-bold">{% if f.precio_actual %}${{ '%.2f' % f.precio_actual }}{% else %}—{% endif %}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-rose-700 font-semibold">Bear case</span>
+          <span class="font-mono-tight font-bold">{% if f.bear %}${{ '%.2f' % f.bear }}{% else %}—{% endif %}</span>
+        </div>
+        <div class="border-t border-slate-200 pt-3 space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500">Crecimiento implícito</span>
+            <span class="font-mono-tight">{% if f.crec_implicito is not none %}{{ f.crec_implicito }}%{% else %}—{% endif %}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500">Estimación Analista</span>
+            <span class="font-mono-tight">{% if f.crec_estimado is not none %}{{ f.crec_estimado }}%{% else %}—{% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 Criterios -->
+  {% if criterios %}
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>10 Criterios de evaluación</h3>
+      <span class="text-xs text-slate-500">CORE (1-3) peso ×1.5 · resto peso ×1.0</span>
+    </div>
+    <div class="divide-y divide-slate-200">
+    {% for c in criterios %}
+      <div class="px-6 py-4 grid grid-cols-12 gap-4 {% if c.core %}bg-slate-50{% endif %}">
+        <div class="col-span-1 flex items-center gap-2">
+          <span class="font-mono-tight font-bold text-navy-900">{{ c.num }}</span>
+          {% if c.core %}<span class="badge bg-indigo-100 text-indigo-700 border-indigo-300 text-[9px]">CORE</span>{% endif %}
+        </div>
+        <div class="col-span-2">{{ score_cell(c.score) }}</div>
+        <div class="col-span-3 text-xs">
+          <div class="text-emerald-700 font-semibold mb-1">+ favor</div>
+          <div class="text-slate-700">{{ c.evidencia_favor[:200] }}{% if c.evidencia_favor | length > 200 %}…{% endif %}</div>
+        </div>
+        <div class="col-span-3 text-xs">
+          <div class="text-rose-700 font-semibold mb-1">− contra</div>
+          <div class="text-slate-700">{{ c.evidencia_contra[:200] }}{% if c.evidencia_contra | length > 200 %}…{% endif %}</div>
+        </div>
+        <div class="col-span-3 text-xs text-slate-600 italic">{{ c.justificacion }}</div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="bb-card px-6 py-8 text-center text-slate-500 text-sm">
+    Sin análisis. Clic en "Ejecutar Analista" arriba para generar el scoring de los 10 criterios.
+  </div>
+  {% endif %}
+
+  <!-- Triggers + Plan + Management + Governance -->
+  <div class="grid grid-cols-2 gap-5">
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Invalidation Triggers</h3></div>
+      <div class="px-6 py-4">
+        {% if f.triggers %}
+          <ul class="list-disc list-inside space-y-2 text-sm text-slate-700">
+          {% for t in f.triggers %}<li>{{ t }}</li>{% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-sm text-slate-500 italic">Sin triggers definidos (el Analista los genera en cada análisis).</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Plan de salida</h3></div>
+      <div class="px-6 py-4 text-sm text-slate-700 whitespace-pre-line">{{ f.plan_salida or '(no definido)' }}</div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header">
+        <h3>Management</h3>
+        {% if f.mgmt_alignment %}
+          <span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">alignment {{ f.mgmt_alignment }}</span>
+        {% endif %}
+      </div>
+      <div class="px-6 py-4 text-sm space-y-3">
+        <div>
+          <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-1">Track record</div>
+          <div class="text-slate-700">{{ f.mgmt_track or '—' }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-1">Evidencia de alignment</div>
+          <div class="text-slate-700">{{ f.mgmt_evidencia or '—' }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header">
+        <h3>Governance</h3>
+        <span class="badge bg-{{ {'verde':'emerald','amarillo':'amber','kill_switch':'rose'}.get(f.estado_gov, 'slate') }}-50 text-{{ {'verde':'emerald','amarillo':'amber','kill_switch':'rose'}.get(f.estado_gov, 'slate') }}-700 border-{{ {'verde':'emerald','amarillo':'amber','kill_switch':'rose'}.get(f.estado_gov, 'slate') }}-400">{{ f.estado_gov }}</span>
+      </div>
+      <div class="px-6 py-4 text-sm space-y-2">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Red flags activos</span>
+          <span class="font-mono-tight font-bold">{{ f.red_flags }}/3</span>
+        </div>
+        {% if f.red_flags_detalle %}
+          <div class="text-xs text-slate-600 italic">{{ f.red_flags_detalle }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Catalizador + Posición activa + Contexto sectorial + Freshness -->
+  <div class="grid grid-cols-4 gap-5">
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Catalizador</h3></div>
+      <div class="px-5 py-4 text-sm space-y-1">
+        <div><span class="text-slate-500 text-xs">Tipo:</span> <span class="font-semibold">{{ f.tipo_cat or 'ninguno' }}</span></div>
+        <div><span class="text-slate-500 text-xs">Fecha:</span> <span class="font-mono-tight">{{ f.cat_fecha or '—' }}</span></div>
+        <div><span class="text-slate-500 text-xs">Impacto:</span> <span class="font-semibold">{{ f.cat_impacto or '—' }}</span></div>
+        {% if f.cat_desc %}<div class="text-xs text-slate-600 mt-2 italic">{{ f.cat_desc }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Posición activa</h3></div>
+      <div class="px-5 py-4 text-sm space-y-1">
+        {% if f.sizing_actual %}
+          <div class="flex justify-between"><span class="text-slate-500 text-xs">Sizing</span><span class="font-mono-tight font-bold">{{ '%.1f' % f.sizing_actual }}%</span></div>
+          <div class="flex justify-between"><span class="text-slate-500 text-xs">Entrada</span><span class="font-mono-tight">${{ '%.2f' % (f.precio_entrada or 0) }}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500 text-xs">Umbral rot.</span><span class="font-mono-tight">{{ f.umbral_rotacion or '0.5' }}x</span></div>
+          <div class="flex justify-between"><span class="text-slate-500 text-xs">Piramid.</span><span>{% if f.piramidacion_disp %}✓{% else %}✗{% endif %}</span></div>
+        {% else %}
+          <div class="text-slate-400 italic">No es posición activa.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Contexto sectorial</h3></div>
+      <div class="px-5 py-4 text-sm space-y-1">
+        <div><span class="text-slate-500 text-xs">Mapa usado:</span> {% if f.mapa_usado %}<span class="text-emerald-600 font-semibold">sí</span>{% else %}<span class="text-slate-500">no</span>{% endif %}</div>
+        <div><span class="text-slate-500 text-xs">Versión:</span> <span class="font-mono-tight">{{ f.mapa_version or '—' }}</span></div>
+        {% if f.mapa_citado %}
+          <div class="text-xs text-slate-600 mt-2 italic">{{ f.mapa_citado[:200] }}{% if f.mapa_citado|length > 200 %}…{% endif %}</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Freshness</h3></div>
+      <div class="px-5 py-4 text-sm space-y-1">
+        <div class="flex justify-between"><span class="text-slate-500 text-xs">Último DR</span><span class="font-mono-tight">{{ f.ultimo_dr or '—' }}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500 text-xs">Próximo</span><span class="font-mono-tight">{{ f.proximo_dr or '—' }}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500 text-xs">Prompt</span><span class="font-mono-tight">{{ f.prompt_version or '—' }}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500 text-xs">TAM excp.</span><span>{% if f.tam_excepcion %}✓{% else %}—{% endif %}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial -->
+  {% if f.cambios_score or f.cambios_estado %}
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Historial</h3></div>
+    <div class="grid grid-cols-2 gap-0 divide-x divide-slate-200">
+      <div class="px-5 py-4">
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-2 font-semibold">Cambios de score</div>
+        <div class="space-y-1 text-xs max-h-48 overflow-auto">
+        {% for c in f.cambios_score[-10:] | reverse %}
+          <div class="flex items-center gap-2 font-mono-tight">
+            <span class="text-slate-500">{{ c.timestamp[:10] }}</span>
+            <span>{{ c.score_anterior }} → <span class="font-bold">{{ c.score_nuevo }}</span></span>
+            <span class="text-slate-400">{{ c.prompt_version }}</span>
+            {% if c.drift_alert %}<span class="text-rose-600 text-[10px]">DRIFT</span>{% endif %}
+          </div>
+        {% endfor %}
+        </div>
+      </div>
+      <div class="px-5 py-4">
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-2 font-semibold">Cambios de estado</div>
+        <div class="space-y-1 text-xs max-h-48 overflow-auto">
+        {% for c in f.cambios_estado[-10:] | reverse %}
+          <div class="font-mono-tight">
+            <span class="text-slate-500">{{ c.timestamp[:10] }}</span>
+            <span class="text-slate-700">{{ c.estado_anterior or '∅' }} → <span class="font-bold">{{ c.estado_nuevo }}</span></span>
+            <div class="text-slate-500 text-[10px]">{{ c.motivo }}</div>
+          </div>
+        {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

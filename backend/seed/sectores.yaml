@@ -1,0 +1,50 @@
+# Sectores del sistema BORJA — doc 01 sec. "Priorización de Sectores"
+# Editable: prioridad, horizonte y notas. El momentum se setea en la UI por el humano.
+
+- nombre: "AI infra"
+  prioridad: "alta"
+  horizonte: "6-12 meses"
+  notas: |
+    Fotónica, cooling, conectividad. El cuello de botella no es el chip,
+    es lo que el chip necesita para funcionar. Under-owned — aquí está el alpha.
+
+- nombre: "Ciberseguridad"
+  prioridad: "alta"
+  horizonte: "6-18 meses"
+  notas: |
+    Recesión-proof. El vector de ataque crece exponencialmente con AI.
+    Funciona en Fase 1 y Fase 2. Under-owned — edge real.
+
+- nombre: "Defensa"
+  prioridad: "media-alta"
+  horizonte: "6-18 meses"
+  notas: |
+    Contratos DoD reales (small cap). Software de targeting, materiales compuestos,
+    comunicaciones satelitales encriptadas, drones autónomos de bajo costo.
+
+- nombre: "Robótica"
+  prioridad: "media-alta"
+  horizonte: "12-18 meses"
+  notas: |
+    Componentes críticos: actuadores, sensores y software de control.
+    Rally todavía no explotó. Under-owned — alpha real.
+
+- nombre: "Minerales críticos"
+  prioridad: "media-alta"
+  horizonte: "12-24 meses"
+  notas: |
+    Uranio, cobre, tierras raras, antimonio. Soberanía industrial los hace
+    estratégicos. Activos en suelo americano o aliado tienen ventaja regulatoria.
+
+- nombre: "Nuclear"
+  prioridad: "media"
+  horizonte: "18-36 meses"
+  notas: |
+    Uranio enriquecido, componentes navales con un solo fabricante global,
+    ingenieros especializados que escasean. Under-owned — paciencia requerida.
+
+- nombre: "Espacio"
+  prioridad: "media"
+  horizonte: "12-24 meses"
+  notas: |
+    Solo revenue real o evidencia concreta de cliente. Alta selectividad.

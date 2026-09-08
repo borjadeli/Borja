@@ -1,0 +1,442 @@
+<title>BORJA — Diagnóstico del estado real + plan de rediseño</title>
+<style>
+  :root{
+    --paper:#F4F6F9; --surface:#FFFFFF; --ink:#14181F; --muted:#5A6472;
+    --navy:#17264A; --navy-2:#22345C; --line:#DDE2EA; --line-soft:#E7EAF0;
+    --brass:#9A7B3F;
+    --ok:#2F7D57;  --ok-bg:#E7F1EC;  --ok-line:#BEDBC9;
+    --mid:#A97A12; --mid-bg:#F6EDD6; --mid-line:#E4D2A0;
+    --red:#B23A3A; --red-bg:#F6E4E4; --red-line:#E4BCBC;
+    --old:#586173; --old-bg:#E9ECF1; --old-line:#CED5E0;
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:0 24px}
+
+  /* Masthead */
+  .masthead{background:var(--navy);color:#EAEEF6;padding:0}
+  .masthead::before{content:"";display:block;height:3px;
+    background:linear-gradient(90deg,var(--brass) 0%,#C7A968 60%,var(--brass) 100%)}
+  .masthead .wrap{padding-top:46px;padding-bottom:44px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:#9DB0D0;margin:0 0 18px}
+  h1{font-family:var(--serif);font-weight:600;font-size:40px;line-height:1.12;
+    margin:0;letter-spacing:-.01em;text-wrap:balance;color:#FBFCFE}
+  .dek{font-size:17px;color:#C4CEE0;margin:16px 0 0;max-width:62ch}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:26px;
+    font-family:var(--mono);font-size:12.5px;color:#93A4C4}
+  .meta b{color:#C4CEE0;font-weight:600}
+
+  /* Working-rule callout */
+  .rule-note{background:#EEF1F6;border:1px solid var(--line);
+    border-left:3px solid var(--brass);border-radius:4px;
+    padding:16px 20px;margin:30px 0 8px;font-size:14.5px;color:#3A414D}
+  .rule-note b{color:var(--navy)}
+
+  main .wrap{padding-top:8px;padding-bottom:64px}
+
+  section{padding-top:40px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin:0 0 6px;
+    border-bottom:1px solid var(--line);padding-bottom:12px}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--brass);
+    font-weight:600;letter-spacing:.04em;flex:0 0 auto;padding-top:3px}
+  h2{font-family:var(--serif);font-weight:600;font-size:25px;line-height:1.2;
+    margin:0;letter-spacing:-.01em;color:var(--navy);text-wrap:balance}
+  h3{font-family:var(--sans);font-weight:650;font-size:16px;margin:26px 0 6px;color:var(--navy)}
+  p{margin:14px 0;max-width:70ch}
+  a{color:#2D4C86;text-decoration:none;border-bottom:1px solid #B9C6DE}
+  a:hover{border-bottom-color:#2D4C86}
+  strong{font-weight:650;color:#1B222D}
+  code{font-family:var(--mono);font-size:.86em;background:#EAEDF2;
+    border:1px solid var(--line-soft);border-radius:3px;padding:.08em .38em;color:#2A3550}
+
+  .lead{font-size:17.5px;line-height:1.62}
+  blockquote{margin:22px 0;padding:14px 22px;border-left:3px solid var(--navy);
+    background:#EFF2F7;border-radius:0 4px 4px 0;color:#333B47;font-size:15px}
+  blockquote p{margin:0;max-width:66ch}
+
+  ul.clean{margin:14px 0;padding-left:0;list-style:none}
+  ul.clean>li{position:relative;padding-left:22px;margin:10px 0;max-width:70ch}
+  ul.clean>li::before{content:"";position:absolute;left:4px;top:11px;width:5px;height:5px;
+    background:var(--brass);border-radius:50%}
+
+  /* Status legend */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 4px}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;
+    font-weight:600;padding:4px 11px;border-radius:100px;border:1px solid;white-space:nowrap;
+    font-family:var(--sans);letter-spacing:.01em}
+  .pill .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+  .s-ok{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+  .s-ok .dot{background:var(--ok)}
+  .s-mid{color:var(--mid);background:var(--mid-bg);border-color:var(--mid-line)}
+  .s-mid .dot{background:var(--mid)}
+  .s-red{color:var(--red);background:var(--red-bg);border-color:var(--red-line)}
+  .s-red .dot{background:var(--red)}
+  .s-old{color:var(--old);background:var(--old-bg);border-color:var(--old-line)}
+  .s-old .dot{background:var(--old)}
+
+  /* Tables */
+  .tbl-scroll{overflow-x:auto;margin:22px 0;border:1px solid var(--line);
+    border-radius:6px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+  thead th{background:var(--navy);color:#DCE3F0;font-family:var(--mono);
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+    text-align:left;padding:12px 14px;vertical-align:middle}
+  tbody td{padding:13px 14px;border-top:1px solid var(--line-soft);
+    vertical-align:top;line-height:1.5}
+  tbody tr:nth-child(even){background:#FAFBFC}
+  td.num{font-family:var(--mono);font-weight:600;color:var(--navy);
+    text-align:center;font-size:13px}
+  td.stage{font-weight:650;color:#1B222D;min-width:170px}
+  td .ref{font-family:var(--mono);font-size:12px;color:#3E4A63}
+  .stripe{border-left:3px solid transparent}
+  .stripe.ok{border-left-color:var(--ok)}
+  .stripe.mid{border-left-color:var(--mid)}
+  .stripe.red{border-left-color:var(--red)}
+  .stripe.old{border-left-color:var(--old)}
+
+  /* Two-system cards */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+    padding:20px 22px}
+  .card.old{border-top:3px solid var(--old)}
+  .card.new{border-top:3px solid #2D4C86}
+  .card h4{margin:0 0 4px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  .card .name{font-family:var(--serif);font-size:20px;color:var(--navy);margin:0 0 10px}
+  .card p{font-size:13.5px;margin:8px 0;max-width:none;color:#3A414D}
+  .card .sin{font-size:12.5px;color:var(--red);font-weight:600;margin-top:12px}
+
+  /* Plan steps */
+  .steps{margin:22px 0;display:flex;flex-direction:column;gap:14px}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+    padding:18px 20px 18px 20px;display:grid;grid-template-columns:auto 1fr;gap:18px}
+  .step .idx{font-family:var(--serif);font-size:30px;color:var(--brass);
+    line-height:1;font-weight:600;min-width:40px}
+  .step h3{margin:2px 0 4px;font-size:16.5px}
+  .step p{margin:6px 0;font-size:14px;max-width:none;color:#3A414D}
+  .step.core{border-left:3px solid var(--brass);background:#FBF8F1}
+
+  /* Q&A open questions */
+  .qa{margin:20px 0;display:flex;flex-direction:column;gap:2px}
+  .qa .q{padding:14px 0;border-top:1px solid var(--line-soft);display:grid;
+    grid-template-columns:auto 1fr;gap:14px;align-items:baseline}
+  .qa .q:first-child{border-top:none}
+  .qa .qn{font-family:var(--mono);font-size:13px;color:var(--brass);font-weight:600}
+  .qa .qt{font-size:14.5px;margin:0;max-width:70ch}
+  .qa .qt b{color:var(--navy)}
+
+  .refs{font-family:var(--mono);font-size:12.5px;color:#43506B;line-height:1.9;
+    background:#EEF1F6;border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin:20px 0}
+  .refs .k{color:var(--navy);font-weight:600}
+
+  footer{border-top:1px solid var(--line);padding:26px 0 60px;color:var(--muted);
+    font-size:12.5px;font-family:var(--mono)}
+
+  @media (max-width:640px){
+    h1{font-size:31px} h2{font-size:22px}
+    .cards{grid-template-columns:1fr}
+    .sec-head{flex-direction:column;gap:2px}
+    .step{grid-template-columns:1fr}.step .idx{font-size:24px}
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">BORJA · Documento vivo · Rediseño</p>
+    <h1>Diagnóstico del estado real &amp; plan de rediseño</h1>
+    <p class="dek">Auditoría del código y la base de datos reales de BORJA contra el
+      flujo objetivo definido por el operador, con la ruta de reconstrucción por etapas.</p>
+    <div class="meta">
+      <span><b>Fecha</b> 2026-07-27</span>
+      <span><b>Método</b> 5 barridos paralelos · evidencia archivo:línea</span>
+      <span><b>Fuente</b> código + DB, no los docs</span>
+    </div>
+    <div class="rule-note">
+      <b>Regla de trabajo.</b> No se toca código ni se hace ningún cambio sin acuerdo
+      total y con el esquema de cada etapa bien definido. El sistema tiene que quedar
+      funcionando perfecto. Este documento se aprueba y se edita antes de cualquier implementación.
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <section>
+    <div class="sec-head"><span class="sec-num">00</span><h2>El norte</h2></div>
+    <p class="lead"><strong>Principio rector:</strong> los datos y los límites duros son
+      <strong>deterministas</strong>; el <strong>LLM (PM) ejerce criterio solo dentro de
+      esos límites</strong> — elige empresas, asigna sizing dentro de los caps, decide
+      cuánto cash y qué priorizar. El LLM nunca inventa números, contratos ni fundamentos.</p>
+
+    <div class="cards" style="grid-template-columns:1fr">
+      <div class="card" style="border-top:3px solid var(--brass)">
+        <h4>Flujo objetivo — 9 etapas</h4>
+        <p style="font-family:var(--mono);font-size:13px;color:#2A3550;line-height:1.9;margin:6px 0 0">
+          1 · Mapa estructural &nbsp;→&nbsp; 2 · Discovery por hechos económicos &nbsp;→&nbsp;
+          3 · Candidatas (manuales + descubiertas) &nbsp;→&nbsp; 4 · Pre-screen barato (Filtro 0)
+          &nbsp;→&nbsp; 5 · Deep research (ficha rica) &nbsp;→&nbsp; 6 · Universo vivo comparable
+          &nbsp;→&nbsp; 7 · PM contextual construye cartera &nbsp;→&nbsp; 8 · Sparring + aprobación
+          &nbsp;→&nbsp; 9 · Monitoreo &amp; rotación disciplinada</p>
+      </div>
+    </div>
+    <h3>Lo que hoy corre (colapsado)</h3>
+    <p style="font-family:var(--mono);font-size:13px;color:#7A2E2E;background:#F6E9E9;
+      border:1px solid var(--red-line);border-radius:6px;padding:14px 18px;max-width:none">
+      Universo heredado (lista estática de Fichas del viejo) → extracción parcial de hechos →
+      reglas y scores del núcleo determinista → ordenamiento por mérito → llenar posiciones
+      hasta la exposición objetivo.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>Hallazgo de fondo: dos sistemas en paralelo, y el objetivo es un tercero</h2></div>
+    <p>No es «un sistema medio roto». Son <strong>dos sistemas casi completos, ambos en
+      paper, ambos comiendo de la misma tabla <code>Ficha</code></strong>:</p>
+
+    <div class="cards">
+      <div class="card old">
+        <h4>Sistema viejo · backend/agents/</h4>
+        <p class="name">Embudo completo</p>
+        <p>12 jobs activos. Screener → analista → juez → recomendación → <strong>aprobación
+          humana</strong> → Trade. Produce <strong>fichas ricas</strong> (66/67 con tesis).
+          Libro propio +13,6 % (S, NABL). Monitores, dispatcher, discovery, 2.788 decisiones auditadas.</p>
+        <p class="sin">Pecado: el score 0-10 subjetivo que se quiere eliminar.</p>
+      </div>
+      <div class="card new">
+        <h4>Sistema nuevo · nucleo/ + seleccion/</h4>
+        <p class="name">Núcleo determinista</p>
+        <p>3 jobs. Gate → mérito → caps → sizing → 5 vías de salida, sobre hechos cacheados.
+          Libro paper propio, 12 posiciones, +4,86 %. Guardrails deterministas sólidos.</p>
+        <p class="sin">Pecado: tiró el juicio del LLM (PM bypasseado, ficha rica reemplazada
+          por hechos tipados) y nunca cableó el front-end.</p>
+      </div>
+    </div>
+
+    <p>El nuevo <strong>no reemplazó</strong> al viejo: lo <strong>consume</strong> (usa
+      <code>Ficha.estado</code> como universo, vía <code>shadow.py:_tickers_vivos()</code>) y
+      corre al lado. El flujo objetivo no es ninguno de los dos: es un tercero que toma el
+      <strong>front-end rico del viejo</strong> (discovery, ficha, PM-LLM) montado sobre los
+      <strong>guardrails deterministas del nuevo</strong> (gate, caps, sizing, salidas).</p>
+
+    <blockquote><p>La migración quedó a mitad de camino: el núcleo construyó bien los
+      guardrails deterministas pero descartó el juicio del LLM y no cableó el front-end;
+      el viejo aún tiene el front-end y la aprobación, pero con el score subjetivo que se
+      quería matar.</p></blockquote>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Diagnóstico módulo por módulo</h2></div>
+    <p>Las 9 etapas del flujo objetivo contra el código real.</p>
+    <div class="legend">
+      <span class="pill s-ok"><span class="dot"></span>Existe y conectado</span>
+      <span class="pill s-mid"><span class="dot"></span>Existe pero incompleto / mal conectado</span>
+      <span class="pill s-red"><span class="dot"></span>A reconstruir</span>
+      <span class="pill s-old"><span class="dot"></span>Heredado del viejo</span>
+    </div>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Etapa objetivo</th><th>Estado</th><th>Evidencia en el código</th></tr></thead>
+        <tbody>
+          <tr class="stripe mid"><td class="num">1</td><td class="stage">Mapa estructural</td>
+            <td><span class="pill s-mid"><span class="dot"></span>Duplicado + huérfano</span></td>
+            <td>Dos mapas. Nuevo (<span class="ref">backend/mapa/</span>, 34 territorios reales)
+              bien diseñado pero <b>sin persistencia</b> (no hay tabla <code>Nodo</code>) y
+              <b>sin caller</b>. Viejo (<code>SectorMapa</code>, 16 mapas, 0/7 activos aprobados)
+              es el que usa <span class="ref">agents/analista.py</span>.</td></tr>
+          <tr class="stripe red"><td class="num">2</td><td class="stage">Discovery por hechos económicos</td>
+            <td><span class="pill s-red"><span class="dot"></span>A reconstruir</span></td>
+            <td><span class="ref">mapa/discovery.py</span> (frecuencia por estado, nodo caliente)
+              existe pero <b>ningún caller lo ejecuta</b>. El viejo corre domingos pero
+              <b>sus candidatos no se convierten en Fichas</b>. Nada abre nodos por
+              contratos / backlog / lead-times automáticamente.</td></tr>
+          <tr class="stripe mid"><td class="num">3</td><td class="stage">Candidatas (manual + descubierta)</td>
+            <td><span class="pill s-mid"><span class="dot"></span>Parcial / heredado</span></td>
+            <td>Puerta manual existe (<span class="ref">ui.py:848</span>). Puerta descubierta:
+              screener <b>manual on-demand</b>. Ambas escriben en la <b>tabla vieja
+              <code>Ficha</code></b>, no en una cola propia del núcleo.</td></tr>
+          <tr class="stripe mid"><td class="num">4</td><td class="stage">Pre-screen barato (Filtro 0)</td>
+            <td><span class="pill s-mid"><span class="dot"></span>Existe, sin cablear</span></td>
+            <td><code>LIQUIDEZ_SCREENER</code> + 5 filtros viven en el screener viejo, solo manual.
+              En el loop vivo <b>no hay Filtro 0</b>: el gate exhaustivo corre directo. Filtro
+              barato y gate formal fusionados.</td></tr>
+          <tr class="stripe old"><td class="num">5</td><td class="stage">Deep research → ficha rica</td>
+            <td><span class="pill s-old"><span class="dot"></span>Heredado</span> <span class="pill s-red"><span class="dot"></span>Rehacer p/núcleo</span></td>
+            <td>La ficha rica existe <b>solo en el viejo</b> (<span class="ref">agents/analista_writer.py</span>),
+              atada al score 0-10. El núcleo produce <b>hechos tipados</b>
+              (<span class="ref">data/nucleo_hechos/</span>, 37 tickers), no una ficha comparable.</td></tr>
+          <tr class="stripe mid"><td class="num">6</td><td class="stage">Universo vivo comparable</td>
+            <td><span class="pill s-mid"><span class="dot"></span>Lógica huérfana / estados heredados</span></td>
+            <td><span class="ref">seleccion/watchlist.py</span> tiene la lógica viva (tope 20,
+              expulsión por mérito, protección por timing). Pero el loop usa
+              <code>Ficha.estado</code> (viejo), no esa abstracción.</td></tr>
+          <tr class="stripe red"><td class="num">7</td><td class="stage">PM contextual construye cartera</td>
+            <td><span class="pill s-red"><span class="dot"></span>El gap más grande</span></td>
+            <td><span class="ref">seleccion/pm.py</span> existe pero (a) su poder es solo
+              incluir/no + sesgo, <b>nunca asigna sizing</b>; (b) <b>no se llama en el loop</b> —
+              <span class="ref">paper_trader.py</span> es «100 % determinista, sin PM». Cero
+              criterio de PM hoy. Choca de frente con el norte.</td></tr>
+          <tr class="stripe mid"><td class="num">8</td><td class="stage">Sparring + aprobación</td>
+            <td><span class="pill s-mid"><span class="dot"></span>Existe (viejo) / desconectado (nuevo)</span></td>
+            <td><span class="ref">sparring.py</span>, <span class="ref">preflight.py</span> y la
+              aprobación del viejo (2.989 recs) existen. El paper nuevo <b>corre sin sparring
+              ni aprobación</b> (autónomo por diseño).</td></tr>
+          <tr class="stripe mid"><td class="num">9</td><td class="stage">Monitoreo / rotación disciplinada</td>
+            <td><span class="pill s-mid"><span class="dot"></span>Parcial</span></td>
+            <td>Monitoreo del viejo cableado (precios/earnings/form4/noticias → Evento →
+              dispatcher). De las 5 vías de salida, <b>solo precio (4,5) + CRR/red-flags</b>
+              en paper; <b>governance hard y triggers no</b>. Sin cadencia de 3 niveles.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Estado operativo actual</h2></div>
+    <ul class="clean">
+      <li><strong>Dos libros paper conviviendo.</strong> Viejo: ~$113,6 K (+13,6 %), 2 posiciones,
+        exposición ~12 %. Nuevo: <code>libro.json</code>, 12 posiciones (100 % invertido),
+        <strong>$104.856 (+4,86 %)</strong> al 23-jul (venía +7,99 % el 22; MP se cayó −20,9 %).
+        Congelado desde el 3-jul (challenger y piramidado apagados).</li>
+      <li><strong>18 jobs autónomos</strong> (scheduler dentro de <code>uvicorn</code>,
+        <code>SCHEDULER_AUTOSTART=true</code>): 3 del núcleo + 12 del viejo + 3 operativos.
+        Costo LLM recurrente <strong>~$22-34/mes</strong>.</li>
+      <li><strong>Universo 100 % estático:</strong> 50 tickers hardcodeados en
+        <code>seed/tickers_iniciales.yaml</code> → 67 Fichas. 37 con hechos cacheados;
+        30 en «Universo» sin evaluar.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Auditoría de desacople del viejo</h2></div>
+    <p>Regla acordada: <strong>el viejo no participa en ninguna decisión nueva, pero no se
+      borra todavía</strong>. El acople real es chico.</p>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Dependencia nuevo → viejo</th><th>Criticidad</th><th>Cómo cortarla</th></tr></thead>
+        <tbody>
+          <tr class="stripe red"><td><code>shadow.py:_tickers_vivos()</code> ← <code>Ficha.estado</code> (el universo entero)</td>
+            <td><span class="pill s-red"><span class="dot"></span>Crítica</span></td>
+            <td>Reemplazar por una fuente de universo propia del núcleo (la cola de candidatas
+              nueva). <b>Es el cordón umbilical principal.</b></td></tr>
+          <tr class="stripe mid"><td><code>paper_trader.py</code> ← CRR, <code>red_flags_count</code>, <code>sector</code></td>
+            <td><span class="pill s-mid"><span class="dot"></span>Degradable</span></td>
+            <td>Encapsular en servicio propio; hoy si fallan degradan sin romper (try/except).</td></tr>
+          <tr class="stripe old"><td><code>paper_pnl.py</code> ← históricos SPY (agents)</td>
+            <td><span class="pill s-old"><span class="dot"></span>Opcional</span></td>
+            <td>Mover a <span class="ref">services/market_data</span>.</td></tr>
+          <tr class="stripe old"><td><code>shadow.py</code> ← <code>agents.portfolio</code> (comparación)</td>
+            <td><span class="pill s-old"><span class="dot"></span>Cosmética</span></td>
+            <td>Retirar cuando ya no se compare.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Datos a preservar sí o sí:</strong> <code>Ficha</code> (66 análisis),
+      <code>DecisionJournal</code> (2.788), <code>Trade</code> (14), <code>PortfolioSnapshot</code>
+      (51 — equity curve), <code>data/nucleo_hechos/</code> (37 JSON).</p>
+    <p><strong>Dashboard:</strong> casi todo es viejo. Solo <code>/</code> (parcial) y
+      <code>/rediseno</code> leen el núcleo. Apagar el viejo hoy rompe
+      <code>/universo</code>, <code>/legacy</code>, <code>/sectores</code>, <code>/eventos</code>,
+      <code>/discovery</code>, fichas. Hay que reconstruir vistas nuevas antes de desconectar.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>Plan de reconstrucción por etapas</h2></div>
+    <p>Secuencia de menor riesgo alineada al norte. Cada etapa se cierra con su esquema
+      detallado <strong>antes</strong> de implementar. Nada se ejecuta sin acuerdo.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="idx">1</div>
+        <div>
+          <h3>Descongelar la cantera — Discovery + Filtro 0</h3>
+          <p>Orquestador que ejecute <code>mapa/discovery.py</code> y abra nodos por hechos
+            económicos (contratos, PO, backlog, take-or-pay, lead-times, shortages).</p>
+          <p>Filtro 0 barato explícito («¿vale el deep research?» → descartar / esperar hecho /
+            pasar a deep). Alimenta una <b>cola de candidatas propia del núcleo</b>, no la
+            <code>Ficha</code> vieja. Ataca directo el «universo heredado».</p>
+        </div>
+      </div>
+      <div class="step core">
+        <div class="idx">2</div>
+        <div>
+          <h3>PM-LLM con sizing dentro de caps <span style="color:var(--brass);font-size:12px;font-family:var(--mono);letter-spacing:.05em">· CORAZÓN DEL NORTE</span></h3>
+          <p><code>pm.py</code> decide inclusión + <b>sizing dentro de [piso, Hard Cap] + cash +
+            priorización</b>, cableado en el loop en reemplazo del selector 100 % determinista.</p>
+          <p>Los caps/gate del núcleo quedan como límites duros que el PM no puede violar.
+            Contrato claro: qué es determinista vs. qué decide el PM.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="idx">3</div>
+        <div>
+          <h3>Ficha rica para el núcleo</h3>
+          <p>Deep research que produzca una ficha comparable (negocio, validación de tesis,
+            finanzas, management, precio/escenarios, tesis operativa) <b>sin score 0-10</b>,
+            que alimente al PM. Reusar lo rescatable de <code>analista_writer.py</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="idx">4</div>
+        <div>
+          <h3>Sparring + aprobación y rotación de 3 niveles</h3>
+          <p>Sparring (2º LLM adversarial) + aprobación sobre el mix del PM. Rotación deliberada:
+            monitoreo continuo · revisión por evento · revisión integral mensual. Cablear las
+            vías de salida faltantes (governance hard, triggers).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="idx">5</div>
+        <div>
+          <h3>Desacople final + vistas nuevas + retiro del viejo</h3>
+          <p>Cortar el cordón <code>Ficha.estado</code>, encapsular las dependencias degradables,
+            reconstruir las vistas del dashboard sobre el núcleo. Recién entonces aislar/retirar
+            el viejo, preservando los datos históricos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Preguntas abiertas</h2></div>
+    <p>Sus respuestas definen el detalle de las etapas 1 y 2.</p>
+    <div class="qa">
+      <div class="q"><span class="qn">Q1</span><p class="qt"><b>Alcance del PM.</b> Sizing dentro
+        de caps confirmado. ¿También cash / timing / priorización explícitos? ¿Algún tope a su
+        discrecionalidad?</p></div>
+      <div class="q"><span class="qn">Q2</span><p class="qt"><b>Libros paper.</b> ¿Unificar en uno
+        solo (el nuevo) o mantener los dos conviviendo durante la transición?</p></div>
+      <div class="q"><span class="qn">Q3</span><p class="qt"><b>Ficha rica.</b> ¿Se reconstruye
+        desde <code>analista_writer.py</code> o se diseña de cero sin arrastrar el score?</p></div>
+      <div class="q"><span class="qn">Q4</span><p class="qt"><b>Aprobación.</b> ¿El flujo nuevo
+        vuelve a tener confirmación humana (como el viejo) o sigue autónomo en paper?</p></div>
+      <div class="q"><span class="qn">Q5</span><p class="qt"><b>Presupuesto LLM.</b> Techo mensual
+        aceptable para discovery + deep research + PM.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>Referencias de código</h2></div>
+    <div class="refs">
+      <span class="k">Núcleo</span> · backend/nucleo/{arquetipo,gate,quality,fragility,sizing,selector,salida,flujo,constantes,shadow,extractor}.py<br>
+      <span class="k">Selección / PM</span> · backend/seleccion/{pm,watchlist,sparring,preflight,paper_trader,paper_pnl,jobs}.py<br>
+      <span class="k">Mapa nuevo</span> · backend/mapa/{nodo,transiciones,brujula,discovery}.py<br>
+      <span class="k">Viejo</span> · backend/agents/{descubrimiento,discovery_hipotesis,mapa_sectorial,analista_writer,juez,portfolio,dispatcher}.py<br>
+      <span class="k">Scheduler</span> · backend/scheduler.py &nbsp;·&nbsp; <span class="k">Endpoints</span> · backend/main.py, backend/ui.py<br>
+      <span class="k">Datos</span> · data/borja.db (17 tablas), data/nucleo_paper/libro.json, data/nucleo_hechos/<br>
+      <span class="k">Seeds</span> · backend/seed/{tickers_iniciales,sectores,macro_v1}.yaml, load_seed.py
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    BORJA · init_docs/12_diagnostico_estado_real.md · documento vivo · se edita antes de implementar
+  </div>
+</footer>

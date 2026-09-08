@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(PYTHONPATH=/opt/BORJA timeout 150 .venv/bin/python /tmp/claude-1000/-opt-BORJA/47e44975-1d03-47ab-b6ea-0eb650d465a9/scratchpad/smoke.py)",
+      "WebSearch",
+      "Bash(.venv/bin/python -m pytest tests/test_pre_revenue.py tests/test_hoja_evidencia.py -q)",
+      "Bash(.venv/bin/python -m pytest tests/ -q)",
+      "Bash(.venv/bin/python -m ops.generar_hoja)",
+      "Bash(.venv/bin/python -c \"import sqlite3; c=sqlite3.connect\\('data/borja.db'\\); print\\('nx_fact:', c.execute\\('select count\\(distinct ticker\\) from nx_fact'\\).fetchone\\(\\)[0], 'tickers'\\)\")",
+      "Bash(timeout 240 env PYTHONPATH=/opt/BORJA .venv/bin/python -m ops.generar_hoja)",
+      "Bash(.venv/bin/python *)"
+    ]
+  }
+}

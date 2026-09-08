@@ -1,0 +1,23 @@
+[Unit]
+Description=BORJA Investment System (VM — publico via Cloudflare Tunnel)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=juan_brana
+Group=juan_brana
+WorkingDirectory=/opt/BORJA
+EnvironmentFile=/opt/BORJA/.env
+# SEGURIDAD: bind SOLO a localhost. Lo publico es el tunnel (borja.i-314.com), no el shell.
+ExecStart=/opt/BORJA/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 4151 --log-level info
+Restart=always
+RestartSec=3
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/BORJA /home/juan_brana/.claude /home/juan_brana/.claude.json
+
+[Install]
+WantedBy=multi-user.target

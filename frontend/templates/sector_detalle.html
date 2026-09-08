@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% from "_macros.html" import momentum_badge %}
+
+{% block heading %}{{ sc.nombre }} · Mapa estructural{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <div class="bb-card px-6 py-4 flex items-start gap-8">
+    <div>
+      <div class="font-serif text-3xl font-bold text-navy-900">{{ sc.nombre }}</div>
+      <div class="text-xs text-slate-500 mt-1">{{ sc.prioridad }} · {{ sc.horizonte }} · {{ sc.n_empresas }} empresas en sistema</div>
+    </div>
+    <div class="flex-1">{{ momentum_badge(sc.momentum) }}</div>
+    <div class="flex gap-2">
+      <button hx-post="/sectores/{{ sc.nombre | urlencode }}/regenerar-mapa" hx-swap="none" hx-on::after-request="setTimeout(() => location.reload(), 1000)" class="bb-btn bb-btn-primary">Regenerar mapa</button>
+      <a href="/sectores" class="bb-btn bb-btn-ghost">← Volver</a>
+    </div>
+  </div>
+
+  {% if sc.notas %}
+  <div class="bb-card px-6 py-4 text-sm text-slate-700 whitespace-pre-line">{{ sc.notas }}</div>
+  {% endif %}
+
+  {% if mapa %}
+    {% set m = mapa.mapa %}
+    <div class="bb-card">
+      <div class="bb-card-header">
+        <h3>Industria servida</h3>
+        <span class="text-xs text-slate-500">Generado {{ mapa.fecha_generacion[:10] }} · vence en {{ mapa.dias_restantes }}d</span>
+      </div>
+      <div class="px-6 py-4 grid grid-cols-3 gap-4 text-sm">
+        <div><div class="text-[11px] text-slate-500 uppercase tracking-widest">Tamaño</div><div class="font-mono-tight font-bold text-xl">{{ m.industria_servida.tamano_estimado or '—' }}</div></div>
+        <div><div class="text-[11px] text-slate-500 uppercase tracking-widest">Crecimiento</div><div class="font-mono-tight font-bold text-xl">{{ m.industria_servida.crecimiento_anual or '—' }}</div></div>
+        <div><div class="text-[11px] text-slate-500 uppercase tracking-widest">Fuente</div><div class="text-xs truncate" title="{{ m.industria_servida.fuente }}">{{ m.industria_servida.fuente or '—' }}</div></div>
+      </div>
+      <div class="px-6 pb-4 text-sm text-slate-700 italic">{{ m.industria_servida.por_que_estrategico }}</div>
+    </div>
+
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Cadena de valor</h3></div>
+      <div class="px-6 py-4 flex items-center gap-2 flex-wrap">
+      {% for eslabon in m.cadena_de_valor %}
+        <span class="badge bg-slate-100 text-slate-700 border-slate-300 font-medium">{{ eslabon }}</span>
+        {% if not loop.last %}<span class="text-slate-400">→</span>{% endif %}
+      {% endfor %}
+      </div>
+    </div>
+
+    <div class="bb-card">
+      <div class="bb-card-header"><h3>Cuellos de botella</h3></div>
+      <div class="divide-y divide-slate-200">
+      {% for c in m.cuellos_de_botella %}
+        <div class="px-6 py-4 grid grid-cols-12 gap-4">
+          <div class="col-span-4">
+            <div class="font-semibold text-navy-900">{{ c.componente }}</div>
+            <div class="text-xs text-slate-500 mt-1">{{ c.por_que_es_cuello }}</div>
+          </div>
+          <div class="col-span-2">
+            <div class="text-[10px] text-slate-500 uppercase tracking-widest">Criticidad</div>
+            <form hx-patch="/sectores/{{ sc.nombre | urlencode }}/criticidad?componente={{ c.componente | urlencode }}" hx-swap="none" hx-on::after-request="location.reload()" class="mt-1">
+              <select name="nivel" onchange="this.form.requestSubmit()" class="bb-input text-xs py-1 w-full
+                {% if c.nivel_critico == 'alto' %}border-rose-400 text-rose-700 font-semibold
+                {% elif c.nivel_critico == 'medio' %}border-amber-400 text-amber-700 font-semibold
+                {% elif c.nivel_critico == 'bajo' %}border-slate-400 text-slate-700
+                {% endif %}">
+                <option value="alto" {% if c.nivel_critico == 'alto' %}selected{% endif %}>alto</option>
+                <option value="medio" {% if c.nivel_critico == 'medio' %}selected{% endif %}>medio</option>
+                <option value="bajo" {% if c.nivel_critico == 'bajo' %}selected{% endif %}>bajo</option>
+                <option value="" {% if c.nivel_critico is none %}selected{% endif %}>null</option>
+              </select>
+            </form>
+          </div>
+          <div class="col-span-2 text-xs">
+            <div class="text-[10px] text-slate-500 uppercase tracking-widest">Proveedores</div>
+            <div class="mt-1">{{ c.cantidad_proveedores or '?' }} · sust. {{ c.sustituibilidad or '?' }}</div>
+            <div class="font-mono-tight text-slate-600 mt-1">{{ c.lead_time_estimado or '—' }}</div>
+          </div>
+          <div class="col-span-2 text-xs">
+            <div class="text-[10px] text-slate-500 uppercase tracking-widest">Proveedores conocidos</div>
+            <div class="mt-1 text-slate-700">{{ (c.proveedores_conocidos or []) | join(', ') }}</div>
+          </div>
+          <div class="col-span-2 text-xs text-slate-500">
+            <div class="text-[10px] uppercase tracking-widest">Justificación</div>
+            <div class="mt-1">{{ c.justificacion_criticidad[:200] }}{% if c.justificacion_criticidad|length > 200 %}…{% endif %}</div>
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-5">
+      <div class="col-span-2 bb-card">
+        <div class="bb-card-header"><h3>Empresas dominantes</h3></div>
+        <table class="bb-table">
+          <thead><tr><th>Ticker / Nombre</th><th>Posición</th><th>Fuente</th></tr></thead>
+          <tbody>
+          {% for e in m.empresas_dominantes %}
+            <tr>
+              <td class="font-mono-tight font-bold text-navy-900">{{ e.ticker_o_nombre }}</td>
+              <td class="text-xs text-slate-700">{{ e.posicion }}</td>
+              <td class="text-xs text-slate-500 truncate max-w-xs" title="{{ e.fuente }}">{{ e.fuente[:60] if e.fuente else '—' }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bb-card">
+        <div class="bb-card-header"><h3>Empresas en sistema</h3></div>
+        <table class="bb-table">
+          <thead><tr><th>Ticker</th><th>Score</th></tr></thead>
+          <tbody>
+          {% for f in fichas %}
+            <tr onclick="location='/fichas/{{ f.ticker }}/view'">
+              <td class="font-mono-tight font-bold">{{ f.ticker }}</td>
+              <td class="font-mono-tight">{% if f.score %}{{ '%.1f' % f.score }}{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="bb-card px-6 py-10 text-center">
+      <div class="text-slate-600 mb-3">Sin mapa sectorial activo para {{ sc.nombre }}.</div>
+      <button hx-post="/sectores/{{ sc.nombre | urlencode }}/regenerar-mapa" hx-swap="none" hx-on::after-request="setTimeout(() => location.reload(), 1000)" class="bb-btn bb-btn-primary">Generar mapa ahora</button>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

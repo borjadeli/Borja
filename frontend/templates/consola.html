@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Consola{% endblock %}
+
+{% block heading %}Consola Claude Code{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+
+<div class="bb-card" style="display:flex; flex-direction:column; height: calc(100vh - 180px); min-height: 460px;">
+  <div class="bb-card-header">
+    <h3>Terminal · Claude Code</h3>
+    <div class="flex items-center gap-3 text-[11px]">
+      <span id="consola-status" class="text-slate-400">iniciando…</span>
+      <button id="consola-reconnect" class="text-slate-500 hover:text-slate-800 border border-slate-200 rounded px-2 py-0.5">Reconectar</button>
+    </div>
+  </div>
+  {% if not consola_enabled %}
+  <div class="px-6 py-10 text-center text-sm text-slate-500">
+    Consola deshabilitada (env <span class="font-mono-tight">CONSOLA_ENABLED=0</span>).
+  </div>
+  {% else %}
+  <div id="consola-term" style="flex:1; width:100%; background:#0b0f17; padding:8px;"></div>
+  {% endif %}
+</div>
+
+{% if consola_enabled %}
+<script>
+(function () {
+  var C = { term: null, fit: null, ws: null, connected: false,
+            pingTimer: null, reconnectTimer: null, reconnectDelay: 1000,
+            manualClose: false, lastPongAt: 0 };
+
+  function setStatus(t, c) {
+    var s = document.getElementById('consola-status');
+    if (s) { s.textContent = t; if (c) s.style.color = c; }
+  }
+
+  function ensure() {
+    if (typeof Terminal === 'undefined' || typeof FitAddon === 'undefined') {
+      setTimeout(ensure, 150); return;          // CDN aún cargando
+    }
+    if (!C.term) {
+      var term = new Terminal({
+        theme: { background: '#0b0f17', foreground: '#d4d7dd', cursor: '#6366f1',
+                 selectionBackground: 'rgba(99,102,241,0.30)' },
+        fontFamily: '"JetBrains Mono", "SF Mono", Menlo, Consolas, monospace',
+        fontSize: 13, cursorBlink: true, convertEol: true, scrollback: 5000
+      });
+      var fit = new FitAddon.FitAddon();
+      term.loadAddon(fit);
+      var host = document.getElementById('consola-term');
+      term.open(host);
+      host.addEventListener('click', function () { try { term.focus(); } catch (e) {} });
+      term.onData(function (d) { if (C.ws && C.ws.readyState === 1) C.ws.send(d); });
+      if (window.ResizeObserver) { new ResizeObserver(doResize).observe(host); }
+      window.addEventListener('resize', doResize);
+      C.term = term; C.fit = fit;
+    }
+    setTimeout(doResize, 30);
+    if (!C.connected) connect();
+  }
+
+  function doResize() {
+    if (!C.fit || !C.term) return;
+    try { C.fit.fit(); } catch (e) { return; }
+    if (C.ws && C.ws.readyState === 1) {
+      C.ws.send(JSON.stringify({ type: 'resize', cols: C.term.cols, rows: C.term.rows }));
+    }
+  }
+
+  function connect() {
+    if (!C.term) return;
+    setStatus('conectando…', '#e89c4a');
+    var proto = (location.protocol === 'https:') ? 'wss' : 'ws';
+    var ws;
+    try { ws = new WebSocket(proto + '://' + location.host + '/ws/consola/terminal'); }
+    catch (e) { setStatus('error: ' + e.message, '#e05555'); return; }
+    C.ws = ws;
+
+    ws.onopen = function () {
+      C.connected = true; C.reconnectDelay = 1000; C.lastPongAt = Date.now();
+      setStatus('conectado', '#7ec699');
+      setTimeout(function () { doResize(); if (C.term) C.term.focus(); }, 80);
+      if (C.pingTimer) clearInterval(C.pingTimer);
+      C.pingTimer = setInterval(function () {
+        if (!C.ws || C.ws.readyState !== 1) return;
+        try { C.ws.send(JSON.stringify({ type: 'ping', t: Date.now() })); } catch (e) {}
+        if (Date.now() - C.lastPongAt > 60000) { try { C.ws.close(); } catch (e) {} }
+      }, 25000);
+    };
+    ws.onmessage = function (ev) {
+      var data = ev.data;
+      if (typeof data === 'string' && data.charCodeAt(0) === 123 && data.indexOf('"type"') !== -1) {
+        try {
+          var j = JSON.parse(data);
+          if (j && j.type === 'pong') { C.lastPongAt = Date.now(); return; }
+          if (j && j.type === 'error') { C.term.write('\r\n\x1b[31m[' + j.message + ']\x1b[0m\r\n'); return; }
+        } catch (e) {}
+      }
+      C.term.write(data);
+    };
+    ws.onclose = function () {
+      C.connected = false;
+      if (C.pingTimer) { clearInterval(C.pingTimer); C.pingTimer = null; }
+      if (C.manualClose) { C.manualClose = false; setStatus('desconectado', '#8a929e'); return; }
+      var delay = C.reconnectDelay; C.reconnectDelay = Math.min(delay * 2, 30000);
+      setStatus('reconectando en ' + Math.round(delay / 1000) + 's…', '#e89c4a');
+      if (C.reconnectTimer) clearTimeout(C.reconnectTimer);
+      C.reconnectTimer = setTimeout(connect, delay);
+    };
+    ws.onerror = function () { setStatus('error de conexión', '#e05555'); };
+  }
+
+  document.getElementById('consola-reconnect').addEventListener('click', function () {
+    if (C.reconnectTimer) { clearTimeout(C.reconnectTimer); C.reconnectTimer = null; }
+    C.reconnectDelay = 1000;
+    if (C.ws) { C.manualClose = true; try { C.ws.close(); } catch (e) {} C.ws = null; }
+    C.connected = false;
+    if (C.term) C.term.write('\r\n\x1b[36m[reconectando…]\x1b[0m\r\n');
+    connect();
+  });
+
+  ensure();
+})();
+</script>
+{% endif %}
+{% endblock %}

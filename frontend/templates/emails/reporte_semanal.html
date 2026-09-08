@@ -1,0 +1,98 @@
+{% extends "_base.html" %}
+{% block head %}
+  <h1>Reporte semanal · {{ semana }}</h1>
+  <div class="sub">Estado general: {{ estado_general }}</div>
+{% endblock %}
+{% block content %}
+  <div class="section">
+    <h2>Resumen ejecutivo</h2>
+    <div class="kv"><span class="k">Portfolio activo</span><span class="v">{{ kpis.n_portfolio }}/10</span></div>
+    <div class="kv"><span class="k">Bucket exploratorio</span><span class="v">{{ kpis.n_bucket }}/1</span></div>
+    <div class="kv"><span class="k">Exposición total</span><span class="v">{{ '%.1f' % kpis.exposicion }}%</span></div>
+    <div class="kv"><span class="k">Alertas risk monitor</span><span class="v">{{ kpis.n_risk_alertas }}</span></div>
+    <div class="kv"><span class="k">Items process auditor</span><span class="v">{{ kpis.n_process_items }}</span></div>
+    <div class="kv"><span class="k">Recomendaciones pendientes</span><span class="v">{{ kpis.n_recs_pendientes }}</span></div>
+    <div class="kv"><span class="k">Costo LLM mes actual</span><span class="v">${{ '%.2f' % kpis.costo_mes }}</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Momentum sectorial</h2>
+    <table>
+      <tr><th>Sector</th><th>Momentum</th><th>Prioridad</th></tr>
+      {% for s in sectores %}
+        <tr>
+          <td><strong>{{ s.nombre }}</strong></td>
+          <td>{{ s.momentum or 'sin momentum' }}</td>
+          <td>{{ s.prioridad }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  {% if risk_alertas %}
+  <div class="section">
+    <h2>Alertas del Risk Monitor</h2>
+    <table>
+      <tr><th>Tipo</th><th>Ticker</th><th>Severidad</th><th>Descripción</th></tr>
+      {% for a in risk_alertas %}
+        <tr>
+          <td><code>{{ a.tipo }}</code></td>
+          <td><strong>{{ a.ticker }}</strong></td>
+          <td>
+            {% if a.severidad == 'alta' %}<span class="badge badge-critical">ALTA</span>
+            {% elif a.severidad == 'media' %}<span class="badge badge-warn">MEDIA</span>
+            {% else %}<span class="badge badge-info">BAJA</span>{% endif %}
+          </td>
+          <td>{{ a.descripcion }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if process_items %}
+  <div class="section">
+    <h2>Process Auditor — items pendientes</h2>
+    <ul>
+      {% for i in process_items[:15] %}
+        <li><code>{{ i.ticker }}</code> — {{ i.tipo }}: {{ i.descripcion }}
+          {% if i.dias_vencido %}<strong style="color:#dc2626;">({{ i.dias_vencido }}d vencido)</strong>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if recs_validadas %}
+  <div class="section">
+    <h2>Recomendaciones pendientes ({{ recs_validadas | length }})</h2>
+    <table>
+      <tr><th>Ticker</th><th>Acción</th><th>Sizing</th><th>Asim.</th><th>Estado</th></tr>
+      {% for r in recs_validadas %}
+        <tr>
+          <td><strong>{{ r.ticker }}</strong></td>
+          <td>{{ r.accion }}</td>
+          <td>{% if r.sizing_sugerido %}{{ '%.1f' % r.sizing_sugerido }}%{% else %}—{% endif %}</td>
+          <td>{% if r.asimetria %}{{ '%.2f' % r.asimetria }}x{% else %}—{% endif %}</td>
+          <td>
+            {% if r.estado_rec == 'CUESTIONADA' %}<span class="badge badge-warn">CUESTIONADA</span>
+            {% else %}<span class="badge badge-info">VALIDADA</span>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if narrativa_macro %}
+  <div class="section">
+    <h2>Narrativa macro</h2>
+    <div style="font-size:13px; white-space:pre-line; color:#334155;">{{ narrativa_macro }}</div>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <a class="btn" href="{{ base_url or 'http://localhost:8000' }}/">Abrir Dashboard</a>
+    <a class="btn" style="background:#4f46e5;" href="{{ base_url or 'http://localhost:8000' }}/costos">Ver costos LLM</a>
+  </div>
+{% endblock %}

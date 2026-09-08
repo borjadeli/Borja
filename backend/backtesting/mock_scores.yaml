@@ -1,0 +1,73 @@
+# Scores sintéticos para modo MOCK del backtest — evita gasto LLM en iteraciones.
+# Representa el output "ideal" del Analista para cada ticker según las rules del sistema.
+# Si el dataset cambia, este archivo debe actualizarse a mano.
+
+COHR:
+  score_total: 7.8
+  criterios: {1: 8, 2: 8, 3: 7, 4: 8, 5: 8, 6: 8, 7: 7, 8: 8, 9: 7, 10: 7}
+  nivel_r: R1
+  bull: 500
+  bear: 200
+
+VRT:
+  score_total: 8.2
+  criterios: {1: 9, 2: 9, 3: 7, 4: 8, 5: 9, 6: 8, 7: 8, 8: 8, 9: 8, 10: 7}
+  nivel_r: R1
+  bull: 500
+  bear: 200
+
+MP:
+  score_total: 6.8
+  criterios: {1: 7, 2: 7, 3: 7, 4: 9, 5: 7, 6: 5, 7: 8, 8: 4, 9: 6, 10: 7}
+  nivel_r: R2
+  bull: 120
+  bear: 35
+
+KTOS:
+  score_total: 7.2
+  criterios: {1: 8, 2: 7, 3: 8, 4: 7, 5: 7, 6: 7, 7: 7, 8: 6, 9: 7, 10: 7}
+  nivel_r: R2
+  bull: 130
+  bear: 45
+
+LEU:
+  score_total: 7.5
+  criterios: {1: 7, 2: 9, 3: 8, 4: 9, 5: 6, 6: 7, 7: 7, 8: 7, 9: 7, 10: 7}
+  nivel_r: R2
+  bull: 400
+  bear: 100
+
+LCID:
+  score_total: 3.8
+  criterios: {1: 3, 2: 3, 3: 4, 4: 3, 5: 4, 6: 3, 7: 3, 8: 2, 9: 4, 10: 3}
+  nivel_r: R3
+  bull: 5
+  bear: 1
+
+WKHS:
+  score_total: 2.5
+  criterios: {1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 3, 8: 2, 9: 3, 10: 2}
+  nivel_r: R4
+  bull: 2
+  bear: 0.2
+
+OPEN:
+  score_total: 4.2
+  criterios: {1: 4, 2: 3, 3: 4, 4: 4, 5: 5, 6: 3, 7: 4, 8: 3, 9: 5, 10: 5}
+  nivel_r: R3
+  bull: 10
+  bear: 2
+
+CHPT:
+  score_total: 4.5
+  criterios: {1: 4, 2: 4, 3: 4, 4: 5, 5: 6, 6: 4, 7: 4, 8: 3, 9: 5, 10: 5}
+  nivel_r: R3
+  bull: 4
+  bear: 0.5
+
+EVTL:
+  score_total: 3.0
+  criterios: {1: 2, 2: 3, 3: 3, 4: 3, 5: 4, 6: 2, 7: 3, 8: 3, 9: 4, 10: 3}
+  nivel_r: R4
+  bull: 10
+  bear: 1

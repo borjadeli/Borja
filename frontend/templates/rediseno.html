@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block heading %}Rediseño · Núcleo determinista (sombra){% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <div class="bb-card px-5 py-4">
+    <div class="font-serif font-semibold text-navy-900">Núcleo nuevo corriendo en sombra</div>
+    <div class="text-xs text-slate-500 mt-1 leading-relaxed">
+      El rediseño completo (Núcleo v3 + Bloque B + Bloque C) está implementado en paquetes aislados
+      (<span class="font-mono-tight">backend/nucleo</span>, <span class="font-mono-tight">backend/mapa</span>,
+      <span class="font-mono-tight">backend/seleccion</span>) y NO toca el sistema vivo. El LLM dejó de decidir:
+      trae hechos fechados y una tabla determinista decide. Abajo, ejemplos ilustrativos del flujo sobre empresas
+      sintéticas (no son posiciones reales) — instantáneos, sin gastar API.
+    </div>
+  </div>
+
+  <!-- Cartera PAPER autónoma (opera sin confirmación humana, simulado) -->
+  {% if paper %}
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>Cartera paper autónoma · núcleo nuevo</h3>
+      <div class="flex gap-3 items-center text-xs text-slate-500">
+        <span>{{ paper.n }}/8 posiciones · {{ '%.0f%%'|format(paper.invertido * 100) }} invertido</span>
+        <span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">auto · sin confirmación · simulado</span>
+      </div>
+    </div>
+    <table class="bb-table">
+      <thead><tr><th>Ticker</th><th>Sizing</th><th>Arquetipo</th><th>Mérito</th><th>Precio entrada</th><th>Desde</th></tr></thead>
+      <tbody>
+      {% for p in paper.posiciones %}
+        <tr>
+          <td class="font-mono-tight font-bold text-navy-900">{{ p.ticker }}</td>
+          <td class="font-mono-tight font-bold">{{ '%.0f%%'|format(p.sizing * 100) }}</td>
+          <td class="text-sm">{{ p.arquetipo or '—' }}</td>
+          <td class="font-mono-tight">{{ '%.1f'|format(p.merito) if p.merito is not none else '—' }}</td>
+          <td class="font-mono-tight text-slate-500">{{ p.precio_entrada or '—' }}</td>
+          <td class="text-xs text-slate-400">{{ (p.fecha or '')[:10] }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if paper.journal %}
+    <div class="px-6 py-3 bg-slate-50 border-t border-slate-200">
+      <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-2 font-semibold">Últimas operaciones automáticas</div>
+      <div class="space-y-1 text-xs">
+      {% for j in paper.journal %}
+        <div class="flex gap-2">
+          <span class="font-mono-tight text-slate-400">{{ (j.fecha or '')[:16] }}</span>
+          {% if j.accion == 'comprar' %}<span class="text-emerald-700 font-semibold">COMPRAR</span>
+          {% elif j.accion == 'vender' %}<span class="text-rose-700 font-semibold">VENDER</span>
+          {% else %}<span class="text-amber-700 font-semibold">{{ j.accion|upper }}</span>{% endif %}
+          <span class="font-mono-tight font-bold">{{ j.ticker }}</span>
+          <span class="text-slate-500">
+            {% if j.accion == 'comprar' %}{{ '%.0f%%'|format(j.sizing * 100) }} · mérito {{ '%.1f'|format(j.merito) }}
+            {% elif j.accion == 'vender' %}vía {{ j.via }}
+            {% elif j.accion == 'recortar' %}{{ '%.0f%%'|format(j.de * 100) }}→{{ '%.0f%%'|format(j.a * 100) }}{% endif %}
+          </span>
+        </div>
+      {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    <div class="px-6 py-2 bg-amber-50 border-t border-amber-200 text-[11px] text-amber-800">
+      Plata SIMULADA. Libro separado del sistema viejo (sin doble decisor). Opera full-auto: detecta y ejecuta sin confirmación. Para correr un ciclo: <span class="font-mono-tight">python -m ops.paper_auto</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Cartera REAL por el núcleo nuevo (última corrida en sombra) -->
+  {% if real %}
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>Tu cartera viva por el núcleo nuevo</h3>
+      <div class="flex gap-3 items-center text-xs text-slate-500">
+        {% if real_meta %}<span>{{ real_meta.n }} fichas · {{ real_meta.generado }}</span>{% endif %}
+        <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">sombra · no ejecuta</span>
+      </div>
+    </div>
+    <table class="bb-table">
+      <thead><tr>
+        <th>Ticker</th><th>Sistema viejo</th><th>Entrada (núcleo nuevo)</th><th>Arquetipo</th>
+        <th>Salida (5 vías)</th><th>Motivo entrada</th>
+      </tr></thead>
+      <tbody>
+      {% for r in real %}
+        <tr>
+          <td class="font-mono-tight font-bold text-navy-900">{{ r.ticker }}</td>
+          <td class="text-xs text-slate-600">{{ r.old }}</td>
+          <td>
+            {% if r.entrada_new == 'candidata' %}<span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">candidata</span>
+            {% elif r.entrada_new == 'watchlist' %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">watchlist</span>
+            {% elif r.entrada_new == 'rechazo' %}<span class="badge bg-rose-50 text-rose-700 border-rose-400">rechazo</span>
+            {% else %}<span class="text-slate-400 text-xs">{{ r.entrada_new or '—' }}</span>{% endif %}
+          </td>
+          <td class="text-sm">{{ r.arquetipo or '—' }}</td>
+          <td>
+            {% if r.salida_new in ['venta_directa','salir_urgente','recomendar_salir'] %}
+              <span class="badge bg-rose-50 text-rose-700 border-rose-400">{{ r.salida_new }}</span>
+            {% elif r.salida_new == 'recortar' %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">recortar</span>
+            {% elif r.salida_new == 'no_aumentar' %}<span class="badge bg-slate-100 text-slate-600 border-slate-300">no aumentar</span>
+            {% elif r.salida_new == 're_gate' %}<span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">re-gate</span>
+            {% else %}<span class="text-emerald-600 text-xs">mantener</span>{% endif %}
+            {% if r.salida_via %}<span class="text-[10px] text-slate-400 ml-1">v{{ r.salida_via }}</span>{% endif %}
+          </td>
+          <td class="text-xs text-slate-500">{{ r.entrada_motivo }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="px-6 py-2 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500">
+      "Entrada" = lo que el núcleo nuevo haría si evaluara entrar hoy · "Salida" = qué vía de venta dispararía sobre la posición. Nada se ejecuta.
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Estado de fases -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Estado de la migración</h3></div>
+    <div class="divide-y divide-slate-200">
+      {% for nombre, desc, hecho in fases %}
+      <div class="px-6 py-3 flex items-center gap-3">
+        <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">✓ {{ nombre }}</span>
+        <span class="text-sm text-slate-700 flex-1">{{ desc }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="px-6 py-3 bg-slate-50 border-t border-slate-200">
+      <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-2 font-semibold">Pendiente para el corte</div>
+      <ul class="text-sm text-slate-600 space-y-1">
+        {% for p in pendientes %}<li>· {{ p }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Flujo de ENTRADA -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Flujo de entrada · arquetipo → gate → mérito → sizing</h3>
+      <span class="text-[11px] text-slate-400 italic">ejemplos ilustrativos</span></div>
+    <table class="bb-table">
+      <thead><tr>
+        <th>Empresa (sintética)</th><th>Decisión</th><th>Arquetipo</th><th>Gate</th>
+        <th>Quality</th><th>Asimetría</th><th>Mérito</th><th>Fragility</th><th>Hard Cap</th><th>Motivo</th>
+      </tr></thead>
+      <tbody>
+      {% for e in entradas %}
+        <tr>
+          <td class="font-mono-tight font-bold text-navy-900">{{ e.ticker }}</td>
+          <td>
+            {% if e.decision == 'candidata' %}<span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">candidata</span>
+            {% elif e.decision == 'watchlist' %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">watchlist</span>
+            {% else %}<span class="badge bg-rose-50 text-rose-700 border-rose-400">rechazo</span>{% endif %}
+          </td>
+          <td class="text-sm">{{ e.arquetipo.arquetipo if e.arquetipo is defined and e.arquetipo else '—' }}</td>
+          <td class="text-xs">
+            {% if e.gate is defined and e.gate %}
+              {% if e.gate.estado == 'pasa' %}<span class="text-emerald-600">pasa</span>
+              {% elif e.gate.estado == 'todavia_no' %}<span class="text-amber-600">todavía no</span>
+              {% else %}<span class="text-rose-600">no pasa</span>{% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td class="font-mono-tight">{{ 'T' ~ e.quality.tier if e.quality is defined and e.quality else '—' }}</td>
+          <td class="font-mono-tight">{{ '%.2f'|format(e.asimetria) if e.asimetria is defined and e.asimetria is not none else '—' }}</td>
+          <td class="font-mono-tight font-bold">{{ '%.1f'|format(e.merito) if e.merito is defined and e.merito is not none else '—' }}</td>
+          <td class="font-mono-tight">{{ 'F' ~ e.fragility.score if e.fragility is defined and e.fragility else '—' }}</td>
+          <td class="font-mono-tight">{{ '%.0f%%'|format(e.hard_cap * 100) if e.hard_cap is defined and e.hard_cap is not none else '—' }}</td>
+          <td class="text-xs text-slate-500">{{ e.motivo or '' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mix propuesto -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Mix propuesto · Selector + sizing</h3></div>
+    <table class="bb-table">
+      <thead><tr><th>Empresa</th><th>Mérito</th><th>Bruto pedido</th><th>Sizing final</th><th>Entra</th><th>Motivo</th></tr></thead>
+      <tbody>
+      {% for m in cartera.mix %}
+        <tr>
+          <td class="font-mono-tight font-bold">{{ m.ticker }}</td>
+          <td class="font-mono-tight">{{ '%.1f'|format(m.merito) }}</td>
+          <td class="font-mono-tight">{{ '%.0f%%'|format(m.bruto_pedido * 100) }}</td>
+          <td class="font-mono-tight font-bold">{{ '%.0f%%'|format(m.sizing * 100) }}</td>
+          <td>{% if m.entra %}<span class="text-emerald-600">✓</span>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+          <td class="text-xs text-slate-500">{{ m.motivo }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-600">
+      Invertido total: <span class="font-mono-tight font-bold">{{ '%.0f%%'|format(cartera.invertido_total * 100) }}</span>
+      · Cubo residual-cero: <span class="font-mono-tight">{{ '%.0f%%'|format(cartera.cubo_residual_cero.total * 100) }}</span>
+      {% if cartera.cubo_residual_cero.excede %}<span class="text-rose-600">(excede 8%)</span>{% else %}<span class="text-emerald-600">(ok ≤ 8%)</span>{% endif %}
+    </div>
+  </div>
+
+  <!-- Flujo de SALIDA -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Salida · las 5 vías deterministas</h3>
+      <span class="text-[11px] text-slate-400 italic">ejemplos ilustrativos</span></div>
+    <table class="bb-table">
+      <thead><tr><th>Posición (sintética)</th><th>Acción</th><th>Vía</th><th>Re-gate</th></tr></thead>
+      <tbody>
+      {% for s in salidas %}
+        <tr>
+          <td class="font-mono-tight font-bold">{{ s.ticker }}</td>
+          <td>
+            {% if s.accion in ['venta_directa', 'salir_urgente', 'recomendar_salir'] %}
+              <span class="badge bg-rose-50 text-rose-700 border-rose-400">{{ s.accion }}</span>
+            {% elif s.accion == 'recortar' %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">recortar</span>
+            {% elif s.accion == 're_gate' %}<span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">re-gate</span>
+            {% else %}<span class="badge bg-slate-100 text-slate-600 border-slate-300">{{ s.accion }}</span>{% endif %}
+          </td>
+          <td class="text-xs">{% if s.via_ganadora %}vía {{ s.via_ganadora.via }} · {{ s.via_ganadora.nombre }}{% else %}—{% endif %}</td>
+          <td class="text-xs">{% if s.regate %}sí{% else %}no{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Brújula factor_macro -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Brújula · concentración de factor_macro</h3>
+      <span class="text-[11px] text-slate-400">{{ territorios_activos }} territorios-cuello activos</span></div>
+    <div class="px-6 py-4">
+      <div class="text-xs text-slate-500 mb-3">Etiqueta visible y NO-decisoria. La concentración de <span class="font-semibold">capex hyperscaler</span> es la más fuerte del mapa — riesgo residual aceptado (§6.3), defensa = visibilidad forzada al confirmar cartera.</div>
+      {% for fm, n in factor_macro.items() %}
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-sm text-slate-700 w-48">{{ fm }}</span>
+        <div class="flex-1 bg-slate-100 rounded h-5 overflow-hidden">
+          <div class="bg-navy-700 h-5" style="width: {{ (n / territorios_activos * 100) | round }}%"></div>
+        </div>
+        <span class="font-mono-tight text-xs text-slate-600 w-10 text-right">{{ n }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block heading %}Discovery · Hipótesis semanales{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <div class="bb-card px-5 py-4 flex items-center gap-3">
+    <div class="flex-1">
+      <div class="font-serif font-semibold text-navy-900">Generador de hipótesis</div>
+      <div class="text-xs text-slate-500 mt-1">Corre automático domingos 20:00 ET. Claude con web search. Sin scoring, sin recomendaciones de compra — solo hipótesis con evidencia.</div>
+    </div>
+    <button hx-post="/discovery/run" hx-swap="none" hx-on::after-request="alert('Discovery encolado — recargá en ~30s'); setTimeout(() => location.reload(), 15000)" class="bb-btn bb-btn-primary">
+      <span class="htmx-indicator spinner"></span> Correr manual ahora
+    </button>
+  </div>
+
+  {% if latest and latest.hipotesis %}
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>Hipótesis de la semana {{ latest.semana }}</h3>
+      <div class="flex gap-2 items-center text-xs">
+        {% if latest.util is none %}
+          <form hx-patch="/discovery/{{ latest.semana }}/feedback?util=true" hx-swap="none" hx-on::after-request="location.reload()" class="inline">
+            <button class="bb-btn bb-btn-ghost">Marcar útil</button>
+          </form>
+          <form hx-patch="/discovery/{{ latest.semana }}/feedback?util=false" hx-swap="none" hx-on::after-request="location.reload()" class="inline">
+            <button class="bb-btn bb-btn-ghost">Marcar no útil</button>
+          </form>
+        {% else %}
+          {% if latest.util %}
+            <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">útil</span>
+          {% else %}
+            <span class="badge bg-rose-50 text-rose-700 border-rose-400">no útil</span>
+          {% endif %}
+        {% endif %}
+        <span class="text-slate-500">{{ latest.timestamp[:10] }}</span>
+      </div>
+    </div>
+    <div class="divide-y divide-slate-200">
+    {% for h in latest.hipotesis %}
+      <div class="px-6 py-5">
+        <div class="flex items-start gap-3 mb-3">
+          <span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">{{ h.sector }}</span>
+          <div class="font-serif text-lg text-navy-900 font-semibold leading-snug flex-1">{{ h.hipotesis }}</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-1 font-semibold">Evidencia mínima</div>
+            <div class="text-slate-700 leading-relaxed">{{ h.evidencia_minima }}</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-500 uppercase tracking-widest mb-1 font-semibold">Por qué ahora</div>
+            <div class="text-slate-700 leading-relaxed">{{ h.por_que_ahora }}</div>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2">
+          <span class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold">Candidatos a investigar:</span>
+          {% for c in h.candidatos %}
+            <span class="font-mono-tight font-bold text-navy-900 bg-slate-100 px-2 py-0.5 rounded text-xs">{{ c }}</span>
+          {% endfor %}
+          <span class="text-[10px] text-slate-400 italic ml-2">{{ h.nota_candidatos or 'Sin análisis — el humano decide' }}</span>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="bb-card px-6 py-10 text-center">
+    <div class="font-serif text-lg text-slate-600 mb-2">Sin sesiones de Discovery todavía.</div>
+    <div class="text-sm text-slate-500 mb-4">La primera sesión se corre automática el próximo domingo 20:00 ET, o podés lanzarla ahora.</div>
+  </div>
+  {% endif %}
+
+  {% if sessions | length > 1 %}
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Sesiones anteriores</h3></div>
+    <table class="bb-table">
+      <thead><tr><th>Semana</th><th>Fecha</th><th>Hipótesis</th><th>Útil</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for s in sessions[1:] %}
+        <tr onclick="location='/discovery#{{ s.semana }}'">
+          <td class="font-mono-tight font-bold">{{ s.semana }}</td>
+          <td class="font-mono-tight text-xs text-slate-500">{{ s.timestamp[:10] }}</td>
+          <td class="font-mono-tight">{{ s.hipotesis_count }}</td>
+          <td>
+            {% if s.util == true %}<span class="text-emerald-600">✓</span>
+            {% elif s.util == false %}<span class="text-rose-600">✗</span>
+            {% else %}<span class="text-slate-400">—</span>{% endif %}
+          </td>
+          <td class="text-xs text-slate-600">{{ s.estado }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

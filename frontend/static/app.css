@@ -1,0 +1,149 @@
+/* BORJA — Banking/Finance aesthetic utilities beyond Tailwind */
+
+/* Monospace for tickers, IDs, numbers */
+.font-mono-tight { font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace; letter-spacing: -0.02em; }
+
+/* Bloomberg-style dense table */
+.bb-table { border-collapse: collapse; width: 100%; }
+.bb-table th {
+  background: #0f172a;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.bb-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
+  color: #0f172a;
+}
+.bb-table tr:hover td { background: #f1f5f9; cursor: pointer; }
+
+/* Score bar */
+.score-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.score-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+/* Subtle card */
+.bb-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+.bb-card-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bb-card-header h3 {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+/* HTMX loading state */
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: inline-flex; }
+.htmx-request.htmx-indicator { display: inline-flex; }
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  border-top-color: #0f172a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Sidebar nav */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.sidebar-link:hover { color: #f1f5f9; background: rgba(255,255,255,0.04); }
+.sidebar-link.active {
+  color: #f1f5f9;
+  background: rgba(99, 102, 241, 0.12);
+  border-left-color: #6366f1;
+}
+
+/* Input */
+.bb-input {
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #ffffff;
+  color: #0f172a;
+}
+.bb-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+
+/* Button */
+.bb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.bb-btn-primary { background: #0f172a; color: #fff; }
+.bb-btn-primary:hover { background: #1e293b; }
+.bb-btn-success { background: #059669; color: #fff; }
+.bb-btn-success:hover { background: #047857; }
+.bb-btn-danger { background: #dc2626; color: #fff; }
+.bb-btn-danger:hover { background: #b91c1c; }
+.bb-btn-ghost { background: transparent; color: #475569; border-color: #cbd5e1; }
+.bb-btn-ghost:hover { background: #f1f5f9; color: #0f172a; }

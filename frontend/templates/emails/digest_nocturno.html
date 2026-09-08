@@ -1,0 +1,76 @@
+{% extends "_base.html" %}
+{% block head %}
+  <h1>Digest diario · BORJA</h1>
+  <div class="sub">Items materiales del último cron nocturno</div>
+{% endblock %}
+{% block content %}
+  {% if r.entry_ranges_vencidos %}
+  <div class="section">
+    <h2>Entry ranges vencidos ({{ r.entry_ranges_vencidos | length }})</h2>
+    <p style="font-size:12px; color:#64748b;">Degradadas automáticamente a WL_Activa.</p>
+    <table>
+      <tr><th>Ticker</th><th>Estado anterior</th><th>Estado nuevo</th><th>Fecha vencimiento</th></tr>
+      {% for x in r.entry_ranges_vencidos %}
+        <tr>
+          <td><code>{{ x.ticker }}</code></td>
+          <td>{{ x.estado_anterior }}</td>
+          <td><strong>{{ x.estado_nuevo }}</strong></td>
+          <td style="font-family:monospace; font-size:11px;">{{ x.entry_range_vencimiento[:10] }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if r.triggers_sin_evaluar %}
+  <div class="section">
+    <h2>Triggers sin evaluar &gt;7d ({{ r.triggers_sin_evaluar | length }})</h2>
+    <ul>
+      {% for x in r.triggers_sin_evaluar %}
+        <li><code>{{ x.ticker }}</code> — {{ x.dias_sin_revisar }}d sin revisar</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if r.deep_research_vencido %}
+  <div class="section">
+    <h2>Deep research vencido ({{ r.deep_research_vencido | length }})</h2>
+    <ul>
+      {% for x in r.deep_research_vencido %}
+        <li><code>{{ x.ticker }}</code> <span class="badge badge-info">{{ x.estado }}</span> — vencido hace {{ x.dias_vencido }}d</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if r.sectores_sin_actualizar %}
+  <div class="section">
+    <h2>Sectores sin actualizar momentum ({{ r.sectores_sin_actualizar | length }})</h2>
+    <ul>
+      {% for x in r.sectores_sin_actualizar %}
+        <li><strong>{{ x.sector }}</strong> — {{ x.dias_sin_actualizar }}d · momentum actual: {{ x.momentum_actual or 'sin momentum' }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if r.mapas_sectoriales_vencidos %}
+  <div class="section">
+    <h2>Mapas sectoriales vencidos ({{ r.mapas_sectoriales_vencidos | length }})</h2>
+    <ul>
+      {% for x in r.mapas_sectoriales_vencidos %}
+        <li><strong>{{ x.sector }}</strong> — {{ x.dias_atraso }}d de atraso
+          {% if x.regenerado %}<span class="badge badge-info">regenerado auto</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="kv"><span class="k">Eventos antiguos limpiados</span><span class="v">{{ r.eventos_limpiados }}</span></div>
+    <div class="kv"><span class="k">Tasks antiguos limpiados</span><span class="v">{{ r.tasks_limpiados }}</span></div>
+    <a class="btn" href="{{ base_url or 'http://localhost:8000' }}/">Abrir Dashboard</a>
+  </div>
+{% endblock %}

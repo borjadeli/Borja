@@ -1,0 +1,289 @@
+# Tickers iniciales — 50 candidatas en small/mid cap posicionadas en cuellos de botella.
+# Entran al sistema en estado "Candidata" y requieren ejecución manual del Analista.
+# EDITABLE: agregar/quitar libremente antes del load_seed. Después, usar el intake rápido.
+#
+# Criterio de selección (doc 01 sec 1):
+# - Market cap indicativo: $100M - $30B (sesgo a small/mid)
+# - Posicionamiento en cuello de botella o pick-and-shovel del sector
+# - Revenue real verificable o evidencia concreta de cliente próximo
+# - Sin mega-caps priceados (NVDA fuera; incluidas empresas en su cadena)
+#
+# Distribución por sector según priorización del doc 01:
+# AI infra (alta):          12 tickers
+# Ciberseguridad (alta):     7 tickers
+# Defensa (media-alta):      8 tickers
+# Minerales críticos:        8 tickers
+# Robótica (media-alta):     6 tickers
+# Nuclear (media):           5 tickers
+# Espacio (media):           4 tickers
+
+# ================================================================
+# AI INFRA — fotónica / cooling / conectividad / power / metrology
+# ================================================================
+- ticker: COHR
+  nombre: "Coherent Corp"
+  sector: "AI infra"
+  driver_macro: "Fotonica de alta velocidad — transceivers 800G+ para AI clusters"
+
+- ticker: POET
+  nombre: "POET Technologies"
+  sector: "AI infra"
+  driver_macro: "Photonic engines integrados — reduce latencia de interconexion"
+
+- ticker: VRT
+  nombre: "Vertiv Holdings"
+  sector: "AI infra"
+  driver_macro: "Cooling y power para data centers — cuello de botella termico"
+
+- ticker: CRDO
+  nombre: "Credo Technology"
+  sector: "AI infra"
+  driver_macro: "Connectivity DSP / AECs — interconexion electrica eficiente"
+
+- ticker: AAOI
+  nombre: "Applied Optoelectronics"
+  sector: "AI infra"
+  driver_macro: "Transceivers opticos — supplier directo a hyperscalers"
+
+- ticker: LITE
+  nombre: "Lumentum Holdings"
+  sector: "AI infra"
+  driver_macro: "Fotonica para 800G/1.6T — cadena de datacom optica"
+
+- ticker: AEIS
+  nombre: "Advanced Energy Industries"
+  sector: "AI infra"
+  driver_macro: "Power conversion para HPC y data centers"
+
+- ticker: KLIC
+  nombre: "Kulicke & Soffa"
+  sector: "AI infra"
+  driver_macro: "Semiconductor packaging/bonding — cuello en HBM y advanced packaging"
+
+- ticker: MTSI
+  nombre: "MACOM Technology"
+  sector: "AI infra"
+  driver_macro: "RF/microwave analog — networking AI 400G+"
+
+- ticker: CLS
+  nombre: "Celestica Inc"
+  sector: "AI infra"
+  driver_macro: "AI server builds para hyperscalers — escala de manufactura"
+
+- ticker: ALAB
+  nombre: "Astera Labs"
+  sector: "AI infra"
+  driver_macro: "Smart fabric connectivity (retimers, CXL) — cuello entre GPUs"
+
+- ticker: NVMI
+  nombre: "Nova Ltd"
+  sector: "AI infra"
+  driver_macro: "Metrology semi — medicion de estructuras 3D avanzadas"
+
+# ================================================================
+# CIBERSEGURIDAD
+# ================================================================
+- ticker: S
+  nombre: "SentinelOne"
+  sector: "Ciberseguridad"
+  driver_macro: "Endpoint protection AI-native — vector expandido por AI"
+
+- ticker: RBRK
+  nombre: "Rubrik"
+  sector: "Ciberseguridad"
+  driver_macro: "Data security y ransomware resilience"
+
+- ticker: VRNS
+  nombre: "Varonis Systems"
+  sector: "Ciberseguridad"
+  driver_macro: "Data security posture management — AI-era data exposure"
+
+- ticker: TENB
+  nombre: "Tenable Holdings"
+  sector: "Ciberseguridad"
+  driver_macro: "Exposure management y vulnerability assessment"
+
+- ticker: QLYS
+  nombre: "Qualys"
+  sector: "Ciberseguridad"
+  driver_macro: "Cloud-native security platform — compliance y vulnerability"
+
+- ticker: NABL
+  nombre: "N-able"
+  sector: "Ciberseguridad"
+  driver_macro: "MSP security stack — mid-market underpenetrado"
+
+- ticker: CVLT
+  nombre: "Commvault Systems"
+  sector: "Ciberseguridad"
+  driver_macro: "Cyber resilience + data protection — cuello post-ransomware"
+
+# ================================================================
+# DEFENSA — contratos DoD verificables
+# ================================================================
+- ticker: KTOS
+  nombre: "Kratos Defense & Security"
+  sector: "Defensa"
+  driver_macro: "Drones, satellites, targeting systems — DoD contracts reales"
+
+- ticker: MRCY
+  nombre: "Mercury Systems"
+  sector: "Defensa"
+  driver_macro: "Defense computing y signal processing — radar/EW"
+
+- ticker: AVAV
+  nombre: "AeroVironment"
+  sector: "Defensa"
+  driver_macro: "Drones autonomos de bajo costo — Switchblade program"
+
+- ticker: CW
+  nombre: "Curtiss-Wright"
+  sector: "Defensa"
+  driver_macro: "Componentes nucleares navales — unico fabricante certificado"
+
+- ticker: DRS
+  nombre: "Leonardo DRS"
+  sector: "Defensa"
+  driver_macro: "Defense electronics — sensors, comms, electro-optics"
+
+- ticker: CACI
+  nombre: "CACI International"
+  sector: "Defensa"
+  driver_macro: "Defense IT + signals intelligence — alta barrera clearance"
+
+- ticker: SAIC
+  nombre: "Science Applications Intl"
+  sector: "Defensa"
+  driver_macro: "Defense/intel IT services — contratos multi-year"
+
+- ticker: PSN
+  nombre: "Parsons Corp"
+  sector: "Defensa"
+  driver_macro: "Defense + critical infra + cyber — contratos federales"
+
+# ================================================================
+# ROBÓTICA — componentes / sensores / visión
+# ================================================================
+- ticker: SYM
+  nombre: "Symbotic"
+  sector: "Robótica"
+  driver_macro: "Warehouse robotics — Walmart lock-in contrato multi-year"
+
+- ticker: NVTS
+  nombre: "Navitas Semiconductor"
+  sector: "Robótica"
+  driver_macro: "GaN semiconductors — power para EV/robots/AI edge"
+
+- ticker: TER
+  nombre: "Teradyne"
+  sector: "Robótica"
+  driver_macro: "Semi test + cobots (Universal Robots, MiR)"
+
+- ticker: CGNX
+  nombre: "Cognex Corp"
+  sector: "Robótica"
+  driver_macro: "Machine vision — cuello de botella en sensing industrial"
+
+- ticker: ALGM
+  nombre: "Allegro MicroSystems"
+  sector: "Robótica"
+  driver_macro: "Sensores corriente/posicion — EV drivetrains + robotics"
+
+- ticker: NNDM
+  nombre: "Nano Dimension"
+  sector: "Robótica"
+  driver_macro: "3D printing electronica — defense/aerospace additive"
+
+# ================================================================
+# MINERALES CRÍTICOS
+# ================================================================
+- ticker: MP
+  nombre: "MP Materials"
+  sector: "Minerales críticos"
+  driver_macro: "Tierras raras — unica mina activa en suelo USA"
+
+- ticker: UEC
+  nombre: "Uranium Energy Corp"
+  sector: "Minerales críticos"
+  driver_macro: "Uranio domestico USA — demanda estructural nuclear"
+
+- ticker: IPX
+  nombre: "IperionX"
+  sector: "Minerales críticos"
+  driver_macro: "Titanio domestico — proveedor defensa/aerospace"
+
+- ticker: USAR
+  nombre: "USA Rare Earth"
+  sector: "Minerales críticos"
+  driver_macro: "Tierras raras + procesamiento magnetico USA"
+
+- ticker: LEU
+  nombre: "Centrus Energy"
+  sector: "Minerales críticos"
+  driver_macro: "Uranium enrichment — unica planta HALEU domestica USA"
+
+- ticker: ATI
+  nombre: "ATI Inc"
+  sector: "Minerales críticos"
+  driver_macro: "Titanium + nickel superalloys — defensa/aerospace"
+
+- ticker: CRML
+  nombre: "Critical Metals Corp"
+  sector: "Minerales críticos"
+  driver_macro: "Tantalum/niobium/tierras raras — proyectos europeos"
+
+- ticker: NXE
+  nombre: "NexGen Energy"
+  sector: "Minerales críticos"
+  driver_macro: "Uranio Canadiense high-grade — Arrow project"
+
+# ================================================================
+# NUCLEAR
+# ================================================================
+- ticker: NNE
+  nombre: "Nano Nuclear Energy"
+  sector: "Nuclear"
+  driver_macro: "Microrreactores nucleares — soberania energetica"
+
+- ticker: BWXT
+  nombre: "BWX Technologies"
+  sector: "Nuclear"
+  driver_macro: "Componentes navales nucleares — unico fabricante global"
+
+- ticker: SMR
+  nombre: "NuScale Power"
+  sector: "Nuclear"
+  driver_macro: "SMR pure play — primera certificacion NRC"
+
+- ticker: OKLO
+  nombre: "Oklo Inc"
+  sector: "Nuclear"
+  driver_macro: "Advanced reactors — PPA model, clientes nombrados"
+
+- ticker: UROY
+  nombre: "Uranium Royalty Corp"
+  sector: "Nuclear"
+  driver_macro: "Uranium royalties — exposicion diversificada sin operating risk"
+
+# ================================================================
+# ESPACIO — solo revenue real o evidencia concreta de cliente
+# ================================================================
+- ticker: RKLB
+  nombre: "Rocket Lab USA"
+  sector: "Espacio"
+  driver_macro: "Lanzamientos + componentes satelitales — revenue real"
+
+- ticker: ASTS
+  nombre: "AST SpaceMobile"
+  sector: "Espacio"
+  driver_macro: "Direct-to-cell satellite — deals con AT&T, Vodafone, Verizon"
+
+- ticker: LUNR
+  nombre: "Intuitive Machines"
+  sector: "Espacio"
+  driver_macro: "Lunar economy — contratos NASA CLPS y comms lunar"
+
+- ticker: PL
+  nombre: "Planet Labs"
+  sector: "Espacio"
+  driver_macro: "Earth observation data — revenue recurrente gov + defensa"

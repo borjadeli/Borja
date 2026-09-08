@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Sizing · caps{% endblock %}
+{% block heading %}Sizing determinista · el techo de cada nombre{% endblock %}
+
+{% block content %}
+<div class="space-y-6" style="font-variant-numeric: tabular-nums;">
+
+  <!-- meta -->
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+    <span>{{ rows|length }} nombres · bucket growth / BURDEN</span>
+    <span class="text-slate-300">·</span>
+    <span>política <span class="font-semibold text-navy-900">{{ politica or '—' }}</span></span>
+    <span class="text-slate-300">·</span>
+    <span>techo ∈ [{{ (cap_floor*100)|round|int }} %, {{ (cap_max*100)|round|int }} %] · cluster ≤ {{ (cluster_cap*100)|round|int }} %</span>
+    <span class="text-slate-300">·</span>
+    <span>generado {{ (generado or '—')[:19].replace('T', ' ') }} UTC</span>
+    <span class="text-slate-300">·</span>
+    <span class="text-slate-400">precomputado — <code>python -m ops.generar_sizing</code></span>
+  </div>
+
+  <!-- tesis -->
+  <div class="bb-card px-5 py-4 border-l-4 border-emerald-600">
+    <p class="text-sm text-navy-900 leading-relaxed max-w-3xl">
+      El motor <span class="font-semibold">no selecciona la cartera</span>: convierte lo que la empresa
+      <span class="italic">ya demostró</span> en un <span class="font-semibold text-emerald-700">techo</span> de posición.
+      El PM elige el tamaño real <span class="font-semibold">dentro</span> de ese techo — ahí vive la tesis de que
+      crece más de lo demostrado. Un nombre elegible nunca baja del piso ({{ (cap_floor*100)|round|int }} %):
+      eso le prohibiría al PM su tesis. El determinismo limita; el juicio apuesta.
+    </p>
+  </div>
+
+  <!-- método en 3 pasos -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bb-card px-5 py-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Paso 1 · Hechos</div>
+      <h3 class="font-serif text-base font-semibold text-navy-900 mt-1 mb-1.5">Lo demostrado</h3>
+      <p class="text-[13px] text-slate-600 leading-snug">Números fechados de los filings: crecimiento del gross
+        profit, márgenes, apalancamiento operativo, dilución por acción. Sin promesa ni proyección de hype.</p>
+    </div>
+    <div class="bb-card px-5 py-4 ring-1 ring-emerald-500/40">
+      <div class="text-[10px] uppercase tracking-widest text-emerald-600 font-semibold">Paso 2 · Motor determinista</div>
+      <h3 class="font-serif text-base font-semibold text-emerald-700 mt-1 mb-1.5">El techo (cap)</h3>
+      <p class="text-[13px] text-slate-600 leading-snug">Cuatro factores no-compensatorios fijan el techo:
+        <span class="font-mono text-[12px] text-navy-900">T</span> (años que exige el precio),
+        <span class="font-mono text-[12px] text-navy-900">GM</span>,
+        <span class="font-mono text-[12px] text-navy-900">apal</span> (lag 3T),
+        <span class="font-mono text-[12px] text-navy-900">GP/acc</span> (acretividad).</p>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Paso 3 · Juicio</div>
+      <h3 class="font-serif text-base font-semibold text-navy-900 mt-1 mb-1.5">El PM elige</h3>
+      <p class="text-[13px] text-slate-600 leading-snug">Selecciona y fija el tamaño real dentro del techo. La
+        tesis de aceleración vive acá — con su ledger de aciertos, no en la mecánica.</p>
+    </div>
+  </div>
+
+  {% macro dest_pill(d) %}
+    {% if d == 'carril' %}<span class="inline-block text-[10px] font-semibold uppercase tracking-wide bg-violet-100 text-violet-700 rounded px-2 py-0.5">carril · opción</span>
+    {% else %}<span class="inline-block text-[10px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 rounded px-2 py-0.5">libro duro</span>{% endif %}
+  {% endmacro %}
+
+  {% macro fac(v) %}{% if v is none %}<span class="text-slate-300">—</span>{% else %}{{ '%.2f'|format(v) }}{% endif %}{% endmacro %}
+
+  <!-- LEDGER -->
+  <div class="bb-card">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-baseline gap-3 flex-wrap">
+      <h2 class="font-serif text-base font-semibold text-navy-900">Ledger · por qué cada nombre recibe su techo</h2>
+      <span class="text-[11px] text-slate-500">ordenado por techo · el barato tiene más techo; el pre-profit de pura opción sale al carril</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[860px]">
+        <thead>
+          <tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
+            <th class="text-left font-semibold px-5 py-2">Ticker</th>
+            <th class="text-left font-semibold py-2">Destino</th>
+            <th class="text-right font-semibold py-2">Revenue</th>
+            <th class="text-right font-semibold py-2" title="múltiplo del gross profit actual que el precio ya descuenta">Burden</th>
+            <th class="text-right font-semibold py-2" title="crecimiento del gross profit DEMOSTRADO (con penalizaciones)">Crece</th>
+            <th class="text-right font-semibold py-2" title="años de compounding al ritmo demostrado (con fade) que el precio exige">Años exige</th>
+            <th class="text-right font-semibold py-2 pl-4 border-l border-slate-100" title="factor de valuación por T">f·val</th>
+            <th class="text-right font-semibold py-2" title="calidad de margen bruto">GM</th>
+            <th class="text-right font-semibold py-2" title="apalancamiento operativo (lag 3T)">apal</th>
+            <th class="text-right font-semibold py-2" title="acretividad: ΔGP por acción">GP/acc</th>
+            <th class="text-left font-semibold py-2 pl-4 border-l border-slate-100">Mérito</th>
+            <th class="text-right font-semibold py-2 pr-5">Techo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr class="border-b border-slate-50 hover:bg-slate-50/60">
+            <td class="px-5 py-3">
+              <span class="inline-flex items-center gap-2">
+                <span class="w-1 h-5 rounded {% if r.dest == 'carril' %}bg-violet-500{% elif r.merito and r.merito > 0.02 %}bg-emerald-600{% else %}bg-emerald-300{% endif %}"></span>
+                <span class="font-mono font-semibold text-navy-900">{{ r.t }}</span>
+              </span>
+            </td>
+            <td class="py-3">{{ dest_pill(r.dest) }}</td>
+            <td class="text-right py-3 font-mono text-slate-600">{% if r.rev_m %}${{ '{:,}'.format(r.rev_m) }}M{% else %}<span class="text-slate-300">—</span>{% endif %}</td>
+            <td class="text-right py-3 font-mono text-navy-900">{{ r.burden }}×</td>
+            <td class="text-right py-3 font-mono">{% if r.g is not none %}{{ (r.g*100)|round|int }} %{% else %}<span class="text-slate-300">n/d</span>{% endif %}</td>
+            <td class="text-right py-3 font-mono {% if r.T and r.T > cap_max*150 %}text-slate-400{% else %}text-navy-900{% endif %}">
+              {% if r.T is not none %}{{ r.T|round|int }} a{% else %}<span class="text-slate-400">&gt;30</span>{% endif %}
+            </td>
+            <td class="text-right py-3 font-mono text-slate-500 pl-4 border-l border-slate-50">{{ fac(r.f_val) }}</td>
+            <td class="text-right py-3 font-mono text-slate-500">{{ fac(r.q_gm) }}</td>
+            <td class="text-right py-3 font-mono text-slate-500">{{ fac(r.q_apal) }}</td>
+            <td class="text-right py-3 font-mono text-slate-500">{{ fac(r.q_ps) }}</td>
+            <td class="py-3 pl-4 border-l border-slate-50">
+              {% if r.merito is none %}
+                <span class="text-[11px] text-violet-600 font-mono">— opción</span>
+              {% else %}
+                <span class="inline-flex items-center gap-2">
+                  <span class="relative w-14 h-1.5 rounded bg-slate-100 overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 bg-emerald-600 rounded" style="width: {{ (r.merito*100)|round|int }}%"></span>
+                  </span>
+                  <span class="font-mono text-[12px] text-slate-500 w-8 text-right">{{ '%.2f'|format(r.merito) }}</span>
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-right py-3 pr-5">
+              {% if r.dest == 'carril' %}
+                <span class="font-mono text-[13px] text-violet-600">carril</span>
+              {% else %}
+                <span class="font-mono font-bold text-[15px] {% if r.merito and r.merito > 0.02 %}text-emerald-700{% else %}text-slate-500{% endif %}">{{ '%.1f'|format(r.cap*100) }} %</span>
+                {% if not (r.merito and r.merito > 0.02) %}<div class="text-[9px] text-slate-400 uppercase tracking-wide">piso</div>{% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="px-5 py-3 border-t border-slate-100 text-[12px] text-slate-500 leading-relaxed">
+      <span class="font-semibold text-slate-600">Cómo leerlo.</span>
+      El <span class="font-semibold">burden</span> crudo engaña: RKLB pide 42× pero crece rápido — lo que manda es
+      el <span class="font-semibold">tiempo</span> (años que exige). &gt;12 años ⇒ mérito 0 ⇒ techo en el piso.
+      El techo se cruza además con los caps de arquetipo/tier (el menor manda); acá se muestra el del motor de valuación.
+    </div>
+  </div>
+
+  <!-- legend -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bb-card px-5 py-4 border-l-4 border-emerald-600">
+      <h4 class="text-[11px] uppercase tracking-widest text-emerald-700 font-semibold mb-1">Libro duro</h4>
+      <p class="text-[13px] text-slate-600 leading-snug">Genera caja antes de la dilución. Techo 4 % (caro) → 8 % (barato). El PM sizea adentro.</p>
+    </div>
+    <div class="bb-card px-5 py-4 border-l-4 border-violet-500">
+      <h4 class="text-[11px] uppercase tracking-widest text-violet-700 font-semibold mb-1">Carril · opción</h4>
+      <p class="text-[13px] text-slate-600 leading-snug">Pre-profit + pura opción (burden alto). Ahí vive el 10×; se dimensiona por base-rate de hito, aparte.</p>
+    </div>
+    <div class="bb-card px-5 py-4 border-l-4 border-rose-500">
+      <h4 class="text-[11px] uppercase tracking-widest text-rose-700 font-semibold mb-1">Veto · fuera</h4>
+      <p class="text-[13px] text-slate-600 leading-snug">Restatement, going-concern, dilución tóxica. El único “no” duro del determinismo. Sin techo.</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

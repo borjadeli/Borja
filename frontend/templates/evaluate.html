@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+
+{% block heading %}Evaluate · Re-correr Analista on-demand{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-12 gap-6" x-data="evaluateApp()" x-init="init()">
+
+  <!-- Form de filtros -->
+  <div class="col-span-7 bb-card">
+    <div class="bb-card-header">
+      <h3>Configurar evaluación</h3>
+      <span class="text-xs text-slate-500">Cualquier combinación de filtros</span>
+    </div>
+    <div class="px-5 py-4 space-y-4">
+
+      <div>
+        <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1 block">
+          Tickers explícitos
+          <span class="text-slate-400 normal-case tracking-normal text-[11px]">(coma-separados; tickers nuevos se crean en Universo)</span>
+        </label>
+        <input
+          type="text" x-model="form.tickers"
+          placeholder="AAPL,NVDA,TSLA"
+          class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-accent"
+        />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-2 block">Estados</label>
+          <div class="space-y-1.5 max-h-44 overflow-y-auto border border-slate-200 rounded p-2 bg-slate-50">
+            {% for e in estados_disponibles %}
+            <label class="flex items-center gap-2 text-xs">
+              <input type="checkbox" x-model="form.estados" value="{{ e }}" class="rounded">
+              <span>{{ e }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-2 block">Sectores</label>
+          <div class="space-y-1.5 max-h-44 overflow-y-auto border border-slate-200 rounded p-2 bg-slate-50">
+            {% for s in sectores_disponibles %}
+            <label class="flex items-center gap-2 text-xs">
+              <input type="checkbox" x-model="form.sectores" value="{{ s }}" class="rounded">
+              <span class="truncate" title="{{ s }}">{{ s[:34] }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1 block">Score mínimo</label>
+          <input type="number" step="0.1" x-model.number="form.score_min" placeholder="ej: 5.5" class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1 block">Score máximo</label>
+          <input type="number" step="0.1" x-model.number="form.score_max" placeholder="ej: 5.99" class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1 block">Excluir evaluados hace</label>
+          <input type="number" x-model.number="form.excluir_evaluados_hace" placeholder="0 (días)" class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1 block">Cap máximo (opcional)</label>
+        <input type="number" x-model.number="form.max_tickers" placeholder="∞" class="w-32 border border-slate-300 rounded px-3 py-2 text-sm font-mono">
+      </div>
+
+      <div class="flex gap-3 pt-3 border-t border-slate-200">
+        <button @click="estimar()" :disabled="loading"
+                class="bb-btn bb-btn-ghost flex items-center gap-2"
+                :class="loading && 'opacity-50'">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Estimar costo
+        </button>
+        <button @click="ejecutar()" :disabled="loading || !hayFiltros()"
+                class="bb-btn bb-btn-primary flex items-center gap-2"
+                :class="(loading || !hayFiltros()) && 'opacity-50 cursor-not-allowed'">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Ejecutar batch
+        </button>
+        <button @click="reset()" class="bb-btn bb-btn-ghost ml-auto text-slate-400">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estimación -->
+  <div class="col-span-5 bb-card">
+    <div class="bb-card-header">
+      <h3>Preview / Estimación</h3>
+    </div>
+    <div class="px-5 py-4">
+      <template x-if="!estimacion && !taskId">
+        <div class="p-6 text-center text-slate-400 text-sm italic">
+          Configurá filtros y presioná <strong>Estimar costo</strong> para ver la previsualización.
+        </div>
+      </template>
+
+      <template x-if="estimacion && !taskId">
+        <div>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="p-3 bg-slate-50 rounded border border-slate-200">
+              <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Tickers</div>
+              <div class="font-serif text-2xl font-bold text-navy-900" x-text="estimacion.tickers_count"></div>
+            </div>
+            <div class="p-3 bg-slate-50 rounded border border-slate-200">
+              <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Costo estimado</div>
+              <div class="font-serif text-2xl font-bold text-navy-900" x-text="'$' + estimacion.costo_estimado_usd"></div>
+              <div class="text-[10px] text-slate-400 mt-1" x-text="'~' + estimacion.tiempo_estimado_min + ' min'"></div>
+            </div>
+          </div>
+          <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Lista</div>
+          <div class="text-xs font-mono bg-slate-50 border border-slate-200 rounded p-3 max-h-44 overflow-y-auto break-words" x-text="estimacion.tickers.join(', ')"></div>
+        </div>
+      </template>
+
+      <template x-if="taskId">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-2 h-2 rounded-full" :class="taskEstado === 'completado' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'"></div>
+            <span class="text-xs uppercase tracking-widest font-semibold" x-text="taskEstado"></span>
+            <span class="text-xs text-slate-500 ml-auto" x-text="taskProgreso"></span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded p-3">
+            <div class="h-2 bg-slate-200 rounded overflow-hidden mb-3">
+              <div class="h-full bg-emerald-500 transition-all" :style="`width: ${pctProgreso}%`"></div>
+            </div>
+            <div class="text-xs">
+              <span class="text-slate-500">Task ID:</span>
+              <code class="font-mono text-[11px]" x-text="taskId"></code>
+            </div>
+          </div>
+
+          <template x-if="candidatos.length > 0">
+            <div class="mt-4">
+              <div class="text-[11px] text-emerald-600 uppercase tracking-widest font-semibold mb-2">⭐ Candidatos a Portfolio</div>
+              <table class="w-full text-xs">
+                <thead class="bg-emerald-50">
+                  <tr>
+                    <th class="text-left p-2 uppercase tracking-widest text-[9px]">Ticker</th>
+                    <th class="text-right p-2 uppercase tracking-widest text-[9px]">Score</th>
+                    <th class="text-right p-2 uppercase tracking-widest text-[9px]">Asim</th>
+                    <th class="text-left p-2 uppercase tracking-widest text-[9px]">Rec</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="c in candidatos" :key="c.ticker">
+                    <tr class="border-t border-slate-100">
+                      <td class="p-2 font-mono font-bold text-emerald-700" x-text="c.ticker"></td>
+                      <td class="p-2 text-right font-mono" x-text="c.score"></td>
+                      <td class="p-2 text-right font-mono" x-text="c.asimetria !== null ? c.asimetria + 'x' : '—'"></td>
+                      <td class="p-2 text-slate-600" x-text="c.rec"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- Tabla completa de resultados con veredicto + motivo + detalle expandible -->
+  <div class="col-span-12 bb-card" x-show="resultados.length > 0">
+    <div class="bb-card-header">
+      <h3>Resultados — Veredicto y análisis detallado</h3>
+      <span class="text-xs text-slate-500" x-text="`${resultados.length} evaluados · click ▶ para detalle completo`"></span>
+    </div>
+    <table class="bb-table">
+      <thead><tr>
+        <th class="w-8"></th>
+        <th>Ticker</th><th>Sector</th>
+        <th class="text-right">Score</th>
+        <th class="text-right">Δ</th>
+        <th class="text-right">Asim</th>
+        <th>Veredicto</th>
+        <th>Motivo</th>
+      </tr></thead>
+      <template x-for="r in resultados" :key="r.ticker">
+        <tbody>
+          <tr class="cursor-pointer hover:bg-slate-50" @click="toggleRow(r.ticker)">
+              <td class="text-center">
+                <span class="inline-block transition-transform text-slate-400" :class="expanded[r.ticker] ? 'rotate-90' : ''">▶</span>
+              </td>
+              <td class="font-mono font-bold text-navy-900" x-text="r.ticker"></td>
+              <td class="text-xs text-slate-500" x-text="(r.sector || '—').slice(0, 32)"></td>
+              <td class="text-right font-mono font-semibold" x-text="r.score_nuevo !== null ? r.score_nuevo : '—'"></td>
+              <td class="text-right font-mono text-xs"
+                  :class="(r.score_nuevo - r.score_antes) > 0 ? 'text-emerald-600' : (r.score_nuevo - r.score_antes) < 0 ? 'text-rose-600' : 'text-slate-400'"
+                  x-text="r.score_antes !== null && r.score_nuevo !== null ? ((r.score_nuevo - r.score_antes) >= 0 ? '+' : '') + (r.score_nuevo - r.score_antes).toFixed(2) : '—'">
+              </td>
+              <td class="text-right font-mono"
+                  :class="(r.asimetria || 0) >= 2 ? 'text-emerald-600 font-semibold' : (r.asimetria || 0) > 0 ? 'text-amber-600' : 'text-slate-400'"
+                  x-text="r.asimetria !== null ? r.asimetria + 'x' : '—'">
+              </td>
+              <td>
+                <template x-if="r.veredicto === 'ENTRA'">
+                  <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">⭐ ENTRA</span>
+                </template>
+                <template x-if="r.veredicto === 'BLOQUEADO'">
+                  <span class="badge bg-amber-50 text-amber-700 border-amber-400">BLOQUEADO</span>
+                </template>
+                <template x-if="r.veredicto === 'SCORE_BAJO'">
+                  <span class="badge bg-slate-100 text-slate-700 border-slate-300">SCORE BAJO</span>
+                </template>
+              </td>
+              <td class="text-xs text-slate-600 max-w-md">
+                <span x-text="r.motivo || '—'" :title="r.motivo"></span>
+              </td>
+            </tr>
+            <tr x-show="expanded[r.ticker]" x-cloak>
+              <td colspan="8" class="bg-slate-50 border-t-2 border-slate-200 p-0">
+                <div class="px-6 py-5" x-data>
+                  <template x-if="r.analisis_detalle">
+                    <div class="space-y-5">
+
+                      <!-- Filtros BORJA — checklist de las 10 reglas -->
+                      <div x-show="(r.analisis_detalle.filtros_borja || []).length > 0">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-2">
+                          Filtros BORJA — checklist de reglas
+                          <span class="ml-2 text-emerald-600 font-bold" x-text="`✓ ${(r.analisis_detalle.filtros_borja || []).filter(f => f.ok).length}`"></span>
+                          <span class="text-slate-400">/</span>
+                          <span class="text-rose-600 font-bold" x-text="`✗ ${(r.analisis_detalle.filtros_borja || []).filter(f => !f.ok).length}`"></span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <template x-for="f in r.analisis_detalle.filtros_borja" :key="f.n">
+                            <div class="flex items-start gap-2 bg-white border rounded p-2.5"
+                                 :class="f.ok ? 'border-emerald-200' : 'border-rose-300'">
+                              <div class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5"
+                                   :class="f.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+                                <span x-text="f.ok ? '✓' : '✗'"></span>
+                              </div>
+                              <div class="flex-1 min-w-0">
+                                <div class="text-xs font-semibold text-navy-900" x-text="`${f.n}. ${f.regla}`"></div>
+                                <div class="text-[10px] text-slate-500 leading-snug mt-0.5">
+                                  <span class="font-mono" x-text="f.umbral"></span>
+                                </div>
+                                <div class="text-[11px] mt-0.5" :class="f.ok ? 'text-emerald-700' : 'text-rose-700'">
+                                  <span class="font-mono font-semibold" x-text="f.valor"></span>
+                                </div>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+
+                      <!-- Tesis vigente -->
+                      <div>
+                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Tesis vigente</div>
+                        <p class="text-sm text-slate-700 leading-relaxed font-serif" x-text="r.analisis_detalle.tesis_vigente || 'sin tesis'"></p>
+                      </div>
+
+                      <!-- Meta -->
+                      <div class="grid grid-cols-4 gap-3 text-xs">
+                        <div class="bg-white border border-slate-200 rounded p-2">
+                          <div class="text-[9px] uppercase text-slate-500 mb-0.5">Nivel R</div>
+                          <div class="font-mono font-bold text-navy-900" x-text="r.analisis_detalle.nivel_r || '—'"></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-2">
+                          <div class="text-[9px] uppercase text-slate-500 mb-0.5">Posición ciclo</div>
+                          <div class="font-mono text-slate-700" x-text="r.analisis_detalle.posicion_ciclo || '—'"></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-2">
+                          <div class="text-[9px] uppercase text-slate-500 mb-0.5">Duración edge</div>
+                          <div class="font-mono text-slate-700 text-[11px]" x-text="r.analisis_detalle.duracion_edge || '—'"></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-2">
+                          <div class="text-[9px] uppercase text-slate-500 mb-0.5">Liquidez</div>
+                          <div class="font-mono" :class="r.analisis_detalle.liquidez_suficiente ? 'text-emerald-600' : 'text-rose-600'" x-text="r.analisis_detalle.liquidez_suficiente ? '✓ suficiente' : '✗ insuficiente'"></div>
+                        </div>
+                      </div>
+
+                      <!-- Bull / Bear / Crecimiento -->
+                      <div class="grid grid-cols-4 gap-3">
+                        <div class="bg-emerald-50 border border-emerald-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-emerald-700 font-semibold mb-1">Bull case</div>
+                          <div class="font-mono font-bold text-emerald-700 text-lg" x-text="r.analisis_detalle.bull_case_precio !== null ? '$' + r.analisis_detalle.bull_case_precio : '—'"></div>
+                        </div>
+                        <div class="bg-rose-50 border border-rose-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-rose-700 font-semibold mb-1">Bear case</div>
+                          <div class="font-mono font-bold text-rose-700 text-lg" x-text="r.analisis_detalle.bear_case_precio !== null ? '$' + r.analisis_detalle.bear_case_precio : '—'"></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Crecimiento estimado</div>
+                          <div class="font-mono font-bold text-slate-700 text-lg" x-text="r.analisis_detalle.estimacion_crecimiento !== null ? r.analisis_detalle.estimacion_crecimiento + '%' : '—'"></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Implícito en precio</div>
+                          <div class="font-mono font-bold text-slate-700 text-lg" x-text="r.analisis_detalle.crecimiento_implicito_precio !== null ? r.analisis_detalle.crecimiento_implicito_precio + '%' : '—'"></div>
+                        </div>
+                      </div>
+
+                      <!-- 10 criterios con confidence + fuente -->
+                      <div>
+                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-2">10 criterios — Score / Confidence / Fuente</div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <template x-for="c in r.analisis_detalle.criterios" :key="c.n">
+                            <div class="bg-white border rounded p-2.5"
+                                 :class="c.es_central ? 'border-navy-700 border-l-4' : 'border-slate-200'">
+                              <div class="flex items-baseline justify-between gap-2 mb-1">
+                                <span class="font-mono font-bold text-xs text-navy-900">
+                                  <span x-text="'#' + c.n"></span>
+                                  <span class="text-slate-500 font-normal text-[10px]" x-text="c.nombre"></span>
+                                  <span x-show="c.es_central" class="text-[8px] uppercase tracking-widest text-navy-700 font-bold ml-1">central</span>
+                                </span>
+                                <span class="font-mono font-bold text-sm" :class="c.score >= 7 ? 'text-emerald-600' : c.score >= 6 ? 'text-amber-600' : 'text-rose-600'" x-text="c.score !== null ? c.score : '—'"></span>
+                              </div>
+                              <div class="flex items-center gap-2 text-[10px] mb-1.5">
+                                <span class="px-1.5 py-0.5 rounded font-semibold uppercase tracking-widest"
+                                      :class="(c.confidence || '').toLowerCase() === 'alta' ? 'bg-emerald-100 text-emerald-700' : (c.confidence || '').toLowerCase() === 'media' ? 'bg-amber-100 text-amber-700' : (c.confidence || '').toLowerCase() === 'baja' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'"
+                                      x-text="c.confidence || 'N/D'"></span>
+                                <span class="text-slate-500">Fuente <strong class="font-mono" x-text="c.fuente_nivel || '—'"></strong></span>
+                              </div>
+                              <div x-show="c.evidencia_favor" class="text-[11px] text-slate-700 leading-snug mb-1">
+                                <span class="text-emerald-600 font-semibold">+</span>
+                                <span x-text="c.evidencia_favor"></span>
+                              </div>
+                              <div x-show="c.evidencia_contra" class="text-[11px] text-slate-700 leading-snug">
+                                <span class="text-rose-600 font-semibold">−</span>
+                                <span x-text="c.evidencia_contra"></span>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+
+                      <!-- Catalizador -->
+                      <div x-show="r.analisis_detalle.catalizador_descripcion" class="bg-white border border-slate-200 rounded p-3">
+                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">
+                          Catalizador
+                          <span class="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[9px]" x-text="r.analisis_detalle.tipo_catalizador"></span>
+                          <span class="ml-1 text-slate-400" x-text="'· impacto ' + (r.analisis_detalle.catalizador_impacto || 'N/D')"></span>
+                          <span class="ml-1 text-slate-400" x-text="'· fecha ' + (r.analisis_detalle.catalizador_fecha || 'N/D')"></span>
+                        </div>
+                        <div class="text-sm text-slate-700" x-text="r.analisis_detalle.catalizador_descripcion"></div>
+                      </div>
+
+                      <!-- Management -->
+                      <div x-show="r.analisis_detalle.management_track_record" class="grid grid-cols-2 gap-3">
+                        <div class="bg-white border border-slate-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Management — Track record</div>
+                          <div class="text-sm text-slate-700" x-text="r.analisis_detalle.management_track_record"></div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">
+                            Alignment
+                            <span class="ml-2 px-1.5 py-0.5 rounded text-[9px]"
+                                  :class="(r.analisis_detalle.management_alignment || '') === 'alto' ? 'bg-emerald-100 text-emerald-700' : (r.analisis_detalle.management_alignment || '') === 'medio' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'"
+                                  x-text="(r.analisis_detalle.management_alignment || 'N/D').toUpperCase()"></span>
+                          </div>
+                          <div class="text-sm text-slate-700" x-text="r.analisis_detalle.management_alignment_evidencia || '—'"></div>
+                        </div>
+                      </div>
+
+                      <!-- Invalidation triggers + plan salida -->
+                      <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white border border-slate-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Invalidation triggers</div>
+                          <ul class="text-sm text-slate-700 space-y-1.5 list-disc list-inside">
+                            <template x-for="t in (r.analisis_detalle.invalidation_triggers || [])" :key="t">
+                              <li x-text="t"></li>
+                            </template>
+                          </ul>
+                          <div x-show="!(r.analisis_detalle.invalidation_triggers || []).length" class="text-xs text-slate-400 italic">— sin triggers definidos —</div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded p-3">
+                          <div class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Plan de salida</div>
+                          <div class="text-sm text-slate-700" x-text="r.analisis_detalle.plan_salida || '—'"></div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </template>
+                  <template x-if="!r.analisis_detalle">
+                    <div class="text-sm text-slate-400 italic">Detalle no disponible (corrida previa al feature).</div>
+                  </template>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </template>
+    </table>
+  </div>
+
+  <!-- Tasks recientes -->
+  <div class="col-span-12 bb-card">
+    <div class="bb-card-header">
+      <h3>Evaluaciones recientes</h3>
+      <span class="text-xs text-slate-500">{{ tasks_recientes | length }} de las últimas 5</span>
+    </div>
+    {% if tasks_recientes %}
+    <table class="bb-table">
+      <thead><tr>
+        <th>Task ID</th><th>Cuándo</th><th>Tickers</th><th>Selección</th><th>Estado</th><th>Progreso</th>
+        <th class="text-right">Candidatos</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for t in tasks_recientes %}
+        <tr>
+          <td class="font-mono text-xs">{{ t.id }}</td>
+          <td class="text-xs text-slate-500">{{ t.created_at }}</td>
+          <td class="text-xs font-mono font-semibold text-navy-900" title="{{ t.tickers_full }}">{{ t.tickers_lista }}</td>
+          <td class="text-xs text-slate-500">{{ t.ticker_o_sector }}</td>
+          <td>
+            {% if t.estado == 'completado' %}<span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">{{ t.estado }}</span>
+            {% elif t.estado == 'en_progreso' %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">{{ t.estado }}</span>
+            {% else %}<span class="badge bg-slate-100 text-slate-700 border-slate-300">{{ t.estado }}</span>{% endif %}
+          </td>
+          <td class="font-mono text-xs">{{ t.progreso or '—' }}</td>
+          <td class="text-right font-mono font-semibold {% if t.n_candidatos > 0 %}text-emerald-600{% else %}text-slate-400{% endif %}">
+            {{ t.n_candidatos }}
+          </td>
+          <td class="text-right">
+            <button class="bb-btn bb-btn-ghost text-xs" onclick="window.location.href='?task={{ t.id }}'">Ver</button>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-8 text-center text-slate-400 text-sm italic">Sin evaluaciones previas. Ejecutá la primera arriba.</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function evaluateApp() {
+    return {
+        loading: false,
+        estimacion: null,
+        taskId: null,
+        taskEstado: '',
+        taskProgreso: '',
+        pctProgreso: 0,
+        candidatos: [],
+        resultados: [],
+        expanded: {},
+        polling: null,
+        form: {
+            tickers: '',
+            estados: [],
+            sectores: [],
+            score_min: null,
+            score_max: null,
+            excluir_evaluados_hace: 0,
+            max_tickers: null,
+        },
+        init() {
+            // Auto-cargar task si viene ?task=ID en URL
+            const url = new URL(location.href);
+            const tId = url.searchParams.get('task');
+            if (tId) {
+                this.taskId = tId;
+                this.empezarPolling();
+            }
+        },
+        async estimar() {
+            this.loading = true;
+            this.taskId = null;
+            try {
+                const r = await fetch('/api/evaluate/dry-run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form),
+                });
+                this.estimacion = await r.json();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+        toggleRow(ticker) {
+            this.expanded[ticker] = !this.expanded[ticker];
+        },
+        hayFiltros() {
+            return Boolean(
+                (this.form.tickers && this.form.tickers.trim())
+                || (this.form.estados && this.form.estados.length)
+                || (this.form.sectores && this.form.sectores.length)
+                || this.form.score_min != null
+                || this.form.score_max != null
+            );
+        },
+        async ejecutar() {
+            // Si no estimó previamente, hace dry-run primero para mostrar el costo en el confirm
+            this.loading = true;
+            try {
+                if (!this.estimacion) {
+                    const re = await fetch('/api/evaluate/dry-run', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.form),
+                    });
+                    this.estimacion = await re.json();
+                }
+                if (!this.estimacion || this.estimacion.tickers_count === 0) {
+                    alert('Ningún ticker seleccionado con esos filtros.');
+                    return;
+                }
+                if (!confirm(`Ejecutar batch sobre ${this.estimacion.tickers_count} tickers? Costo estimado $${this.estimacion.costo_estimado_usd}.`)) return;
+                const r = await fetch('/api/evaluate/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form),
+                });
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || r.statusText);
+                }
+                const d = await r.json();
+                this.taskId = d.task_id;
+                this.taskEstado = 'en_progreso';
+                this.empezarPolling();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+        empezarPolling() {
+            if (this.polling) clearInterval(this.polling);
+            const tick = async () => {
+                const r = await fetch(`/api/evaluate/${this.taskId}/status`);
+                if (!r.ok) return;
+                const d = await r.json();
+                this.taskEstado = d.estado;
+                this.taskProgreso = d.progreso || '';
+                if (d.progreso) {
+                    const [done, total] = d.progreso.split('/').map(Number);
+                    if (total > 0) this.pctProgreso = Math.round(100 * done / total);
+                }
+                this.candidatos = (d.resultado || {}).candidatos || [];
+                this.resultados = ((d.resultado || {}).completados || []).filter(r => r.ok);
+                if (d.estado === 'completado' || d.estado === 'fallido') {
+                    clearInterval(this.polling);
+                }
+            };
+            tick();
+            this.polling = setInterval(tick, 5000);
+        },
+        reset() {
+            this.form = { tickers: '', estados: [], sectores: [], score_min: null, score_max: null, excluir_evaluados_hace: 0, max_tickers: null };
+            this.estimacion = null;
+            this.taskId = null;
+            if (this.polling) clearInterval(this.polling);
+        }
+    }
+}
+</script>
+{% endblock %}

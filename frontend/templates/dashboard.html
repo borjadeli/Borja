@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+{% from "_macros.html" import estado_badge, momentum_badge, accion_badge, severidad_badge %}
+
+{% block heading %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-12 gap-6">
+
+  <!-- KPI Row -->
+  <div class="col-span-12 grid grid-cols-5 gap-4">
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Equity total</div>
+      <div class="flex items-baseline gap-2 mt-2">
+        <span class="font-serif text-4xl font-bold text-navy-900">${{ '{:,.0f}'.format(equity_total_usd or 0) }}</span>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500">
+        sobre ${{ '{:,.0f}'.format(capital_usd or 0) }} inicial
+      </div>
+    </div>
+
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">P&amp;L total</div>
+      <div class="flex items-baseline gap-2 mt-2">
+        <span class="font-serif text-4xl font-bold {% if (pnl_total_usd or 0) > 0 %}text-emerald-600{% elif (pnl_total_usd or 0) < 0 %}text-rose-600{% else %}text-navy-900{% endif %}">
+          {% if (pnl_total_usd or 0) >= 0 %}+{% endif %}${{ '{:,.0f}'.format(pnl_total_usd or 0) }}
+        </span>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500 leading-tight">
+        <div class="{% if (pnl_realizado_usd or 0) > 0 %}text-emerald-600{% elif (pnl_realizado_usd or 0) < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+          Realizado: {% if (pnl_realizado_usd or 0) >= 0 %}+{% endif %}${{ '{:,.0f}'.format(pnl_realizado_usd or 0) }}
+          <span class="text-slate-400">({{ n_trades_cerrados or 0 }} cerrados)</span>
+        </div>
+        <div class="{% if (pnl_abierto_usd or 0) > 0 %}text-emerald-600{% elif (pnl_abierto_usd or 0) < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+          Abierto: {% if (pnl_abierto_usd or 0) >= 0 %}+{% endif %}${{ '{:,.0f}'.format(pnl_abierto_usd or 0) }}
+          <span class="text-slate-400">({{ n_trades_abiertos or 0 }} vivos)</span>
+        </div>
+        <div class="text-slate-500">
+          {% if (pnl_total_pct or 0) >= 0 %}+{% endif %}{{ '%.2f' % (pnl_total_pct or 0) }}% sobre capital · día {% if (pnl_dia_usd or 0) >= 0 %}+{% endif %}${{ '{:,.0f}'.format(pnl_dia_usd or 0) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Portfolio activo</div>
+      <div class="flex items-baseline gap-2 mt-2">
+        <span class="font-serif text-4xl font-bold text-navy-900">{{ n_portfolio }}</span>
+        <span class="text-slate-400 text-sm">/ 10</span>
+      </div>
+      <div class="mt-2 h-1.5 bg-slate-200 rounded overflow-hidden">
+        <div class="h-full bg-emerald-500" style="width: {{ (n_portfolio / 10 * 100) | round(0, 'floor') }}%"></div>
+      </div>
+      {% if capital_usd %}<div class="mt-2 text-[11px] text-slate-500">Max 3 por sector · 3 por driver</div>{% endif %}
+    </div>
+
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Exposición</div>
+      <div class="flex items-baseline gap-2 mt-2">
+        {% if capital_usd %}
+          <span class="font-serif text-4xl font-bold {% if exposicion < 80 %}text-amber-600{% else %}text-navy-900{% endif %}">${{ '{:,.0f}'.format(exposicion_usd) }}</span>
+        {% else %}
+          <span class="font-serif text-4xl font-bold {% if exposicion < 80 %}text-amber-600{% else %}text-navy-900{% endif %}">{{ exposicion }}</span>
+          <span class="text-slate-400 text-sm">%</span>
+        {% endif %}
+      </div>
+      <div class="mt-2 text-[11px] {% if exposicion < 80 %}text-amber-700 font-semibold{% else %}text-slate-500{% endif %}">
+        {% if capital_usd %}
+          {{ exposicion }}% deployado · Cash ${{ '{:,.0f}'.format(cash_usd) }}{% if exposicion < 80 %} · bajo piso 80%{% endif %}
+        {% else %}
+          Cash: {{ (100 - exposicion) | round(1) }}%{% if exposicion < 80 %} · bajo piso 80%{% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Pendientes</div>
+      <div class="flex items-baseline gap-2 mt-2">
+        <span class="font-serif text-4xl font-bold text-navy-900">{{ recomendaciones | length }}</span>
+        <span class="text-slate-400 text-sm">recs</span>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500">{{ eventos_pendientes }} eventos · {{ alertas_risk | length }} alertas · {{ n_bucket }} bucket</div>
+    </div>
+  </div>
+
+  <!-- Equity curve BORJA vs SPY -->
+  <div class="col-span-12 bb-card">
+    <div class="bb-card-header">
+      <h3>Performance — BORJA vs SPY</h3>
+      <span class="text-xs text-slate-500">Curva diaria desde inception · benchmark normalizado al capital base</span>
+    </div>
+    <div class="px-5 py-3">
+      <div id="equity-chart" style="width:100%;height:480px"></div>
+      <div id="equity-chart-empty" class="hidden p-12 text-center text-slate-400 text-sm italic">
+        Sin datos de equity curve aún. Correr POST /api/equity-curve/backfill.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (async function() {
+        const el = document.getElementById('equity-chart');
+        const elEmpty = document.getElementById('equity-chart-empty');
+        try {
+            const r = await fetch('/api/equity-curve-vs-spy');
+            const d = await r.json();
+            if (!d.fechas || d.fechas.length === 0) {
+                el.classList.add('hidden');
+                elEmpty.classList.remove('hidden');
+                return;
+            }
+            const chart = echarts.init(el, null, { renderer: 'svg' });
+            const capital = d.capital_total_usd || 100000;
+            const ultimo = d.fechas.length - 1;
+            const borjaUltimo = d.borja_equity[ultimo];
+            const spyUltimo = d.spy_equity[ultimo];
+            const alphaUltimo = d.alpha_pct[ultimo];
+
+            // Calcular min/max para auto-zoom del eje principal — clave para que se vea
+            // la diferencia entre BORJA y SPY (sin esto la escala $0-$120K aplasta todo)
+            const allValues = [...d.borja_equity, ...d.spy_equity, capital];
+            const minVal = Math.min(...allValues);
+            const maxVal = Math.max(...allValues);
+            const padding = (maxVal - minVal) * 0.20 || maxVal * 0.005;
+            const yMin = Math.floor((minVal - padding) / 100) * 100;
+            const yMax = Math.ceil((maxVal + padding) / 100) * 100;
+
+            chart.setOption({
+                color: ['#1e3a8a', '#d97706', '#be123c'],
+                textStyle: { fontFamily: 'Inter, system-ui, sans-serif' },
+                axisPointer: { link: [{ xAxisIndex: 'all' }] },
+                grid: [
+                    { left: 80, right: 80, top: 64, height: '52%', containLabel: false },
+                    { left: 80, right: 80, top: '74%', height: '20%', containLabel: false }
+                ],
+                graphic: [
+                    {
+                        type: 'text', left: 80, top: 32,
+                        style: { text: 'Equity (USD) — eje auto-zoom para mostrar la diferencia', fill: '#64748b', fontSize: 10, fontWeight: 600, fontFamily: 'Inter,sans-serif' }
+                    },
+                    {
+                        type: 'text', left: 80, top: '72.5%',
+                        style: { text: 'Drawdown — caída desde el peak histórico (riesgo certero)', fill: '#be123c', fontSize: 10, fontWeight: 600, fontFamily: 'Inter,sans-serif' }
+                    }
+                ],
+                legend: {
+                    top: 8, right: 16, icon: 'roundRect',
+                    textStyle: { fontSize: 11, color: '#475569', fontWeight: 600 },
+                    itemWidth: 14, itemHeight: 8, itemGap: 18,
+                    data: ['BORJA', 'SPY (benchmark)', 'Drawdown BORJA', 'Drawdown SPY'],
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(15,23,42,0.96)',
+                    borderColor: '#0f172a',
+                    borderWidth: 0,
+                    padding: 12,
+                    textStyle: { color: '#fff', fontSize: 12 },
+                    axisPointer: {
+                        type: 'cross',
+                        lineStyle: { color: '#94a3b8', type: 'dashed' },
+                        crossStyle: { color: '#94a3b8' },
+                        label: { backgroundColor: '#0f172a' }
+                    },
+                    formatter: function(params) {
+                        const fecha = params[0].axisValueLabel;
+                        const idx = params[0].dataIndex;
+                        const b = d.borja_equity[idx];
+                        const s = d.spy_equity[idx];
+                        const bp = d.borja_pct[idx];
+                        const sp = d.spy_pct[idx];
+                        const a = d.alpha_pct[idx];
+                        const bdd = d.borja_drawdown_pct[idx];
+                        const sdd = d.spy_drawdown_pct[idx];
+                        const colorB = bp >= 0 ? '#10b981' : '#f43f5e';
+                        const colorS = sp >= 0 ? '#10b981' : '#f43f5e';
+                        const colorA = a >= 0 ? '#10b981' : '#f43f5e';
+                        return `
+                            <div style="font-family:'IBM Plex Serif',Georgia,serif;font-size:13px;font-weight:600;margin-bottom:6px;letter-spacing:0.5px">${fecha}</div>
+                            <div style="border-top:1px solid #475569;padding-top:8px;margin-top:4px">
+                                <div style="margin:4px 0">
+                                    <span style="display:inline-block;width:10px;height:10px;background:#1e3a8a;border-radius:2px;margin-right:6px"></span>
+                                    <span style="color:#cbd5e1">BORJA</span>
+                                    <span style="float:right;font-family:'JetBrains Mono',monospace;font-weight:600">$${b.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
+                                </div>
+                                <div style="font-size:10px;color:${colorB};text-align:right;margin-top:-2px">${bp >= 0 ? '+' : ''}${bp.toFixed(2)}%</div>
+                                <div style="margin:8px 0 4px 0">
+                                    <span style="display:inline-block;width:10px;height:10px;background:#d97706;border-radius:2px;margin-right:6px"></span>
+                                    <span style="color:#cbd5e1">SPY <span style="color:#94a3b8;font-size:9px">(benchmark)</span></span>
+                                    <span style="float:right;font-family:'JetBrains Mono',monospace;font-weight:600">$${s.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
+                                </div>
+                                <div style="font-size:10px;color:${colorS};text-align:right;margin-top:-2px">${sp >= 0 ? '+' : ''}${sp.toFixed(2)}%</div>
+                                <div style="border-top:1px solid #334155;margin-top:8px;padding-top:6px;font-size:11px">
+                                    <span style="color:#cbd5e1">Alpha</span>
+                                    <span style="float:right;font-family:'JetBrains Mono',monospace;font-weight:700;color:${colorA}">${a >= 0 ? '+' : ''}${a.toFixed(2)}%</span>
+                                </div>
+                                <div style="border-top:1px solid #334155;margin-top:6px;padding-top:6px;font-size:11px">
+                                    <div><span style="color:#cbd5e1">Drawdown BORJA</span><span style="float:right;font-family:'JetBrains Mono',monospace;font-weight:600;color:#f43f5e">${bdd.toFixed(2)}%</span></div>
+                                    <div style="margin-top:3px"><span style="color:#94a3b8">Drawdown SPY</span><span style="float:right;font-family:'JetBrains Mono',monospace;font-weight:500;color:#94a3b8">${sdd.toFixed(2)}%</span></div>
+                                </div>
+                            </div>`;
+                    }
+                },
+                xAxis: [
+                    {
+                        type: 'category', gridIndex: 0,
+                        data: d.fechas, boundaryGap: false,
+                        axisLine: { lineStyle: { color: '#cbd5e1' } },
+                        axisTick: { show: false },
+                        axisLabel: { show: false }
+                    },
+                    {
+                        type: 'category', gridIndex: 1,
+                        data: d.fechas, boundaryGap: false,
+                        axisLine: { lineStyle: { color: '#cbd5e1' } },
+                        axisTick: { show: false },
+                        axisLabel: { color: '#64748b', fontSize: 10, formatter: v => v.slice(5) }
+                    }
+                ],
+                yAxis: [
+                    {
+                        // Eje USD con auto-zoom: arranca cerca del min, no en cero.
+                        // Esto hace visible la diferencia BORJA vs SPY que con escala 0-120K era imperceptible.
+                        type: 'value', position: 'left', gridIndex: 0,
+                        min: yMin, max: yMax, scale: true,
+                        axisLine: { show: false }, axisTick: { show: false },
+                        splitLine: { lineStyle: { color: '#e2e8f0', type: 'dashed' } },
+                        axisLabel: {
+                            color: '#64748b', fontSize: 10,
+                            formatter: v => '$' + v.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                        }
+                    },
+                    {
+                        // Eje % derecha: muestra el retorno acumulado equivalente al USD del eje izquierdo.
+                        type: 'value', position: 'right', gridIndex: 0,
+                        min: ((yMin - capital) / capital) * 100,
+                        max: ((yMax - capital) / capital) * 100,
+                        axisLine: { show: false }, axisTick: { show: false },
+                        splitLine: { show: false },
+                        axisLabel: {
+                            color: '#64748b', fontSize: 10,
+                            formatter: v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%'
+                        }
+                    },
+                    {
+                        type: 'value', position: 'left', gridIndex: 1,
+                        max: 0.05, scale: true,
+                        axisLine: { show: false }, axisTick: { show: false },
+                        splitLine: { lineStyle: { color: '#fee2e2', type: 'dashed' } },
+                        axisLabel: { color: '#be123c', fontSize: 10, formatter: v => v.toFixed(2) + '%' }
+                    }
+                ],
+                series: [
+                    {
+                        name: 'BORJA', type: 'line', smooth: 0.4,
+                        xAxisIndex: 0, yAxisIndex: 0,
+                        data: d.borja_equity, symbol: 'circle', symbolSize: 6,
+                        lineStyle: { width: 3, color: '#1e3a8a' },
+                        itemStyle: { color: '#1e3a8a', borderColor: '#fff', borderWidth: 2 },
+                        emphasis: { focus: 'series', lineStyle: { width: 4 } },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(30,58,138,0.30)' },
+                                { offset: 1, color: 'rgba(30,58,138,0.02)' }
+                            ])
+                        },
+                        markLine: {
+                            silent: true, symbol: 'none',
+                            data: [{
+                                yAxis: capital,
+                                lineStyle: { color: '#64748b', type: 'dashed', width: 1.2 },
+                                label: { formatter: 'Capital base — $' + capital.toLocaleString('en-US'), color: '#475569', fontSize: 10, fontWeight: 600, position: 'insideEndTop', backgroundColor: 'rgba(255,255,255,0.85)', padding: [2, 6] }
+                            }]
+                        }
+                    },
+                    {
+                        // SPY como benchmark: línea sólida amber/dorado (NO dashed gris) para destacarse del grid
+                        name: 'SPY (benchmark)', type: 'line', smooth: 0.4,
+                        xAxisIndex: 0, yAxisIndex: 0,
+                        data: d.spy_equity, symbol: 'circle', symbolSize: 5,
+                        lineStyle: { width: 2.2, color: '#d97706' },
+                        itemStyle: { color: '#d97706', borderColor: '#fff', borderWidth: 1.5 },
+                        emphasis: { focus: 'series', lineStyle: { width: 3 } }
+                    },
+                    {
+                        name: 'Drawdown BORJA', type: 'line', smooth: 0.3,
+                        xAxisIndex: 1, yAxisIndex: 2,
+                        data: d.borja_drawdown_pct, symbol: 'none',
+                        lineStyle: { width: 2, color: '#be123c' },
+                        emphasis: { focus: 'series' },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(190,18,60,0.05)' },
+                                { offset: 1, color: 'rgba(190,18,60,0.30)' }
+                            ])
+                        }
+                    },
+                    {
+                        name: 'Drawdown SPY', type: 'line', smooth: 0.3,
+                        xAxisIndex: 1, yAxisIndex: 2,
+                        data: d.spy_drawdown_pct, symbol: 'none',
+                        lineStyle: { width: 1.5, color: '#fb7185', type: 'dashed' },
+                        emphasis: { focus: 'series' }
+                    }
+                ]
+            });
+
+            // Mini-leyenda explicativa
+            const legendEl = document.createElement('div');
+            legendEl.className = 'px-5 py-2 text-[11px] text-slate-500 italic border-t border-slate-100';
+            legendEl.innerHTML = `
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span><span class="inline-block w-3 h-1 align-middle" style="background:#1e3a8a"></span> BORJA equity</span>
+                    <span><span class="inline-block w-3 h-1 align-middle" style="background:#d97706"></span> SPY benchmark</span>
+                    <span class="text-slate-400">·</span>
+                    <span><span class="inline-block w-3 h-1 align-middle" style="background:#be123c"></span> Drawdown BORJA (sólida)</span>
+                    <span><span class="inline-block w-3 align-middle" style="border-top:1.5px dashed #fb7185"></span> Drawdown SPY (dashed)</span>
+                    <span class="text-slate-400 ml-auto">El drawdown es la <strong>caída desde el peak histórico</strong>. -0.5% significa que en ese día estabas 0.5% abajo del máximo previo.</span>
+                </div>
+            `;
+            el.parentElement.appendChild(legendEl);
+
+            // Stats footer (equity + alpha + drawdown)
+            const statsEl = document.createElement('div');
+            statsEl.className = 'grid grid-cols-5 gap-3 px-5 pb-4 pt-3 text-xs border-t border-slate-200 mt-2';
+            const alphaColor = alphaUltimo >= 0 ? 'text-emerald-600' : 'text-rose-600';
+            const ddBorja = d.borja_drawdown_actual_pct;
+            const maxDDBorja = d.borja_max_drawdown_pct;
+            const maxDDSpy = d.spy_max_drawdown_pct;
+            const ddBorjaColor = ddBorja < 0 ? 'text-rose-600' : 'text-slate-700';
+            statsEl.innerHTML = `
+                <div>
+                    <div class="uppercase tracking-widest text-slate-500 font-semibold text-[10px] mb-1">BORJA</div>
+                    <div class="font-mono font-bold text-navy-900">$${borjaUltimo.toLocaleString('en-US',{maximumFractionDigits:0})}</div>
+                    <div class="${d.borja_pct[ultimo] >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-semibold text-[11px]">${d.borja_pct[ultimo] >= 0 ? '+' : ''}${d.borja_pct[ultimo].toFixed(2)}%</div>
+                </div>
+                <div>
+                    <div class="uppercase tracking-widest text-slate-500 font-semibold text-[10px] mb-1">SPY</div>
+                    <div class="font-mono font-bold text-slate-700">$${spyUltimo.toLocaleString('en-US',{maximumFractionDigits:0})}</div>
+                    <div class="${d.spy_pct[ultimo] >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-semibold text-[11px]">${d.spy_pct[ultimo] >= 0 ? '+' : ''}${d.spy_pct[ultimo].toFixed(2)}%</div>
+                </div>
+                <div>
+                    <div class="uppercase tracking-widest text-slate-500 font-semibold text-[10px] mb-1">Alpha vs SPY</div>
+                    <div class="font-mono font-bold ${alphaColor}">${alphaUltimo >= 0 ? '+' : ''}${alphaUltimo.toFixed(2)}%</div>
+                    <div class="text-slate-400 text-[10px]">desde inception</div>
+                </div>
+                <div>
+                    <div class="uppercase tracking-widest text-slate-500 font-semibold text-[10px] mb-1">Drawdown actual</div>
+                    <div class="font-mono font-bold ${ddBorjaColor}" title="Caída desde el peak histórico (riesgo)">${ddBorja.toFixed(2)}%</div>
+                    <div class="text-slate-400 text-[10px]">desde peak BORJA</div>
+                </div>
+                <div>
+                    <div class="uppercase tracking-widest text-slate-500 font-semibold text-[10px] mb-1">Max Drawdown</div>
+                    <div class="font-mono font-bold text-rose-600" title="Peor caída desde un peak — métrica certera de riesgo">${maxDDBorja.toFixed(2)}%</div>
+                    <div class="text-slate-400 text-[10px]">SPY ${maxDDSpy.toFixed(2)}%</div>
+                </div>
+            `;
+            el.parentElement.appendChild(statsEl);
+
+            window.addEventListener('resize', () => chart.resize());
+        } catch (e) {
+            console.error('equity-chart error', e);
+            el.classList.add('hidden');
+            elEmpty.classList.remove('hidden');
+            elEmpty.textContent = 'Error cargando equity curve: ' + e.message;
+        }
+    })();
+  </script>
+
+  <!-- Recomendaciones pendientes -->
+  <div class="col-span-12 bb-card">
+    <div class="bb-card-header">
+      <h3>Recomendaciones pendientes de aprobación</h3>
+      <span class="text-xs text-slate-500">{{ recomendaciones | length }} pending</span>
+    </div>
+    {% if recomendaciones %}
+    <table class="bb-table">
+      <thead><tr>
+        <th>Ticker</th><th>Acción</th><th>Sizing</th><th>Asim.</th><th>Momentum</th>
+        <th>Estado</th><th>Justificación</th><th class="text-right">Acciones</th>
+      </tr></thead>
+      <tbody>
+      {% for r in recomendaciones %}
+        <tr {% if r.prioridad_capital == 'alta' %}class="bg-amber-50/40"{% endif %}>
+          <td>
+            <a href="/fichas/{{ r.ticker }}/view" class="font-mono-tight font-bold text-navy-900 hover:text-accent">{{ r.ticker }}</a>
+            {% if r.prioridad_capital == 'alta' %}<span class="ml-1 badge bg-amber-100 text-amber-800 border-amber-400" title="Exposición {{ r.exposicion_pct_al_evaluar }}% &lt; piso 80% — completar cartera">★ ALTA</span>{% endif %}
+          </td>
+          <td>{{ accion_badge(r.accion) }}</td>
+          <td class="font-mono-tight">{% if r.sizing_sugerido %}{{ '%.1f' % r.sizing_sugerido }}%{% else %}—{% endif %}</td>
+          <td class="font-mono-tight {% if r.asimetria and r.asimetria >= 3 %}text-emerald-600 font-semibold{% elif r.asimetria and r.asimetria < 1 %}text-rose-600{% else %}{% endif %}">
+            {% if r.asimetria %}{{ '%.2f' % r.asimetria }}x{% else %}—{% endif %}
+          </td>
+          <td>{{ momentum_badge(r.momentum) }}</td>
+          <td>
+            {% if r.estado_rec == 'CUESTIONADA' %}
+              <span class="badge bg-amber-50 text-amber-700 border-amber-400" title="{{ r.motivo_cuestionada }}">CUESTIONADA</span>
+            {% else %}
+              <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">VALIDADA</span>
+            {% endif %}
+          </td>
+          <td class="text-xs text-slate-600 max-w-md truncate" title="{{ r.justificacion }}">{{ r.justificacion[:120] }}{% if r.justificacion | length > 120 %}…{% endif %}</td>
+          <td class="text-right whitespace-nowrap">
+            <form hx-post="/aprobar/{{ r.id }}" hx-swap="none" hx-on::after-request="location.reload()" class="inline">
+              <button type="submit" class="bb-btn bb-btn-success">Aprobar</button>
+            </form>
+            <form hx-post="/rechazar/{{ r.id }}" hx-swap="none" hx-on::after-request="location.reload()" class="inline ml-1">
+              <button type="submit" class="bb-btn bb-btn-ghost">Rechazar</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-8 text-center text-slate-500 text-sm">Sin recomendaciones pendientes.</div>
+    {% endif %}
+  </div>
+
+  <!-- Macro + Posiciones activas -->
+  <div class="col-span-8 bb-card">
+    <div class="bb-card-header">
+      <h3>Posiciones activas</h3>
+      <span class="text-xs text-slate-500">{{ posiciones | length }} · exp {{ exposicion }}% · MtM intra-day</span>
+    </div>
+    {% if posiciones %}
+    <table class="bb-table">
+      <thead><tr>
+        <th>Ticker</th><th>Sector</th>
+        <th class="text-right">Sizing</th>
+        <th class="text-right">Entrada</th>
+        <th class="text-right">Actual</th>
+        <th class="text-right">P&amp;L %</th>
+        <th class="text-right">P&amp;L USD</th>
+        <th class="text-right">Días</th>
+      </tr></thead>
+      <tbody>
+      {% for p in posiciones %}
+        <tr>
+          <td>
+            <a href="/fichas/{{ p.ticker }}/view" class="font-mono-tight font-bold text-navy-900 hover:text-accent">{{ p.ticker }}</a>
+            <div class="text-[10px] text-slate-400">{{ p.nombre[:30] }}</div>
+          </td>
+          <td class="text-slate-600 text-xs">{{ p.sector }}</td>
+          <td class="text-right font-mono-tight font-semibold">{{ '%.1f' % (p.sizing or 0) }}%</td>
+          <td class="text-right font-mono-tight">{% if p.precio_entrada %}${{ '%.2f' % p.precio_entrada }}{% else %}—{% endif %}</td>
+          <td class="text-right font-mono-tight">{% if p.precio_actual %}${{ '%.2f' % p.precio_actual }}{% else %}—{% endif %}</td>
+          <td class="text-right font-mono-tight font-semibold {% if p.pnl_pct > 0 %}text-emerald-600{% elif p.pnl_pct < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+            {% if p.pnl_pct is not none %}{% if p.pnl_pct >= 0 %}+{% endif %}{{ '%.2f' % p.pnl_pct }}%{% else %}—{% endif %}
+          </td>
+          <td class="text-right font-mono-tight {% if p.pnl_usd > 0 %}text-emerald-600{% elif p.pnl_usd < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+            {% if p.pnl_usd is not none %}{% if p.pnl_usd >= 0 %}+{% endif %}${{ '{:,.0f}'.format(p.pnl_usd) }}{% else %}—{% endif %}
+          </td>
+          <td class="text-right font-mono-tight text-slate-500 text-xs">{% if p.dias_en_cartera is not none %}{{ p.dias_en_cartera }}d{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="border-t-2 border-slate-300 font-semibold">
+          <td colspan="6" class="text-right text-xs uppercase tracking-widest text-slate-500">P&amp;L total</td>
+          <td class="text-right font-mono-tight {% if (pnl_total_usd or 0) > 0 %}text-emerald-600{% elif (pnl_total_usd or 0) < 0 %}text-rose-600{% else %}text-slate-700{% endif %}">
+            {% if (pnl_total_usd or 0) >= 0 %}+{% endif %}${{ '{:,.0f}'.format(pnl_total_usd or 0) }}
+          </td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+    <div class="p-8 text-center text-slate-500 text-sm">Sin posiciones activas. Las aprobaciones de entrada las activarán.</div>
+    {% endif %}
+  </div>
+
+  <!-- Trades cerrados — P&L realizado -->
+  <div class="col-span-12 bb-card">
+    <div class="bb-card-header">
+      <h3>Trades cerrados — P&amp;L realizado</h3>
+      <span class="text-xs text-slate-500">{{ trades_cerrados | length }} · total realizado
+        <span class="{% if (pnl_realizado_usd or 0) > 0 %}text-emerald-600{% elif (pnl_realizado_usd or 0) < 0 %}text-rose-600{% endif %} font-semibold">
+          {% if (pnl_realizado_usd or 0) >= 0 %}+{% endif %}${{ '{:,.0f}'.format(pnl_realizado_usd or 0) }}
+        </span>
+      </span>
+    </div>
+    {% if trades_cerrados %}
+    <table class="bb-table">
+      <thead><tr>
+        <th>Ticker</th><th>Sector</th>
+        <th>Apertura</th><th>Cierre</th>
+        <th class="text-right">Días</th>
+        <th class="text-right">Entrada</th>
+        <th class="text-right">Salida</th>
+        <th class="text-right">P&amp;L %</th>
+        <th class="text-right">P&amp;L USD</th>
+        <th>Motivo</th>
+      </tr></thead>
+      <tbody>
+      {% for t in trades_cerrados %}
+        <tr>
+          <td><a href="/fichas/{{ t.ticker }}/view" class="font-mono-tight font-bold text-navy-900 hover:text-accent">{{ t.ticker }}</a></td>
+          <td class="text-slate-600 text-xs">{{ t.sector }}</td>
+          <td class="text-slate-600 text-xs font-mono-tight">{{ t.fecha_apertura }}</td>
+          <td class="text-slate-600 text-xs font-mono-tight">{{ t.fecha_cierre }}</td>
+          <td class="text-right font-mono-tight text-xs text-slate-500">{{ t.dias }}d</td>
+          <td class="text-right font-mono-tight">${{ '%.2f' % t.precio_entrada }}</td>
+          <td class="text-right font-mono-tight">${{ '%.2f' % t.precio_cierre }}</td>
+          <td class="text-right font-mono-tight font-semibold {% if t.pnl_realizado_pct > 0 %}text-emerald-600{% elif t.pnl_realizado_pct < 0 %}text-rose-600{% endif %}">
+            {% if t.pnl_realizado_pct >= 0 %}+{% endif %}{{ '%.2f' % t.pnl_realizado_pct }}%
+          </td>
+          <td class="text-right font-mono-tight {% if t.pnl_realizado_usd > 0 %}text-emerald-600{% elif t.pnl_realizado_usd < 0 %}text-rose-600{% endif %}">
+            {% if t.pnl_realizado_usd >= 0 %}+{% endif %}${{ '{:,.0f}'.format(t.pnl_realizado_usd) }}
+          </td>
+          <td><span class="badge bg-slate-50 text-slate-700 border-slate-300">{{ t.motivo_cierre }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-8 text-center text-slate-500 text-sm">Sin trades cerrados aún. Cuando una posición rote o salga, su P&amp;L realizado quedará trazado acá.</div>
+    {% endif %}
+  </div>
+
+  <div class="col-span-4 bb-card" x-data="{ editar: false }">
+    <div class="bb-card-header">
+      <h3>Tesis Macro {{ macro.version or '' }}</h3>
+      <button @click="editar = !editar" class="bb-btn bb-btn-ghost text-[11px]" x-text="editar ? 'Cancelar' : 'Editar'"></button>
+    </div>
+    <div class="px-5 py-4">
+      <div x-show="!editar">
+        <div class="flex gap-2 mb-3">
+          <span class="badge bg-navy-800 text-white border-navy-900">{{ macro.fase or '—' }}</span>
+          <span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">{{ macro.postura or '—' }}</span>
+        </div>
+        <div class="text-xs text-slate-600 whitespace-pre-line leading-relaxed">{{ macro.notas[:400] }}{% if macro.notas | length > 400 %}…{% endif %}</div>
+      </div>
+      <form x-show="editar" action="/macro/edit" method="post" class="space-y-2">
+        <select name="fase_actual" class="bb-input w-full">
+          <option value="fase_1_ofensiva" {% if macro.fase == 'fase_1_ofensiva' %}selected{% endif %}>fase_1_ofensiva</option>
+          <option value="transicion" {% if macro.fase == 'transicion' %}selected{% endif %}>transicion</option>
+          <option value="fase_2_defensiva" {% if macro.fase == 'fase_2_defensiva' %}selected{% endif %}>fase_2_defensiva</option>
+        </select>
+        <select name="postura_capital" class="bb-input w-full">
+          <option value="agresiva" {% if macro.postura == 'agresiva' %}selected{% endif %}>agresiva</option>
+          <option value="selectiva" {% if macro.postura == 'selectiva' %}selected{% endif %}>selectiva</option>
+          <option value="defensiva" {% if macro.postura == 'defensiva' %}selected{% endif %}>defensiva</option>
+        </select>
+        <input name="version" value="{{ macro.version or 'v1.0' }}" class="bb-input w-full" placeholder="versión">
+        <textarea name="notas" rows="6" class="bb-input w-full font-mono text-[11px]">{{ macro.notas or '' }}</textarea>
+        <button type="submit" class="bb-btn bb-btn-primary w-full">Guardar tesis</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Eventos recientes -->
+  <div class="col-span-6 bb-card">
+    <div class="bb-card-header">
+      <h3>Últimos eventos</h3>
+      <a href="/eventos" class="text-xs text-accent hover:underline">ver todos</a>
+    </div>
+    {% if eventos_recientes %}
+    <table class="bb-table">
+      <thead><tr><th>Timestamp</th><th>Ticker</th><th>Tipo</th><th>Descripción</th></tr></thead>
+      <tbody>
+      {% for e in eventos_recientes %}
+        <tr>
+          <td class="font-mono-tight text-[11px] text-slate-500">{{ e.timestamp }}</td>
+          <td><a href="/fichas/{{ e.ticker }}/view" class="font-mono-tight font-bold">{{ e.ticker }}</a></td>
+          <td><span class="badge bg-slate-100 text-slate-600 border-slate-300">{{ e.tipo }}</span></td>
+          <td class="text-xs text-slate-600">{{ e.descripcion[:80] }}{% if e.descripcion | length > 80 %}…{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-6 text-center text-slate-500 text-sm">Sin eventos pendientes.</div>
+    {% endif %}
+  </div>
+
+  <!-- Momentum sectorial -->
+  <div class="col-span-6 bb-card">
+    <div class="bb-card-header">
+      <h3>Momentum sectorial</h3>
+      <a href="/sectores" class="text-xs text-accent hover:underline">editar</a>
+    </div>
+    <table class="bb-table">
+      <thead><tr><th>Sector</th><th>Prioridad</th><th>Momentum</th><th>Actualizado</th></tr></thead>
+      <tbody>
+      {% for s in sectores %}
+        <tr>
+          <td class="font-medium text-navy-900">{{ s.nombre }}</td>
+          <td class="text-xs text-slate-600">{{ s.prioridad }}</td>
+          <td>{{ momentum_badge(s.momentum) }}</td>
+          <td class="font-mono-tight text-[11px] text-slate-500">{{ s.ultima_actualizacion }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Alertas -->
+  {% if alertas_risk or process_items %}
+  <div class="col-span-12 bb-card">
+    <div class="bb-card-header">
+      <h3>Alertas del Juez</h3>
+      <span class="text-xs text-slate-500">{{ alertas_risk | length }} risk · {{ process_items | length }} process</span>
+    </div>
+    <div class="px-5 py-4 space-y-3">
+      {% for a in alertas_risk %}
+        <div class="flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
+          {{ severidad_badge(a.severidad) }}
+          <span class="text-xs font-mono-tight font-semibold text-navy-900">{{ a.tipo }}</span>
+          <span class="text-xs font-mono-tight text-slate-600">{{ a.ticker }}</span>
+          <span class="text-xs text-slate-700 flex-1">{{ a.descripcion }}</span>
+        </div>
+      {% endfor %}
+      {% for i in process_items %}
+        <div class="flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
+          <span class="badge bg-slate-100 text-slate-600 border-slate-300">{{ i.tipo }}</span>
+          <span class="text-xs font-mono-tight text-slate-600">{{ i.ticker }}</span>
+          <span class="text-xs text-slate-700 flex-1">{{ i.descripcion }}</span>
+          {% if i.dias_vencido %}<span class="text-xs text-rose-600 font-semibold">{{ i.dias_vencido }}d vencido</span>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{# Macros reutilizables #}
+
+{% macro estado_badge(estado) -%}
+  {% set classes = {
+    'Candidata': 'bg-slate-100 text-slate-700 border-slate-300',
+    'Universo': 'bg-slate-100 text-slate-700 border-slate-300',
+    'WL_Seguimiento': 'bg-sky-50 text-sky-700 border-sky-300',
+    'WL_Activa': 'bg-indigo-50 text-indigo-700 border-indigo-300',
+    'WL_Prioritaria': 'bg-amber-50 text-amber-700 border-amber-300',
+    'Portfolio_Activo': 'bg-emerald-50 text-emerald-700 border-emerald-400',
+    'Bucket_Exploratorio': 'bg-violet-50 text-violet-700 border-violet-400',
+    'Suspendida': 'bg-rose-50 text-rose-700 border-rose-400',
+    'Eliminada': 'bg-zinc-100 text-zinc-500 border-zinc-300',
+  } %}
+  <span class="badge {{ classes.get(estado, 'bg-slate-100 text-slate-700 border-slate-300') }}">{{ estado.replace('_',' ') }}</span>
+{%- endmacro %}
+
+{% macro momentum_badge(m) -%}
+  {% set classes = {
+    'pre_rally': 'bg-slate-100 text-slate-700 border-slate-300',
+    'rally_temprano': 'bg-emerald-50 text-emerald-700 border-emerald-400',
+    'rally_maduro': 'bg-amber-50 text-amber-700 border-amber-400',
+    'agotamiento': 'bg-rose-50 text-rose-700 border-rose-400',
+  } %}
+  {% if m %}<span class="badge {{ classes.get(m, 'bg-slate-100 text-slate-600 border-slate-300') }}">{{ m.replace('_',' ') }}</span>{% else %}<span class="text-slate-400 text-xs">—</span>{% endif %}
+{%- endmacro %}
+
+{% macro nivel_r_badge(r) -%}
+  {% set colors = {'R1': 'emerald', 'R2': 'sky', 'R3': 'amber', 'R4': 'rose'} %}
+  {% if r %}
+    {% set c = colors.get(r, 'slate') %}
+    <span class="badge bg-{{c}}-50 text-{{c}}-700 border-{{c}}-400">{{ r }}</span>
+  {% else %}<span class="text-slate-400 text-xs">—</span>{% endif %}
+{%- endmacro %}
+
+{% macro score_cell(score) -%}
+  {% if score is none %}
+    <span class="text-slate-400">—</span>
+  {% else %}
+    <div class="flex items-center gap-2">
+      <span class="font-mono-tight text-sm font-semibold w-10
+        {% if score >= 8.0 %}text-emerald-600
+        {% elif score >= 7.0 %}text-indigo-600
+        {% elif score >= 6.0 %}text-amber-600
+        {% else %}text-slate-500{% endif %}">{{ '%.1f' % score }}</span>
+      <div class="score-bar w-20">
+        <span class="
+          {% if score >= 8.0 %}bg-emerald-500
+          {% elif score >= 7.0 %}bg-indigo-500
+          {% elif score >= 6.0 %}bg-amber-500
+          {% else %}bg-slate-400{% endif %}
+        " style="width: {{ score * 10 }}%"></span>
+      </div>
+    </div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro severidad_badge(sev) -%}
+  {% set c = {'alta': 'rose', 'media': 'amber', 'baja': 'slate'}.get(sev, 'slate') %}
+  <span class="badge bg-{{c}}-50 text-{{c}}-700 border-{{c}}-400">{{ sev }}</span>
+{%- endmacro %}
+
+{% macro accion_badge(accion) -%}
+  {% set classes = {
+    'entrar': 'bg-emerald-600 text-white border-emerald-700',
+    'aumentar': 'bg-emerald-500 text-white border-emerald-600',
+    'piramidacion': 'bg-teal-500 text-white border-teal-600',
+    'bucket': 'bg-violet-500 text-white border-violet-600',
+    'mantener': 'bg-slate-200 text-slate-700 border-slate-300',
+    'reducir': 'bg-amber-500 text-white border-amber-600',
+    'salir': 'bg-rose-600 text-white border-rose-700',
+    'rotar': 'bg-rose-500 text-white border-rose-600',
+    'wl_prioritaria': 'bg-indigo-100 text-indigo-700 border-indigo-300',
+    'cash_preventivo': 'bg-sky-100 text-sky-700 border-sky-300',
+  } %}
+  <span class="badge {{ classes.get(accion, 'bg-slate-200 text-slate-700 border-slate-300') }}">{{ accion.replace('_',' ') }}</span>
+{%- endmacro %}

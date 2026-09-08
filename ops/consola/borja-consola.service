@@ -1,0 +1,7 @@
+# ⚠️ OBSOLETO — NO USAR.
+#
+# Este unit lanzaba `ttyd` como servidor de terminal web separado. La consola de
+# BORJA ya NO usa ttyd: está embebida de forma nativa (PTY + WebSocket + xterm.js)
+# dentro del propio dashboard FastAPI. No hay proceso ni puerto extra que levantar.
+#
+# Ver: ops/consola/DEMO.md  (mecanismo nativo)  y  backend/consola.py.

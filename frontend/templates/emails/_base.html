@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body { margin:0; padding:0; background:#f1f5f9; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif; color:#0f172a; }
+  .wrap { max-width:640px; margin:20px auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; }
+  .head { background:#0b1220; color:#f1f5f9; padding:16px 24px; border-top-left-radius:6px; border-top-right-radius:6px; }
+  .head h1 { margin:0; font-family:Georgia,serif; font-size:18px; font-weight:600; letter-spacing:-0.01em; }
+  .head .sub { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.1em; margin-top:4px; }
+  .section { padding:20px 24px; border-bottom:1px solid #e2e8f0; }
+  .section:last-child { border-bottom:0; }
+  .section h2 { margin:0 0 10px 0; font-family:Georgia,serif; font-size:14px; color:#0f172a; }
+  .kv { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+  .kv:last-child { border-bottom:0; }
+  .kv .k { color:#64748b; }
+  .kv .v { font-family:ui-monospace,SF Mono,Menlo,monospace; font-weight:600; color:#0f172a; }
+  .badge { display:inline-block; padding:2px 8px; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; border-radius:3px; }
+  .badge-critical { background:#dc2626; color:#ffffff; }
+  .badge-warn { background:#f59e0b; color:#ffffff; }
+  .badge-info { background:#6366f1; color:#ffffff; }
+  .foot { padding:14px 24px; font-size:11px; color:#64748b; background:#f8fafc; border-top:1px solid #e2e8f0; border-bottom-left-radius:6px; border-bottom-right-radius:6px; }
+  .btn { display:inline-block; padding:8px 14px; background:#0f172a; color:#ffffff !important; text-decoration:none; border-radius:4px; font-size:12px; font-weight:600; margin:8px 4px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { background:#f1f5f9; padding:8px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:#475569; }
+  td { padding:8px; border-top:1px solid #f1f5f9; }
+  ul { margin:0; padding-left:20px; }
+  li { margin:4px 0; font-size:13px; }
+  code { font-family:ui-monospace,Menlo,monospace; background:#f1f5f9; padding:1px 5px; border-radius:3px; font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      {% block head %}
+      <h1>BORJA Investment System</h1>
+      <div class="sub">{{ tag or 'Alerta' }}</div>
+      {% endblock %}
+    </div>
+    {% block content %}{% endblock %}
+    <div class="foot">
+      Generado {{ generado }} · BORJA Investment System · <a href="{{ base_url or 'http://localhost:8000' }}">Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

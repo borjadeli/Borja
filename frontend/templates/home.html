@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block heading %}Núcleo determinista · Cartera paper autónoma{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+{% if not mtm %}
+  <div class="bb-card px-6 py-10 text-center">
+    <div class="font-serif text-lg text-slate-600 mb-2">El libro paper todavía no tiene mark-to-market.</div>
+    <div class="text-sm text-slate-500">Corré <span class="font-mono-tight">python -m ops.paper_auto</span> (opera) y luego <span class="font-mono-tight">python -m ops.paper_snapshot</span> (marca a mercado).</div>
+  </div>
+{% else %}
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bb-card px-5 py-4">
+      <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold">Equity (simulado)</div>
+      <div class="font-serif text-3xl font-bold text-navy-900 mt-1">${{ '{:,.0f}'.format(mtm.equity) }}</div>
+      <div class="text-xs text-slate-400 mt-1">base ${{ '{:,.0f}'.format(mtm.capital_inicial) }}</div>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold">P&L total</div>
+      <div class="font-serif text-3xl font-bold mt-1 {% if mtm.pnl_total >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+        {{ '{:+,.0f}'.format(mtm.pnl_total) }}</div>
+      <div class="text-xs {% if mtm.pnl_total >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %} mt-1">{{ '{:+.2%}'.format(mtm.pnl_total_pct) }}</div>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold">Exposición</div>
+      <div class="font-serif text-3xl font-bold text-navy-900 mt-1">{{ '{:.0%}'.format(mtm.invertido_pct) }}</div>
+      <div class="text-xs text-slate-400 mt-1">piso 70% · cash ${{ '{:,.0f}'.format(mtm.cash) }}</div>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold">Posiciones</div>
+      <div class="font-serif text-3xl font-bold text-navy-900 mt-1">{{ mtm.n_posiciones }}</div>
+      <div class="text-xs text-slate-400 mt-1">auto · sin confirmación humana</div>
+    </div>
+  </div>
+
+  <!-- Curva de equity vs SPY -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Equity (paper) vs SPY</h3>
+      <div class="flex gap-3 items-center text-[11px]">
+        {% if alpha_actual is not none %}
+          <span class="text-slate-500">Alpha vs SPY:
+            <span class="font-mono-tight font-bold {% if alpha_actual >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">{{ '{:+.2f}'.format(alpha_actual) }}%</span></span>
+        {% endif %}
+        <span class="text-slate-400">{{ snapshots|length }} día(s) · 1 punto/día</span>
+      </div>
+    </div>
+    <div id="equity-chart" style="height: 280px;" class="px-2 py-2"></div>
+  </div>
+
+  <!-- Posiciones con P&L -->
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Posiciones</h3>
+      <span class="text-[11px] text-slate-400">marcado {{ (mtm.fecha or actualizado or '')[:16] }}</span></div>
+    <table class="bb-table">
+      <thead><tr><th>Ticker</th><th>Arquetipo</th><th>Sizing</th><th>P. entrada</th><th>P. actual</th><th>Valor</th><th>P&L</th><th>Mérito</th></tr></thead>
+      <tbody>
+      {% for p in mtm.posiciones %}
+        <tr>
+          <td class="font-mono-tight font-bold text-navy-900">{{ p.ticker }}</td>
+          <td class="text-sm">{{ p.arquetipo or '—' }}</td>
+          <td class="font-mono-tight">{{ '{:.0%}'.format(p.sizing) }}</td>
+          <td class="font-mono-tight text-slate-500">{{ p.precio_entrada or '—' }}</td>
+          <td class="font-mono-tight">{{ p.precio_actual or '—' }}</td>
+          <td class="font-mono-tight">${{ '{:,.0f}'.format(p.valor) }}</td>
+          <td class="font-mono-tight font-bold {% if p.pnl >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+            {{ '{:+,.0f}'.format(p.pnl) }} <span class="text-[10px]">({{ '{:+.1%}'.format(p.pnl_pct) }})</span></td>
+          <td class="font-mono-tight text-slate-500">{{ '%.1f'|format(p.merito) if p.merito is not none else '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Operaciones automáticas -->
+  {% if journal %}
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Operaciones automáticas</h3></div>
+    <div class="px-6 py-3 space-y-1 text-xs">
+    {% for j in journal %}
+      <div class="flex gap-2 items-center">
+        <span class="font-mono-tight text-slate-400">{{ (j.fecha or '')[:16] }}</span>
+        {% if j.accion == 'comprar' %}<span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">COMPRAR</span>
+        {% elif j.accion == 'vender' %}<span class="badge bg-rose-50 text-rose-700 border-rose-400">VENDER</span>
+        {% else %}<span class="badge bg-amber-50 text-amber-700 border-amber-400">{{ j.accion|upper }}</span>{% endif %}
+        <span class="font-mono-tight font-bold">{{ j.ticker }}</span>
+        <span class="text-slate-500">
+          {% if j.accion == 'comprar' %}{{ '{:.0%}'.format(j.sizing) }} · mérito {{ '%.1f'|format(j.merito) }} · {{ j.arquetipo }}
+          {% elif j.accion == 'vender' %}vía {{ j.via }}{% endif %}</span>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    (function() {
+      const curva = {{ curva|tojson }};
+      const el = document.getElementById('equity-chart');
+      if (!el || !window.echarts) return;
+      const chart = echarts.init(el, null, { renderer: 'svg' });
+      chart.setOption({
+        grid: { left: 60, right: 20, top: 30, bottom: 30 },
+        legend: { data: ['Núcleo (paper)', 'SPY'], top: 0, right: 10, textStyle: { fontSize: 11 } },
+        tooltip: { trigger: 'axis', valueFormatter: v => v == null ? '—' : '$' + Math.round(v).toLocaleString() },
+        xAxis: { type: 'category', data: curva.fechas, axisLabel: { fontSize: 10 } },
+        yAxis: { type: 'value', scale: true, axisLabel: { formatter: v => '$' + (v/1000) + 'k', fontSize: 10 } },
+        series: [
+          {
+            name: 'Núcleo (paper)', type: 'line', data: curva.equity, smooth: true, symbol: 'circle', symbolSize: 6,
+            lineStyle: { color: '#1e293b', width: 2.5 },
+            areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[
+              { offset: 0, color: 'rgba(30,41,59,0.15)' }, { offset: 1, color: 'rgba(30,41,59,0.0)' }]) },
+            markLine: { silent: true, data: [{ yAxis: {{ mtm.capital_inicial }} }],
+              lineStyle: { color: '#cbd5e1', type: 'dashed' }, label: { formatter: 'base', fontSize: 10 } }
+          },
+          {
+            name: 'SPY', type: 'line', data: curva.spy_equity, smooth: true, symbol: 'none', connectNulls: true,
+            lineStyle: { color: '#f59e0b', width: 2, type: 'dashed' }
+          }
+        ]
+      });
+      window.addEventListener('resize', () => chart.resize());
+    })();
+  </script>
+
+{% endif %}
+</div>
+{% endblock %}

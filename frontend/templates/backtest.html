@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block heading %}Backtesting · Gate pre go-live{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <div class="bb-card px-5 py-5">
+    <div class="flex items-start gap-6">
+      <div class="flex-1">
+        <div class="font-serif text-lg text-navy-900 font-semibold mb-2">Validación obligatoria antes de capital real</div>
+        <div class="text-sm text-slate-600 leading-relaxed">
+          El backtest corre el sistema sobre un dataset curado de 10 empresas (5 winners + 5 losers) y verifica
+          que las clasificaciones coincidan con los outcomes conocidos. <strong>Gate:</strong> ≥8/10 correctamente clasificados.
+        </div>
+      </div>
+      <div class="flex gap-2 flex-col">
+        <form hx-post="/backtest/run?mock=true" hx-swap="none" hx-on::after-request="alert('Mock completado — recargá la página'); location.reload()" class="inline">
+          <button class="bb-btn bb-btn-primary">Run mock (gratis)</button>
+        </form>
+        <form hx-post="/backtest/run?mock=false" hx-swap="none" hx-on::after-request="alert('Backtest real completado (~\$3.50 gastados) — recargá'); location.reload()" class="inline">
+          <button class="bb-btn bb-btn-danger" onclick="return confirm('El backtest real llamará a Claude 10 veces y costará ~\$3.50. ¿Continuar?')">Run real (~$3.50)</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if latest_mock or latest_real %}
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>Reportes persistidos</h3>
+    </div>
+    <div class="grid grid-cols-2 gap-0 divide-x divide-slate-200">
+      <div class="px-5 py-4">
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Último MOCK</div>
+        {% if latest_mock %}
+          <div class="flex items-baseline gap-3">
+            <span class="font-mono-tight text-3xl font-bold
+              {% if latest_mock.gate_passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+              {{ latest_mock.correctos }}/{{ latest_mock.total }}
+            </span>
+            <span class="text-sm text-slate-500">{{ latest_mock.timestamp[:19].replace('T',' ') }}</span>
+            <a href="/backtest?mock=true" class="bb-btn bb-btn-ghost ml-auto">Ver →</a>
+          </div>
+        {% else %}
+          <div class="text-slate-400 italic text-sm">Sin reportes mock — corré uno arriba.</div>
+        {% endif %}
+      </div>
+      <div class="px-5 py-4">
+        <div class="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Último REAL (LLM)</div>
+        {% if latest_real %}
+          <div class="flex items-baseline gap-3">
+            <span class="font-mono-tight text-3xl font-bold
+              {% if latest_real.gate_passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+              {{ latest_real.correctos }}/{{ latest_real.total }}
+            </span>
+            <span class="text-sm text-slate-500">{{ latest_real.timestamp[:19].replace('T',' ') }} · ${{ latest_real.cost_usd_total }}</span>
+            <a href="/backtest?mock=false" class="bb-btn bb-btn-ghost ml-auto">Ver →</a>
+          </div>
+        {% else %}
+          <div class="text-slate-400 italic text-sm">Sin reportes reales — el backtest real es el gate obligatorio del go-live.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if activo and report_html %}
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>{{ 'MOCK' if activo.mock else 'REAL' }} · {{ activo.timestamp[:19].replace('T',' ') }}</h3>
+      {% if activo.gate_passed %}
+        <span class="badge bg-emerald-600 text-white border-emerald-700">GATE PASS</span>
+      {% else %}
+        <span class="badge bg-rose-600 text-white border-rose-700">GATE FAIL</span>
+      {% endif %}
+    </div>
+    <iframe srcdoc="{{ report_html | e }}" class="w-full" style="height: 1200px; border: 0;"></iframe>
+  </div>
+  {% else %}
+  <div class="bb-card px-6 py-10 text-center">
+    <div class="text-slate-500 text-sm">
+      Ningún backtest ejecutado todavía. Clickeá <strong>Run mock</strong> arriba para validar el harness sin gasto de LLM.
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="bb-card px-5 py-4 bg-indigo-50 border-indigo-200 text-xs text-indigo-900">
+    <strong>Criterio go-live (doc 03):</strong> antes de operar con capital real, el backtest <em>real</em> (no mock) debe
+    pasar con ≥8/10 correctos · ≥4 winners identificados · ≥4 losers rechazados.
+    El umbral por ticker se calibra en <code>backend/backtesting/dataset.yaml</code>.
+  </div>
+</div>
+{% endblock %}

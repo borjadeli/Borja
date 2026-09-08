@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block heading %}Costos LLM · Opus 4.7{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Mes actual</div>
+      <div class="font-serif text-4xl font-bold text-navy-900 mt-2">${{ '%.2f' % mes_actual }}</div>
+      <div class="text-[11px] text-slate-500 mt-1">corriente del mes calendario</div>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Últimos 30 días</div>
+      <div class="font-serif text-4xl font-bold text-navy-900 mt-2">${{ '%.2f' % total_30 }}</div>
+      <div class="text-[11px] text-slate-500 mt-1">rolling window</div>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Total histórico</div>
+      <div class="font-serif text-4xl font-bold text-navy-900 mt-2">${{ '%.2f' % total_lifetime }}</div>
+      <div class="text-[11px] text-slate-500 mt-1">desde el primer análisis</div>
+    </div>
+    <div class="bb-card px-5 py-4">
+      <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Llamadas</div>
+      <div class="font-serif text-4xl font-bold text-navy-900 mt-2">{{ n_calls }}</div>
+      <div class="text-[11px] text-slate-500 mt-1">totales registradas</div>
+    </div>
+  </div>
+
+  <div class="bb-card">
+    <div class="bb-card-header"><h3>Breakdown por agente (últimos 30 días)</h3></div>
+    {% if por_agente %}
+    <table class="bb-table">
+      <thead><tr>
+        <th>Agente</th><th class="text-right">Calls</th>
+        <th class="text-right">Tokens IN</th><th class="text-right">Tokens OUT</th>
+        <th class="text-right">Web searches</th><th class="text-right">Costo</th>
+        <th class="text-right">$/call avg</th>
+      </tr></thead>
+      <tbody>
+      {% for a in por_agente %}
+        <tr>
+          <td><span class="badge bg-indigo-50 text-indigo-700 border-indigo-300">{{ a.agent }}</span></td>
+          <td class="text-right font-mono-tight">{{ a.calls }}</td>
+          <td class="text-right font-mono-tight text-xs">{{ '{:,}'.format(a['in']) }}</td>
+          <td class="text-right font-mono-tight text-xs">{{ '{:,}'.format(a.out) }}</td>
+          <td class="text-right font-mono-tight">{{ a.searches }}</td>
+          <td class="text-right font-mono-tight font-semibold">${{ '%.2f' % a.cost }}</td>
+          <td class="text-right font-mono-tight text-slate-500">{% if a.calls > 0 %}${{ '%.3f' % (a.cost / a.calls) }}{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-8 text-center text-slate-500 text-sm">Sin llamadas LLM registradas en los últimos 30 días.</div>
+    {% endif %}
+  </div>
+
+  <div class="bb-card">
+    <div class="bb-card-header">
+      <h3>Últimas 50 llamadas</h3>
+      <span class="text-xs text-slate-500">Opus 4.7 · $15/M in · $75/M out · $1.50/M cache-read</span>
+    </div>
+    {% if recientes %}
+    <table class="bb-table">
+      <thead><tr>
+        <th>Timestamp</th><th>Agente</th><th>Ticker/Sector</th>
+        <th class="text-right">IN</th><th class="text-right">OUT</th><th class="text-right">Cache</th>
+        <th class="text-right">Search</th><th class="text-right">Costo</th><th class="text-right">Lat</th>
+      </tr></thead>
+      <tbody>
+      {% for r in recientes %}
+        <tr>
+          <td class="font-mono-tight text-[11px] text-slate-500">{{ r.timestamp }}</td>
+          <td><span class="badge bg-slate-100 text-slate-700 border-slate-300">{{ r.agent }}</span></td>
+          <td class="font-mono-tight font-semibold">{{ r.ticker or '—' }}</td>
+          <td class="text-right font-mono-tight text-xs">{{ r['in'] }}</td>
+          <td class="text-right font-mono-tight text-xs">{{ r.out }}</td>
+          <td class="text-right font-mono-tight text-xs text-slate-500">{{ r.cache }}</td>
+          <td class="text-right font-mono-tight text-xs">{{ r.searches }}</td>
+          <td class="text-right font-mono-tight font-semibold {% if r.cost and r.cost > 0.5 %}text-amber-700{% endif %}">${{ '%.4f' % r.cost }}</td>
+          <td class="text-right font-mono-tight text-xs text-slate-500">{% if r.latency %}{{ '%.1f' % r.latency }}s{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-8 text-center text-slate-500 text-sm">Sin llamadas aún — el primer análisis las registrará.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

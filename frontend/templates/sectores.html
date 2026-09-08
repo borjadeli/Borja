@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import momentum_badge %}
+
+{% block heading %}Sectores · Mapas estructurales{% endblock %}
+
+{% block content %}
+<div class="bb-card">
+  <div class="bb-card-header">
+    <h3>7 sectores prioritarios</h3>
+    <span class="text-xs text-slate-500">Mapa sectorial: cadena de valor + cuellos de botella con criticidad + empresas dominantes</span>
+  </div>
+  <table class="bb-table">
+    <thead><tr>
+      <th>Sector</th><th>Prioridad</th><th>Momentum</th><th>Horizonte</th>
+      <th>Empresas</th><th>Mapa</th><th>Vence</th><th class="text-right">Acciones</th>
+    </tr></thead>
+    <tbody>
+    {% for s in sectores %}
+      <tr>
+        <td><a href="/sectores/{{ s.nombre | urlencode }}/view" class="font-medium text-navy-900 hover:text-accent">{{ s.nombre }}</a></td>
+        <td class="text-xs">
+          <span class="badge bg-{{ {'alta':'emerald','media-alta':'indigo','media':'slate'}.get(s.prioridad, 'slate') }}-50 text-{{ {'alta':'emerald','media-alta':'indigo','media':'slate'}.get(s.prioridad, 'slate') }}-700 border-{{ {'alta':'emerald','media-alta':'indigo','media':'slate'}.get(s.prioridad, 'slate') }}-400">{{ s.prioridad }}</span>
+        </td>
+        <td>
+          <form hx-post="/sectores/{{ s.nombre | urlencode }}/momentum" hx-swap="none" hx-on::after-request="location.reload()">
+            <select name="momentum" onchange="this.form.requestSubmit()" class="bb-input text-xs py-1">
+              <option value="" {% if not s.momentum %}selected{% endif %}>sin momentum</option>
+              <option value="pre_rally" {% if s.momentum == 'pre_rally' %}selected{% endif %}>pre_rally</option>
+              <option value="rally_temprano" {% if s.momentum == 'rally_temprano' %}selected{% endif %}>rally_temprano</option>
+              <option value="rally_maduro" {% if s.momentum == 'rally_maduro' %}selected{% endif %}>rally_maduro</option>
+              <option value="agotamiento" {% if s.momentum == 'agotamiento' %}selected{% endif %}>agotamiento</option>
+            </select>
+          </form>
+        </td>
+        <td class="text-xs text-slate-600">{{ s.horizonte }}</td>
+        <td class="font-mono-tight text-sm">{{ s.n_empresas }}</td>
+        <td class="text-xs">
+          {% if s.mapa %}
+            {% if s.mapa.vencido %}
+              <span class="badge bg-rose-50 text-rose-700 border-rose-400">VENCIDO</span>
+            {% elif s.mapa.aprobado %}
+              <span class="badge bg-emerald-50 text-emerald-700 border-emerald-400">aprobado</span>
+            {% else %}
+              <span class="badge bg-indigo-50 text-indigo-700 border-indigo-400">activo</span>
+            {% endif %}
+            <div class="font-mono-tight text-[10px] text-slate-500 mt-1">{{ s.mapa.fecha_gen }}</div>
+          {% else %}
+            <span class="text-slate-400">sin mapa</span>
+          {% endif %}
+        </td>
+        <td class="text-xs font-mono-tight">
+          {% if s.mapa %}
+            {% if s.mapa.dias_restantes >= 0 %}
+              <span class="text-slate-600">{{ s.mapa.dias_restantes }}d</span>
+            {% else %}
+              <span class="text-rose-600">-{{ s.mapa.dias_restantes * -1 }}d</span>
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td class="text-right whitespace-nowrap">
+          <button hx-post="/sectores/{{ s.nombre | urlencode }}/regenerar-mapa" hx-swap="none" hx-on::after-request="setTimeout(() => location.reload(), 1000)" class="bb-btn bb-btn-primary">
+            <span class="htmx-indicator spinner"></span> Regenerar
+          </button>
+          {% if s.mapa and not s.mapa.aprobado %}
+          <form hx-post="/sectores/{{ s.nombre | urlencode }}/aprobar-mapa" hx-swap="none" hx-on::after-request="location.reload()" class="inline">
+            <button class="bb-btn bb-btn-ghost">Aprobar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-6 bb-card">
+  <div class="px-5 py-3 bg-indigo-50 border-b border-indigo-200 text-xs text-indigo-900">
+    <strong>Vencimientos default:</strong>
+    AI infra 14d · Ciberseguridad 21d · Defensa 30d · Robótica 21d · Minerales críticos 30d · Nuclear 45d · Espacio 30d.
+    Los mapas aprobados tienen safety net: la regeneración automática se pospone al doble del plazo.
+  </div>
+</div>
+{% endblock %}

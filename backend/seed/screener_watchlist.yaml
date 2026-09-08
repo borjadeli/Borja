@@ -1,0 +1,52 @@
+# Lista de tickers a pasar por el screener cuantitativo del Descubrimiento.
+# Editable. Agregar nombres sospechosos/interesantes del sector — el screener corre los 5 filtros
+# (market cap $50M-$2B, rev YoY >20%, margen bruto >30%, deuda/rev <2x, vol diario >$1M) y
+# flagea los que pasan TODOS. Los que pasen y no estén en `fichas` → Candidata.
+#
+# Esta lista debería rotar conforme el humano va descubriendo candidatos del Discovery semanal
+# o por research propio. Los 50 tickers ya seeded NO necesitan estar acá (el screener los
+# omite si ya tienen ficha, pero conviene dejarlos fuera para eficiencia).
+
+# AI infra / semi / power — candidatos adicionales
+- INDI     # indie Semiconductor — sensors automotive
+- AMBA     # Ambarella — edge AI vision
+- SITM     # SiTime — MEMS timing
+- ONTO     # Onto Innovation — metrology semi
+- MKSI     # MKS Instruments — semi equipment
+- CEVA     # CEVA Inc — IP cores for AI edge
+- SMTC     # Semtech — IoT/connectivity
+
+# Ciberseguridad mid cap adicional
+- OSPN     # OneSpan — authentication
+- KVYO     # Klaviyo (marketing, skip pero en screener)
+
+# Defensa / aerospace supplier
+- HXL      # Hexcel — advanced composites
+- MSIA     # Mesa Air (aerospace service — sanity check)
+- SPR      # Spirit AeroSystems
+- ESLT     # Elbit Systems of America
+- VSEC     # VSE Corp
+- KRRO     # Korro Bio (biotech — sanity check para ver fail)
+
+# Minerales / materials
+- CDE      # Coeur Mining
+- NGD      # New Gold
+- HL       # Hecla Mining
+- NAK      # Northern Dynasty
+- ABAT     # American Battery Technology
+- KODK     # Eastman Kodak (tiene producción domestica críticos)
+
+# Nuclear / energia
+- CNK      # Cinemark (sanity — debe fallar)
+- URG      # Ur-Energy
+- GEVO     # Gevo (clean energy)
+
+# Space
+- LLAP     # Terran Orbital (si existe aún)
+- IRDM     # Iridium Communications
+- BKSY     # BlackSky Technology
+
+# Robótica adicional
+- IRBT     # iRobot (small cap troubled — screener debería ser estricto)
+- PRLB     # Proto Labs — digital manufacturing
+- SHYF     # Shyft Group — EV chassis

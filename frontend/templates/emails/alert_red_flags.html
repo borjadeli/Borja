@@ -1,0 +1,17 @@
+{% extends "_base.html" %}
+{% block head %}
+  <h1>Red flags · {{ ticker }}</h1>
+  <div class="sub">{{ red_flags }}/3 activos · no aumentar posición</div>
+{% endblock %}
+{% block content %}
+  <div class="section">
+    <p style="font-size:13px;">
+      <span class="badge badge-warn">ALERTA</span>
+      La posición <code>{{ ticker }}</code> acumuló <strong>{{ red_flags }} red flags</strong>. No se permite aumentar posición hasta que se resuelvan.
+    </p>
+    {% if detalle %}<p style="font-size:13px; white-space:pre-line; color:#475569;">{{ detalle }}</p>{% endif %}
+  </div>
+  <div class="section">
+    <a class="btn" href="{{ base_url or 'http://localhost:8000' }}/fichas/{{ ticker }}/view">Abrir ficha</a>
+  </div>
+{% endblock %}

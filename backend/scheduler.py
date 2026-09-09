@@ -170,7 +170,9 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
     )
 
     # ---- Núcleo nuevo en PAPER (autónomo, sin confirmación humana, simulado) ----
-    from backend.seleccion.jobs import job_paper_ciclo, job_paper_reextraccion, job_paper_snapshot
+    from backend.seleccion.jobs import (
+        job_paper_ciclo, job_paper_pm, job_paper_reextraccion, job_paper_snapshot,
+    )
 
     # Opera (compra/vende) — diario L-V tras el cierre. Sin LLM (hechos cacheados + precios).
     scheduler.add_job(
@@ -198,6 +200,14 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
         func=_safe_run(job_paper_reextraccion, "paper_reextraccion"),
         trigger=CronTrigger(day_of_week="sun", hour=19, minute=0, timezone="America/New_York"),
         id="paper_reextraccion",
+        replace_existing=True,
+    )
+    # Canal de juicio PM-LLM → libro_pm.json (targets de tamaño) — semanal (domingo 19:30 ET, TRAS la
+    # re-extracción, con hechos frescos). Costoso (LLM + web search por nombre). El evento lo dispara el ciclo.
+    scheduler.add_job(
+        func=_safe_run(job_paper_pm, "paper_pm"),
+        trigger=CronTrigger(day_of_week="sun", hour=19, minute=30, timezone="America/New_York"),
+        id="paper_pm",
         replace_existing=True,
     )
 

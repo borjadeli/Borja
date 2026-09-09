@@ -101,6 +101,20 @@ def persistir(libro_pm, path: Path = PM_LIBRO_PATH) -> Path:
     return path
 
 
+def persistir_merge(libro_pm, path: Path = PM_LIBRO_PATH) -> Path:
+    """Actualiza SOLO las decisiones de los tickers de `libro_pm` sobre el archivo existente (disparo por evento):
+    reemplaza esos nombres, conserva el resto de la última corrida semanal. Si no hay archivo previo, es como persistir."""
+    prev = cargar(path) or {"decisiones": []}
+    nuevo = serializar(libro_pm)
+    tickers_nuevos = {d["ticker"] for d in nuevo["decisiones"]}
+    conservadas = [d for d in prev.get("decisiones", []) if d["ticker"] not in tickers_nuevos]
+    nuevo["decisiones"] = nuevo["decisiones"] + conservadas
+    nuevo["n"] = len(nuevo["decisiones"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(nuevo, indent=2, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
 def cargar(path: Path = PM_LIBRO_PATH) -> dict | None:
     if not path.exists():
         return None

@@ -38,8 +38,8 @@ def test_ciclo_pm_sizea_al_target_y_excluye_veto_y_no_evaluados():
     assert set(pos.keys()) == {"RBRK", "MP"}
     assert pos["RBRK"]["sizing"] == 0.08              # PRIORITY_HIGH → target 8% (dentro del hard_cap 8%)
     assert pos["MP"]["sizing"] == 0.06                # PRIORITY_MEDIUM → target 6% (dentro del hard_cap 10%)
-    # DECISIÓN ABIERTA (operador): base PM = CAP_FLOOR_BURN 4% vs PISO_POSICION del paper 5%. Hoy manda el 5%
-    # → un PASS/base no despliega. Si se quiere "el determinismo despliega el piso", alinear los dos pisos.
+    # DECIDIDO (operador 2026-09-09): el piso del paper queda en 5% (PISO_POSICION). La base PM (4%) es solo
+    # la base de la banda; para tomar slot el PM tiene que empujar arriba de 5% (un PASS/base NO despliega).
 
 
 def test_ciclo_sin_pm_no_cambia(monkeypatch):

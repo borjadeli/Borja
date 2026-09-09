@@ -5269,3 +5269,5 @@
 2026-09-07 17:05:55,605 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=53.58s tokens=62361/3167 searches=4/5 cost=$1.2129 json_ok=True
 2026-09-07 17:06:21,054 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=25.44s tokens=4174/1405 searches=0/5 cost=$0.1680 json_ok=True
 2026-09-07 17:07:10,176 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=49.11s tokens=61913/3027 searches=4/5 cost=$1.1957 json_ok=True
+2026-09-09 14:54:21,390 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CLS&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-09-09 14:54:22,792 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVMI&region=US&lang=en-US) fallo: HTTP Error 502: 

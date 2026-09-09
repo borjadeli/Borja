@@ -189,18 +189,46 @@ def eventos_red_flags(tickers: list[str]) -> dict:
     return eventos
 
 
+PROMOCIONES_PM = ("ADMIT_PROBE", "PRIORITY_HIGH", "PRIORITY_MEDIUM", "PRIORITY_LOW")  # etiquetas que suben tamaño
+
+
+def _pm_targets(pm_libro) -> dict:
+    """ticker -> {'size', 'promovido', 'etiqueta'} desde un LibroPM (objeto) o su dict serializado (libro_pm.json).
+
+    Vacío si pm_libro es None → el ciclo cae al sizing determinista por mérito (comportamiento previo, intacto).
+    Cuando hay targets, el PM manda el TAMAÑO (dentro del hard_cap): VETO/THESIS_BROKEN → size 0 → no entra;
+    PASS/HOLD → base (piso, el determinismo despliega el piso); PRIORITY_* promovido → sube hacia el techo."""
+    if not pm_libro:
+        return {}
+    decis = pm_libro.get("decisiones") if isinstance(pm_libro, dict) else getattr(pm_libro, "decisiones", [])
+    out = {}
+    for d in decis or []:
+        if isinstance(d, dict):
+            tk, size, etq, promo = d.get("ticker"), d.get("size_final") or 0.0, d.get("etiqueta", ""), bool(d.get("promovido"))
+        else:
+            tk, size, etq = d.ticker, d.size_final or 0.0, d.etiqueta
+            promo = etq in PROMOCIONES_PM and size > (d.banda.base + 1e-9)
+        if tk:
+            out[tk] = {"size": size, "promovido": promo, "etiqueta": etq}
+    return out
+
+
 def correr_ciclo(evaluaciones: list[dict], *, eventos: dict | None = None,
-                 libro: LibroPaper | None = None, persistir: bool = True) -> dict:
+                 libro: LibroPaper | None = None, persistir: bool = True, pm_libro=None) -> dict:
     """Corre un ciclo completo de trading automático en paper.
 
     evaluaciones: salidas de flujo.evaluar_empresa() (con ticker, decision, merito,
       hard_cap, arquetipo, asimetria, y bull/bear/precio en el sub-dict si están).
     eventos: dict ticker -> hechos event-driven para la salida (opcional).
+    pm_libro: LibroPM (objeto o dict serializado) del canal de juicio. Si se pasa, el PM manda el TAMAÑO
+      DENTRO del hard_cap determinista (el determinismo pone el techo/veto; el juicio elige adentro, doc 39).
+      Si es None → sizing por mérito como antes.
 
     Devuelve {ventas, recortes, compras, topeos, invertido, subinvertido, ...}.
     """
     eventos = eventos or {}
     libro = libro or cargar_libro()
+    pm_t = _pm_targets(pm_libro)   # vacío → sizing por mérito (comportamiento previo)
     por_ticker = {e["ticker"]: e for e in evaluaciones}
     ventas, recortes, compras, topeos, swaps = [], [], [], [], []
     vendidos_este_ciclo: set[str] = set()    # no se re-compran en el mismo ciclo (§13.1 re-entrada).
@@ -256,11 +284,22 @@ def correr_ciclo(evaluaciones: list[dict], *, eventos: dict | None = None,
                 por_sector[sec_h] = por_sector.get(sec_h, 0) + 1
             if (por_ticker.get(tk) or {}).get("residual_cero") or pos.get("residual_cero"):
                 cubo_residual += pos.get("sizing") or 0.0
-        # Selector: top-N por mérito, normalizado al capital bruto disponible hasta el techo.
-        ranked = normalizar_merito(
-            [{"ticker": c["ticker"], "merito": c["merito"], "_ev": c} for c in candidatas],
-            n=slots_libres, target=capital_disponible,
-        )
+        if pm_t:
+            # PM oficial: cada nombre BENDECIDO se sizea a su TARGET del PM (dentro del hard_cap determinista);
+            # NO se normaliza-para-llenar → si el PM no tiene convicción, el cash emerge (disciplina sobre actividad).
+            pm_cands = sorted(
+                [c for c in candidatas if (pm_t.get(c["ticker"]) or {}).get("size", 0) > 0],
+                key=lambda c: -pm_t[c["ticker"]]["size"],
+            )
+            ranked = [{"_ev": c, "bruto": pm_t[c["ticker"]]["size"], "en_top_n": True}
+                      for c in pm_cands[:slots_libres]]
+        else:
+            # Selector: top-N por mérito, normalizado al capital bruto disponible hasta el techo.
+            ranked = normalizar_merito(
+                [{"ticker": c["ticker"], "merito": c["merito"], "_ev": c} for c in candidatas],
+                n=slots_libres, target=capital_disponible,
+            )
+        restante = capital_disponible
         for r in ranked:
             if not r["en_top_n"]:
                 continue
@@ -268,6 +307,8 @@ def correr_ciclo(evaluaciones: list[dict], *, eventos: dict | None = None,
             s = sizing_final(r["bruto"], ev["hard_cap"])
             if not s["entra"]:
                 continue
+            if s["sizing"] > restante + 1e-9:
+                continue  # no exceder el capital disponible (en modo PM no hay normalización que lo garantice).
             sec = ev.get("_sector")
             if sec and por_sector.get(sec, 0) >= MAX_POR_SUBSECTOR:
                 continue  # cap de concentración por sector (no expulsa las vigentes).
@@ -281,6 +322,7 @@ def correr_ciclo(evaluaciones: list[dict], *, eventos: dict | None = None,
             }
             compras.append(_log(libro, "comprar", ev["ticker"], sizing=s["sizing"],
                                 merito=ev["merito"], arquetipo=libro.posiciones[ev["ticker"]]["arquetipo"]))
+            restante -= s["sizing"]
             if sec:
                 por_sector[sec] = por_sector.get(sec, 0) + 1
             if es_rc:
@@ -300,7 +342,13 @@ def correr_ciclo(evaluaciones: list[dict], *, eventos: dict | None = None,
                 continue  # sin datos frescos → no se topea a ciegas.
             if ev.get("decision") != "candidata":
                 continue  # si el gate ya no pasa, no se le agrega capital.
-            headroom = ev["hard_cap"] - pos["sizing"]
+            cap_efectivo = ev["hard_cap"]
+            if pm_t:
+                tgt = pm_t.get(ticker)
+                if not tgt or tgt["size"] <= 0:
+                    continue  # PM oficial: no piramidar nombres que el PM no bendijo.
+                cap_efectivo = min(ev["hard_cap"], tgt["size"])  # el techo del topeo es el target del PM.
+            headroom = cap_efectivo - pos["sizing"]
             if headroom > INCREMENTO_MIN_TOPEO:
                 topeables.append({"ticker": ticker, "merito": ev["merito"], "_pos": pos,
                                   "_headroom": headroom, "_precio": ev.get("_precio")})

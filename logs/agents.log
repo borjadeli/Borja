@@ -20642,3 +20642,8 @@ sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
 2026-09-11 14:30:00,003 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
 2026-09-11 14:30:01,562 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
 2026-09-11 14:30:05,609 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=2
+2026-09-11 14:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 14:54:52,589 [INFO] backend.agents.research: monitor_noticias — creados=2 dup_skipped=5
+2026-09-11 14:54:52,594 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1166 ticker=AAPL tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-11 14:54:52,598 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1167 ticker=AI tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-11 14:54:52,598 [INFO] backend.agents.dispatcher: dispatcher — procesados=2 por_destino={'DESCARTADO': 2}

@@ -259,3 +259,5 @@
 2026-09-09 17:09:46,389 [WARNING] backend.ingreso.adapter: adapter — sin precio para ZZZZ
 2026-09-11 14:37:57,808 [WARNING] backend.ingreso.adapter: adapter — sin precio para ACME
 2026-09-11 14:37:57,857 [WARNING] backend.ingreso.adapter: adapter — sin precio para ZZZZ
+2026-09-11 14:58:39,939 [WARNING] backend.ingreso.adapter: adapter — sin precio para ACME
+2026-09-11 14:58:39,984 [WARNING] backend.ingreso.adapter: adapter — sin precio para ZZZZ

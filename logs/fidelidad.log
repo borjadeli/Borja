@@ -594,3 +594,8 @@
 2026-09-11 14:37:58,418 [WARNING] backend.nucleo.fidelidad: fidelidad: margen=-2.0 fuera de rango (-1.0, 1.0) → descartado (UNKNOWN)
 2026-09-11 14:37:58,419 [WARNING] backend.nucleo.fidelidad: fidelidad: positivo=-5.0 fuera de rango (0.0, None) → descartado (UNKNOWN)
 2026-09-11 14:37:58,420 [WARNING] backend.nucleo.fidelidad: fidelidad: monto no numérico ('N/D') → descartado
+2026-09-11 14:58:40,507 [WARNING] backend.nucleo.fidelidad: fidelidad: dilucion=40.37 fuera de rango (-0.5, 3.0) → descartado (UNKNOWN)
+2026-09-11 14:58:40,508 [WARNING] backend.nucleo.fidelidad: fidelidad: margen=1.5 fuera de rango (-1.0, 1.0) → descartado (UNKNOWN)
+2026-09-11 14:58:40,508 [WARNING] backend.nucleo.fidelidad: fidelidad: margen=-2.0 fuera de rango (-1.0, 1.0) → descartado (UNKNOWN)
+2026-09-11 14:58:40,509 [WARNING] backend.nucleo.fidelidad: fidelidad: positivo=-5.0 fuera de rango (0.0, None) → descartado (UNKNOWN)
+2026-09-11 14:58:40,509 [WARNING] backend.nucleo.fidelidad: fidelidad: monto no numérico ('N/D') → descartado

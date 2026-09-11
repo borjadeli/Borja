@@ -644,3 +644,11 @@
 2026-09-11 14:37:59,615 [INFO] backend.seleccion.jobs: paper_ciclo — evento fuerte en ['MP'] → re-juicio PM ad-hoc
 2026-09-11 14:37:59,616 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
 2026-09-11 14:37:59,616 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
+2026-09-11 14:58:29,358 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=0 pm=sí
+2026-09-11 14:58:29,360 [INFO] backend.seleccion.jobs: paper_ciclo — evento fuerte en ['MP'] → re-juicio PM ad-hoc
+2026-09-11 14:58:29,360 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
+2026-09-11 14:58:29,361 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
+2026-09-11 14:58:40,981 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=0 pm=sí
+2026-09-11 14:58:40,982 [INFO] backend.seleccion.jobs: paper_ciclo — evento fuerte en ['MP'] → re-juicio PM ad-hoc
+2026-09-11 14:58:40,982 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
+2026-09-11 14:58:40,983 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no

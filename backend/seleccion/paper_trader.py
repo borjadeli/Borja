@@ -204,8 +204,12 @@ def _pm_targets(pm_libro) -> dict:
     out = {}
     for d in decis or []:
         if isinstance(d, dict):
+            if d.get("valido") is False:
+                continue  # llamada al PM fallida (fallback) → NO sizea el libro (cae al mérito, no posición-piso fantasma).
             tk, size, etq, promo = d.get("ticker"), d.get("size_final") or 0.0, d.get("etiqueta", ""), bool(d.get("promovido"))
         else:
+            if getattr(getattr(d, "memo", None), "valido", True) is False:
+                continue  # ídem para el LibroPM objeto (DecisionPM.memo.valido).
             tk, size, etq = d.ticker, d.size_final or 0.0, d.etiqueta
             promo = etq in PROMOCIONES_PM and size > (d.banda.base + 1e-9)
         if tk:

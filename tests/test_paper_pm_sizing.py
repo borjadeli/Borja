@@ -21,6 +21,16 @@ def test_pm_targets_parsea_dict_serializado():
     assert _pm_targets(None) == {}
 
 
+def test_pm_targets_ignora_decisiones_invalidas():
+    # una llamada al PM fallida (valido=False, fallback a PASS) NO debe sizear el libro
+    pm = {"decisiones": [
+        {"ticker": "OK", "size_final": 0.06, "etiqueta": "PRIORITY_MEDIUM", "promovido": True, "valido": True},
+        {"ticker": "FALLÓ", "size_final": 0.04, "etiqueta": "PASS", "promovido": False, "valido": False},
+    ]}
+    t = _pm_targets(pm)
+    assert "OK" in t and "FALLÓ" not in t   # la fallida se excluye → ese nombre cae al sizing por mérito
+
+
 def test_ciclo_pm_sizea_al_target_y_excluye_veto_y_no_evaluados():
     evals = [_ev("RBRK", 0.08, sector="a"), _ev("MP", 0.10, sector="b"),
              _ev("LOWBALL", 0.08, sector="e"),

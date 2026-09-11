@@ -126,6 +126,22 @@ def sizing_view(request: Request):
     return templates.TemplateResponse("sizing.html", ctx)
 
 
+@router.get("/pm", response_class=HTMLResponse)
+def pm_view(request: Request):
+    """Canal de juicio PM-LLM (Bloque 3): las decisiones del PM — etiqueta discreta + tamaño DENTRO del cap
+    determinista + memo auditable (bull/bear/falsador/fuentes). Lo produce el job paper_pm (semanal + evento)."""
+    import json
+    from pathlib import Path
+    ctx = _common_context(request, active="pm")
+    path = Path(__file__).resolve().parent.parent / "data" / "nucleo_paper" / "libro_pm.json"
+    if path.exists():
+        ctx.update(json.loads(path.read_text()))
+    else:
+        ctx.update({"decisiones": [], "fecha": None, "prompt_version": None,
+                    "presupuesto": 0, "promos_usadas": 0, "n": 0})
+    return templates.TemplateResponse("pm.html", ctx)
+
+
 @router.get("/legacy", response_class=HTMLResponse)
 def dashboard(request: Request):
     now = utcnow()

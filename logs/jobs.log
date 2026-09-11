@@ -609,3 +609,38 @@
 2026-09-09 17:09:47,522 [INFO] backend.seleccion.jobs: paper_ciclo — evento fuerte en ['MP'] → re-juicio PM ad-hoc
 2026-09-09 17:09:47,522 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
 2026-09-09 17:09:47,524 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
+2026-09-09 17:30:04,786 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105126 pnl=5.13%
+2026-09-09 18:00:04,693 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105645 pnl=5.65%
+2026-09-09 18:30:04,577 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105633 pnl=5.63%
+2026-09-09 19:00:05,151 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105144 pnl=5.14%
+2026-09-09 19:30:04,294 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$104991 pnl=4.99%
+2026-09-09 20:00:04,762 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105155 pnl=5.16%
+2026-09-09 20:30:04,488 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105189 pnl=5.19%
+2026-09-09 20:40:14,286 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=100% eventos=9
+2026-09-09 20:45:03,104 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105189 pnl=5.19%
+2026-09-10 13:00:03,344 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105189 pnl=5.19%
+2026-09-10 13:30:03,194 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$105189 pnl=5.19%
+2026-09-10 14:00:05,168 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103737 pnl=3.74%
+2026-09-10 14:30:04,694 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103787 pnl=3.79%
+2026-09-10 15:00:04,895 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103835 pnl=3.83%
+2026-09-10 15:30:05,111 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103360 pnl=3.36%
+2026-09-10 16:00:04,998 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103213 pnl=3.21%
+2026-09-10 16:30:04,307 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103175 pnl=3.17%
+2026-09-10 17:00:05,019 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103190 pnl=3.19%
+2026-09-10 17:30:04,243 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102987 pnl=2.99%
+2026-09-10 18:00:04,570 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102832 pnl=2.83%
+2026-09-10 18:30:04,561 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102662 pnl=2.66%
+2026-09-10 19:00:04,718 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102687 pnl=2.69%
+2026-09-10 19:30:04,257 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102502 pnl=2.50%
+2026-09-10 20:00:04,782 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102326 pnl=2.33%
+2026-09-10 20:30:04,694 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102366 pnl=2.37%
+2026-09-10 20:40:35,203 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=100% eventos=9
+2026-09-10 20:45:02,767 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102366 pnl=2.37%
+2026-09-11 13:00:03,202 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102366 pnl=2.37%
+2026-09-11 13:30:02,755 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102560 pnl=2.56%
+2026-09-11 14:00:04,575 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$103162 pnl=3.16%
+2026-09-11 14:30:04,657 [INFO] backend.seleccion.jobs: paper_snapshot — equity=$102162 pnl=2.16%
+2026-09-11 14:37:59,614 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=0 pm=sí
+2026-09-11 14:37:59,615 [INFO] backend.seleccion.jobs: paper_ciclo — evento fuerte en ['MP'] → re-juicio PM ad-hoc
+2026-09-11 14:37:59,616 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no
+2026-09-11 14:37:59,616 [INFO] backend.seleccion.jobs: paper_ciclo — compras=0 topeos=0 ventas=0 recortes=0 invertido=0% eventos=1 pm=no

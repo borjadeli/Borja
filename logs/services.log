@@ -5271,3 +5271,7 @@
 2026-09-07 17:07:10,176 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=49.11s tokens=61913/3027 searches=4/5 cost=$1.1957 json_ok=True
 2026-09-09 14:54:21,390 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CLS&region=US&lang=en-US) fallo: HTTP Error 502: 
 2026-09-09 14:54:22,792 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVMI&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-09-09 18:54:12,745 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=AVAV&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-09-09 18:54:47,106 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CHPT&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-09-09 22:54:43,329 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=WKHS&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-09-09 22:54:45,237 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=EVTL&region=US&lang=en-US) fallo: HTTP Error 502: 

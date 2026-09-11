@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Juicio · PM{% endblock %}
+{% block heading %}Canal de juicio · el PM dentro del cap{% endblock %}
+
+{% block content %}
+<div class="space-y-6" style="font-variant-numeric: tabular-nums;">
+
+  <!-- meta -->
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+    <span>{{ decisiones|length }} decisiones</span>
+    <span class="text-slate-300">·</span>
+    <span>promos <span class="font-semibold text-navy-900">{{ promos_usadas }}/{{ presupuesto }}</span></span>
+    <span class="text-slate-300">·</span>
+    <span>prompt <span class="font-semibold text-navy-900">{{ prompt_version or '—' }}</span></span>
+    <span class="text-slate-300">·</span>
+    <span>generado {{ (fecha or '—')[:19].replace('T', ' ') }} UTC</span>
+    <span class="text-slate-300">·</span>
+    <span class="text-slate-400">job <code>paper_pm</code> (dom 19:30 + evento) · manual <code>python -m ops.correr_pm</code></span>
+  </div>
+
+  <!-- tesis -->
+  <div class="bb-card px-5 py-4 border-l-4 border-sky-600">
+    <p class="text-sm text-navy-900 leading-relaxed max-w-3xl">
+      El PM-LLM emite <span class="font-semibold">solo una etiqueta</span> — nunca un número. El determinismo pone
+      el <span class="font-semibold">techo</span> (cap sobre lo demostrado) y el <span class="font-semibold">veto</span>
+      de supervivencia; el juicio elige el tamaño <span class="font-semibold text-sky-700">dentro</span> de la banda.
+      Toda <span class="font-semibold">promoción</span> consume presupuesto y exige un <span class="font-semibold">falsador</span>
+      escrito. El hype no se censura en la entrada: lo contienen el techo + el presupuesto + el ledger de hit-rate.
+    </p>
+  </div>
+
+  {% macro etq_badge(e) %}
+    {% set c = {'PRIORITY_HIGH':'bg-emerald-100 text-emerald-700','PRIORITY_MEDIUM':'bg-emerald-50 text-emerald-600',
+                'PRIORITY_LOW':'bg-emerald-50 text-emerald-500','ADMIT_PROBE':'bg-violet-100 text-violet-700',
+                'PASS':'bg-slate-100 text-slate-500','HOLD':'bg-sky-50 text-sky-600',
+                'THESIS_BROKEN':'bg-rose-100 text-rose-700','VETO':'bg-rose-100 text-rose-700'} %}
+    <span class="inline-block text-[10px] font-semibold uppercase tracking-wide rounded px-2 py-0.5 {{ c.get(e, 'bg-slate-100 text-slate-500') }}">{{ e|replace('_',' ')|lower }}</span>
+  {% endmacro %}
+
+  {% if decisiones %}
+  <!-- DECISIONES -->
+  <div class="bb-card">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-baseline gap-3 flex-wrap">
+      <h2 class="font-serif text-base font-semibold text-navy-900">Decisiones del PM · etiqueta → tamaño dentro del cap</h2>
+      <span class="text-[11px] text-slate-500">ordenado por tamaño · la promoción exige falsador escrito</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[820px]">
+        <thead>
+          <tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
+            <th class="text-left font-semibold px-5 py-2">Ticker</th>
+            <th class="text-left font-semibold py-2">Etiqueta</th>
+            <th class="text-left font-semibold py-2 pl-4 border-l border-slate-100" title="tamaño elegido dentro de la banda [base, techo]">Tamaño · banda</th>
+            <th class="text-left font-semibold py-2 pl-4 border-l border-slate-100">Falsador (qué la rompe · antes de)</th>
+            <th class="text-right font-semibold py-2 pr-5" title="búsquedas web usadas (traza de costo/auditoría)">web</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in decisiones %}
+          <tr class="border-b border-slate-50 hover:bg-slate-50/60 align-top"
+              {% if d.bull or d.bear %}title="BULL: {{ d.bull }}&#10;BEAR: {{ d.bear }}"{% endif %}>
+            <td class="px-5 py-3">
+              <span class="inline-flex items-center gap-2">
+                <span class="w-1 h-5 rounded {% if d.promovido %}bg-emerald-600{% elif d.etiqueta in ('VETO','THESIS_BROKEN') %}bg-rose-500{% else %}bg-slate-300{% endif %}"></span>
+                <span class="font-mono font-semibold text-navy-900">{{ d.ticker }}</span>
+                {% if not d.valido %}<span class="text-[9px] text-amber-600 uppercase" title="{{ d.flags|join('; ') }}">⚠ fallback</span>{% endif %}
+              </span>
+            </td>
+            <td class="py-3">{{ etq_badge(d.etiqueta) }}</td>
+            <td class="py-3 pl-4 border-l border-slate-50">
+              <span class="inline-flex items-center gap-2">
+                <span class="font-mono font-bold text-[14px] {% if d.promovido %}text-emerald-700{% elif d.size_final <= 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+                  {% if d.size_final <= 0 %}—{% else %}{{ '%.1f'|format(d.size_final*100) }} %{% endif %}
+                </span>
+                <span class="relative w-16 h-1.5 rounded bg-slate-100 overflow-hidden" title="banda [{{ '%.0f'|format(d.base*100) }}%, {{ '%.0f'|format(d.techo*100) }}%]">
+                  {% if d.techo > 0 %}
+                  <span class="absolute inset-y-0 bg-sky-200 rounded" style="left: {{ (d.base/d.techo*100)|round|int }}%; right: 0;"></span>
+                  <span class="absolute inset-y-0 left-0 bg-sky-600 rounded" style="width: {{ (d.size_final/d.techo*100)|round|int if d.techo else 0 }}%"></span>
+                  {% endif %}
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">/{{ '%.0f'|format(d.techo*100) }}%</span>
+              </span>
+            </td>
+            <td class="py-3 pl-4 border-l border-slate-50 max-w-md">
+              {% if d.falsador %}
+                <div class="text-[12px] text-slate-600 leading-snug">{{ d.falsador }}</div>
+                {% if d.fecha_falsador %}<div class="text-[10px] text-slate-400 font-mono mt-0.5">antes de {{ d.fecha_falsador }}</div>{% endif %}
+              {% else %}
+                <span class="text-slate-300 text-[12px]">— sin falsador (no promueve)</span>
+              {% endif %}
+            </td>
+            <td class="text-right py-3 pr-5 font-mono text-slate-500">{{ d.web_searches or 0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="px-5 py-3 border-t border-slate-100 text-[12px] text-slate-500 leading-relaxed">
+      <span class="font-semibold text-slate-600">Cómo leerlo.</span>
+      La barra muestra el tamaño elegido sobre la banda <span class="font-mono">[base, techo]</span>: el celeste claro es
+      el tramo que el PM puede ganar con convicción, el celeste fuerte es lo que asignó. <span class="font-semibold">VETO</span>
+      y <span class="font-semibold">THESIS_BROKEN</span> van a 0. Pasá el cursor sobre la fila para ver el bull/bear.
+      El juicio es auditable: reconstruís qué se supo, el falsador y por qué esa etiqueta — no la reproducibilidad de la opinión.
+    </div>
+  </div>
+  {% else %}
+  <!-- vacío -->
+  <div class="bb-card px-6 py-10 text-center">
+    <div class="text-slate-400 text-sm mb-2">El PM todavía no corrió.</div>
+    <p class="text-[13px] text-slate-500 max-w-lg mx-auto leading-relaxed">
+      El canal de juicio produce <code>libro_pm.json</code> con el job <code>paper_pm</code> (domingo 19:30 ET, tras la
+      re-extracción) o a mano con <code>python -m ops.correr_pm</code>. Hasta entonces el ciclo del paper sizea por
+      mérito (fallback determinista).
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

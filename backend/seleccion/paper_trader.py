@@ -160,7 +160,7 @@ def eventos_red_flags(tickers: list[str]) -> dict:
     """
     if not tickers:
         return {}
-    from backend.agents.capital_raise_risk import calcular_crr_ticker
+    from backend.nucleo.capital_raise_risk import calcular_crr_ticker
     from backend.database import session_scope
     from backend.models import Ficha
 

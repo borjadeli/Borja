@@ -20647,3 +20647,1090 @@ sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked
 2026-09-11 14:54:52,594 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1166 ticker=AAPL tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
 2026-09-11 14:54:52,598 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1167 ticker=AI tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
 2026-09-11 14:54:52,598 [INFO] backend.agents.dispatcher: dispatcher — procesados=2 por_destino={'DESCARTADO': 2}
+2026-09-11 15:00:00,003 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 15:00:01,440 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 15:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 15:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-11 15:15:00,281 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4436
+2026-09-11 15:15:00,282 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4436 ticker=NABL accion=mantener (modo paper)
+2026-09-11 15:15:00,416 [INFO] backend.agents.recomendacion_runner: REC 4436 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-11 15:15:00,427 [INFO] backend.agents.decision_journal: decision_journal — id=4233 accion=mantener ticker=NABL decisor=humano
+2026-09-11 15:15:00,676 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4437
+2026-09-11 15:15:00,676 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4437 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-11 15:15:00,886 [INFO] backend.agents.recomendacion_runner: REC 4437 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 15:15:00,890 [INFO] backend.agents.decision_journal: decision_journal — id=4234 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-11 15:15:01,107 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4438
+2026-09-11 15:15:01,108 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4438 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-11 15:15:01,305 [INFO] backend.agents.recomendacion_runner: REC 4438 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 15:15:01,309 [INFO] backend.agents.decision_journal: decision_journal — id=4235 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-11 15:15:01,484 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4439
+2026-09-11 15:15:01,485 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4439 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-11 15:15:01,620 [INFO] backend.agents.recomendacion_runner: REC 4439 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 15:15:01,624 [INFO] backend.agents.decision_journal: decision_journal — id=4236 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-11 15:15:01,999 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4440
+2026-09-11 15:15:02,000 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4440 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-11 15:15:02,338 [INFO] backend.agents.recomendacion_runner: REC 4440 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 15:15:02,342 [INFO] backend.agents.decision_journal: decision_journal — id=4237 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-11 15:15:02,524 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4441
+2026-09-11 15:15:02,525 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4441 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-11 15:15:02,689 [INFO] backend.agents.recomendacion_runner: REC 4441 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 15:15:02,693 [INFO] backend.agents.decision_journal: decision_journal — id=4238 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-11 15:15:02,693 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-11 15:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 15:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 15:30:01,582 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 15:30:05,192 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=1
+2026-09-11 15:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1168 ticker=QLYS tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-11 15:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-11 15:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 16:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 16:00:01,660 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 16:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 16:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-11 16:15:00,321 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4442
+2026-09-11 16:15:00,322 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4442 ticker=NABL accion=mantener (modo paper)
+2026-09-11 16:15:00,473 [INFO] backend.agents.recomendacion_runner: REC 4442 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-11 16:15:00,477 [INFO] backend.agents.decision_journal: decision_journal — id=4239 accion=mantener ticker=NABL decisor=humano
+2026-09-11 16:15:00,724 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4443
+2026-09-11 16:15:00,726 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4443 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-11 16:15:01,009 [INFO] backend.agents.recomendacion_runner: REC 4443 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 16:15:01,013 [INFO] backend.agents.decision_journal: decision_journal — id=4240 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-11 16:15:01,227 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4444
+2026-09-11 16:15:01,228 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4444 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-11 16:15:01,431 [INFO] backend.agents.recomendacion_runner: REC 4444 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 16:15:01,434 [INFO] backend.agents.decision_journal: decision_journal — id=4241 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-11 16:15:01,615 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4445
+2026-09-11 16:15:01,616 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4445 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-11 16:15:01,765 [INFO] backend.agents.recomendacion_runner: REC 4445 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 16:15:01,769 [INFO] backend.agents.decision_journal: decision_journal — id=4242 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-11 16:15:01,998 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4446
+2026-09-11 16:15:01,999 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4446 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-11 16:15:02,243 [INFO] backend.agents.recomendacion_runner: REC 4446 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 16:15:02,246 [INFO] backend.agents.decision_journal: decision_journal — id=4243 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-11 16:15:02,490 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4447
+2026-09-11 16:15:02,491 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4447 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-11 16:15:02,636 [INFO] backend.agents.recomendacion_runner: REC 4447 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 16:15:02,640 [INFO] backend.agents.decision_journal: decision_journal — id=4244 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-11 16:15:02,640 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-11 16:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 16:30:00,003 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 16:30:01,311 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 16:30:05,707 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=1
+2026-09-11 16:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 16:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 17:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 17:00:01,957 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 17:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 17:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-11 17:15:00,272 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4448
+2026-09-11 17:15:00,273 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4448 ticker=NABL accion=mantener (modo paper)
+2026-09-11 17:15:00,404 [INFO] backend.agents.recomendacion_runner: REC 4448 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-11 17:15:00,409 [INFO] backend.agents.decision_journal: decision_journal — id=4245 accion=mantener ticker=NABL decisor=humano
+2026-09-11 17:15:00,700 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4449
+2026-09-11 17:15:00,701 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4449 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-11 17:15:00,865 [INFO] backend.agents.recomendacion_runner: REC 4449 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 17:15:00,869 [INFO] backend.agents.decision_journal: decision_journal — id=4246 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-11 17:15:01,143 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4450
+2026-09-11 17:15:01,144 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4450 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-11 17:15:01,291 [INFO] backend.agents.recomendacion_runner: REC 4450 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 17:15:01,295 [INFO] backend.agents.decision_journal: decision_journal — id=4247 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-11 17:15:01,627 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4451
+2026-09-11 17:15:01,627 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4451 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-11 17:15:01,778 [INFO] backend.agents.recomendacion_runner: REC 4451 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 17:15:01,782 [INFO] backend.agents.decision_journal: decision_journal — id=4248 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-11 17:15:01,972 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4452
+2026-09-11 17:15:01,973 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4452 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-11 17:15:02,129 [INFO] backend.agents.recomendacion_runner: REC 4452 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 17:15:02,132 [INFO] backend.agents.decision_journal: decision_journal — id=4249 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-11 17:15:02,319 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4453
+2026-09-11 17:15:02,321 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4453 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-11 17:15:02,453 [INFO] backend.agents.recomendacion_runner: REC 4453 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 17:15:02,457 [INFO] backend.agents.decision_journal: decision_journal — id=4250 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-11 17:15:02,457 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-11 17:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 17:30:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 17:30:01,315 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 17:30:05,408 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=1
+2026-09-11 17:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 17:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 18:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 18:00:01,830 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 18:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 18:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-11 18:15:00,314 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4454
+2026-09-11 18:15:00,315 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4454 ticker=NABL accion=mantener (modo paper)
+2026-09-11 18:15:00,500 [INFO] backend.agents.recomendacion_runner: REC 4454 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-11 18:15:00,504 [INFO] backend.agents.decision_journal: decision_journal — id=4251 accion=mantener ticker=NABL decisor=humano
+2026-09-11 18:15:00,785 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4455
+2026-09-11 18:15:00,786 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4455 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-11 18:15:00,936 [INFO] backend.agents.recomendacion_runner: REC 4455 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 18:15:00,940 [INFO] backend.agents.decision_journal: decision_journal — id=4252 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-11 18:15:01,148 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4456
+2026-09-11 18:15:01,149 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4456 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-11 18:15:01,289 [INFO] backend.agents.recomendacion_runner: REC 4456 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 18:15:01,292 [INFO] backend.agents.decision_journal: decision_journal — id=4253 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-11 18:15:01,602 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4457
+2026-09-11 18:15:01,604 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4457 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-11 18:15:01,888 [INFO] backend.agents.recomendacion_runner: REC 4457 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 18:15:01,893 [INFO] backend.agents.decision_journal: decision_journal — id=4254 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-11 18:15:02,242 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4458
+2026-09-11 18:15:02,243 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4458 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-11 18:15:02,423 [INFO] backend.agents.recomendacion_runner: REC 4458 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 18:15:02,426 [INFO] backend.agents.decision_journal: decision_journal — id=4255 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-11 18:15:02,629 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4459
+2026-09-11 18:15:02,630 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4459 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-11 18:15:02,772 [INFO] backend.agents.recomendacion_runner: REC 4459 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 18:15:02,776 [INFO] backend.agents.decision_journal: decision_journal — id=4256 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-11 18:15:02,776 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-11 18:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 18:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 18:30:01,886 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 18:30:06,262 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=1
+2026-09-11 18:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 18:54:50,231 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=3
+2026-09-11 18:54:50,236 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1169 ticker=OKLO tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-11 18:54:50,237 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-11 19:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 19:00:02,761 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 19:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 19:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-11 19:15:00,282 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4460
+2026-09-11 19:15:00,283 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4460 ticker=NABL accion=mantener (modo paper)
+2026-09-11 19:15:00,514 [INFO] backend.agents.recomendacion_runner: REC 4460 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-11 19:15:00,517 [INFO] backend.agents.decision_journal: decision_journal — id=4257 accion=mantener ticker=NABL decisor=humano
+2026-09-11 19:15:00,767 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4461
+2026-09-11 19:15:00,768 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4461 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-11 19:15:01,012 [INFO] backend.agents.recomendacion_runner: REC 4461 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 19:15:01,016 [INFO] backend.agents.decision_journal: decision_journal — id=4258 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-11 19:15:01,225 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4462
+2026-09-11 19:15:01,227 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4462 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-11 19:15:01,396 [INFO] backend.agents.recomendacion_runner: REC 4462 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 19:15:01,399 [INFO] backend.agents.decision_journal: decision_journal — id=4259 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-11 19:15:01,655 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4463
+2026-09-11 19:15:01,656 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4463 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-11 19:15:01,836 [INFO] backend.agents.recomendacion_runner: REC 4463 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 19:15:01,839 [INFO] backend.agents.decision_journal: decision_journal — id=4260 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-11 19:15:02,103 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4464
+2026-09-11 19:15:02,103 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4464 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-11 19:15:02,263 [INFO] backend.agents.recomendacion_runner: REC 4464 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 19:15:02,266 [INFO] backend.agents.decision_journal: decision_journal — id=4261 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-11 19:15:02,479 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4465
+2026-09-11 19:15:02,480 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4465 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-11 19:15:02,680 [INFO] backend.agents.recomendacion_runner: REC 4465 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 19:15:02,683 [INFO] backend.agents.decision_journal: decision_journal — id=4262 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-11 19:15:02,683 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-11 19:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 19:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 19:30:01,304 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 19:30:04,981 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=1
+2026-09-11 19:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 19:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 20:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 20:00:01,545 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 20:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 20:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-11 20:15:00,416 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4466
+2026-09-11 20:15:00,417 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4466 ticker=NABL accion=mantener (modo paper)
+2026-09-11 20:15:00,598 [INFO] backend.agents.recomendacion_runner: REC 4466 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-11 20:15:00,602 [INFO] backend.agents.decision_journal: decision_journal — id=4263 accion=mantener ticker=NABL decisor=humano
+2026-09-11 20:15:00,839 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4467
+2026-09-11 20:15:00,840 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4467 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-11 20:15:01,096 [INFO] backend.agents.recomendacion_runner: REC 4467 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 20:15:01,100 [INFO] backend.agents.decision_journal: decision_journal — id=4264 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-11 20:15:01,401 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4468
+2026-09-11 20:15:01,402 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4468 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-11 20:15:01,601 [INFO] backend.agents.recomendacion_runner: REC 4468 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 20:15:01,605 [INFO] backend.agents.decision_journal: decision_journal — id=4265 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-11 20:15:01,948 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4469
+2026-09-11 20:15:01,949 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4469 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-11 20:15:02,186 [INFO] backend.agents.recomendacion_runner: REC 4469 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 20:15:02,190 [INFO] backend.agents.decision_journal: decision_journal — id=4266 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-11 20:15:02,514 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4470
+2026-09-11 20:15:02,515 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4470 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-11 20:15:02,670 [INFO] backend.agents.recomendacion_runner: REC 4470 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 20:15:02,673 [INFO] backend.agents.decision_journal: decision_journal — id=4267 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-11 20:15:02,985 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4471
+2026-09-11 20:15:02,986 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4471 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-11 20:15:03,115 [INFO] backend.agents.recomendacion_runner: REC 4471 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-11 20:15:03,119 [INFO] backend.agents.decision_journal: decision_journal — id=4268 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-11 20:15:03,119 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-11 20:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 20:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-11 20:30:01,532 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-11 20:30:04,571 [INFO] backend.agents.portfolio_snapshot: portfolio_snapshot — fecha=2026-09-11 equity=114661.83 pnl_total=14661.83 pnl_dia=0.00 n=1
+2026-09-11 20:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 20:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 21:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 21:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 21:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 21:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 22:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 22:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 22:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 22:54:48,590 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=3
+2026-09-11 22:54:48,594 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1170 ticker=GOOG tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-11 22:54:48,594 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-11 23:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 23:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 23:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-11 23:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 00:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 00:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 00:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 00:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 01:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 01:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 01:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 01:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 02:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 02:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 02:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 02:54:47,904 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=2
+2026-09-12 02:54:47,905 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 03:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 03:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 03:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 03:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 04:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 04:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 04:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 04:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 05:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 05:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 05:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 05:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 06:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 06:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 06:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 06:54:45,718 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=3
+2026-09-12 06:54:45,720 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 07:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 07:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 07:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 07:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 08:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 08:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 08:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 08:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 09:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 09:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 09:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 09:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 10:00:06,616 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CeyMGvWGXW6aep9f2Kus5'}
+2026-09-12 10:00:06,619 [INFO] backend.agents.script_nocturno: script_nocturno — regenerados=0 omitidos_aprobados=0 errores=1
+2026-09-12 10:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 10:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 10:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 10:54:46,006 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=3
+2026-09-12 10:54:46,011 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1171 ticker=LCID tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-12 10:54:46,011 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-12 11:00:00,609 [INFO] backend.agents.research: monitor_earnings — creados=0
+2026-09-12 11:05:00,010 [INFO] backend.agents.research: monitor_form4 — creados=0
+2026-09-12 11:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 11:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 11:30:00,002 [INFO] backend.agents.revalidacion: revalidacion — creadas=0 saltadas=1
+2026-09-12 11:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 11:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 12:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 12:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 12:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 12:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 13:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 13:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 13:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 13:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 14:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 14:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 14:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 14:54:50,495 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-12 14:54:50,497 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 15:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 15:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 15:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 15:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 16:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 16:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 16:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 16:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 17:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 17:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 17:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 17:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 18:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 18:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 18:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 18:54:48,413 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-12 18:54:48,415 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 19:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 19:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 19:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 19:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 20:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 20:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 20:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 20:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 21:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 21:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 21:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 21:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 22:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 22:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 22:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 22:54:49,526 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-12 22:54:49,529 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 23:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 23:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 23:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-12 23:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 00:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 00:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 00:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 00:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 01:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 01:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 01:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 01:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 02:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 02:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 02:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 02:54:52,742 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=0
+2026-09-13 02:54:52,745 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 03:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 03:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 03:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 03:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 04:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 04:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 04:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 04:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 05:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 05:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 05:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 05:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 06:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 06:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 06:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 06:54:49,086 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=0
+2026-09-13 06:54:49,088 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 07:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 07:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 07:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 07:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 08:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 08:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 08:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 08:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 09:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 09:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 09:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 09:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 10:00:06,550 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en (sin asignar)
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf1F5qKUThU1FChYtUgHc'}
+2026-09-13 10:00:12,992 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf1F6JrS7Ghjs3LLhPLZh'}
+2026-09-13 10:00:19,431 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Cooling + thermal management
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf1F6nKvaEaP4espw9b1y'}
+2026-09-13 10:00:25,898 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Fotónica + conectividad
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf1F7Ft7x1viREBQys9CE'}
+2026-09-13 10:00:32,317 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Semicap + advanced packaging
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf1F7jZG7NNqjDqWRDViM'}
+2026-09-13 10:00:32,318 [INFO] backend.agents.script_nocturno: script_nocturno — regenerados=0 omitidos_aprobados=0 errores=5
+2026-09-13 10:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 10:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 10:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 10:54:48,719 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=0
+2026-09-13 10:54:48,721 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 11:00:00,818 [INFO] backend.agents.research: monitor_earnings — creados=0
+2026-09-13 11:05:00,007 [INFO] backend.agents.research: monitor_form4 — creados=0
+2026-09-13 11:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 11:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 11:30:00,003 [INFO] backend.agents.revalidacion: revalidacion — creadas=0 saltadas=1
+2026-09-13 11:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 11:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 12:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 12:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 12:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 12:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 13:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 13:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 13:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 13:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 14:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 14:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 14:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 14:54:48,516 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=0
+2026-09-13 14:54:48,521 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1172 ticker=BWXT tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-13 14:54:48,521 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-13 15:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 15:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 15:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 15:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 16:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 16:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 16:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 16:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 17:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 17:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 17:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 17:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 18:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 18:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 18:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 18:54:49,351 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-13 18:54:49,353 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 19:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 19:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 19:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 19:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 20:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 20:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 20:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 20:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 21:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 21:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 21:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 21:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 22:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 22:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 22:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 22:54:48,439 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-13 22:54:48,441 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 23:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 23:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 23:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-13 23:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 00:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 00:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 00:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 00:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 01:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 01:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 01:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 01:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 02:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 02:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 02:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 02:54:47,491 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-14 02:54:47,493 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 03:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 03:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 03:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 03:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 04:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 04:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 04:39:05,550 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 04:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 05:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 05:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 05:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 05:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 06:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 06:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 06:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 06:54:45,999 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=2
+2026-09-14 06:54:46,001 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 07:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 07:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 07:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 07:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 08:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 08:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 08:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 08:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 09:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 09:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 09:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 09:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 10:00:06,628 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en (sin asignar)
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf38tkjQCf28XJUoTC1VT'}
+2026-09-14 10:00:13,131 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf38uEV1FpJQCU7pYtyjA'}
+2026-09-14 10:00:19,640 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Cooling + thermal management
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf38uiNYWQWThyHcpS62b'}
+2026-09-14 10:00:26,055 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Fotónica + conectividad
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf38vBpYToC5uCQahp6qC'}
+2026-09-14 10:00:32,550 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Semicap + advanced packaging
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf38vfVgs57bxDzBwyepN'}
+2026-09-14 10:00:32,552 [INFO] backend.agents.script_nocturno: script_nocturno — regenerados=0 omitidos_aprobados=0 errores=5
+2026-09-14 10:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 10:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 10:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 10:54:47,363 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=2
+2026-09-14 10:54:47,368 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1173 ticker=AI tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-14 10:54:47,369 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-14 11:00:00,659 [INFO] backend.agents.research: monitor_earnings — creados=0
+2026-09-14 11:05:00,015 [INFO] backend.agents.research: monitor_form4 — creados=0
+2026-09-14 11:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 11:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 11:30:00,003 [INFO] backend.agents.revalidacion: revalidacion — creadas=0 saltadas=1
+2026-09-14 11:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 11:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 12:00:02,232 [INFO] backend.agents.reporte_semanal: reporte_semanal generado — semana=2026-W38 estado=atención requerida
+2026-09-14 12:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 12:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 12:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 12:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 13:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 13:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 13:30:04,131 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=0
+2026-09-14 13:39:05,553 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1174 ticker=QLYS tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-14 13:39:05,553 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-14 13:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 14:00:00,003 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 14:00:02,447 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 14:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 14:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 14:15:00,323 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4472
+2026-09-14 14:15:00,324 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4472 ticker=NABL accion=mantener (modo paper)
+2026-09-14 14:15:00,594 [INFO] backend.agents.recomendacion_runner: REC 4472 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 14:15:00,597 [INFO] backend.agents.decision_journal: decision_journal — id=4269 accion=mantener ticker=NABL decisor=humano
+2026-09-14 14:15:00,869 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4473
+2026-09-14 14:15:00,870 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4473 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 14:15:01,033 [INFO] backend.agents.recomendacion_runner: REC 4473 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 14:15:01,036 [INFO] backend.agents.decision_journal: decision_journal — id=4270 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 14:15:01,237 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4474
+2026-09-14 14:15:01,238 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4474 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 14:15:01,374 [INFO] backend.agents.recomendacion_runner: REC 4474 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 14:15:01,378 [INFO] backend.agents.decision_journal: decision_journal — id=4271 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 14:15:01,664 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4475
+2026-09-14 14:15:01,664 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4475 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 14:15:01,843 [INFO] backend.agents.recomendacion_runner: REC 4475 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 14:15:01,847 [INFO] backend.agents.decision_journal: decision_journal — id=4272 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 14:15:02,134 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4476
+2026-09-14 14:15:02,135 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4476 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 14:15:02,574 [INFO] backend.agents.recomendacion_runner: REC 4476 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 14:15:02,578 [INFO] backend.agents.decision_journal: decision_journal — id=4273 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 14:15:02,831 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4477
+2026-09-14 14:15:02,832 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4477 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 14:15:02,980 [INFO] backend.agents.recomendacion_runner: REC 4477 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 14:15:02,984 [INFO] backend.agents.decision_journal: decision_journal — id=4274 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 14:15:02,985 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 14:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 14:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 14:30:01,423 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 14:30:05,419 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=1
+2026-09-14 14:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1175 ticker=CVLT tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-14 14:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-14 14:54:49,887 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=1
+2026-09-14 14:54:49,892 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1176 ticker=GOOG tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-14 14:54:49,892 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-14 15:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 15:00:01,581 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0

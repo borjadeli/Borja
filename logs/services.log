@@ -5275,3 +5275,4 @@
 2026-09-09 18:54:47,106 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CHPT&region=US&lang=en-US) fallo: HTTP Error 502: 
 2026-09-09 22:54:43,329 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=WKHS&region=US&lang=en-US) fallo: HTTP Error 502: 
 2026-09-09 22:54:45,237 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=EVTL&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-09-14 12:00:02,231 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'

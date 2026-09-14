@@ -181,6 +181,12 @@ def get_price_history(ticker: str, period: str = "1y") -> list[dict[str, Any]]:
         return []
 
 
+def historico_diario(ticker: str, period: str = "3mo") -> dict:
+    """{date: close} para un ticker — reshape de get_price_history (usado por el MtM del paper vs SPY)."""
+    rows = get_price_history(ticker, period=period)
+    return {row["date"].date(): float(row["close"]) for row in rows if row.get("close")}
+
+
 def check_liquidity(ticker: str, umbral_usd: float = 1_000_000) -> dict[str, Any]:
     """Liquidez — volumen diario >$1M según doc 01 sec. 6."""
     snap = get_price_snapshot(ticker)

@@ -82,7 +82,7 @@ def registrar_snapshot(libro, mtm: dict, fecha: str, spy: float | None = None) -
 def _backfill_spy(snapshots: list) -> None:
     """Rellena el precio de SPY en snapshots que no lo tengan (vía histórico)."""
     from datetime import date, timedelta
-    from backend.agents.equity_curve import _historico_diario
+    from backend.services.market_data import historico_diario as _historico_diario
     faltan = [s for s in snapshots if s.get("spy") is None]
     if not faltan:
         return
@@ -121,7 +121,7 @@ def curva_vs_spy(snapshots: list) -> dict:
 
 
 def _precio_actual(ticker: str) -> float | None:
-    from backend.agents.equity_curve import _historico_diario
+    from backend.services.market_data import historico_diario as _historico_diario
     from backend.services import market_data
     snap = market_data.get_price_snapshot(ticker)
     if snap and snap.precio_actual:

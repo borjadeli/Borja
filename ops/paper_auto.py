@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from backend.nucleo.shadow import _tickers_vivos
+from backend.seleccion.universo import tickers_vivos as _tickers_vivos
 from backend.seleccion import paper_trader as pt
 
 

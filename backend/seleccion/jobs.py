@@ -30,7 +30,7 @@ def job_paper_pm(tickers: list[str] | None = None, *, merge: bool = False) -> di
     from backend.seleccion import pm_run
     from backend.seleccion.paper_trader import _hoy
     if tickers is None:
-        from backend.nucleo.shadow import _tickers_vivos
+        from backend.seleccion.universo import tickers_vivos as _tickers_vivos
         tickers = _tickers_vivos()
     if not tickers:
         return {"n": 0}
@@ -45,7 +45,7 @@ def job_paper_pm(tickers: list[str] | None = None, *, merge: bool = False) -> di
 
 def job_paper_ciclo() -> dict:
     """Ciclo de trading automático en paper (salida + entrada). Sin LLM, SALVO disparo por evento fuerte."""
-    from backend.nucleo.shadow import _tickers_vivos
+    from backend.seleccion.universo import tickers_vivos as _tickers_vivos
     from backend.seleccion import paper_trader as pt
     from backend.seleccion import pm_run
     tickers = _tickers_vivos()
@@ -82,5 +82,5 @@ def job_paper_snapshot() -> dict | None:
 def job_paper_reextraccion() -> dict:
     """Re-extracción semanal de hechos con LLM (refresca bull/bear/gate). Costoso."""
     from backend.nucleo.extractor import reextraer_a_cache
-    from backend.nucleo.shadow import _tickers_vivos
+    from backend.seleccion.universo import tickers_vivos as _tickers_vivos
     return reextraer_a_cache(_tickers_vivos())

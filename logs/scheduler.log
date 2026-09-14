@@ -19274,3 +19274,6 @@ sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) FOREIGN KEY constraint f
 2026-09-14 15:00:01,581 [INFO] backend.scheduler: scheduler — mtm_intraday completado
 2026-09-14 15:00:01,581 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
 2026-09-14 15:00:04,464 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 15:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 15:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 15:09:40,764 [INFO] backend.scheduler: scheduler — 6 jobs registrados

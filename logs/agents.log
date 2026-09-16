@@ -23027,3 +23027,4 @@ anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type':
 2026-09-16 18:15:03,464 [INFO] backend.agents.recomendacion_runner: REC 4585 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
 2026-09-16 18:15:03,467 [INFO] backend.agents.decision_journal: decision_journal — id=4382 accion=wl_prioritaria ticker=CVLT decisor=humano
 2026-09-16 18:15:03,467 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-16 18:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}

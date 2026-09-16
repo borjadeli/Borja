@@ -374,31 +374,6 @@ def eventos_view(request: Request, estado: str = "pendiente", tipo: str = "", ti
 
 # ---------- Discovery ----------
 
-@router.get("/backtest", response_class=HTMLResponse)
-def backtest_view(request: Request, mock: bool | None = None):
-    from backend.backtesting.report import render_report_html
-    from backend.backtesting.runner import load_latest_report
-
-    latest_mock = load_latest_report(mock=True)
-    latest_real = load_latest_report(mock=False)
-
-    # Preferir real si existe, sino mock, según param
-    if mock is True:
-        activo = latest_mock
-    elif mock is False:
-        activo = latest_real
-    else:
-        activo = latest_real or latest_mock
-
-    report_html = render_report_html(activo) if activo else None
-    ctx = _common_context(request, active="backtest")
-    ctx.update({
-        "latest_mock": latest_mock,
-        "latest_real": latest_real,
-        "activo": activo,
-        "report_html": report_html,
-    })
-    return templates.TemplateResponse("backtest.html", ctx)
 
 
 @router.get("/costos", response_class=HTMLResponse)

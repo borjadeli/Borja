@@ -20073,3 +20073,5 @@ sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) FOREIGN KEY constraint f
 2026-09-16 18:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
 2026-09-16 18:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
 2026-09-16 18:15:03,468 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-16 18:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 18:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado

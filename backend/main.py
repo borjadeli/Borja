@@ -669,32 +669,6 @@ def scheduler_stop_endpoint() -> dict:
 
 
 
-# ===================================================================
-#  BACKTESTING  (Sprint 7 — gate go-live)
-# ===================================================================
-
-@app.post("/backtest/run")
-def backtest_run(mock: bool = True, tickers: str | None = None) -> dict:
-    """Corre el backtest. Por default mock (gratis); mock=false cuesta ~$3.50."""
-    from dataclasses import asdict
-    from backend.backtesting.runner import run_backtest
-
-    tickers_list = [t.strip() for t in tickers.split(",")] if tickers else None
-    report = run_backtest(mock=mock, tickers_filter=tickers_list, persistir=True)
-    data = asdict(report)
-    data["resultados"] = [asdict(r) for r in report.resultados]
-    return data
-
-
-@app.get("/api/backtest/latest")
-def backtest_latest(mock: bool | None = None) -> dict:
-    """Último reporte persistido. mock=None prefiere real."""
-    from backend.backtesting.runner import load_latest_report
-    r = load_latest_report(mock=mock)
-    if r is None:
-        raise HTTPException(status_code=404, detail="sin backtests previos")
-    return r
-
 
 # ===================================================================
 #  KILL SWITCH GLOBAL  (Tier 1 hardening)

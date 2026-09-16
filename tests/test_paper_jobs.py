@@ -8,7 +8,7 @@ _R = {"compras": [], "topeos": [], "ventas": [], "recortes": [],
 
 
 def test_ciclo_pasa_pm_libro_a_correr_ciclo(monkeypatch):
-    monkeypatch.setattr("backend.nucleo.shadow._tickers_vivos", lambda: ["RBRK"])
+    monkeypatch.setattr("backend.seleccion.universo.tickers_vivos", lambda: ["RBRK"])
     monkeypatch.setattr(pt, "evaluaciones_desde_cache", lambda tks: [])
     monkeypatch.setattr(pt, "cargar_libro", lambda: pt.LibroPaper())
     monkeypatch.setattr(pt, "eventos_red_flags", lambda tks: {})
@@ -21,7 +21,7 @@ def test_ciclo_pasa_pm_libro_a_correr_ciclo(monkeypatch):
 
 
 def test_evento_fuerte_dispara_re_juicio_pm(monkeypatch):
-    monkeypatch.setattr("backend.nucleo.shadow._tickers_vivos", lambda: [])
+    monkeypatch.setattr("backend.seleccion.universo.tickers_vivos", lambda: [])
     monkeypatch.setattr(pt, "evaluaciones_desde_cache", lambda tks: [])
     monkeypatch.setattr(pt, "cargar_libro", lambda: pt.LibroPaper(posiciones={"MP": {"sizing": 0.06}}))
     monkeypatch.setattr(pt, "eventos_red_flags", lambda tks: {"MP": {"crr_critico": True}})
@@ -35,7 +35,7 @@ def test_evento_fuerte_dispara_re_juicio_pm(monkeypatch):
 
 
 def test_sin_evento_no_dispara_pm(monkeypatch):
-    monkeypatch.setattr("backend.nucleo.shadow._tickers_vivos", lambda: [])
+    monkeypatch.setattr("backend.seleccion.universo.tickers_vivos", lambda: [])
     monkeypatch.setattr(pt, "evaluaciones_desde_cache", lambda tks: [])
     monkeypatch.setattr(pt, "cargar_libro", lambda: pt.LibroPaper(posiciones={"MP": {"sizing": 0.06}}))
     monkeypatch.setattr(pt, "eventos_red_flags", lambda tks: {"MP": {"soft_red_flags": 1}})  # 1 < umbral 3

@@ -71,3 +71,7 @@
 2026-09-13 04:00:00,044 [INFO] backend.ops.backup: backup — eliminados 2 backups antiguos (>30 días)
 2026-09-14 04:00:00,047 [INFO] backend.ops.backup: backup — creado borja_20260914T040000.db (6.85 MB)
 2026-09-14 04:00:00,049 [INFO] backend.ops.backup: backup — eliminados 1 backups antiguos (>30 días)
+2026-09-15 04:00:00,045 [INFO] backend.ops.backup: backup — creado borja_20260915T040000.db (6.89 MB)
+2026-09-15 04:00:00,047 [INFO] backend.ops.backup: backup — eliminados 1 backups antiguos (>30 días)
+2026-09-16 04:00:00,043 [INFO] backend.ops.backup: backup — creado borja_20260916T040000.db (6.94 MB)
+2026-09-16 04:00:00,046 [INFO] backend.ops.backup: backup — eliminados 1 backups antiguos (>30 días)

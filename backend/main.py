@@ -15,19 +15,6 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from backend.auth import AuthMiddleware
-from backend.agents import descubrimiento as descubrimiento_agent
-from backend.agents import discovery_hipotesis as discovery_agent
-from backend.agents import juez as juez_agent
-from backend.agents import mapa_sectorial as mapa_agent
-from backend.agents import research as research_agent
-from backend.agents.analista_runner import dispatch_analista, get_task
-from backend.agents.dispatcher import dispatch_evento, procesar_cola_eventos
-from backend.agents.recomendacion_runner import (
-    aprobar_recomendacion,
-    ejecutar_recomendacion,
-    rechazar_recomendacion,
-)
-from backend.agents.script_nocturno import correr_script_nocturno
 from backend.ui import router as ui_router
 from backend.config import get_settings
 from backend.database import init_db, session_scope
@@ -211,112 +198,6 @@ def _safe_ping(fn) -> bool:
         return False
 
 
-# ===================================================================
-#  AGENTE ANALISTA — endpoints async
-# ===================================================================
-
-@app.post("/analizar/{ticker}")
-def analizar_ticker(ticker: str, background_tasks: BackgroundTasks, dry_run: bool = False) -> dict:
-    """Dispara el Analista en background. Devuelve task_id para polling.
-
-    Query param opcional dry_run=true: no llama a Anthropic — útil para validar
-    que el contexto se arma bien sin gastar tokens.
-    """
-    ticker_upper = ticker.upper().strip()
-    with session_scope() as s:
-        ficha = s.query(Ficha).filter_by(ticker=ticker_upper).first()
-        if ficha is None:
-            raise HTTPException(status_code=404, detail=f"ticker {ticker_upper} no está en fichas — cargar vía intake primero")
-
-    task_id = dispatch_analista(ticker_upper, background_tasks, dry_run=dry_run)
-    return {
-        "task_id": task_id,
-        "ticker": ticker_upper,
-        "dry_run": dry_run,
-        "poll_url": f"/task/{task_id}",
-        "mensaje": "análisis encolado — consultar /task/{task_id} para estado",
-    }
-
-
-@app.get("/task/{task_id}")
-def get_task_status(task_id: str) -> dict:
-    """Estado de un task async (polling desde la UI)."""
-    task = get_task(task_id)
-    if task is None:
-        raise HTTPException(status_code=404, detail=f"task {task_id} no encontrado")
-    return task
-
-
-# ===================================================================
-#  AGENTES PORTFOLIO + JUEZ — endpoints de aprobación y monitoreo
-# ===================================================================
-
-@app.post("/portfolio/evaluar/{ticker}")
-def portfolio_evaluar(ticker: str) -> dict:
-    """Corre Portfolio+Juez manualmente sobre una ficha (fuera del pipeline del Analista).
-
-    Útil para reevaluar una posición ante cambio de precio o macro sin correr el Analista.
-    """
-    ticker_upper = ticker.upper().strip()
-    with session_scope() as s:
-        ficha = s.query(Ficha).filter_by(ticker=ticker_upper).first()
-        if ficha is None:
-            raise HTTPException(status_code=404, detail=f"ticker {ticker_upper} no existe")
-    return ejecutar_recomendacion(ticker_upper)
-
-
-@app.get("/recomendaciones")
-def list_recomendaciones(estado: str | None = "pendiente_aprobacion", ticker: str | None = None) -> dict:
-    """Lista recomendaciones. Por default solo las pendientes."""
-    with session_scope() as s:
-        q = s.query(Recomendacion)
-        if estado:
-            q = q.filter(Recomendacion.estado_aprobacion == estado)
-        if ticker:
-            q = q.filter(Recomendacion.ticker == ticker.upper())
-        rows = q.order_by(Recomendacion.timestamp_juez.desc()).limit(100).all()
-        result = [
-            {
-                "rec_id": r.id,
-                "ticker": r.ticker,
-                "accion": r.accion,
-                "estado_rec": r.estado_rec,
-                "motivo_cuestionada": r.motivo_cuestionada,
-                "sizing_sugerido": r.sizing_sugerido,
-                "capacidad_maxima_teorica": r.capacidad_maxima_teorica,
-                "asimetria_vigente": r.asimetria_vigente,
-                "momentum_sectorial_leido": r.momentum_sectorial_leido,
-                "umbral_rotacion_activo": r.umbral_rotacion_activo,
-                "reglas_verificadas": r.reglas_verificadas,
-                "checklist_completo": r.checklist_completo,
-                "checklist_detalle": r.checklist_json,
-                "contexto_macro": r.contexto_macro,
-                "nota_bucket": r.nota_bucket,
-                "justificacion": r.justificacion,
-                "estado_aprobacion": r.estado_aprobacion,
-                "timestamp_juez": r.timestamp_juez.isoformat() if r.timestamp_juez else None,
-                "timestamp_human": r.timestamp_human.isoformat() if r.timestamp_human else None,
-            }
-            for r in rows
-        ]
-    return {"total": len(result), "recomendaciones": result}
-
-
-@app.post("/aprobar/{rec_id}")
-def aprobar(rec_id: int, precio_entrada: float | None = None) -> dict:
-    """Aprueba una recomendación pendiente. Si es 'entrar'/'aumentar', aplica sizing y precio."""
-    try:
-        return aprobar_recomendacion(rec_id, precio_entrada=precio_entrada)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/rechazar/{rec_id}")
-def rechazar(rec_id: int, motivo: str | None = None) -> dict:
-    try:
-        return rechazar_recomendacion(rec_id, motivo=motivo)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 # v4.2 Enmienda C — Override manual de insider selling como red flag.
@@ -581,78 +462,6 @@ def create_ficha_contractual(ticker: str, payload: dict) -> dict:
     return result
 
 
-# --- Revalidación 30d (v4.2 sec 5) ---
-
-@app.get("/api/revalidaciones")
-def list_revalidaciones(estado: str | None = None, ticker: str | None = None) -> dict:
-    from backend.database import session_scope
-    from backend.models import Revalidacion
-    with session_scope() as s:
-        q = s.query(Revalidacion)
-        if estado:
-            q = q.filter_by(estado=estado)
-        if ticker:
-            q = q.filter_by(ticker=ticker.upper())
-        rows = q.order_by(Revalidacion.id.desc()).limit(100).all()
-        return {
-            "items": [
-                {
-                    "id": r.id,
-                    "ticker": r.ticker,
-                    "timestamp": r.timestamp.isoformat() if r.timestamp else None,
-                    "estado": r.estado,
-                    "fecha_respuesta": r.fecha_respuesta.isoformat() if r.fecha_respuesta else None,
-                    "p1_que_aprendi": r.p1_que_aprendi,
-                    "p2_supuesto_cambio": r.p2_supuesto_cambio,
-                    "p3_deterioro_o_precio": r.p3_deterioro_o_precio,
-                    "p4_red_team_anticipo": r.p4_red_team_anticipo,
-                    "p5_trigger_faltante": r.p5_trigger_faltante,
-                    "accion_decidida": r.accion_decidida,
-                }
-                for r in rows
-            ],
-        }
-
-
-@app.post("/api/revalidaciones/{ticker}/responder")
-def responder_revalidacion_endpoint(
-    ticker: str,
-    sigue_creyendo: bool,
-    payload: dict | None = None,
-) -> dict:
-    """payload (si sigue_creyendo=False): {p1_que_aprendi, p2_supuesto_cambio,
-    p3_deterioro_o_precio, p4_red_team_anticipo, p5_trigger_faltante, accion_decidida}
-    """
-    from backend.agents.revalidacion import responder_revalidacion
-    payload = payload or {}
-    accion_decidida = payload.pop("accion_decidida", None) if isinstance(payload, dict) else None
-    try:
-        return responder_revalidacion(
-            ticker=ticker,
-            sigue_creyendo=sigue_creyendo,
-            respuestas=payload if not sigue_creyendo else None,
-            accion_decidida=accion_decidida,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/api/revalidaciones/run")
-def revalidaciones_run() -> dict:
-    """Trigger manual del job (normalmente corre 7:30 ET diario)."""
-    from backend.agents.revalidacion import detectar_revalidaciones_pendientes
-    return detectar_revalidaciones_pendientes()
-
-
-# --- Protocolo Transición Fase Macro (v4.2 sec 5) ---
-
-@app.post("/api/macro/fase-2-activar")
-def macro_fase_2_activar(motivo: str = "humano declara Fase 2 activada") -> dict:
-    """Trigger humano de Transición Fase Macro. Reduce sizing 50% en posiciones
-    que no pasen checklist + suspende bucket. NO ejecuta ventas automáticas.
-    """
-    from backend.agents.transicion_fase_macro import activar_fase_2
-    return activar_fase_2(motivo=motivo)
 
 
 # --- Admin: restart del servicio ---
@@ -667,14 +476,6 @@ def admin_restart() -> dict:
     import os
     import threading
 
-    from backend.agents.decision_journal import registrar_decision
-
-    registrar_decision(
-        accion="admin_restart",
-        decisor="humano",
-        motivo="reinicio manual desde dashboard",
-        metadata={"pid": os.getpid()},
-    )
     log.warning("ADMIN — reinicio solicitado desde UI (PID %s) — saliendo en 0.5s", os.getpid())
 
     def _exit_delayed():
@@ -697,147 +498,6 @@ def admin_restart() -> dict:
 # Borrar la línea log = get_logger duplicada de arriba — ya existe a nivel módulo
 
 
-# --- Evaluate UI: batch_analista on-demand ---
-
-@app.post("/api/evaluate/dry-run")
-def evaluate_dry_run(payload: dict) -> dict:
-    """Estima cuántos tickers + costo sin gastar API."""
-    import argparse
-    from ops.batch_analista import COSTO_PROMEDIO_USD, construir_lista_tickers
-
-    args = argparse.Namespace(
-        tickers=payload.get("tickers", "") or "",
-        estado=payload.get("estados") or [],
-        sector=payload.get("sectores") or [],
-        score_min=payload.get("score_min"),
-        score_max=payload.get("score_max"),
-        excluir_evaluados_hace=int(payload.get("excluir_evaluados_hace") or 0),
-        sector_default_nuevo="(sin asignar)",
-        solo_estimar_costo=True,
-        max_tickers=payload.get("max_tickers"),
-        output_dir="data/batches",
-    )
-    tickers = construir_lista_tickers(args, crear_fichas=False)
-    return {
-        "tickers_count": len(tickers),
-        "tickers": tickers,
-        "costo_estimado_usd": round(len(tickers) * COSTO_PROMEDIO_USD, 2),
-        "tiempo_estimado_min": round(len(tickers) * 70 / 60, 1),
-    }
-
-
-@app.post("/api/evaluate/start")
-def evaluate_start(payload: dict, background_tasks: BackgroundTasks) -> dict:
-    """Lanza el batch en background y crea una Task con estado=en_progreso."""
-    import argparse
-    import secrets
-    import threading
-    from ops.batch_analista import construir_lista_tickers, correr_uno
-    from backend.database import session_scope
-    from backend.models import EstadoTask, Task
-
-    args = argparse.Namespace(
-        tickers=payload.get("tickers", "") or "",
-        estado=payload.get("estados") or [],
-        sector=payload.get("sectores") or [],
-        score_min=payload.get("score_min"),
-        score_max=payload.get("score_max"),
-        excluir_evaluados_hace=int(payload.get("excluir_evaluados_hace") or 0),
-        sector_default_nuevo="(sin asignar)",
-        solo_estimar_costo=False,
-        max_tickers=payload.get("max_tickers"),
-        output_dir="data/batches",
-    )
-    tickers = construir_lista_tickers(args, crear_fichas=True)
-    if not tickers:
-        raise HTTPException(status_code=400, detail="ningún ticker seleccionado con esos filtros")
-
-    task_id = f"eval-{secrets.token_hex(6)}"
-    with session_scope() as s:
-        s.add(Task(
-            id=task_id,
-            tipo="evaluate_batch",
-            ticker_o_sector=f"{len(tickers)} tickers",
-            estado=EstadoTask.EN_PROGRESO.value,
-            progreso=f"0/{len(tickers)}",
-            resultado_json={"tickers_total": tickers, "completados": [], "candidatos": []},
-        ))
-
-    def _run():
-        from backend.utils import utcnow
-        completados: list[dict] = []
-        candidatos: list[dict] = []
-        for i, t in enumerate(tickers, 1):
-            r = correr_uno(t)
-            completados.append(r)
-            # Marcar candidato si pasa el filtro Portfolio
-            if r.get("ok") and (r.get("score_nuevo") or 0) >= 6.0 and not r.get("centrales_baja"):
-                candidatos.append({
-                    "ticker": r["ticker"],
-                    "score": r["score_nuevo"],
-                    "asimetria": r.get("asimetria"),
-                    "rec": r.get("accion_rec"),
-                })
-            with session_scope() as s:
-                tk = s.query(Task).filter_by(id=task_id).first()
-                if tk:
-                    tk.progreso = f"{i}/{len(tickers)}"
-                    tk.resultado_json = {
-                        "tickers_total": tickers,
-                        "completados": completados,
-                        "candidatos": candidatos,
-                    }
-        with session_scope() as s:
-            tk = s.query(Task).filter_by(id=task_id).first()
-            if tk:
-                tk.estado = EstadoTask.COMPLETADO.value
-                tk.finished_at = utcnow()
-
-    threading.Thread(target=_run, daemon=True).start()
-    return {
-        "task_id": task_id,
-        "tickers_count": len(tickers),
-        "estado": "en_progreso",
-    }
-
-
-@app.get("/api/evaluate/{task_id}/status")
-def evaluate_status(task_id: str) -> dict:
-    from backend.database import session_scope
-    from backend.models import Task
-    with session_scope() as s:
-        tk = s.query(Task).filter_by(id=task_id).first()
-        if tk is None:
-            raise HTTPException(status_code=404, detail=f"task {task_id} no existe")
-        return {
-            "task_id": tk.id,
-            "estado": tk.estado,
-            "progreso": tk.progreso,
-            "tipo": tk.tipo,
-            "resultado": tk.resultado_json,
-            "created_at": tk.created_at.isoformat() if tk.created_at else None,
-            "finished_at": tk.finished_at.isoformat() if tk.finished_at else None,
-        }
-
-
-# --- Equity curve vs SPY (benchmark) ---
-
-@app.get("/api/equity-curve-vs-spy")
-def get_equity_curve_vs_spy(desde: str | None = None) -> dict:
-    """Curva diaria BORJA vs SPY normalizado al capital base.
-
-    Args:
-        desde: opcional 'YYYY-MM-DD'. Si None, toma todo el histórico disponible.
-    """
-    from backend.agents.equity_curve import equity_curve_vs_spy
-    return equity_curve_vs_spy(fecha_desde=desde)
-
-
-@app.post("/api/equity-curve/backfill")
-def post_equity_curve_backfill() -> dict:
-    """Trigger manual del backfill (recomputa snapshots desde primer trade)."""
-    from backend.agents.equity_curve import backfill_equity_historico
-    return backfill_equity_historico()
 
 
 # --- Trades (P&L realizado vs abierto) ---
@@ -885,27 +545,6 @@ def list_trades(status: str | None = None, ticker: str | None = None, limit: int
         }
 
 
-# --- Decision Journal (v4.2 sec 8 + 10) ---
-
-@app.get("/api/decision-journal")
-def list_decision_journal(
-    ticker: str | None = None,
-    accion: str | None = None,
-    desde: str | None = None,
-    limit: int = 100,
-) -> dict:
-    from backend.agents.decision_journal import listar_decisiones
-    items = listar_decisiones(ticker=ticker, accion=accion, desde=desde, limit=limit)
-    return {"total": len(items), "items": items}
-
-
-@app.post("/api/decision-journal/{decision_id}/resultado")
-def anotar_resultado_decision(decision_id: int, resultado: str) -> dict:
-    from backend.agents.decision_journal import anotar_resultado
-    try:
-        return anotar_resultado(decision_id, resultado)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
 
 
 @app.post("/api/fichas-contractuales/{fc_id}/aprobar")
@@ -1011,48 +650,6 @@ def list_dispatch_log(
     return {"total": len(result), "dispatch_log": result}
 
 
-@app.post("/dispatcher/process-queue")
-def dispatcher_process_queue() -> dict:
-    """Procesa todos los eventos pendientes aplicando reglas de routing."""
-    return procesar_cola_eventos()
-
-
-@app.post("/dispatcher/evento/{evento_id}")
-def dispatcher_evento(evento_id: int) -> dict:
-    """Dispatcha un evento específico manualmente."""
-    try:
-        d = dispatch_evento(evento_id)
-        from dataclasses import asdict
-        return asdict(d)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/research/run-manual")
-def research_run_manual() -> dict:
-    """Ejecuta los 4 monitores del Research sin esperar al cron."""
-    return research_agent.correr_todos_monitores()
-
-
-@app.post("/research/{monitor}")
-def research_monitor_individual(monitor: str) -> dict:
-    """Ejecuta un monitor individual: precios / earnings / form4 / noticias."""
-    mapping = {
-        "precios": research_agent.monitor_precios,
-        "earnings": research_agent.monitor_earnings,
-        "form4": research_agent.monitor_form4,
-        "noticias": research_agent.monitor_noticias,
-    }
-    fn = mapping.get(monitor)
-    if fn is None:
-        raise HTTPException(status_code=400, detail=f"monitor '{monitor}' inválido. Válidos: {list(mapping)}")
-    return fn()
-
-
-@app.post("/nocturno/run")
-def nocturno_run() -> dict:
-    """Ejecuta el script nocturno manualmente (sin esperar 6:00 AM ET)."""
-    return correr_script_nocturno()
 
 
 @app.get("/scheduler/status")
@@ -1070,24 +667,6 @@ def scheduler_stop_endpoint() -> dict:
     return scheduler_mod.stop()
 
 
-@app.post("/evaluador/correr")
-def evaluador_correr() -> dict:
-    """Dispara manualmente el evaluador diario (Portfolio + WL_Prioritaria).
-
-    Determinista, sin LLM. Útil para forzar re-evaluación con precios frescos
-    fuera del horario automático (16:15 ET L-V).
-    """
-    from backend.agents.evaluador_automatico import correr_evaluacion_diaria
-    return correr_evaluacion_diaria()
-
-
-@app.post("/reporte/generar")
-def reporte_generar(enviar_email: bool = True) -> dict:
-    """Genera el reporte semanal del Juez manualmente."""
-    from backend.agents.reporte_semanal import generar_reporte
-    r = generar_reporte(enviar_email=enviar_email)
-    # No devolvemos el HTML completo en el JSON para mantenerlo liviano
-    return {k: v for k, v in r.items() if k != "html"}
 
 
 # ===================================================================
@@ -1175,82 +754,6 @@ def backups_list() -> dict:
     return {"backups": listar_backups()}
 
 
-# ===================================================================
-#  MAPA SECTORIAL + DISCOVERY + DESCUBRIMIENTO  (Sprint 4)
-# ===================================================================
-
-@app.get("/sectores/{nombre}/mapa")
-def get_mapa_sector(nombre: str) -> dict:
-    m = mapa_agent.get_mapa_activo(nombre)
-    if m is None:
-        raise HTTPException(status_code=404, detail=f"sin mapa activo para '{nombre}'")
-    return m
-
-
-@app.post("/sectores/{nombre}/regenerar-mapa")
-def regenerar_mapa(nombre: str, dry_run: bool = False, max_searches: int = 5) -> dict:
-    try:
-        return mapa_agent.generar_mapa_sectorial(nombre, dry_run=dry_run, max_searches=max_searches)
-    except mapa_agent.MapaSectorialError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/sectores/{nombre}/aprobar-mapa")
-def aprobar_mapa_endpoint(nombre: str) -> dict:
-    try:
-        return mapa_agent.aprobar_mapa(nombre)
-    except mapa_agent.MapaSectorialError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@app.patch("/sectores/{nombre}/criticidad")
-def ajustar_criticidad_endpoint(nombre: str, componente: str, nivel: str | None = None) -> dict:
-    try:
-        return mapa_agent.ajustar_criticidad(nombre, componente, nivel)
-    except mapa_agent.MapaSectorialError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.get("/discovery")
-def list_discovery_endpoint(limit: int = 20) -> dict:
-    return {"total": len(discovery_agent.list_discovery(limit)), "sessions": discovery_agent.list_discovery(limit)}
-
-
-@app.get("/discovery/{semana}")
-def get_discovery_endpoint(semana: str) -> dict:
-    d = discovery_agent.get_discovery_semana(semana)
-    if d is None:
-        raise HTTPException(status_code=404, detail=f"semana '{semana}' no encontrada")
-    return d
-
-
-@app.post("/discovery/run")
-def run_discovery(dry_run: bool = False, max_searches: int = 5) -> dict:
-    try:
-        return discovery_agent.generar_hipotesis_semanales(dry_run=dry_run, max_searches=max_searches)
-    except discovery_agent.DiscoveryError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.patch("/discovery/{semana}/feedback")
-def feedback_discovery(semana: str, util: bool | None = None, feedback: str | None = None) -> dict:
-    try:
-        return discovery_agent.set_feedback(semana, util=util, feedback=feedback)
-    except discovery_agent.DiscoveryError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@app.post("/descubrimiento/screener")
-def run_screener(tickers: list[str] | None = None) -> dict:
-    """Corre el screener cuantitativo. Si tickers=None, usa watchlist YAML."""
-    return descubrimiento_agent.correr_screener(tickers)
-
-
-@app.post("/descubrimiento/crear-candidatas")
-def crear_candidatas(tickers: list[str], sector: str = "AI infra", driver_macro: str | None = None) -> dict:
-    """Crea fichas Candidata a partir de una lista de tickers (tras pasar screener)."""
-    return descubrimiento_agent.crear_candidatas(tickers, sector_default=sector,
-                                                  driver_macro_default=driver_macro)
 
 
 # ===================================================================
@@ -1326,16 +829,6 @@ def api_costos(dias: int = 30) -> dict:
     }
 
 
-@app.get("/juez/risk")
-def juez_risk_monitor() -> dict:
-    alertas = juez_agent.risk_monitor()
-    return {"total": len(alertas), "alertas": juez_agent.alertas_to_dict(alertas)}
-
-
-@app.get("/juez/process")
-def juez_process_auditor() -> dict:
-    items = juez_agent.process_auditor()
-    return {"total": len(items), "items": juez_agent.items_to_dict(items)}
 
 
 @app.get("/fichas/{ticker}")

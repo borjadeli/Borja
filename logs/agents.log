@@ -21735,3 +21735,1295 @@ anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type':
 2026-09-14 15:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
 2026-09-14 15:00:01,581 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
 2026-09-14 15:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 15:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 15:15:00,363 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4478
+2026-09-14 15:15:00,364 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4478 ticker=NABL accion=mantener (modo paper)
+2026-09-14 15:15:00,578 [INFO] backend.agents.recomendacion_runner: REC 4478 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 15:15:00,581 [INFO] backend.agents.decision_journal: decision_journal — id=4275 accion=mantener ticker=NABL decisor=humano
+2026-09-14 15:15:00,874 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4479
+2026-09-14 15:15:00,875 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4479 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 15:15:01,026 [INFO] backend.agents.recomendacion_runner: REC 4479 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 15:15:01,030 [INFO] backend.agents.decision_journal: decision_journal — id=4276 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 15:15:01,354 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4480
+2026-09-14 15:15:01,355 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4480 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 15:15:01,500 [INFO] backend.agents.recomendacion_runner: REC 4480 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 15:15:01,503 [INFO] backend.agents.decision_journal: decision_journal — id=4277 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 15:15:01,715 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4481
+2026-09-14 15:15:01,716 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4481 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 15:15:01,871 [INFO] backend.agents.recomendacion_runner: REC 4481 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 15:15:01,874 [INFO] backend.agents.decision_journal: decision_journal — id=4278 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 15:15:02,125 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4482
+2026-09-14 15:15:02,126 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4482 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 15:15:02,334 [INFO] backend.agents.recomendacion_runner: REC 4482 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 15:15:02,338 [INFO] backend.agents.decision_journal: decision_journal — id=4279 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 15:15:02,519 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4483
+2026-09-14 15:15:02,520 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4483 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 15:15:02,636 [INFO] backend.agents.recomendacion_runner: REC 4483 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 15:15:02,639 [INFO] backend.agents.decision_journal: decision_journal — id=4280 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 15:15:02,640 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 15:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 15:30:00,003 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 15:30:01,399 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 15:30:05,454 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=2
+2026-09-14 15:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 15:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 16:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 16:00:01,584 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 16:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 16:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 16:15:00,300 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4484
+2026-09-14 16:15:00,301 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4484 ticker=NABL accion=mantener (modo paper)
+2026-09-14 16:15:00,443 [INFO] backend.agents.recomendacion_runner: REC 4484 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 16:15:00,447 [INFO] backend.agents.decision_journal: decision_journal — id=4281 accion=mantener ticker=NABL decisor=humano
+2026-09-14 16:15:00,752 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4485
+2026-09-14 16:15:00,752 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4485 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 16:15:00,854 [INFO] backend.agents.recomendacion_runner: REC 4485 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 16:15:00,857 [INFO] backend.agents.decision_journal: decision_journal — id=4282 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 16:15:01,117 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4486
+2026-09-14 16:15:01,118 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4486 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 16:15:01,313 [INFO] backend.agents.recomendacion_runner: REC 4486 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 16:15:01,317 [INFO] backend.agents.decision_journal: decision_journal — id=4283 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 16:15:01,524 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4487
+2026-09-14 16:15:01,526 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4487 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 16:15:01,669 [INFO] backend.agents.recomendacion_runner: REC 4487 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 16:15:01,673 [INFO] backend.agents.decision_journal: decision_journal — id=4284 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 16:15:01,840 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4488
+2026-09-14 16:15:01,841 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4488 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 16:15:02,042 [INFO] backend.agents.recomendacion_runner: REC 4488 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 16:15:02,045 [INFO] backend.agents.decision_journal: decision_journal — id=4285 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 16:15:02,235 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4489
+2026-09-14 16:15:02,237 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4489 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 16:15:02,357 [INFO] backend.agents.recomendacion_runner: REC 4489 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 16:15:02,362 [INFO] backend.agents.decision_journal: decision_journal — id=4286 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 16:15:02,362 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 16:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 16:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 16:30:01,456 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 16:30:05,676 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-14 16:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1177 ticker=ALGM tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-14 16:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-14 16:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 17:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 17:00:02,128 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 17:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 17:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 17:15:00,393 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4490
+2026-09-14 17:15:00,394 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4490 ticker=NABL accion=mantener (modo paper)
+2026-09-14 17:15:00,618 [INFO] backend.agents.recomendacion_runner: REC 4490 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 17:15:00,622 [INFO] backend.agents.decision_journal: decision_journal — id=4287 accion=mantener ticker=NABL decisor=humano
+2026-09-14 17:15:00,903 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4491
+2026-09-14 17:15:00,904 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4491 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 17:15:01,168 [INFO] backend.agents.recomendacion_runner: REC 4491 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 17:15:01,172 [INFO] backend.agents.decision_journal: decision_journal — id=4288 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 17:15:01,423 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4492
+2026-09-14 17:15:01,424 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4492 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 17:15:01,649 [INFO] backend.agents.recomendacion_runner: REC 4492 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 17:15:01,654 [INFO] backend.agents.decision_journal: decision_journal — id=4289 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 17:15:01,934 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4493
+2026-09-14 17:15:01,935 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4493 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 17:15:02,238 [INFO] backend.agents.recomendacion_runner: REC 4493 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 17:15:02,243 [INFO] backend.agents.decision_journal: decision_journal — id=4290 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 17:15:02,544 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4494
+2026-09-14 17:15:02,546 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4494 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 17:15:02,801 [INFO] backend.agents.recomendacion_runner: REC 4494 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 17:15:02,806 [INFO] backend.agents.decision_journal: decision_journal — id=4291 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 17:15:03,089 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4495
+2026-09-14 17:15:03,090 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4495 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 17:15:03,277 [INFO] backend.agents.recomendacion_runner: REC 4495 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 17:15:03,282 [INFO] backend.agents.decision_journal: decision_journal — id=4292 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 17:15:03,282 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 17:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 17:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 17:30:01,514 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 17:30:05,499 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-14 17:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 17:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 18:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 18:00:01,801 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 18:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 18:15:00,005 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 18:15:00,328 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4496
+2026-09-14 18:15:00,329 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4496 ticker=NABL accion=mantener (modo paper)
+2026-09-14 18:15:00,594 [INFO] backend.agents.recomendacion_runner: REC 4496 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 18:15:00,598 [INFO] backend.agents.decision_journal: decision_journal — id=4293 accion=mantener ticker=NABL decisor=humano
+2026-09-14 18:15:00,879 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4497
+2026-09-14 18:15:00,879 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4497 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 18:15:01,070 [INFO] backend.agents.recomendacion_runner: REC 4497 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 18:15:01,074 [INFO] backend.agents.decision_journal: decision_journal — id=4294 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 18:15:01,341 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4498
+2026-09-14 18:15:01,342 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4498 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 18:15:01,503 [INFO] backend.agents.recomendacion_runner: REC 4498 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 18:15:01,508 [INFO] backend.agents.decision_journal: decision_journal — id=4295 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 18:15:01,835 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4499
+2026-09-14 18:15:01,836 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4499 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 18:15:02,029 [INFO] backend.agents.recomendacion_runner: REC 4499 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 18:15:02,034 [INFO] backend.agents.decision_journal: decision_journal — id=4296 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 18:15:02,340 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4500
+2026-09-14 18:15:02,341 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4500 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 18:15:02,563 [INFO] backend.agents.recomendacion_runner: REC 4500 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 18:15:02,568 [INFO] backend.agents.decision_journal: decision_journal — id=4297 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 18:15:02,995 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4501
+2026-09-14 18:15:02,996 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4501 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 18:15:03,292 [INFO] backend.agents.recomendacion_runner: REC 4501 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 18:15:03,296 [INFO] backend.agents.decision_journal: decision_journal — id=4298 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 18:15:03,297 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 18:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 18:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 18:30:02,012 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 18:30:06,116 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-14 18:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 18:54:53,003 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=1
+2026-09-14 18:54:53,006 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 19:00:00,006 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 19:00:01,602 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 19:09:05,550 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 19:15:00,007 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 19:15:00,339 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4502
+2026-09-14 19:15:00,340 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4502 ticker=NABL accion=mantener (modo paper)
+2026-09-14 19:15:00,498 [INFO] backend.agents.recomendacion_runner: REC 4502 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 19:15:00,502 [INFO] backend.agents.decision_journal: decision_journal — id=4299 accion=mantener ticker=NABL decisor=humano
+2026-09-14 19:15:00,738 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4503
+2026-09-14 19:15:00,739 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4503 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 19:15:00,957 [INFO] backend.agents.recomendacion_runner: REC 4503 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 19:15:00,961 [INFO] backend.agents.decision_journal: decision_journal — id=4300 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 19:15:01,235 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4504
+2026-09-14 19:15:01,236 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4504 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 19:15:01,432 [INFO] backend.agents.recomendacion_runner: REC 4504 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 19:15:01,437 [INFO] backend.agents.decision_journal: decision_journal — id=4301 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 19:15:01,635 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4505
+2026-09-14 19:15:01,637 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4505 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 19:15:01,794 [INFO] backend.agents.recomendacion_runner: REC 4505 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 19:15:01,799 [INFO] backend.agents.decision_journal: decision_journal — id=4302 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 19:15:02,160 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4506
+2026-09-14 19:15:02,161 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4506 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 19:15:02,398 [INFO] backend.agents.recomendacion_runner: REC 4506 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 19:15:02,403 [INFO] backend.agents.decision_journal: decision_journal — id=4303 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 19:15:02,591 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4507
+2026-09-14 19:15:02,592 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4507 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 19:15:02,775 [INFO] backend.agents.recomendacion_runner: REC 4507 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 19:15:02,779 [INFO] backend.agents.decision_journal: decision_journal — id=4304 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 19:15:02,779 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 19:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 19:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 19:30:01,959 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 19:30:06,344 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-14 19:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 19:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 20:00:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 20:00:01,838 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 20:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 20:15:00,005 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-14 20:15:00,357 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4508
+2026-09-14 20:15:00,359 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4508 ticker=NABL accion=mantener (modo paper)
+2026-09-14 20:15:00,496 [INFO] backend.agents.recomendacion_runner: REC 4508 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-14 20:15:00,506 [INFO] backend.agents.decision_journal: decision_journal — id=4305 accion=mantener ticker=NABL decisor=humano
+2026-09-14 20:15:00,782 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4509
+2026-09-14 20:15:00,783 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4509 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-14 20:15:01,056 [INFO] backend.agents.recomendacion_runner: REC 4509 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 20:15:01,062 [INFO] backend.agents.decision_journal: decision_journal — id=4306 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-14 20:15:01,297 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4510
+2026-09-14 20:15:01,298 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4510 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-14 20:15:01,574 [INFO] backend.agents.recomendacion_runner: REC 4510 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 20:15:01,579 [INFO] backend.agents.decision_journal: decision_journal — id=4307 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-14 20:15:01,819 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4511
+2026-09-14 20:15:01,820 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4511 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-14 20:15:02,077 [INFO] backend.agents.recomendacion_runner: REC 4511 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 20:15:02,082 [INFO] backend.agents.decision_journal: decision_journal — id=4308 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-14 20:15:02,324 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4512
+2026-09-14 20:15:02,325 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4512 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-14 20:15:02,555 [INFO] backend.agents.recomendacion_runner: REC 4512 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 20:15:02,561 [INFO] backend.agents.decision_journal: decision_journal — id=4309 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-14 20:15:02,790 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4513
+2026-09-14 20:15:02,792 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4513 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-14 20:15:02,949 [INFO] backend.agents.recomendacion_runner: REC 4513 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-14 20:15:02,955 [INFO] backend.agents.decision_journal: decision_journal — id=4310 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-14 20:15:02,955 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-14 20:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 20:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-14 20:30:01,427 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-14 20:30:04,572 [INFO] backend.agents.portfolio_snapshot: portfolio_snapshot — fecha=2026-09-14 equity=115054.94 pnl_total=15054.94 pnl_dia=393.11 n=1
+2026-09-14 20:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 20:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 21:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 21:24:05,565 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 21:39:05,550 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 21:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 22:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 22:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 22:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 22:54:50,240 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=0
+2026-09-14 22:54:50,243 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 23:09:05,551 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 23:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 23:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-14 23:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 00:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 00:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 00:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 00:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 01:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 01:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 01:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 01:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 02:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 02:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 02:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 02:54:48,461 [INFO] backend.agents.research: monitor_noticias — creados=2 dup_skipped=0
+2026-09-15 02:54:48,469 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1178 ticker=ASTS tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 02:54:48,472 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1179 ticker=VCYT tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 02:54:48,472 [INFO] backend.agents.dispatcher: dispatcher — procesados=2 por_destino={'DESCARTADO': 2}
+2026-09-15 03:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 03:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 03:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 03:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 04:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 04:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 04:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 04:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 05:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 05:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 05:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 05:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 06:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 06:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 06:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 06:54:49,172 [INFO] backend.agents.research: monitor_noticias — creados=2 dup_skipped=2
+2026-09-15 06:54:49,181 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1180 ticker=RKLB tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 06:54:49,186 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1181 ticker=OPEN tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 06:54:49,186 [INFO] backend.agents.dispatcher: dispatcher — procesados=2 por_destino={'DESCARTADO': 2}
+2026-09-15 07:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 07:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 07:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 07:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 08:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 08:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 08:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 08:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 09:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 09:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 09:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 09:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 10:00:00,007 [WARNING] backend.agents.red_flags_detector: RED_FLAG detectado — ticker=VCYT categoria=INSIDER_SELLING_ATIPICO count=2/3 (era 1)
+2026-09-15 10:00:06,629 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en (sin asignar)
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf52hfqU8bvC6VxLqdacD'}
+2026-09-15 10:00:13,081 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf52i9UPEuezdVa1V4tfT'}
+2026-09-15 10:00:19,491 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Cooling + thermal management
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf52id25qUVDrbamiipZp'}
+2026-09-15 10:00:25,985 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Fotónica + conectividad
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf52j6YYe42tQzCarkpX1'}
+2026-09-15 10:00:32,489 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Semicap + advanced packaging
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf52jaNrwdfqPeFse5XuP'}
+2026-09-15 10:00:32,490 [INFO] backend.agents.script_nocturno: script_nocturno — regenerados=0 omitidos_aprobados=0 errores=5
+2026-09-15 10:09:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1182 ticker=VCYT tipo=RED_FLAG destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 10:09:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 10:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 10:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 10:54:46,952 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=4
+2026-09-15 10:54:46,958 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1183 ticker=RDW tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 10:54:46,958 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 11:00:00,663 [INFO] backend.agents.research: monitor_earnings — creados=0
+2026-09-15 11:05:00,005 [INFO] backend.agents.research: monitor_form4 — creados=0
+2026-09-15 11:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 11:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 11:30:00,004 [INFO] backend.agents.revalidacion: revalidacion — creadas=0 saltadas=1
+2026-09-15 11:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 11:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 12:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 12:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 12:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 12:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 13:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 13:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 13:30:04,256 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-15 13:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1184 ticker=QLYS tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-15 13:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 13:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 14:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 14:00:01,755 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 14:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 14:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 14:15:00,398 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4514
+2026-09-15 14:15:00,400 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4514 ticker=NABL accion=mantener (modo paper)
+2026-09-15 14:15:00,644 [INFO] backend.agents.recomendacion_runner: REC 4514 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 14:15:00,648 [INFO] backend.agents.decision_journal: decision_journal — id=4311 accion=mantener ticker=NABL decisor=humano
+2026-09-15 14:15:00,984 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4515
+2026-09-15 14:15:00,986 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4515 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 14:15:01,250 [INFO] backend.agents.recomendacion_runner: REC 4515 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 14:15:01,254 [INFO] backend.agents.decision_journal: decision_journal — id=4312 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 14:15:01,542 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4516
+2026-09-15 14:15:01,543 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4516 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 14:15:01,813 [INFO] backend.agents.recomendacion_runner: REC 4516 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 14:15:01,817 [INFO] backend.agents.decision_journal: decision_journal — id=4313 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 14:15:02,104 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4517
+2026-09-15 14:15:02,105 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4517 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 14:15:02,406 [INFO] backend.agents.recomendacion_runner: REC 4517 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 14:15:02,409 [INFO] backend.agents.decision_journal: decision_journal — id=4314 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 14:15:02,660 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4518
+2026-09-15 14:15:02,661 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4518 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 14:15:02,884 [INFO] backend.agents.recomendacion_runner: REC 4518 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 14:15:02,888 [INFO] backend.agents.decision_journal: decision_journal — id=4315 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 14:15:03,186 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4519
+2026-09-15 14:15:03,187 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4519 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 14:15:03,470 [INFO] backend.agents.recomendacion_runner: REC 4519 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 14:15:03,474 [INFO] backend.agents.decision_journal: decision_journal — id=4316 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 14:15:03,474 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 14:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 14:30:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 14:30:01,784 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 14:30:06,318 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-15 14:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1185 ticker=CVLT tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-15 14:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 14:54:51,427 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=4
+2026-09-15 14:54:51,432 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1186 ticker=SYM tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 14:54:51,433 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 15:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 15:00:01,997 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 15:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 15:15:00,006 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 15:15:00,324 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4520
+2026-09-15 15:15:00,325 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4520 ticker=NABL accion=mantener (modo paper)
+2026-09-15 15:15:00,497 [INFO] backend.agents.recomendacion_runner: REC 4520 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 15:15:00,501 [INFO] backend.agents.decision_journal: decision_journal — id=4317 accion=mantener ticker=NABL decisor=humano
+2026-09-15 15:15:00,764 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4521
+2026-09-15 15:15:00,765 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4521 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 15:15:00,994 [INFO] backend.agents.recomendacion_runner: REC 4521 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 15:15:00,999 [INFO] backend.agents.decision_journal: decision_journal — id=4318 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 15:15:01,175 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4522
+2026-09-15 15:15:01,176 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4522 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 15:15:01,355 [INFO] backend.agents.recomendacion_runner: REC 4522 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 15:15:01,359 [INFO] backend.agents.decision_journal: decision_journal — id=4319 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 15:15:01,582 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4523
+2026-09-15 15:15:01,583 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4523 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 15:15:01,760 [INFO] backend.agents.recomendacion_runner: REC 4523 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 15:15:01,766 [INFO] backend.agents.decision_journal: decision_journal — id=4320 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 15:15:02,050 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4524
+2026-09-15 15:15:02,052 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4524 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 15:15:02,321 [INFO] backend.agents.recomendacion_runner: REC 4524 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 15:15:02,326 [INFO] backend.agents.decision_journal: decision_journal — id=4321 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 15:15:02,532 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4525
+2026-09-15 15:15:02,533 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4525 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 15:15:02,695 [INFO] backend.agents.recomendacion_runner: REC 4525 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 15:15:02,699 [INFO] backend.agents.decision_journal: decision_journal — id=4322 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 15:15:02,699 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 15:24:05,550 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 15:30:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 15:30:01,615 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 15:30:05,542 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-15 15:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 15:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 16:00:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 16:00:01,929 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 16:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 16:15:00,005 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 16:15:00,356 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4526
+2026-09-15 16:15:00,357 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4526 ticker=NABL accion=mantener (modo paper)
+2026-09-15 16:15:00,595 [INFO] backend.agents.recomendacion_runner: REC 4526 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 16:15:00,598 [INFO] backend.agents.decision_journal: decision_journal — id=4323 accion=mantener ticker=NABL decisor=humano
+2026-09-15 16:15:00,876 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4527
+2026-09-15 16:15:00,877 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4527 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 16:15:01,152 [INFO] backend.agents.recomendacion_runner: REC 4527 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 16:15:01,155 [INFO] backend.agents.decision_journal: decision_journal — id=4324 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 16:15:01,405 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4528
+2026-09-15 16:15:01,405 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4528 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 16:15:01,595 [INFO] backend.agents.recomendacion_runner: REC 4528 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 16:15:01,598 [INFO] backend.agents.decision_journal: decision_journal — id=4325 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 16:15:01,831 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4529
+2026-09-15 16:15:01,833 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4529 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 16:15:02,022 [INFO] backend.agents.recomendacion_runner: REC 4529 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 16:15:02,025 [INFO] backend.agents.decision_journal: decision_journal — id=4326 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 16:15:02,284 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4530
+2026-09-15 16:15:02,284 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4530 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 16:15:02,445 [INFO] backend.agents.recomendacion_runner: REC 4530 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 16:15:02,448 [INFO] backend.agents.decision_journal: decision_journal — id=4327 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 16:15:02,737 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4531
+2026-09-15 16:15:02,738 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4531 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 16:15:02,887 [INFO] backend.agents.recomendacion_runner: REC 4531 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 16:15:02,890 [INFO] backend.agents.decision_journal: decision_journal — id=4328 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 16:15:02,890 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 16:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 16:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 16:30:01,669 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 16:30:05,860 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-15 16:39:05,553 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1187 ticker=ALGM tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-15 16:39:05,553 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 16:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 17:00:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 17:00:01,637 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 17:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 17:15:00,005 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 17:15:00,289 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4532
+2026-09-15 17:15:00,290 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4532 ticker=NABL accion=mantener (modo paper)
+2026-09-15 17:15:00,429 [INFO] backend.agents.recomendacion_runner: REC 4532 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 17:15:00,433 [INFO] backend.agents.decision_journal: decision_journal — id=4329 accion=mantener ticker=NABL decisor=humano
+2026-09-15 17:15:00,657 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4533
+2026-09-15 17:15:00,657 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4533 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 17:15:00,888 [INFO] backend.agents.recomendacion_runner: REC 4533 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 17:15:00,892 [INFO] backend.agents.decision_journal: decision_journal — id=4330 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 17:15:01,175 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4534
+2026-09-15 17:15:01,176 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4534 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 17:15:01,419 [INFO] backend.agents.recomendacion_runner: REC 4534 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 17:15:01,423 [INFO] backend.agents.decision_journal: decision_journal — id=4331 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 17:15:02,036 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4535
+2026-09-15 17:15:02,037 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4535 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 17:15:02,256 [INFO] backend.agents.recomendacion_runner: REC 4535 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 17:15:02,260 [INFO] backend.agents.decision_journal: decision_journal — id=4332 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 17:15:02,440 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4536
+2026-09-15 17:15:02,441 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4536 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 17:15:02,758 [INFO] backend.agents.recomendacion_runner: REC 4536 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 17:15:02,762 [INFO] backend.agents.decision_journal: decision_journal — id=4333 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 17:15:03,012 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4537
+2026-09-15 17:15:03,013 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4537 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 17:15:03,155 [INFO] backend.agents.recomendacion_runner: REC 4537 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 17:15:03,158 [INFO] backend.agents.decision_journal: decision_journal — id=4334 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 17:15:03,159 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 17:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 17:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 17:30:01,416 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 17:30:04,919 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-15 17:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 17:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 18:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 18:00:01,606 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 18:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 18:15:00,008 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 18:15:00,290 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4538
+2026-09-15 18:15:00,291 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4538 ticker=NABL accion=mantener (modo paper)
+2026-09-15 18:15:00,461 [INFO] backend.agents.recomendacion_runner: REC 4538 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 18:15:00,466 [INFO] backend.agents.decision_journal: decision_journal — id=4335 accion=mantener ticker=NABL decisor=humano
+2026-09-15 18:15:00,740 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4539
+2026-09-15 18:15:00,741 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4539 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 18:15:00,924 [INFO] backend.agents.recomendacion_runner: REC 4539 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 18:15:00,930 [INFO] backend.agents.decision_journal: decision_journal — id=4336 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 18:15:01,187 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4540
+2026-09-15 18:15:01,190 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4540 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 18:15:01,453 [INFO] backend.agents.recomendacion_runner: REC 4540 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 18:15:01,457 [INFO] backend.agents.decision_journal: decision_journal — id=4337 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 18:15:01,718 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4541
+2026-09-15 18:15:01,719 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4541 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 18:15:01,892 [INFO] backend.agents.recomendacion_runner: REC 4541 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 18:15:01,899 [INFO] backend.agents.decision_journal: decision_journal — id=4338 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 18:15:02,149 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4542
+2026-09-15 18:15:02,152 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4542 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 18:15:02,404 [INFO] backend.agents.recomendacion_runner: REC 4542 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 18:15:02,409 [INFO] backend.agents.decision_journal: decision_journal — id=4339 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 18:15:02,655 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4543
+2026-09-15 18:15:02,658 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4543 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 18:15:02,807 [INFO] backend.agents.recomendacion_runner: REC 4543 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 18:15:02,812 [INFO] backend.agents.decision_journal: decision_journal — id=4340 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 18:15:02,813 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 18:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 18:30:00,006 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 18:30:01,713 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 18:30:07,134 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-15 18:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 18:54:51,503 [INFO] backend.agents.research: monitor_noticias — creados=3 dup_skipped=4
+2026-09-15 18:54:51,508 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1188 ticker=COHR tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 18:54:51,511 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1189 ticker=AAOI tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 18:54:51,516 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1190 ticker=LITE tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 18:54:51,516 [INFO] backend.agents.dispatcher: dispatcher — procesados=3 por_destino={'DESCARTADO': 3}
+2026-09-15 19:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 19:00:02,479 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 19:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 19:15:00,003 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 19:15:00,301 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4544
+2026-09-15 19:15:00,302 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4544 ticker=NABL accion=mantener (modo paper)
+2026-09-15 19:15:00,479 [INFO] backend.agents.recomendacion_runner: REC 4544 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 19:15:00,483 [INFO] backend.agents.decision_journal: decision_journal — id=4341 accion=mantener ticker=NABL decisor=humano
+2026-09-15 19:15:00,876 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4545
+2026-09-15 19:15:00,877 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4545 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 19:15:01,107 [INFO] backend.agents.recomendacion_runner: REC 4545 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 19:15:01,111 [INFO] backend.agents.decision_journal: decision_journal — id=4342 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 19:15:01,649 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4546
+2026-09-15 19:15:01,650 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4546 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 19:15:01,857 [INFO] backend.agents.recomendacion_runner: REC 4546 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 19:15:01,861 [INFO] backend.agents.decision_journal: decision_journal — id=4343 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 19:15:02,144 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4547
+2026-09-15 19:15:02,144 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4547 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 19:15:02,414 [INFO] backend.agents.recomendacion_runner: REC 4547 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 19:15:02,418 [INFO] backend.agents.decision_journal: decision_journal — id=4344 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 19:15:02,630 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4548
+2026-09-15 19:15:02,630 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4548 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 19:15:02,948 [INFO] backend.agents.recomendacion_runner: REC 4548 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 19:15:02,951 [INFO] backend.agents.decision_journal: decision_journal — id=4345 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 19:15:03,300 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4549
+2026-09-15 19:15:03,300 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4549 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 19:15:03,494 [INFO] backend.agents.recomendacion_runner: REC 4549 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 19:15:03,497 [INFO] backend.agents.decision_journal: decision_journal — id=4346 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 19:15:03,497 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 19:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 19:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 19:30:01,954 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 19:30:06,320 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-15 19:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 19:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 20:00:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 20:00:01,984 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 20:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 20:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-15 20:15:00,422 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4550
+2026-09-15 20:15:00,423 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4550 ticker=NABL accion=mantener (modo paper)
+2026-09-15 20:15:00,724 [INFO] backend.agents.recomendacion_runner: REC 4550 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-15 20:15:00,728 [INFO] backend.agents.decision_journal: decision_journal — id=4347 accion=mantener ticker=NABL decisor=humano
+2026-09-15 20:15:01,020 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4551
+2026-09-15 20:15:01,021 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4551 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-15 20:15:01,235 [INFO] backend.agents.recomendacion_runner: REC 4551 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 20:15:01,239 [INFO] backend.agents.decision_journal: decision_journal — id=4348 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-15 20:15:01,481 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4552
+2026-09-15 20:15:01,482 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4552 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-15 20:15:01,748 [INFO] backend.agents.recomendacion_runner: REC 4552 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 20:15:01,752 [INFO] backend.agents.decision_journal: decision_journal — id=4349 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-15 20:15:02,125 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4553
+2026-09-15 20:15:02,126 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4553 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-15 20:15:02,346 [INFO] backend.agents.recomendacion_runner: REC 4553 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 20:15:02,351 [INFO] backend.agents.decision_journal: decision_journal — id=4350 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-15 20:15:02,771 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4554
+2026-09-15 20:15:02,773 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4554 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-15 20:15:02,915 [INFO] backend.agents.recomendacion_runner: REC 4554 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 20:15:02,919 [INFO] backend.agents.decision_journal: decision_journal — id=4351 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-15 20:15:03,227 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4555
+2026-09-15 20:15:03,229 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4555 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-15 20:15:03,484 [INFO] backend.agents.recomendacion_runner: REC 4555 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-15 20:15:03,488 [INFO] backend.agents.decision_journal: decision_journal — id=4352 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-15 20:15:03,488 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-15 20:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 20:30:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-15 20:30:01,447 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-15 20:30:04,547 [INFO] backend.agents.portfolio_snapshot: portfolio_snapshot — fecha=2026-09-15 equity=114877.41 pnl_total=14877.41 pnl_dia=-177.53 n=1
+2026-09-15 20:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 20:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 21:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 21:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 21:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 21:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 22:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 22:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 22:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 22:54:52,734 [INFO] backend.agents.research: monitor_noticias — creados=1 dup_skipped=6
+2026-09-15 22:54:52,740 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1191 ticker=ASTS tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-15 22:54:52,740 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-15 23:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 23:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 23:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-15 23:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 00:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 00:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 00:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 00:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 01:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 01:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 01:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 01:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 02:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 02:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 02:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 02:54:47,337 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=4
+2026-09-16 02:54:47,339 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 03:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 03:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 03:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 03:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 04:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 04:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 04:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 04:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 05:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 05:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 05:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 05:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 06:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 06:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 06:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 06:54:46,208 [INFO] backend.agents.research: monitor_noticias — creados=2 dup_skipped=4
+2026-09-16 06:54:46,214 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1192 ticker=RKLB tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-16 06:54:46,216 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1193 ticker=RDW tipo=NOTICIA_MATERIAL destino=DESCARTADO urgencia=baja regla=R_default: sin regla para este tipo+estado
+2026-09-16 06:54:46,217 [INFO] backend.agents.dispatcher: dispatcher — procesados=2 por_destino={'DESCARTADO': 2}
+2026-09-16 07:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 07:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 07:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 07:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 08:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 08:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 08:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 08:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 09:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 09:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 09:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 09:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 10:00:06,543 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en (sin asignar)
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf6vWajeBPACwExhq48Lj'}
+2026-09-16 10:00:12,989 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf6vX4HLnJ4rdCrBB1csk'}
+2026-09-16 10:00:19,472 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Cooling + thermal management
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf6vXXwk5VAyDjhTpc4oR'}
+2026-09-16 10:00:26,031 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Fotónica + conectividad
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf6vY1vVBB2new67TKih1'}
+2026-09-16 10:00:32,460 [ERROR] backend.agents.mapa_sectorial: regenerar_si_vencido — fallo en AI infra — Semicap + advanced packaging
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 408, in regenerar_si_vencido
+    r = generar_mapa_sectorial(sec)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/mapa_sectorial.py", line 166, in generar_mapa_sectorial
+    result = call_llm_json(
+             ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 336, in wrapped_f
+    return copy(f, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 475, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/tenacity/__init__.py", line 478, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/services/llm.py", line 184, in call_llm_json
+    response = client.messages.create(**create_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_utils/_utils.py", line 275, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/resources/messages.py", line 888, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1277, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 954, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/anthropic/_base_client.py", line 1058, in _request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf6vYVQxvzKaErzEPabcK'}
+2026-09-16 10:00:32,461 [INFO] backend.agents.script_nocturno: script_nocturno — regenerados=0 omitidos_aprobados=0 errores=5
+2026-09-16 10:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 10:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 10:39:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 10:54:48,325 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=6
+2026-09-16 10:54:48,326 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 11:00:00,641 [INFO] backend.agents.research: monitor_earnings — creados=0
+2026-09-16 11:05:00,181 [INFO] backend.agents.research: monitor_form4 — creados=2
+2026-09-16 11:09:05,556 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1194 ticker=QLYS tipo=INSIDER_ACTIVITY destino=PORTFOLIO urgencia=baja regla=R5b: INSIDER + Portfolio/WLP
+2026-09-16 11:09:05,560 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1195 ticker=CVLT tipo=INSIDER_ACTIVITY destino=PORTFOLIO urgencia=baja regla=R5b: INSIDER + Portfolio/WLP
+2026-09-16 11:09:05,560 [INFO] backend.agents.dispatcher: dispatcher — procesados=2 por_destino={'PORTFOLIO': 2}
+2026-09-16 11:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 11:30:00,003 [INFO] backend.agents.revalidacion: revalidacion — creadas=0 saltadas=1
+2026-09-16 11:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 11:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 12:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 12:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 12:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 12:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 13:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 13:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 13:30:04,366 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-16 13:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1196 ticker=QLYS tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-16 13:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-16 13:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 14:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 14:00:01,467 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 14:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 14:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-16 14:15:00,391 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4556
+2026-09-16 14:15:00,392 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4556 ticker=NABL accion=mantener (modo paper)
+2026-09-16 14:15:00,603 [INFO] backend.agents.recomendacion_runner: REC 4556 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-16 14:15:00,608 [INFO] backend.agents.decision_journal: decision_journal — id=4353 accion=mantener ticker=NABL decisor=humano
+2026-09-16 14:15:00,834 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4557
+2026-09-16 14:15:00,835 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4557 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-16 14:15:01,026 [INFO] backend.agents.recomendacion_runner: REC 4557 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 14:15:01,030 [INFO] backend.agents.decision_journal: decision_journal — id=4354 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-16 14:15:01,208 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4558
+2026-09-16 14:15:01,210 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4558 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-16 14:15:01,360 [INFO] backend.agents.recomendacion_runner: REC 4558 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 14:15:01,364 [INFO] backend.agents.decision_journal: decision_journal — id=4355 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-16 14:15:01,602 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4559
+2026-09-16 14:15:01,603 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4559 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-16 14:15:01,813 [INFO] backend.agents.recomendacion_runner: REC 4559 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 14:15:01,817 [INFO] backend.agents.decision_journal: decision_journal — id=4356 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-16 14:15:02,033 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4560
+2026-09-16 14:15:02,034 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4560 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-16 14:15:02,283 [INFO] backend.agents.recomendacion_runner: REC 4560 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 14:15:02,287 [INFO] backend.agents.decision_journal: decision_journal — id=4357 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-16 14:15:02,502 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4561
+2026-09-16 14:15:02,503 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4561 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-16 14:15:02,699 [INFO] backend.agents.recomendacion_runner: REC 4561 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 14:15:02,703 [INFO] backend.agents.decision_journal: decision_journal — id=4358 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-16 14:15:02,704 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-16 14:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 14:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 14:30:01,568 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 14:30:05,974 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-16 14:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 14:54:51,240 [INFO] backend.agents.research: monitor_noticias — creados=0 dup_skipped=5
+2026-09-16 14:54:51,242 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 15:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 15:00:01,751 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 15:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 15:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-16 15:15:00,277 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4562
+2026-09-16 15:15:00,278 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4562 ticker=NABL accion=mantener (modo paper)
+2026-09-16 15:15:00,443 [INFO] backend.agents.recomendacion_runner: REC 4562 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-16 15:15:00,446 [INFO] backend.agents.decision_journal: decision_journal — id=4359 accion=mantener ticker=NABL decisor=humano
+2026-09-16 15:15:00,679 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4563
+2026-09-16 15:15:00,680 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4563 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-16 15:15:00,910 [INFO] backend.agents.recomendacion_runner: REC 4563 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 15:15:00,914 [INFO] backend.agents.decision_journal: decision_journal — id=4360 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-16 15:15:01,239 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4564
+2026-09-16 15:15:01,240 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4564 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-16 15:15:01,453 [INFO] backend.agents.recomendacion_runner: REC 4564 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 15:15:01,457 [INFO] backend.agents.decision_journal: decision_journal — id=4361 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-16 15:15:01,733 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4565
+2026-09-16 15:15:01,734 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4565 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-16 15:15:01,918 [INFO] backend.agents.recomendacion_runner: REC 4565 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 15:15:01,922 [INFO] backend.agents.decision_journal: decision_journal — id=4362 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-16 15:15:02,167 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4566
+2026-09-16 15:15:02,168 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4566 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-16 15:15:02,330 [INFO] backend.agents.recomendacion_runner: REC 4566 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 15:15:02,334 [INFO] backend.agents.decision_journal: decision_journal — id=4363 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-16 15:15:02,602 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4567
+2026-09-16 15:15:02,603 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4567 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-16 15:15:02,736 [INFO] backend.agents.recomendacion_runner: REC 4567 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 15:15:02,739 [INFO] backend.agents.decision_journal: decision_journal — id=4364 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-16 15:15:02,739 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-16 15:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 15:30:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 15:30:01,267 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 15:30:05,242 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-16 15:39:05,554 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1197 ticker=CVLT tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-16 15:39:05,554 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-16 15:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 16:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 16:00:01,539 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 16:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 16:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-16 16:15:00,328 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4568
+2026-09-16 16:15:00,329 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4568 ticker=NABL accion=mantener (modo paper)
+2026-09-16 16:15:00,431 [INFO] backend.agents.recomendacion_runner: REC 4568 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-16 16:15:00,435 [INFO] backend.agents.decision_journal: decision_journal — id=4365 accion=mantener ticker=NABL decisor=humano
+2026-09-16 16:15:00,684 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4569
+2026-09-16 16:15:00,685 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4569 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-16 16:15:00,895 [INFO] backend.agents.recomendacion_runner: REC 4569 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 16:15:00,899 [INFO] backend.agents.decision_journal: decision_journal — id=4366 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-16 16:15:01,114 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4570
+2026-09-16 16:15:01,115 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4570 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-16 16:15:01,285 [INFO] backend.agents.recomendacion_runner: REC 4570 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 16:15:01,290 [INFO] backend.agents.decision_journal: decision_journal — id=4367 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-16 16:15:01,528 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4571
+2026-09-16 16:15:01,529 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4571 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-16 16:15:01,669 [INFO] backend.agents.recomendacion_runner: REC 4571 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 16:15:01,675 [INFO] backend.agents.decision_journal: decision_journal — id=4368 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-16 16:15:01,888 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4572
+2026-09-16 16:15:01,890 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4572 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-16 16:15:02,077 [INFO] backend.agents.recomendacion_runner: REC 4572 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 16:15:02,082 [INFO] backend.agents.decision_journal: decision_journal — id=4369 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-16 16:15:02,369 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4573
+2026-09-16 16:15:02,370 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4573 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-16 16:15:02,519 [INFO] backend.agents.recomendacion_runner: REC 4573 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 16:15:02,523 [INFO] backend.agents.decision_journal: decision_journal — id=4370 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-16 16:15:02,523 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-16 16:24:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 16:30:00,005 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 16:30:01,581 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 16:30:07,698 [INFO] backend.agents.research: monitor_precios — creados=1 cooldown=2
+2026-09-16 16:39:05,552 [INFO] backend.agents.dispatcher: DISPATCHER — evento=1198 ticker=ALGM tipo=PRECIO_ALERTA destino=DESCARTADO urgencia=media regla=R6b: PRECIO + WLP — humano decide (evento visible)
+2026-09-16 16:39:05,552 [INFO] backend.agents.dispatcher: dispatcher — procesados=1 por_destino={'DESCARTADO': 1}
+2026-09-16 16:54:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 17:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 17:00:01,725 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 17:09:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 17:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-16 17:15:00,315 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4574
+2026-09-16 17:15:00,316 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4574 ticker=NABL accion=mantener (modo paper)
+2026-09-16 17:15:00,529 [INFO] backend.agents.recomendacion_runner: REC 4574 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-16 17:15:00,533 [INFO] backend.agents.decision_journal: decision_journal — id=4371 accion=mantener ticker=NABL decisor=humano
+2026-09-16 17:15:00,753 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4575
+2026-09-16 17:15:00,754 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4575 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-16 17:15:00,920 [INFO] backend.agents.recomendacion_runner: REC 4575 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 17:15:00,923 [INFO] backend.agents.decision_journal: decision_journal — id=4372 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-16 17:15:01,168 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4576
+2026-09-16 17:15:01,169 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4576 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-16 17:15:01,313 [INFO] backend.agents.recomendacion_runner: REC 4576 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 17:15:01,317 [INFO] backend.agents.decision_journal: decision_journal — id=4373 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-16 17:15:01,592 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4577
+2026-09-16 17:15:01,593 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4577 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-16 17:15:01,752 [INFO] backend.agents.recomendacion_runner: REC 4577 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 17:15:01,757 [INFO] backend.agents.decision_journal: decision_journal — id=4374 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-16 17:15:01,942 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4578
+2026-09-16 17:15:01,943 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4578 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-16 17:15:02,123 [INFO] backend.agents.recomendacion_runner: REC 4578 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 17:15:02,126 [INFO] backend.agents.decision_journal: decision_journal — id=4375 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-16 17:15:02,356 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4579
+2026-09-16 17:15:02,357 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4579 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-16 17:15:02,496 [INFO] backend.agents.recomendacion_runner: REC 4579 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 17:15:02,499 [INFO] backend.agents.decision_journal: decision_journal — id=4376 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-16 17:15:02,499 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}
+2026-09-16 17:24:05,549 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 17:30:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 17:30:01,582 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 17:30:05,589 [INFO] backend.agents.research: monitor_precios — creados=0 cooldown=3
+2026-09-16 17:39:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 17:54:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 18:00:00,004 [INFO] backend.agents.mtm: mtm — arrancando — 6 tickers
+2026-09-16 18:00:01,528 [INFO] backend.agents.mtm: mtm — completado — actualizados=6 errores=0 alertas_entry=0
+2026-09-16 18:09:05,548 [INFO] backend.agents.dispatcher: dispatcher — procesados=0 por_destino={}
+2026-09-16 18:15:00,004 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — arrancando — 6 tickers a evaluar
+2026-09-16 18:15:00,393 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=NABL accion=mantener estado=VALIDADA rec_id=4580
+2026-09-16 18:15:00,394 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4580 ticker=NABL accion=mantener (modo paper)
+2026-09-16 18:15:00,597 [INFO] backend.agents.recomendacion_runner: REC 4580 aprobada — ticker=NABL accion=mantener estado Portfolio_Activo→Portfolio_Activo
+2026-09-16 18:15:00,601 [INFO] backend.agents.decision_journal: decision_journal — id=4377 accion=mantener ticker=NABL decisor=humano
+2026-09-16 18:15:00,847 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VRT accion=wl_prioritaria estado=VALIDADA rec_id=4581
+2026-09-16 18:15:00,848 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4581 ticker=VRT accion=wl_prioritaria (modo paper)
+2026-09-16 18:15:01,019 [INFO] backend.agents.recomendacion_runner: REC 4581 aprobada — ticker=VRT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 18:15:01,023 [INFO] backend.agents.decision_journal: decision_journal — id=4378 accion=wl_prioritaria ticker=VRT decisor=humano
+2026-09-16 18:15:01,431 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=ALGM accion=wl_prioritaria estado=VALIDADA rec_id=4582
+2026-09-16 18:15:01,432 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4582 ticker=ALGM accion=wl_prioritaria (modo paper)
+2026-09-16 18:15:02,143 [INFO] backend.agents.recomendacion_runner: REC 4582 aprobada — ticker=ALGM accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 18:15:02,146 [INFO] backend.agents.decision_journal: decision_journal — id=4379 accion=wl_prioritaria ticker=ALGM decisor=humano
+2026-09-16 18:15:02,388 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=VCYT accion=wl_prioritaria estado=VALIDADA rec_id=4583
+2026-09-16 18:15:02,390 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4583 ticker=VCYT accion=wl_prioritaria (modo paper)
+2026-09-16 18:15:02,574 [INFO] backend.agents.recomendacion_runner: REC 4583 aprobada — ticker=VCYT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 18:15:02,577 [INFO] backend.agents.decision_journal: decision_journal — id=4380 accion=wl_prioritaria ticker=VCYT decisor=humano
+2026-09-16 18:15:02,840 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=QLYS accion=wl_prioritaria estado=VALIDADA rec_id=4584
+2026-09-16 18:15:02,841 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4584 ticker=QLYS accion=wl_prioritaria (modo paper)
+2026-09-16 18:15:03,034 [INFO] backend.agents.recomendacion_runner: REC 4584 aprobada — ticker=QLYS accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 18:15:03,038 [INFO] backend.agents.decision_journal: decision_journal — id=4381 accion=wl_prioritaria ticker=QLYS decisor=humano
+2026-09-16 18:15:03,276 [INFO] backend.agents.recomendacion_runner: RECOMENDACION creada — ticker=CVLT accion=wl_prioritaria estado=VALIDADA rec_id=4585
+2026-09-16 18:15:03,277 [WARNING] backend.agents.recomendacion_runner: AUTO-APROBANDO rec_id=4585 ticker=CVLT accion=wl_prioritaria (modo paper)
+2026-09-16 18:15:03,464 [INFO] backend.agents.recomendacion_runner: REC 4585 aprobada — ticker=CVLT accion=wl_prioritaria estado WL_Prioritaria→WL_Prioritaria
+2026-09-16 18:15:03,467 [INFO] backend.agents.decision_journal: decision_journal — id=4382 accion=wl_prioritaria ticker=CVLT decisor=humano
+2026-09-16 18:15:03,467 [INFO] backend.agents.evaluador_automatico: evaluador_automatico — completado — evaluados=6 auto_aprobadas=6 por_accion={'mantener': 1, 'wl_prioritaria': 5}

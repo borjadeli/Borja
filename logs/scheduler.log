@@ -19277,3 +19277,799 @@ sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) FOREIGN KEY constraint f
 2026-09-14 15:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
 2026-09-14 15:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
 2026-09-14 15:09:40,764 [INFO] backend.scheduler: scheduler — 6 jobs registrados
+2026-09-14 15:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-14 15:15:02,640 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-14 15:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 15:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 15:30:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 15:30:01,399 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 15:30:01,399 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 15:30:04,492 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 15:30:04,492 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-14 15:30:05,454 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-14 15:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 15:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 15:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 15:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 16:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 16:00:01,584 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 16:00:01,584 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 16:00:04,501 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 16:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 16:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 16:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-14 16:15:02,362 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-14 16:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 16:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 16:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 16:30:01,456 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 16:30:01,457 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 16:30:04,681 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 16:30:04,681 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-14 16:30:05,676 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-14 16:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 16:39:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 16:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 16:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 17:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 17:00:02,128 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 17:00:02,128 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 17:00:06,670 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 17:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 17:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 17:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-14 17:15:03,282 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-14 17:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 17:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 17:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 17:30:01,515 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 17:30:01,515 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 17:30:04,667 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 17:30:04,667 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-14 17:30:05,499 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-14 17:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 17:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 17:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 17:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 18:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 18:00:01,801 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 18:00:01,801 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 18:00:05,447 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 18:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 18:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 18:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-14 18:15:03,297 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-14 18:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 18:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 18:30:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 18:30:02,012 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 18:30:02,012 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 18:30:05,475 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 18:30:05,476 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-14 18:30:06,116 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-14 18:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 18:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 18:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-14 18:54:53,004 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-14 18:54:53,004 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 18:54:53,006 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 19:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 19:00:01,602 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 19:00:01,602 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 19:00:05,093 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 19:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 19:09:05,551 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 19:15:00,001 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-14 19:15:02,779 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-14 19:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 19:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 19:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 19:30:01,960 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 19:30:01,960 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 19:30:05,457 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 19:30:05,457 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-14 19:30:06,344 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-14 19:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 19:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 19:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 19:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 20:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 20:00:01,839 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 20:00:01,839 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 20:00:05,018 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 20:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 20:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 20:15:00,001 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-14 20:15:02,956 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-14 20:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 20:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 20:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-14 20:30:01,427 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-14 20:30:01,427 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-14 20:30:04,566 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-14 20:30:04,566 [INFO] backend.scheduler: scheduler — ejecutando portfolio_snapshot
+2026-09-14 20:30:04,572 [INFO] backend.scheduler: scheduler — portfolio_snapshot completado
+2026-09-14 20:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 20:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 20:40:00,000 [INFO] backend.scheduler: scheduler — ejecutando paper_ciclo
+2026-09-14 20:40:14,474 [INFO] backend.scheduler: scheduler — paper_ciclo completado
+2026-09-14 20:45:00,000 [INFO] backend.scheduler: scheduler — ejecutando paper_snapshot
+2026-09-14 20:45:03,360 [INFO] backend.scheduler: scheduler — paper_snapshot completado
+2026-09-14 20:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 20:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 21:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 21:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 21:24:05,549 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 21:24:05,565 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 21:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 21:39:05,550 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 21:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 21:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 22:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 22:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 22:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 22:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 22:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 22:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 22:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-14 22:54:50,240 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-14 22:54:50,241 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 22:54:50,243 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 23:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 23:09:05,551 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 23:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 23:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 23:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 23:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-14 23:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-14 23:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 00:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 00:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 00:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 00:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 00:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 00:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 00:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 00:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 01:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 01:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 01:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 01:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 01:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 01:39:05,550 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 01:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 01:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 02:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 02:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 02:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 02:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 02:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 02:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 02:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-15 02:54:48,461 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-15 02:54:48,462 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 02:54:48,472 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 03:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 03:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 03:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 03:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 03:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 03:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 03:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 03:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 04:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando backup_sqlite
+2026-09-15 04:00:00,048 [INFO] backend.scheduler: scheduler — backup_sqlite completado
+2026-09-15 04:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 04:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 04:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 04:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 04:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 04:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 04:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 04:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 05:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 05:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 05:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 05:24:05,550 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 05:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 05:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 05:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 05:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 06:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 06:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 06:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 06:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 06:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 06:39:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 06:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-15 06:54:49,173 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-15 06:54:49,173 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 06:54:49,186 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 07:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 07:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 07:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 07:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 07:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 07:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 07:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 07:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 08:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 08:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 08:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 08:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 08:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 08:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 08:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 08:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 09:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 09:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 09:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 09:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 09:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 09:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 09:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 09:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 10:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando script_nocturno
+2026-09-15 10:00:32,652 [ERROR] backend.scheduler: scheduler — script_nocturno falló: (sqlite3.IntegrityError) FOREIGN KEY constraint failed
+[SQL: DELETE FROM eventos WHERE eventos.estado IN (?, ?) AND eventos.timestamp < ?]
+[parameters: ('procesado', 'descartado', '2026-06-17 10:00:32.490593')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+Traceback (most recent call last):
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.IntegrityError: FOREIGN KEY constraint failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/scheduler.py", line 213, in wrapper
+  File "/opt/BORJA/backend/agents/script_nocturno.py", line 244, in correr_script_nocturno
+    "eventos_limpiados": limpiar_eventos_antiguos(),
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/script_nocturno.py", line 199, in limpiar_eventos_antiguos
+    .delete()
+     ^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 3162, in delete
+    result: CursorResult[Any] = self.session.execute(
+                                ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py", line 2021, in orm_execute_statement
+    return super().orm_execute_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 305, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) FOREIGN KEY constraint failed
+[SQL: DELETE FROM eventos WHERE eventos.estado IN (?, ?) AND eventos.timestamp < ?]
+[parameters: ('procesado', 'descartado', '2026-06-17 10:00:32.490593')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-15 10:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 10:09:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 10:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 10:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 10:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 10:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 10:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-15 10:54:46,953 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-15 10:54:46,953 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 10:54:46,958 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 11:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando monitor_earnings
+2026-09-15 11:00:00,663 [INFO] backend.scheduler: scheduler — monitor_earnings completado
+2026-09-15 11:05:00,001 [INFO] backend.scheduler: scheduler — ejecutando monitor_form4
+2026-09-15 11:05:00,005 [INFO] backend.scheduler: scheduler — monitor_form4 completado
+2026-09-15 11:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 11:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 11:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 11:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 11:30:00,000 [INFO] backend.scheduler: scheduler — ejecutando revalidacion_30d
+2026-09-15 11:30:00,004 [INFO] backend.scheduler: scheduler — revalidacion_30d completado
+2026-09-15 11:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 11:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 11:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 11:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 12:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 12:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 12:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 12:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 12:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 12:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 12:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 12:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 13:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 13:00:03,093 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 13:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 13:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 13:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 13:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 13:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 13:30:03,261 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 13:30:03,261 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 13:30:04,257 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 13:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 13:39:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 13:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 13:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 14:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 14:00:01,755 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 14:00:01,755 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 14:00:05,614 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 14:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 14:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 14:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 14:15:03,474 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 14:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 14:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 14:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 14:30:01,784 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 14:30:01,784 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 14:30:05,186 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 14:30:05,186 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 14:30:06,318 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 14:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 14:39:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 14:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-15 14:54:51,428 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-15 14:54:51,428 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 14:54:51,433 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 15:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 15:00:01,997 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 15:00:01,997 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 15:00:06,009 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 15:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 15:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 15:15:00,001 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 15:15:02,699 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 15:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 15:24:05,550 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 15:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 15:30:01,615 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 15:30:01,616 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 15:30:04,493 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 15:30:04,493 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 15:30:05,542 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 15:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 15:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 15:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 15:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 16:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 16:00:01,929 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 16:00:01,930 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 16:00:05,786 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 16:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 16:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 16:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 16:15:02,891 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 16:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 16:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 16:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 16:30:01,669 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 16:30:01,669 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 16:30:04,720 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 16:30:04,720 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 16:30:05,860 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 16:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 16:39:05,553 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 16:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 16:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 17:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 17:00:01,637 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 17:00:01,637 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 17:00:05,249 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 17:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 17:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 17:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 17:15:03,159 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 17:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 17:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 17:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 17:30:01,416 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 17:30:01,416 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 17:30:04,265 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 17:30:04,265 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 17:30:04,920 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 17:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 17:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 17:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 17:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 18:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 18:00:01,607 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 18:00:01,607 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 18:00:04,625 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 18:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 18:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 18:15:00,001 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 18:15:02,813 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 18:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 18:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 18:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 18:30:01,713 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 18:30:01,713 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 18:30:06,166 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 18:30:06,167 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 18:30:07,135 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 18:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 18:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 18:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-15 18:54:51,503 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-15 18:54:51,503 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 18:54:51,516 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 19:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 19:00:02,479 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 19:00:02,480 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 19:00:05,795 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 19:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 19:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 19:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 19:15:03,497 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 19:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 19:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 19:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 19:30:01,955 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 19:30:01,955 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 19:30:05,619 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 19:30:05,619 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-15 19:30:06,321 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-15 19:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 19:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 19:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 19:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 20:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 20:00:01,984 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 20:00:01,984 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 20:00:05,080 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 20:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 20:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 20:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-15 20:15:03,488 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-15 20:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 20:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 20:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-15 20:30:01,447 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-15 20:30:01,448 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-15 20:30:04,534 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-15 20:30:04,534 [INFO] backend.scheduler: scheduler — ejecutando portfolio_snapshot
+2026-09-15 20:30:04,548 [INFO] backend.scheduler: scheduler — portfolio_snapshot completado
+2026-09-15 20:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 20:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 20:40:00,000 [INFO] backend.scheduler: scheduler — ejecutando paper_ciclo
+2026-09-15 20:40:26,777 [INFO] backend.scheduler: scheduler — paper_ciclo completado
+2026-09-15 20:45:00,000 [INFO] backend.scheduler: scheduler — ejecutando paper_snapshot
+2026-09-15 20:45:03,388 [INFO] backend.scheduler: scheduler — paper_snapshot completado
+2026-09-15 20:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 20:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 21:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 21:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 21:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 21:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 21:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 21:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 21:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 21:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 22:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 22:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 22:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 22:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 22:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 22:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 22:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-15 22:54:52,735 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-15 22:54:52,735 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 22:54:52,740 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 23:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 23:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 23:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 23:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 23:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 23:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-15 23:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-15 23:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 00:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 00:09:05,550 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 00:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 00:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 00:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 00:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 00:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 00:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 01:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 01:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 01:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 01:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 01:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 01:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 01:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 01:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 02:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 02:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 02:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 02:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 02:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 02:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 02:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-16 02:54:47,337 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-16 02:54:47,337 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 02:54:47,339 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 03:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 03:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 03:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 03:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 03:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 03:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 03:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 03:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 04:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando backup_sqlite
+2026-09-16 04:00:00,046 [INFO] backend.scheduler: scheduler — backup_sqlite completado
+2026-09-16 04:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 04:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 04:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 04:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 04:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 04:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 04:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 04:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 05:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 05:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 05:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 05:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 05:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 05:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 05:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 05:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 06:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 06:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 06:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 06:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 06:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 06:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 06:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-16 06:54:46,208 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-16 06:54:46,209 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 06:54:46,217 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 07:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 07:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 07:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 07:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 07:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 07:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 07:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 07:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 08:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 08:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 08:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 08:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 08:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 08:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 08:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 08:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 09:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 09:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 09:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 09:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 09:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 09:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 09:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 09:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 10:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando script_nocturno
+2026-09-16 10:00:32,633 [ERROR] backend.scheduler: scheduler — script_nocturno falló: (sqlite3.IntegrityError) FOREIGN KEY constraint failed
+[SQL: DELETE FROM eventos WHERE eventos.estado IN (?, ?) AND eventos.timestamp < ?]
+[parameters: ('procesado', 'descartado', '2026-06-18 10:00:32.461887')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+Traceback (most recent call last):
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.IntegrityError: FOREIGN KEY constraint failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/BORJA/backend/scheduler.py", line 213, in wrapper
+  File "/opt/BORJA/backend/agents/script_nocturno.py", line 244, in correr_script_nocturno
+    "eventos_limpiados": limpiar_eventos_antiguos(),
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/backend/agents/script_nocturno.py", line 199, in limpiar_eventos_antiguos
+    .delete()
+     ^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 3162, in delete
+    result: CursorResult[Any] = self.session.execute(
+                                ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py", line 2021, in orm_execute_statement
+    return super().orm_execute_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 305, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/opt/BORJA/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) FOREIGN KEY constraint failed
+[SQL: DELETE FROM eventos WHERE eventos.estado IN (?, ?) AND eventos.timestamp < ?]
+[parameters: ('procesado', 'descartado', '2026-06-18 10:00:32.461887')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-09-16 10:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 10:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 10:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 10:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 10:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 10:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 10:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-16 10:54:48,325 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-16 10:54:48,325 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 10:54:48,327 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 11:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando monitor_earnings
+2026-09-16 11:00:00,641 [INFO] backend.scheduler: scheduler — monitor_earnings completado
+2026-09-16 11:05:00,000 [INFO] backend.scheduler: scheduler — ejecutando monitor_form4
+2026-09-16 11:05:00,182 [INFO] backend.scheduler: scheduler — monitor_form4 completado
+2026-09-16 11:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 11:09:05,560 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 11:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 11:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 11:30:00,000 [INFO] backend.scheduler: scheduler — ejecutando revalidacion_30d
+2026-09-16 11:30:00,004 [INFO] backend.scheduler: scheduler — revalidacion_30d completado
+2026-09-16 11:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 11:39:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 11:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 11:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 12:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 12:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 12:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 12:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 12:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 12:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 12:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 12:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 13:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 13:00:03,434 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 13:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 13:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 13:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 13:24:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 13:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 13:30:03,337 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 13:30:03,337 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-16 13:30:04,366 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-16 13:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 13:39:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 13:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 13:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 14:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 14:00:01,467 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 14:00:01,468 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 14:00:04,557 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 14:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 14:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 14:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-16 14:15:02,704 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-16 14:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 14:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 14:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 14:30:01,568 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 14:30:01,569 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 14:30:05,156 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 14:30:05,157 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-16 14:30:05,974 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-16 14:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 14:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 14:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando monitor_noticias
+2026-09-16 14:54:51,240 [INFO] backend.scheduler: scheduler — monitor_noticias completado
+2026-09-16 14:54:51,240 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 14:54:51,242 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 15:00:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 15:00:01,751 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 15:00:01,751 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 15:00:05,217 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 15:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 15:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 15:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-16 15:15:02,739 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-16 15:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 15:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 15:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 15:30:01,267 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 15:30:01,267 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 15:30:04,264 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 15:30:04,264 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-16 15:30:05,242 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-16 15:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 15:39:05,554 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 15:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 15:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 16:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 16:00:01,539 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 16:00:01,539 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 16:00:04,842 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 16:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 16:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 16:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-16 16:15:02,524 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-16 16:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 16:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 16:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 16:30:01,581 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 16:30:01,581 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 16:30:04,778 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 16:30:04,778 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-16 16:30:07,698 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-16 16:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 16:39:05,552 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 16:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 16:54:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 17:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 17:00:01,726 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 17:00:01,726 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 17:00:05,510 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 17:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 17:09:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 17:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-16 17:15:02,500 [INFO] backend.scheduler: scheduler — evaluador_horario completado
+2026-09-16 17:24:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 17:24:05,549 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 17:30:00,001 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 17:30:01,582 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 17:30:01,582 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 17:30:04,659 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 17:30:04,659 [INFO] backend.scheduler: scheduler — ejecutando monitor_precios
+2026-09-16 17:30:05,589 [INFO] backend.scheduler: scheduler — monitor_precios completado
+2026-09-16 17:39:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 17:39:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 17:54:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 17:54:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 18:00:00,000 [INFO] backend.scheduler: scheduler — ejecutando mtm_intraday
+2026-09-16 18:00:01,528 [INFO] backend.scheduler: scheduler — mtm_intraday completado
+2026-09-16 18:00:01,528 [INFO] backend.scheduler: scheduler — ejecutando paper_mtm_intraday
+2026-09-16 18:00:04,431 [INFO] backend.scheduler: scheduler — paper_mtm_intraday completado
+2026-09-16 18:09:05,547 [INFO] backend.scheduler: scheduler — ejecutando dispatcher
+2026-09-16 18:09:05,548 [INFO] backend.scheduler: scheduler — dispatcher completado
+2026-09-16 18:15:00,000 [INFO] backend.scheduler: scheduler — ejecutando evaluador_horario
+2026-09-16 18:15:03,468 [INFO] backend.scheduler: scheduler — evaluador_horario completado

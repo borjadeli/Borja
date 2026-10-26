@@ -23,11 +23,15 @@ arquitectura/plan en doc 52.
   **Bear** (`bear.py`, Sonnet 5.5 + web, ataca) · **Verificador** (`verificador.py`, determinista por
   procedencia, 3 estados PASS/REVIEW/FAIL, núcleo sin API) · **Macro** (`macro.py`, Opus 5.5 + web →
   MacroMemo). **Los 5 agentes de research están completos** (Triage, Macro, Analista, Bear, Verificador).
-- **Próximo — ÚNICO pendiente de Fase 3: el ORQUESTADOR** (`orquestador.py`): flujo semanal
-  Macro→Triage→Analista→Bear→(réplica)→Verificador; **ledger de presupuesto en USD** (sobre semanal ~$9 +
-  reserva 20-25% para eventos + reserva de peor-caso antes de cada llamada + escalera de degradación
-  70/90/100%); reutilización por hash (data pack + hechos por known_at, TTL 4-6 sem); Analista en Batch
-  (−50%) para agendados, sync para eventos. Es el capstone de Fase 3 y la puerta a Fase 4 (PM + paper nuevo).
+  **ORQUESTADOR** (`orquestador.py`) + **ledger de presupuesto USD** (`presupuesto.py`): flujo semanal
+  Macro→Triage(ranking, forzados)→ por nombre bajo el ledger (sobre semanal + reserva de eventos + reserva
+  de peor-caso + escalera 70/90/100%): reutiliza por hash (TTL 35d) o corre Analista→Bear→Verificador; un
+  dossier FAIL no se cachea. Todo testeado con stubs (508 tests verdes).
+- **Fase 3: COMPONENTES COMPLETOS.** Falta solo la **validación**: el SMOKE REAL sobre 5 nombres (doc 52) —
+  una corrida semanal en vivo (≈$4-6, ~20-30 min de llamadas agénticas) → reportar costo real/nombre + 2
+  dossiers. Diferido a Fase 4: réplica del Analista al Bear (turno en su hilo) + Analista en Batch (−50%).
+- **Fase 4 (próxima):** PM + Auditor + IPS en código (`config/ips.yaml`) + ledger de decisiones; reescritura
+  de `paper_trader` para operar desde las decisiones del PM; monitor de eventos.
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

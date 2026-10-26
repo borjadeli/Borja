@@ -1,0 +1,41 @@
+# IPS — Investment Policy Statement (v2 Fase 4, doc 51 §3B / doc 55).
+# El ÚNICO lugar donde el código impone límites duros. Inputs MECÁNICOS solo (precios, pesos, ADV, market
+# cap, fechas, clasificación de fuente fija) — nunca un juicio de LLM (doc 55 §4, principio rector).
+# El validador usa esto como dry-run tool del PM y como gate final. Versionado + hash en cada decisión.
+version: "1.0"
+fecha: "2026-10-26"
+
+# --- Límites de cartera (decisiones del operador 2026-10-26) ---
+max_posiciones: 12
+peso_max_nombre: 0.20          # 20% por nombre
+max_por_sector: 0.30
+max_por_cuello: 0.35           # requiere mapa poblado (nx_nodo) — ya está
+caja_min: 0.0
+caja_max: 1.0                  # puede ir 100% a caja (disciplina sobre actividad)
+max_ops_semana: 2
+
+# --- Admisibilidad del universo ---
+market_cap_min_usd: 150000000       # $150M
+market_cap_max_usd: 60000000000     # $60B
+adv_min_usd: 3000000                # liquidez mínima $3M/día
+pct_adv_max: 0.10                   # una posición no supera el 10% del ADV
+
+# --- Regla condicional de supervivencia (doc 55 §4.5: el cap vive en el IPS, no por fuera) ---
+# Un flag de supervivencia NO resuelto (ni refutado con evidencia ni aceptado como falsador) → el nombre
+# cae a REVIEW y su peso resultante no supera este tope. NO es una regla paralela del orquestador.
+cap_flag_supervivencia: 0.04
+
+# --- Reglas de riesgo que ANTES eran "juicio del auditor" y ahora son números (doc 55 §4.4) ---
+turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|)
+holding_period_min_dias: 5     # no cerrar una posición abierta hace < N días (salvo falsador disparado)
+
+# --- Presupuesto LLM (el ledger de presupuesto lo hace cumplir; acá queda el número) ---
+presupuesto_usd_mes: 40.0
+
+# --- Duro e innegociable ---
+ordenes_reales: false          # PROHIBIDO enviar órdenes reales / conectar bróker con escritura
+
+# --- Fuente de la clasificación sector/cuello para los caps de concentración ---
+# MECÁNICA: tabla fija, NUNCA un bucket asignado por LLM (doc 55 §4.1). 'nx_nodo' = el mapa poblado en Fase 2
+# (cluster/factor_macro); 'gics' = tabla GICS a mano si se necesita el eje bursátil.
+clasificacion_fuente: "nx_nodo"

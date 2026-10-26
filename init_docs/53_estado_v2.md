@@ -14,10 +14,15 @@ arquitectura/plan en doc 52.
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
-- Fase 3: SDK anthropic 0.39→2.3 (Opus 5.5 operativo) · contratos de datos (`backend/agentes/provenance.py`
-  + `schemas.py`, los 8 agentes) · data pack assembler (`data_pack.py`, capa de mercado con procedencia).
-- **Próximo (se triangula primero — doc 54):** agent base + los agentes LLM (Triage, Macro, Analista, Bear,
-  Verificador) + orquestador con presupuesto + harness ScriptedLLM.
+- Fase 3: SDK anthropic 0.39→2.3 (Opus 5.5 operativo) · contratos de datos (`provenance.py` + `schemas.py`,
+  los 8 agentes, al diseño convergido) · data pack assembler (`data_pack.py`) · **triangulación CERRADA +
+  validada por spike** (doc 54 §4) · **agent base** (`base.py`: transporte + costo 5.5 + `ScriptedLLM`) ·
+  **Triage** (`triage.py`, pointwise, validado en vivo Haiku 5.5) · **Analista** (`analista.py`: Opus 5.5 +
+  web + tool `emitir_dossier` strict — **validado en vivo sobre OKLO**: Dossier real, 9 claims, bull/bear
+  independientes, falsador fechado, $0.69/corrida).
+- **Próximo:** Bear + Verificador (determinista-primero por procedencia, 3 estados) + Macro + **orquestador**
+  (ledger de presupuesto en USD, sobres semanales, reutilización por hash, Analista en batch). Mismo patrón
+  del agent base.
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

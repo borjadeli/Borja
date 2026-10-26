@@ -89,3 +89,61 @@ Un fake de `services/llm.py` que devuelve respuestas guionadas → tests de cada
 El paradigma (determinismo informa/limita, LLM decide — doc 51), los modelos, el IPS parcial, los contratos
 pydantic ya definidos, y que el Analista es Opus+web agéntico (doc 49). La triangulación es sobre la
 **mecánica de implementación**, no sobre quién decide.
+
+---
+
+## 4. RESOLUCIÓN CONVERGIDA (IA1 + IA2 + spike empírico, 2026-10-26)
+
+Las dos IAs convergieron; donde difirieron, el **spike empírico** (llamadas reales a Opus 5.5) desempató.
+
+**Hechos verificados que corrigen el diseño original:**
+- `task_budget` **NO es tope duro** (sugerencia blanda; lo que se hace cumplir es `max_tokens`). → el freno de
+  $40 va en el **orquestador con ledger en USD**.
+- **No se puede forzar `tool_choice`** en Opus 5.5 (thinking siempre activo → **400**, confirmado en spike).
+- Caché: lecturas-hit al **5% solo en Opus/Sonnet 5.5; Haiku sigue al 10%** → la tabla de precios por modelo
+  no puede hardcodear 5%.
+- `web_search_20260318` existe (control de inclusión; dejar en **full** para conservar las URLs).
+- El `encrypted_content`/`page_age`/`url`/`title` de los `web_search_result` hay que devolverlos **intactos**
+  (si faltan/se modifican → 400); son el insumo de procedencia del Verificador.
+
+**Decisiones cerradas:**
+1. **Parse del Analista:** NO `output_config.format`. Acción final = **tool cliente `emitir_dossier`
+   (strict:true)**; el parse lee el `input` de ese `tool_use`. Si el loop termina `end_turn` sin emitirlo →
+   turno extra "emití el dossier" (cache-hit, barato). **Validado en spike.** Triage/Bear/Verificador (sin
+   web) sí usan `output_config.format`. Schema strict: todo `required` con centinelas `""`/`[]` (tope 24
+   opcionales/16 unions); **sin campo "razonamiento"** (riesgo `reasoning_extraction` refusal); enums
+   case-insensitive.
+2. **Analista:** Opus 5.5, `effort` a **barrer (medium vs high) sobre evals propios**, no fijo. `max_uses` +
+   `max_tokens` + ledger USD = los topes reales. Prefijo común (IPS+cuello+memo+rúbrica) cacheado **con TTL
+   1h** (los loops pasan los 5'); el prefijo se comparte entre nombres del MISMO agente, no entre agentes.
+3. **Triage:** **pointwise por nombre** (o chunks ~20) con structured output, ordenar en código (evita sesgo
+   de posición del listwise). La **incertidumbre se computa determinista fuera del LLM** (días desde último
+   Dossier, hechos nuevos desde `known_at`, distancia a eventos, precio vs tesis); Haiku solo juzga
+   materialidad de hechos nuevos. Posiciones + eventos forzados.
+4. **Bear:** ve Dossier **+ fact store crudo** (cacheado) + 2-3 búsquedas dirigidas a contra-evidencia (para
+   cazar omisiones, no solo lo que el Analista incluyó). Se le **quitan convicción y recomendación** antes
+   (anti-anclaje). Réplica = turno nuevo en el **mismo hilo del Analista** (lee research de caché). El
+   Verificador corre **después** de la réplica (verifica el Dossier final).
+5. **Verificador: 3 estados PASS / REVIEW / FAIL.** Determinista primero: **procedencia** (la URL debe estar
+   entre las que devolvió web_search en el loop o en el fact store — NO chequear que "resuelva" por HTTP) +
+   números contra `cited_text` normalizando escala/moneda/decimal + `page_age` para datos viejos. El Dossier
+   declara `tesis_claims_soporte: [claim_id]`; cualquiera de esos sin procedencia → **FAIL**. Heurística
+   extra: claim cuyo número aparece en el texto de la tesis cuenta como central.
+6. **Presupuesto:** **sobre semanal (~$9)** con reserva 20-25% para eventos + escalera de degradación
+   (70%: baja `max_uses`, solo posiciones/eventos · 90%: solo reutilización · 100%: corte). **Reserva de
+   peor caso ANTES de cada llamada** (`max_tokens×precio_out + max_uses×$0.01 + input estimado`), se libera
+   la diferencia al terminar. Reutilización por `known_at` **con TTL máximo 4-6 semanas**. **Analista en
+   Batch (−50%) para nombres agendados; sync para eventos** (web search anda en Batches al mismo precio).
+   Costo/corrida medido: ~$0.11 (ligera) → se mide la 1ª semana; ~20-60 corridas/mes es la restricción madre.
+7. **Red flags de supervivencia:** el PM emite `respuestas_flags[{flag_id, accion:
+   acepta|reduce|no_opera, motivo}]`; se chequea en código que cubra todos los IDs (retry si no). El Auditor
+   registra cada override contra el resultado posterior (anti pro-forma). Severidad "supervivencia" puede
+   imponer un cap de sizing automático (decisión de gobernanza, opcional).
+8. **`services/llm.py`:** reusar como transporte; checklist a cumplir: loop `pause_turn` (reenviar mensaje
+   pausado sin cambios), round-trip intacto de bloques `server_tool_use`/`web_search_tool_result`
+   (`encrypted_content`!), `stop_reason` refusal + max_tokens, `output_config` (effort/format/task_budget con
+   beta `task-budgets-2026-03-13`), y **contabilidad que separe cache-write / cache-read / web_search_requests**
+   con tabla de precios por modelo (Haiku 10%, Opus/Sonnet 5.5 al 5%).
+
+**Único punto pendiente de spike adicional (no bloquea):** confirmar qué pasa exactamente con
+`output_config.format` + citas reales (el test A fue trivial) — pero es moot para el Analista (usa tool strict).

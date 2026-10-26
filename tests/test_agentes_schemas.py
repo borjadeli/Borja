@@ -52,11 +52,15 @@ def test_triage_valida_rangos():
                           incertidumbre_0_1=1.5, research_profundo=False, motivo="")  # >1
 
 
-def test_dossier_bull_bear_independientes_y_falsador():
+def test_dossier_claims_y_falsador():
     esc = sc.Escenario(tesis="t", supuestos=["a"], contraste_con_calculadoras="vs T*")
+    claim = sc.Claim(claim_id="c1", contenido="$1.41B caja per 10-K", tipo="hecho",
+                     source_url="https://sec.gov/...", cited_text="cash of $1.41 billion",
+                     materiality="central", verification="confirmed_by_filing")
     d = sc.Dossier(
         meta=sc.AgentMeta(agent="analista", prompt_version="v1", model="claude-opus-5-5"),
         ticker="OKLO", negocio_y_posicion_cuello="SMR",
+        claims=[claim], tesis_claims_soporte=["c1"],
         valuacion_que_exige_el_precio="precio exige T*=12a",
         bull=esc, bear=esc.model_copy(update={"tesis": "bear"}),
         falsador=sc.Falsador(afirmacion="no firma contrato DOE", fecha_limite="2027-06-30",
@@ -64,18 +68,23 @@ def test_dossier_bull_bear_independientes_y_falsador():
         conviccion_0_1=0.6,
     )
     assert d.bull.tesis != d.bear.tesis            # independientes
-    assert d.falsador.fecha_limite == "2027-06-30"  # falsador con fecha
+    assert d.tesis_claims_soporte == ["c1"]        # gate del Verificador
+    assert d.claims[0].materiality == "central"
 
 
-def test_verificador_fail_bloquea():
+def test_verificador_tres_estados():
     v = sc.VerificationReport(
         meta=_META.model_copy(update={"agent": "verificador"}),
         ticker="OKLO", veredicto="fail",
-        checks=[sc.Check(afirmacion="rev $10M", fuente_ok=False, fecha_ok=True,
-                        es_declaracion_corporativa=True, consistente_con_numeros=False, motivo="sin filing")],
-        motivos=["cita no verificada"],
+        checks=[sc.Check(claim_id="c1", procedencia_ok=False, numeros_ok=False,
+                        es_declaracion_corporativa=True, dato_vigente=True, motivo="URL no trazable")],
+        flags_supervivencia=["going_concern"],
+        motivos=["claim central sin procedencia"],
     )
     assert v.veredicto == "fail"
+    assert v.flags_supervivencia == ["going_concern"]
+    with pytest.raises(ValidationError):
+        sc.VerificationReport(meta=_META, ticker="X", veredicto="maybe")   # fuera de pass/review/fail
 
 
 def test_pm_peso_objetivo_acotado():

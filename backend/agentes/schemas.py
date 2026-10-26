@@ -26,6 +26,26 @@ class Evidence(BaseModel):
     verification: VerificationLit
 
 
+TipoClaim = Literal["hecho", "declaracion_empresa", "estimacion", "inferencia"]
+
+
+class Claim(BaseModel):
+    """Afirmación individualizada del Dossier (doc 54 §4) — unidad de verificación y reutilización.
+
+    Permite al Verificador validar por afirmación (no por párrafo) y reutilizar por sección: un hecho
+    nuevo invalida solo los claims afectados, no todo el Dossier.
+    """
+    claim_id: str
+    contenido: str
+    tipo: TipoClaim
+    source_url: str | None = None           # null si es inferencia
+    cited_text: str | None = None           # texto citado de la fuente (insumo del Verificador)
+    source_date: str | None = None          # fecha de publicación de la fuente (YYYY-MM-DD)
+    known_at: str | None = None             # fecha en que el sistema incorporó el dato (point-in-time)
+    materiality: Literal["central", "soporte", "secundaria"]
+    verification: VerificationLit
+
+
 class AgentMeta(BaseModel):
     """Metadata de ejecución común a todo output de agente (costo, modelo, versión)."""
     agent: str
@@ -102,7 +122,9 @@ class Dossier(BaseModel):
     meta: AgentMeta
     ticker: str
     negocio_y_posicion_cuello: str
-    demanda: list[Evidence] = Field(default_factory=list)
+    claims: list[Claim] = Field(default_factory=list, description="afirmaciones individualizadas y citadas")
+    tesis_claims_soporte: list[str] = Field(
+        default_factory=list, description="claim_ids que sostienen la tesis central (gate del Verificador)")
     valuacion_que_exige_el_precio: str       # usando T*/burden
     bull: Escenario
     bear: Escenario
@@ -131,11 +153,11 @@ class BearAttack(BaseModel):
 # --------------------------------------------------------------------------- 6. Verificador
 
 class Check(BaseModel):
-    afirmacion: str
-    fuente_ok: bool
-    fecha_ok: bool
+    claim_id: str                            # ata el check al claim del Dossier
+    procedencia_ok: bool                     # la URL está entre las que trajo web_search / el fact store
+    numeros_ok: bool                         # el número coincide con el cited_text (escala/moneda/decimal)
     es_declaracion_corporativa: bool         # declaración corporativa ≠ hecho verificado
-    consistente_con_numeros: bool
+    dato_vigente: bool                       # page_age razonable (no dato viejo como actual)
     motivo: str
 
 
@@ -143,7 +165,10 @@ class VerificationReport(BaseModel):
     meta: AgentMeta
     ticker: str
     checks: list[Check] = Field(default_factory=list)
-    veredicto: Literal["pass", "fail"]       # un dossier `fail` no puede justificar compra/aumento
+    # PASS: tesis con respaldo suficiente · REVIEW: faltantes en lo no-central · FAIL: claim central
+    # (en tesis_claims_soporte) sin procedencia, o contradicción central. `fail` no justifica compra/aumento.
+    veredicto: Literal["pass", "review", "fail"]
+    flags_supervivencia: list[str] = Field(default_factory=list)   # going-concern / material weakness / restatement
     motivos: list[str] = Field(default_factory=list)
 
 
@@ -163,9 +188,18 @@ class PMAccion(BaseModel):
     dossier_hash: str | None = None          # dossier vigente verificado que respalda la decisión
 
 
+class RespuestaFlag(BaseModel):
+    """Respuesta obligatoria del PM a cada flag de supervivencia del Verificador (doc 54 §4.7)."""
+    flag_id: str
+    accion: Literal["acepta", "reduce", "no_opera"]
+    motivo: str
+
+
 class PMDecision(BaseModel):
     meta: AgentMeta
     acciones: list[PMAccion] = Field(default_factory=list)
+    respuestas_flags: list[RespuestaFlag] = Field(
+        default_factory=list, description="debe cubrir todos los flags de supervivencia; se valida en código")
     operar_ahora: bool                        # puede quedarse en caja / no operar
     razon_timing: str
 

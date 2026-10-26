@@ -15,8 +15,15 @@ El sistema está compuesto por reglas para analizar y elegir empresas. Tiene una
 Todos los outputs que genere el modelo deben verse en un dashboard web en Flask, muy elegante y corporativo estilo Banking & Finace.
 
 05) INSTRUCCIONES
-Todas las instrucciones y lineamientos que debes seguir se encuentran en la carpta raiz de este proyecto llamada init_docs y consta al inicio de tres documentos en WORD docx: 01_sistema_inversion.docx, 02_mvp.docx, 03_especificacion_tecnica_agentes.docx. Ese orden SI importa para hacer una mejor comprension del algoritmo a consturir!.
+Los lineamientos vigentes viven en `init_docs/`. Los docx iniciales (01/02/03) son el origen histórico de la visión, pero BORJA está en un **cambio de dirección (v2, 2026-10-26)**. Documentos CANÓNICOS hoy:
+- `init_docs/51_prompt_pm_ia.md` — la directiva fundacional de v2 (qué construir y por qué).
+- `init_docs/52_pm_ia_arquitectura.md` — arquitectura + plan por fases + presupuesto + mapa de módulos.
+- `init_docs/53_estado_v2.md` — ESTADO VIVO (en qué fase estamos). Leer primero.
+- `init_docs/00_MAPA_DOCUMENTOS.md` — qué docs viejos siguen vigentes y cuáles son historia.
+
+05.bis) PARADIGMA v2 (quién decide)
+BORJA deja de ser "núcleo determinista que decide" y pasa a ser un **sistema de PM de IA multiagente**: agentes especializados investigan/verifican/auditan y un PM-LLM decide la cartera. **El determinismo informa y limita (datos, cálculos, detección de eventos, presupuesto, límites del IPS); NO elige nombres ni tamaños.** Base empírica: doc 49.
 
 06) CONTEXTO DEL SISTEMA (arquitectura + estado actual + cómo navegar el código)
-Para orientarte en BORJA — qué es, el estado vigente, el mapa del código, el núcleo determinista, el paper trading y por dónde entrar — ver:
+Para orientarte en BORJA — qué es, la dirección v2, las 5 capas, el estado vigente y el mapa del código — ver:
 @CONTEXT.md

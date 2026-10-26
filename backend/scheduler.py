@@ -4,13 +4,13 @@ Requisitos:
 - **1 thread worker** para evitar lock contention en SQLite.
 - Timezone: America/New_York (para respetar horario de mercado).
 
-Schedule (tras el destete del sistema viejo, 2026-09-14):
+Schedule vigente (tras DESTETE v2 Fase 1, 2026-10-26 — el paper v3 quedó CONGELADO):
 - Backup SQLite:       cron 4:00 UTC
-- paper_ciclo:         cron L-V 16:40 ET (opera; $0 salvo evento)
-- paper_snapshot:      cron L-V 16:45 ET (MtM + equity)
-- paper_mtm_intraday:  cron L-V 9-16h :00/:30 (MtM en vivo)
-- paper_reextraccion:  cron dom 19:00 ET (re-extrae hechos, LLM)
-- paper_pm:            cron dom 19:30 ET (canal de juicio PM-LLM → libro_pm.json)
+- paper_snapshot:      cron L-V 16:45 ET (MtM + equity del libro congelado, $0)
+- paper_mtm_intraday:  cron L-V 9-16h :00/:30 (MtM en vivo del libro congelado, $0)
+
+DESACTIVADOS en Fase 1 (reaparecen con el comité PM-IA en Fase 4): paper_ciclo (operaba el
+libro v3), paper_reextraccion y paper_pm (gasto LLM recurrente del v3). Ver init_docs/52 §7.
 """
 from __future__ import annotations
 
@@ -55,18 +55,16 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
         replace_existing=True,
     )
 
-    # ---- Núcleo nuevo en PAPER (autónomo, sin confirmación humana, simulado) ----
-    from backend.seleccion.jobs import (
-        job_paper_ciclo, job_paper_pm, job_paper_reextraccion, job_paper_snapshot,
-    )
+    # ---- Núcleo nuevo en PAPER ----
+    # DESTETE v2 — Fase 1 (2026-10-26): el paper v3 se CONGELA. Quedan solo los jobs $0 que marcan
+    # a mercado el libro congelado (snapshot + mtm intradía). Los jobs que GASTAN LLM o cambian el
+    # libro quedan DESACTIVADOS hasta el comité PM-IA nuevo (Fase 4):
+    #   - paper_ciclo        (operaba el libro v3 por mérito Quality×Asimetría)
+    #   - paper_reextraccion (re-extraía hechos con LLM, ~$3.5/corrida)
+    #   - paper_pm           (canal de juicio v3: Opus+web sobre TODO el universo, dom 19:30 — el gasto recurrente)
+    # Ver init_docs/52 §7. ⚠️ Requiere reiniciar borja.service en el HOST para que tome efecto.
+    from backend.seleccion.jobs import job_paper_snapshot
 
-    # Opera (compra/vende) — diario L-V tras el cierre. Sin LLM (hechos cacheados + precios).
-    scheduler.add_job(
-        func=_safe_run(job_paper_ciclo, "paper_ciclo"),
-        trigger=CronTrigger(day_of_week="mon-fri", hour=16, minute=40, timezone="America/New_York"),
-        id="paper_ciclo",
-        replace_existing=True,
-    )
     # Marca a mercado + snapshot de equity — diario L-V tras operar.
     scheduler.add_job(
         func=_safe_run(job_paper_snapshot, "paper_snapshot"),
@@ -81,21 +79,9 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
         id="paper_mtm_intraday",
         replace_existing=True,
     )
-    # Re-extracción de hechos con LLM — semanal (domingo 19:00 ET, antes del Discovery). ~$3.5/corrida.
-    scheduler.add_job(
-        func=_safe_run(job_paper_reextraccion, "paper_reextraccion"),
-        trigger=CronTrigger(day_of_week="sun", hour=19, minute=0, timezone="America/New_York"),
-        id="paper_reextraccion",
-        replace_existing=True,
-    )
-    # Canal de juicio PM-LLM → libro_pm.json (targets de tamaño) — semanal (domingo 19:30 ET, TRAS la
-    # re-extracción, con hechos frescos). Costoso (LLM + web search por nombre). El evento lo dispara el ciclo.
-    scheduler.add_job(
-        func=_safe_run(job_paper_pm, "paper_pm"),
-        trigger=CronTrigger(day_of_week="sun", hour=19, minute=30, timezone="America/New_York"),
-        id="paper_pm",
-        replace_existing=True,
-    )
+    # paper_reextraccion y paper_pm DESACTIVADOS en DESTETE v2 Fase 1 (ver nota arriba). El gasto LLM
+    # recurrente del sistema v3 queda cortado. El comité PM-IA nuevo (Fase 4) reintroduce la extracción
+    # (en modo batch) y el juicio (triageado a ~pocos nombres, no todo el universo).
 
     _jobs_registered = True
     log.info("scheduler — %d jobs registrados", len(scheduler.get_jobs()))

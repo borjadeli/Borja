@@ -20,9 +20,14 @@ arquitectura/plan en doc 52.
   **Triage** (`triage.py`, pointwise, validado en vivo Haiku 5.5) · **Analista** (`analista.py`: Opus 5.5 +
   web + tool `emitir_dossier` strict — **validado en vivo sobre OKLO**: Dossier real, 9 claims, bull/bear
   independientes, falsador fechado, $0.69/corrida).
-- **Próximo:** Bear + Verificador (determinista-primero por procedencia, 3 estados) + Macro + **orquestador**
-  (ledger de presupuesto en USD, sobres semanales, reutilización por hash, Analista en batch). Mismo patrón
-  del agent base.
+  **Bear** (`bear.py`, Sonnet 5.5 + web, ataca) · **Verificador** (`verificador.py`, determinista por
+  procedencia, 3 estados PASS/REVIEW/FAIL, núcleo sin API) · **Macro** (`macro.py`, Opus 5.5 + web →
+  MacroMemo). **Los 5 agentes de research están completos** (Triage, Macro, Analista, Bear, Verificador).
+- **Próximo — ÚNICO pendiente de Fase 3: el ORQUESTADOR** (`orquestador.py`): flujo semanal
+  Macro→Triage→Analista→Bear→(réplica)→Verificador; **ledger de presupuesto en USD** (sobre semanal ~$9 +
+  reserva 20-25% para eventos + reserva de peor-caso antes de cada llamada + escalera de degradación
+  70/90/100%); reutilización por hash (data pack + hechos por known_at, TTL 4-6 sem); Analista en Batch
+  (−50%) para agendados, sync para eventos. Es el capstone de Fase 3 y la puerta a Fase 4 (PM + paper nuevo).
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

@@ -1,0 +1,89 @@
+"""Agente Verificador (v2 Fase 3, doc 54 §4.5) — determinista-primero por PROCEDENCIA, 3 estados.
+
+Núcleo determinista (sin API, testeable):
+- **procedencia**: la `source_url` de cada claim tiene que estar entre las URLs que trajo web_search en el
+  loop del Analista (`fuentes`) o en el fact store. NO se chequea que la URL "resuelva" por HTTP (frágil:
+  paywalls, 403 a bots) — se chequea que sea TRAZABLE. Elimina URLs inventadas a costo cero.
+- regla de la tesis: cualquier claim en `tesis_claims_soporte` (central) sin procedencia → **FAIL**.
+  Claim no-central sin procedencia, o claim central que es declaración de empresa tratada como hecho → **REVIEW**.
+- `flags_supervivencia`: going concern / material weakness / restatement detectados en las red flags → el
+  PM DEBE responderlos (doc 54 §4.7); no vetan por sí solos.
+
+Un pase LLM opcional (`consistencia_fn`, Sonnet 5.5) puede DEGRADAR el veredicto por inconsistencia
+narrativa↔números; nunca lo mejora. El chequeo numérico fino (cited_text vs fuente) queda como mejora futura.
+"""
+from __future__ import annotations
+
+from collections.abc import Callable
+
+from backend.agentes.schemas import AgentMeta, Check, Dossier, VerificationReport
+
+PROMPT_VERSION = "verificador_v1"
+
+_PALABRAS_SUPERVIVENCIA = {
+    "going_concern": ("going concern", "going_concern", "empresa en marcha"),
+    "material_weakness": ("material weakness", "material_weakness", "debilidad material"),
+    "restatement": ("restatement", "restate", "reexpresión", "reexpresion"),
+}
+
+
+def flags_supervivencia(red_flags) -> list[str]:
+    """Detecta red flags de supervivencia por palabra clave en el tipo/cita (case-insensitive)."""
+    out: list[str] = []
+    for rf in red_flags:
+        texto = f"{getattr(rf, 'tipo', '')} {getattr(getattr(rf, 'cita', None), 'claim', '')}".lower()
+        for flag, claves in _PALABRAS_SUPERVIVENCIA.items():
+            if flag not in out and any(k in texto for k in claves):
+                out.append(flag)
+    return out
+
+
+def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] | None = None,
+              consistencia_fn: Callable[[Dossier], tuple[str | None, list[str], AgentMeta | None]] | None = None,
+              model: str = "claude-sonnet-5-5") -> VerificationReport:
+    trazables = set(fuentes) | set(hechos_store or [])
+    central = set(dossier.tesis_claims_soporte)
+    checks: list[Check] = []
+    motivos: list[str] = []
+    falla_central = False
+    hay_review = False
+
+    for c in dossier.claims:
+        proc = bool(c.source_url) and c.source_url in trazables
+        es_decl = (c.tipo == "declaracion_empresa") or (c.verification == "company_statement")
+        checks.append(Check(
+            claim_id=c.claim_id, procedencia_ok=proc, numeros_ok=True,   # chequeo numérico fino: mejora futura
+            es_declaracion_corporativa=es_decl, dato_vigente=True,
+            motivo=("procedencia trazable" if proc else "source_url no trazable en fuentes/fact store"),
+        ))
+        if not proc:
+            if c.claim_id in central:
+                falla_central = True
+                motivos.append(f"claim central {c.claim_id} sin procedencia")
+            else:
+                hay_review = True
+        elif es_decl and c.claim_id in central:
+            hay_review = True
+            motivos.append(f"tesis se apoya en declaración de empresa ({c.claim_id})")
+
+    flags = flags_supervivencia(dossier.red_flags)
+    if falla_central:
+        veredicto = "fail"
+    elif hay_review:
+        veredicto = "review"
+    else:
+        veredicto = "pass"
+
+    meta = AgentMeta(agent="verificador", prompt_version=PROMPT_VERSION, model=model)
+    if consistencia_fn is not None:
+        override, motivos_llm, meta_llm = consistencia_fn(dossier)
+        motivos.extend(motivos_llm)
+        if meta_llm is not None:
+            meta = meta_llm
+        if override in ("review", "fail"):   # el LLM solo DEGRADA
+            orden = {"pass": 0, "review": 1, "fail": 2}
+            if orden[override] > orden[veredicto]:
+                veredicto = override
+
+    return VerificationReport(meta=meta, ticker=dossier.ticker, checks=checks,
+                              veredicto=veredicto, flags_supervivencia=flags, motivos=motivos)

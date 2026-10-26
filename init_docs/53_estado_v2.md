@@ -5,8 +5,19 @@
 > Última actualización: **2026-10-26**.
 
 ## Dónde estamos
-**FASE 1 (Consolidación) — en curso.** El cambio de dirección v2 está decidido (doc 51) y la arquitectura +
-plan están cerrados (doc 52). Arrancó la ejecución por fases. Rama de trabajo: `destete-v2-fase1`.
+**FASE 3 (Agentes de research) — en curso, parte de infraestructura hecha; la capa de agentes LLM se
+TRIANGULA antes de codear (doc 54).** Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commiteadas;
+pendientes de push con token fresco y de merge del PR 1). El cambio de dirección v2 está cerrado (doc 51),
+arquitectura/plan en doc 52.
+
+**Hecho hasta ahora (todo commiteado, 482 tests verdes):**
+- Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
+- Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
+  hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
+- Fase 3: SDK anthropic 0.39→2.3 (Opus 5.5 operativo) · contratos de datos (`backend/agentes/provenance.py`
+  + `schemas.py`, los 8 agentes) · data pack assembler (`data_pack.py`, capa de mercado con procedencia).
+- **Próximo (se triangula primero — doc 54):** agent base + los agentes LLM (Triage, Macro, Analista, Bear,
+  Verificador) + orquestador con presupuesto + harness ScriptedLLM.
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

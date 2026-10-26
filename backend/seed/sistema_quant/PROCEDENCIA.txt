@@ -1,0 +1,2 @@
+COMMIT del SQ fuente: 95f0f6e
+fuente: https://github.com/borjadeli/Sistema-Quant (público), importado 2026-10-26

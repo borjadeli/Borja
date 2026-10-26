@@ -61,6 +61,25 @@ def construir_meta(agente: str, prompt_version: str, resp: Any) -> AgentMeta:
     )
 
 
+def _buscar_tool_use(resp: Any, nombre: str) -> Any | None:
+    for b in resp.content:
+        if getattr(b, "type", None) == "tool_use" and getattr(b, "name", None) == nombre:
+            return b
+    return None
+
+
+def _urls_de(resp: Any) -> list[str]:
+    """URLs que trajo web_search en esta respuesta (procedencia para el Verificador)."""
+    urls: list[str] = []
+    for b in resp.content:
+        if getattr(b, "type", None) == "web_search_tool_result":
+            for item in (getattr(b, "content", None) or []):
+                u = getattr(item, "url", None)
+                if u:
+                    urls.append(u)
+    return urls
+
+
 class Agente:
     """Transporte de un agente: una llamada LLM con salida estructurada → (payload dict, AgentMeta).
 
@@ -91,6 +110,47 @@ class Agente:
         payload = json.loads(_primer_texto(resp))
         return payload, construir_meta(self.nombre, self.prompt_version, resp)
 
+    def agentico(self, *, system: str, user: str, tools: list, emisor: str,
+                 max_tokens: int = 8192, max_nudges: int = 1) -> tuple[dict | None, list[str], AgentMeta]:
+        """Loop agéntico (Analista/Bear): corre el LLM con web_search + un tool cliente `emisor` (strict).
+        Maneja `pause_turn` (reenvía el turno pausado sin cambios), reintenta UNA vez si termina sin emitir
+        (no se puede forzar tool_choice con thinking always-on), y junta las URLs de web_search (procedencia).
+        Devuelve (input del tool emisor | None, fuentes_urls, meta acumulada de TODO el loop)."""
+        cli = self._cli()
+        messages: list[dict] = [{"role": "user", "content": user}]
+        acc = {"in": 0, "out": 0, "searches": 0, "cost": 0.0, "model": self.model}
+        fuentes: list[str] = []
+        nudges = 0
+        while True:
+            resp = cli.messages.create(model=self.model, max_tokens=max_tokens, system=system,
+                                       messages=messages, tools=tools)
+            u = resp.usage
+            stu = getattr(u, "server_tool_use", None)
+            acc["in"] += _u(u, "input_tokens"); acc["out"] += _u(u, "output_tokens")
+            acc["searches"] += int(getattr(stu, "web_search_requests", 0) or 0) if stu else 0
+            acc["cost"] += costo_usd(getattr(resp, "model", self.model), u)
+            acc["model"] = getattr(resp, "model", self.model)
+            fuentes.extend(_urls_de(resp))
+
+            tu = _buscar_tool_use(resp, emisor)
+            if tu is not None:
+                return tu.input, list(dict.fromkeys(fuentes)), self._meta_acc(acc)
+            if getattr(resp, "stop_reason", None) == "pause_turn":
+                messages.append({"role": "assistant", "content": resp.content})
+                continue
+            if nudges < max_nudges:                       # terminó sin emitir → empujón (cache-hit, barato)
+                messages.append({"role": "assistant", "content": resp.content})
+                messages.append({"role": "user",
+                                 "content": f"Emití el dossier ahora llamando a la tool {emisor}."})
+                nudges += 1
+                continue
+            return None, list(dict.fromkeys(fuentes)), self._meta_acc(acc)
+
+    def _meta_acc(self, acc: dict) -> AgentMeta:
+        return AgentMeta(agent=self.nombre, prompt_version=self.prompt_version, model=acc["model"],
+                         cost_usd=round(acc["cost"], 6), input_tokens=acc["in"],
+                         output_tokens=acc["out"], web_searches=acc["searches"])
+
 
 # --------------------------------------------------------------------------- ScriptedLLM (tests)
 
@@ -110,6 +170,27 @@ class _TextBlock:
 
 
 @dataclass
+class _ToolUseBlock:
+    name: str
+    input: dict
+    id: str = "tu_1"
+    type: str = "tool_use"
+
+
+@dataclass
+class _WSItem:
+    url: str
+    title: str = ""
+    type: str = "web_search_result"
+
+
+@dataclass
+class _WSResultBlock:
+    content: list
+    type: str = "web_search_tool_result"
+
+
+@dataclass
 class _FakeResp:
     content: list
     model: str
@@ -117,11 +198,36 @@ class _FakeResp:
     stop_reason: str = "end_turn"
 
 
-class ScriptedLLM:
-    """Fake de `anthropic.Anthropic` para tests sin API. Se le pasa una cola de `(texto, FakeUsage)`;
-    cada `messages.create(...)` devuelve el siguiente y registra los kwargs recibidos en `.llamadas`."""
+def resp_texto(texto: str, usage: FakeUsage, model: str = "fake") -> _FakeResp:
+    return _FakeResp(content=[_TextBlock(texto)], model=model, usage=usage, stop_reason="end_turn")
 
-    def __init__(self, respuestas: list[tuple[str, FakeUsage]]):
+
+def resp_tool(nombre: str, entrada: dict, usage: FakeUsage, *, urls: list[str] | None = None,
+              model: str = "fake") -> _FakeResp:
+    """Respuesta que EMITE el tool `nombre` (stop_reason tool_use), opcionalmente con URLs de búsqueda."""
+    content: list = []
+    if urls:
+        content.append(_WSResultBlock(content=[_WSItem(url=u) for u in urls]))
+    content.append(_ToolUseBlock(name=nombre, input=entrada))
+    return _FakeResp(content=content, model=model, usage=usage, stop_reason="tool_use")
+
+
+def resp_sin_emitir(usage: FakeUsage, *, urls: list[str] | None = None, model: str = "fake",
+                    stop_reason: str = "end_turn") -> _FakeResp:
+    """Respuesta que NO emite el tool (para probar el nudge / pause_turn)."""
+    content: list = []
+    if urls:
+        content.append(_WSResultBlock(content=[_WSItem(url=u) for u in urls]))
+    content.append(_TextBlock("..."))
+    return _FakeResp(content=content, model=model, usage=usage, stop_reason=stop_reason)
+
+
+class ScriptedLLM:
+    """Fake de `anthropic.Anthropic` para tests sin API. Se le pasa una cola de respuestas; cada una es
+    un `_FakeResp` (usar `resp_tool`/`resp_texto`/`resp_sin_emitir`) o un `(texto, FakeUsage)` (atajo texto).
+    Cada `messages.create(...)` devuelve la siguiente y registra los kwargs en `.llamadas`."""
+
+    def __init__(self, respuestas: list):
         self._q = list(respuestas)
         self.llamadas: list[dict] = []
 
@@ -133,5 +239,8 @@ class ScriptedLLM:
         self.llamadas.append(kwargs)
         if not self._q:
             raise AssertionError("ScriptedLLM sin respuestas en cola")
-        texto, usage = self._q.pop(0)
+        item = self._q.pop(0)
+        if isinstance(item, _FakeResp):
+            return item
+        texto, usage = item                      # atajo (texto, usage)
         return _FakeResp(content=[_TextBlock(texto)], model=kwargs.get("model", "fake"), usage=usage)

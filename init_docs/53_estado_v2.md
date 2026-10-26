@@ -30,8 +30,14 @@ arquitectura/plan en doc 52.
 - **Fase 3: COMPONENTES COMPLETOS.** Falta solo la **validación**: el SMOKE REAL sobre 5 nombres (doc 52) —
   una corrida semanal en vivo (≈$4-6, ~20-30 min de llamadas agénticas) → reportar costo real/nombre + 2
   dossiers. Diferido a Fase 4: réplica del Analista al Bear (turno en su hilo) + Analista en Batch (−50%).
-- **Fase 4 (próxima):** PM + Auditor + IPS en código (`config/ips.yaml`) + ledger de decisiones; reescritura
-  de `paper_trader` para operar desde las decisiones del PM; monitor de eventos.
+- **Fase 4 — TRIANGULADA (doc 55, principio rector: límite duro = inputs mecánicos O canal de disputa) +
+  arrancada:** ✅ **IPS en código** (`config/ips.yaml` + `backend/agentes/ips.py`): validador determinista,
+  inputs mecánicos-solo, tipos local_simple (recorte a cash) / agregada (NO_ACTION), cap de supervivencia
+  DENTRO del IPS, dry-run + gate final. Testeado.
+  - **Próximo (Fase 4):** ledger de decisiones (append-only, inmutable, "PM+clip", objeciones del auditor
+    como predicciones falsables, signo disparado/cumplido) · **PM** (Opus, sizea bajo IPS, usa el dry-run) ·
+    **Auditor** (Opus, sin veto, objeciones medidas + demora 1 ciclo en aumentos) · canal de disputa del FAIL
+    en el Verificador · reescritura de `paper_trader` desde `PMDecision` · 5+ carteras sombra · monitor de eventos.
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

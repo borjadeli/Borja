@@ -11,6 +11,7 @@ Diseño convergido (IA2): `task_budget` NO es tope → el control vive acá, en 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime
 
 from backend.agentes.base import PRECIOS
 
@@ -62,3 +63,37 @@ class LedgerPresupuesto:
         """Libera la reserva de peor-caso y contabiliza el costo REAL."""
         self.reservado = max(0.0, round(self.reservado - peor_caso, 6))
         self.gastado = round(self.gastado + real, 6)
+
+
+# --------------------------------------------------------------------------- presupuesto MENSUAL persistente
+
+def gastado_mes_usd(hoy: date | None = None, *, session=None) -> float:
+    """Gasto LLM acumulado en el MES CALENDARIO de `hoy`, leído de `llm_calls` (persistente, TODOS los
+    agentes). 0.0 si no hay DB disponible (fail-silent). `session` inyectable para tests."""
+    hoy = hoy or date.today()
+    inicio = datetime(hoy.year, hoy.month, 1)
+    try:
+        from sqlalchemy import func
+
+        from backend.models import LLMCall
+
+        def _q(s) -> float:
+            return float(s.query(func.coalesce(func.sum(LLMCall.cost_usd), 0.0))
+                         .filter(LLMCall.timestamp >= inicio).scalar() or 0.0)
+
+        if session is not None:
+            return _q(session)
+        from backend.database import session_scope
+        with session_scope() as s:
+            return _q(s)
+    except Exception:  # noqa: BLE001 — sin DB, el presupuesto arranca de cero (no bloquea)
+        return 0.0
+
+
+def ledger_mensual(presupuesto_usd_mes: float, hoy: date | None = None, *,
+                   reserva_eventos_pct: float = 0.22, session=None) -> LedgerPresupuesto:
+    """Ledger para ESTA corrida con tope MENSUAL persistente: el 'sobre' disponible = lo que queda del mes
+    (`presupuesto_usd_mes` − gastado del mes, de `llm_calls`). Así el gasto sobrevive al reinicio y respeta
+    el tope mensual del IPS, cubriendo a todos los agentes que loguean su costo."""
+    restante = max(0.0, round(presupuesto_usd_mes - gastado_mes_usd(hoy, session=session), 6))
+    return LedgerPresupuesto(sobre_semanal=restante, reserva_eventos_pct=reserva_eventos_pct)

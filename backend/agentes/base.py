@@ -9,12 +9,30 @@ Opus/Sonnet 5.5, 10% en Haiku 5.5 (si se hardcodea 5% se subestima Haiku).
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import BaseModel
 
 from backend.agentes.schemas import AgentMeta
+
+_log = logging.getLogger("agentes.base")
+
+
+def _persistir_costo(meta: AgentMeta) -> None:
+    """Registra una invocación de agente en `llm_calls` (para /costos + presupuesto mensual). Fail-silent.
+    Solo se llama con el cliente REAL (no en tests con ScriptedLLM) — ver Agente._log_costo."""
+    try:
+        from backend.database import session_scope
+        from backend.models import LLMCall
+        with session_scope() as s:
+            s.add(LLMCall(agent=meta.agent, model=meta.model, tokens_input=meta.input_tokens,
+                          tokens_output=meta.output_tokens, web_searches=meta.web_searches,
+                          cost_usd=meta.cost_usd,
+                          metadata_json={"prompt_version": meta.prompt_version}))
+    except Exception as e:  # noqa: BLE001 — el tracking no debe tumbar al agente
+        _log.warning("no pude registrar costo del agente %s: %s", meta.agent, e)
 
 # Precios base por 1M tokens + % de cache_read por modelo (doc 54 §4).
 PRECIOS: dict[str, dict[str, float]] = {
@@ -108,7 +126,9 @@ class Agente:
             output_config={"format": {"type": "json_schema", "schema": payload_schema}},
         )
         payload = json.loads(_primer_texto(resp))
-        return payload, construir_meta(self.nombre, self.prompt_version, resp)
+        meta = construir_meta(self.nombre, self.prompt_version, resp)
+        self._log_costo(meta)
+        return payload, meta
 
     def agentico(self, *, system: str, user: str, tools: list, emisor: str,
                  max_tokens: int = 8192, max_nudges: int = 1) -> tuple[dict | None, list[str], AgentMeta]:
@@ -191,9 +211,17 @@ class Agente:
             return None, self._meta_acc(acc)
 
     def _meta_acc(self, acc: dict) -> AgentMeta:
-        return AgentMeta(agent=self.nombre, prompt_version=self.prompt_version, model=acc["model"],
+        meta = AgentMeta(agent=self.nombre, prompt_version=self.prompt_version, model=acc["model"],
                          cost_usd=round(acc["cost"], 6), input_tokens=acc["in"],
                          output_tokens=acc["out"], web_searches=acc["searches"])
+        self._log_costo(meta)
+        return meta
+
+    def _log_costo(self, meta: AgentMeta) -> None:
+        """Registra el costo en llm_calls SOLO con el cliente real (self._cliente is None → usa _get_client).
+        Con ScriptedLLM inyectado (tests) no toca la DB."""
+        if self._cliente is None:
+            _persistir_costo(meta)
 
 
 # --------------------------------------------------------------------------- ScriptedLLM (tests)

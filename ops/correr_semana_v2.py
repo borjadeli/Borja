@@ -35,7 +35,7 @@ from backend.agentes.macro import Macro
 from backend.agentes.orquestador import CacheDossiers, Orquestador, _CACHE_PATH
 from backend.agentes.orquestador_decision import OrquestadorDecision
 from backend.agentes.pm import PM
-from backend.agentes.presupuesto import LedgerPresupuesto
+from backend.agentes.presupuesto import gastado_mes_usd, ledger_mensual
 from backend.agentes.runner_semanal import RunnerSemanal
 from backend.agentes.triage import SenalesTriage, Triage
 
@@ -56,28 +56,30 @@ def main() -> int:
     ap.add_argument("tickers", nargs="*", default=["OKLO"], help="nombres a correr (default OKLO)")
     ap.add_argument("--con-macro", action="store_true", help="incluir el memo macro (otro Opus+web)")
     ap.add_argument("--capital", type=float, default=100_000.0, help="capital inicial del paper (1a vez)")
-    ap.add_argument("--presupuesto", type=float, default=9.0, help="sobre semanal USD (de los $40/mes)")
     ap.add_argument("--cupo", type=int, default=0, help="cupo de cobertura: nombres nuevos a promover")
     ap.add_argument("--bootstrap", action="store_true", help="primera pasada: promueve todos los nuevos")
     args = ap.parse_args()
     tickers = [t.upper() for t in (args.tickers or ["OKLO"])]
 
-    # --- agentes reales (cliente Anthropic real vía services.llm) ---
+    ips = IPS.cargar()
+    presupuesto_mes = float(ips.cfg.get("presupuesto_usd_mes", 40.0))
+
+    # --- agentes reales (cliente Anthropic real vía services.llm; cada llamada se loguea a llm_calls) ---
     triage = Triage(Agente("triage", m_triage.PROMPT_VERSION, M_HAIKU))
     analista = Analista(Agente("analista", m_analista.PROMPT_VERSION, M_OPUS))
     bear = Bear(Agente("bear", m_bear.PROMPT_VERSION, M_SONNET))
     macro = Macro(Agente("macro", m_macro.PROMPT_VERSION, M_OPUS)) if args.con_macro else None
-    pm = PM(Agente("pm", m_pm.PROMPT_VERSION, M_OPUS), IPS.cargar())
+    pm = PM(Agente("pm", m_pm.PROMPT_VERSION, M_OPUS), ips)
     auditor = Auditor(Agente("auditor", m_auditor.PROMPT_VERSION, M_OPUS))
 
     research = Orquestador(
         triage=triage, analista=analista, bear=bear, macro=macro,
-        ledger=LedgerPresupuesto(sobre_semanal=args.presupuesto),
+        ledger=ledger_mensual(presupuesto_mes, date.today()),   # tope MENSUAL persistente del IPS (P0.4)
         cache=CacheDossiers(_CACHE_PATH),                # reutilización PERSISTENTE a disco (P0.2b)
         data_pack_fn=lambda tk: ensamblar(tk),
         contexto_fn=lambda _tk: "",                      # contexto del cuello para el Analista: mejora futura
     )
-    decision = OrquestadorDecision(IPS.cargar(), LedgerDecisiones(), auditor=auditor)
+    decision = OrquestadorDecision(ips, LedgerDecisiones(), auditor=auditor)
     runner = RunnerSemanal(research=research, pm=pm, decision=decision)
 
     # --- datos reales ---
@@ -101,7 +103,9 @@ def main() -> int:
     # --- resumen ---
     print("\n=== SMOKE v2 ===")
     print(f"dossiers considerados (PASS/REVIEW): {res.dossiers_considerados}")
-    print(f"gasto research: ${res.research.gastado_usd:.4f}")
+    print(f"gasto research (esta corrida): ${res.research.gastado_usd:.4f}")
+    print(f"gasto LLM del mes (todos los agentes, llm_calls): ${gastado_mes_usd(date.today()):.4f} "
+          f"/ tope ${presupuesto_mes:.0f}")
     print(f"decisión del PM: operar={res.decision.operar_ahora} · acciones={len(res.decision.acciones)} "
           f"· clip={res.resultado_decision.clip} · no_action={res.resultado_decision.no_action}")
     if res.resultado_decision.demoradas:

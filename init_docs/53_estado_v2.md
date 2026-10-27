@@ -11,7 +11,7 @@ smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commi
 commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
 de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 576 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 588 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -73,7 +73,11 @@ de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
     operar_ahora respetado; max_ops por semana calendario; turnover/cap_flag cableados; holding_period
     sacado); **2 reutilización** (hash_pack estable ignorando volátiles; cache persistente); **3 triage**
     (cupo de cobertura + bootstrap para nombres nuevos); **4 presupuesto** (mensual persistente desde
-    llm_calls; todos los agentes loguean su costo → /costos). 576 tests verdes.
+    llm_calls; todos los agentes loguean su costo → /costos).
+    **+ 2ª vuelta de la auditoría (r2) CERRADA:** gate por SESIONES (no órdenes), turnover = rotación (no
+    despliegue desde caja), agregado de grupo bloquea solo el sector/cuello violado, re-propuesta UNA vez con
+    holguras, evento fuerte saltea el caché, presupuesto con ritmo semanal + bootstrap + fail-closed, dry-run
+    con ops del ledger, alertas persistidas al PM, sin Auditor si no opera. 588 tests verdes.
   - **Próximo (Fase 4):** 🟢 **DISPARAR EL SMOKE REAL** (acción del operador, cuesta plata; la consola no
     puede: sin API key/red) → valida el pipeline end-to-end; **no avanzar a P1 sin ese reporte** (regla de
     la auditoría) · después P1 (data pack con calculadoras, contexto del mapa, verificador de contenido,

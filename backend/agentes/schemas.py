@@ -181,6 +181,8 @@ class PMAccion(BaseModel):
     ticker: str
     accion: AccionTipo
     peso_objetivo: float = Field(ge=0, le=1, description="fracción de cartera (0-1); el IPS valida el techo")
+    conviccion_0_1: float = Field(
+        ge=0, le=1, description="convicción del PM en la tesis (P tesis se sostiene) — insumo del Brier del ledger")
     por_que_ese_tamano: str
     tesis: str
     falsador: Falsador

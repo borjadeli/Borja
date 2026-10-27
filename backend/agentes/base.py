@@ -146,6 +146,50 @@ class Agente:
                 continue
             return None, list(dict.fromkeys(fuentes)), self._meta_acc(acc)
 
+    def conversacion_tools(self, *, system: str, user: str, tools: list, emisor: str,
+                           manejadores: dict, max_tokens: int = 4096,
+                           max_nudges: int = 1) -> tuple[dict | None, AgentMeta]:
+        """Loop con tools CLIENTE (sin web): cuando el LLM llama a una tool de `manejadores` (nombre→fn(dict)->str)
+        se ejecuta y se le devuelve el resultado como `tool_result`; cuando llama a `emisor` se devuelve su input.
+        Responde a TODOS los tool_use del turno (lo exige la API). Maneja pause_turn y empuja si no emite.
+        Devuelve (input del emisor | None, meta acumulada). Usado por el PM (IPS como dry-run)."""
+        cli = self._cli()
+        messages: list[dict] = [{"role": "user", "content": user}]
+        acc = {"in": 0, "out": 0, "searches": 0, "cost": 0.0, "model": self.model}
+        nudges = 0
+        while True:
+            resp = cli.messages.create(model=self.model, max_tokens=max_tokens, system=system,
+                                       messages=messages, tools=tools)
+            u = resp.usage
+            acc["in"] += _u(u, "input_tokens"); acc["out"] += _u(u, "output_tokens")
+            acc["cost"] += costo_usd(getattr(resp, "model", self.model), u)
+            acc["model"] = getattr(resp, "model", self.model)
+
+            usos = [b for b in resp.content
+                    if getattr(b, "type", None) == "tool_use"]
+            emit = next((b for b in usos if getattr(b, "name", None) == emisor), None)
+            if emit is not None:
+                return emit.input, self._meta_acc(acc)
+            if getattr(resp, "stop_reason", None) == "pause_turn":
+                messages.append({"role": "assistant", "content": resp.content})
+                continue
+            if usos:                                   # tools cliente → ejecutar y devolver resultados
+                messages.append({"role": "assistant", "content": resp.content})
+                resultados = []
+                for b in usos:
+                    fn = manejadores.get(getattr(b, "name", ""))
+                    salida = fn(b.input) if fn else f"tool desconocida: {getattr(b, 'name', '?')}"
+                    resultados.append({"type": "tool_result", "tool_use_id": b.id, "content": salida})
+                messages.append({"role": "user", "content": resultados})
+                continue
+            if nudges < max_nudges:                     # terminó sin emitir → empujón
+                messages.append({"role": "assistant", "content": resp.content})
+                messages.append({"role": "user",
+                                 "content": f"Emití la decisión ahora llamando a la tool {emisor}."})
+                nudges += 1
+                continue
+            return None, self._meta_acc(acc)
+
     def _meta_acc(self, acc: dict) -> AgentMeta:
         return AgentMeta(agent=self.nombre, prompt_version=self.prompt_version, model=acc["model"],
                          cost_usd=round(acc["cost"], 6), input_tokens=acc["in"],

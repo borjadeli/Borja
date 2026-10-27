@@ -88,7 +88,7 @@ def test_verificador_tres_estados():
 
 
 def test_pm_peso_objetivo_acotado():
-    acc = sc.PMAccion(ticker="OKLO", accion="comprar", peso_objetivo=0.08,
+    acc = sc.PMAccion(ticker="OKLO", accion="comprar", peso_objetivo=0.08, conviccion_0_1=0.6,
                       por_que_ese_tamano="carril", tesis="opción",
                       falsador=sc.Falsador(afirmacion="x", fecha_limite="2027-01-01", que_lo_mataria="y"),
                       que_me_haria_vender="dilución")

@@ -133,7 +133,7 @@ class LedgerDecisiones:
         with self.path.open("a", encoding="utf-8") as f:
             f.write(evento.model_dump_json() + "\n")
 
-    def registrar_decision(self, accion: PMAccion, *, ciclo: str, conviccion: float,
+    def registrar_decision(self, accion: PMAccion, *, ciclo: str,
                             peso_resultante: float | None = None,
                             clip: ClipTipo = "none", precio: float | None = None,
                             verif_veredicto: str | None = None, ips_hash: str = "",
@@ -141,8 +141,7 @@ class LedgerDecisiones:
                             auditoria: AuditReport | None = None) -> str:
         """Append de una decisión del PM. Devuelve `decision_id`. `peso_resultante` = objetivo si no hubo clip.
 
-        `conviccion` (0-1) = P(tesis se sostiene) — la fija el caller desde el Dossier que respalda la acción
-        (`accion.dossier_hash`), porque `PMAccion` no la lleva. Es el insumo del Brier.
+        La convicción (P tesis se sostiene, insumo del Brier) la lleva la propia `PMAccion`.
         """
         objeciones = [ObjecionRegistrada(tipo=o.tipo, detalle=o.detalle, severidad=o.severidad)
                       for o in (auditoria.objeciones if auditoria else [])]
@@ -153,7 +152,7 @@ class LedgerDecisiones:
             clip=clip, tesis=accion.tesis,
             falsador_afirmacion=accion.falsador.afirmacion,
             falsador_fecha_limite=accion.falsador.fecha_limite,
-            conviccion_0_1=conviccion, precio=precio, dossier_hash=accion.dossier_hash,
+            conviccion_0_1=accion.conviccion_0_1, precio=precio, dossier_hash=accion.dossier_hash,
             verif_veredicto=verif_veredicto, ips_hash=ips_hash,
             prompt_version=prompt_version, model=model, objeciones_auditor=objeciones)
         self._append(reg)

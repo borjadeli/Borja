@@ -11,7 +11,7 @@ smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commi
 commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
 de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 553 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 557 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -63,9 +63,14 @@ de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
     end-to-end. Inyectable (recibe agentes + datos reales: precios, contexto, `session` del ledger fiel);
     toma los dossiers PASS/REVIEW, proyecta la cartera del ledger fiel, inyecta el hit-rate solo si N≥20.
     `DecisionOrq` ahora expone el hash del data pack. 2 tests.
-  - **Próximo (Fase 4):** **adaptadores de datos reales** para el runner (precios de market_data, contexto
-    sector/cuello/market-cap/ADV desde `nx_nodo`, DB del paper nuevo) → habilita el **smoke real** ·
-    5+ carteras sombra point-in-time · monitor de eventos (ya hay `ledger.pendientes(hoy)` para falsadores).
+  - ✅ **Adaptadores de datos reales + harness del smoke** (`backend/agentes/datos_reales.py` +
+    `ops/correr_semana_v2.py`): precios/market-cap/ADV de market_data, sector/cuello del ledger `nx_*`,
+    paper nuevo en DB SQLite separada (`data/paper_v2.db`). El ops cablea agentes reales (Opus/Sonnet/Haiku
+    5.5) + runner → corre el ciclo end-to-end con datos reales. 4 tests (adaptadores); el ops es import-safe.
+    **El SMOKE REAL queda listo para disparar** (`python -m ops.correr_semana_v2 OKLO MP RKLB`, ⚠️ gasta ~$4-6).
+  - **Próximo (Fase 4):** 🟢 **DISPARAR EL SMOKE REAL** (acción del operador, cuesta plata) → valida todo el
+    pipeline end-to-end · después: 5+ carteras sombra point-in-time · monitor de eventos (ya hay
+    `ledger.pendientes(hoy)` para falsadores vencidos).
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

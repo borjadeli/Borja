@@ -32,7 +32,7 @@ from backend.agentes.datos_reales import abrir_paper, contexto_de, precios_de, r
 from backend.agentes.ips import IPS
 from backend.agentes.ledger_decisiones import LedgerDecisiones
 from backend.agentes.macro import Macro
-from backend.agentes.orquestador import Orquestador
+from backend.agentes.orquestador import CacheDossiers, Orquestador, _CACHE_PATH
 from backend.agentes.orquestador_decision import OrquestadorDecision
 from backend.agentes.pm import PM
 from backend.agentes.presupuesto import LedgerPresupuesto
@@ -71,6 +71,7 @@ def main() -> int:
     research = Orquestador(
         triage=triage, analista=analista, bear=bear, macro=macro,
         ledger=LedgerPresupuesto(sobre_semanal=args.presupuesto),
+        cache=CacheDossiers(_CACHE_PATH),                # reutilización PERSISTENTE a disco (P0.2b)
         data_pack_fn=lambda tk: ensamblar(tk),
         contexto_fn=lambda _tk: "",                      # contexto del cuello para el Analista: mejora futura
     )

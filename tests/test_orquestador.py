@@ -132,3 +132,41 @@ def test_dossier_fail_no_se_cachea():
     orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif("fail"), cache=cache)
     orq.correr_semana([("OKLO", _sen(), "h")], hoy=HOY)
     assert cache.vigente("OKLO", hash_pack(_pack("OKLO")), HOY) is None    # un fail no queda reusable
+
+
+# --------------------------------------------------------------------------- regresión P0.2 (auditoría)
+from backend.agentes.provenance import DataKind, DataPoint, Source  # noqa: E402
+
+_SRC = Source(name="Yahoo", document_type="api")
+
+
+def _dp(metric, value, known):
+    return DataPoint(entity="OKLO", metric=metric, value=value, unit="u", currency="USD",
+                     kind=DataKind.ORIGINAL, source=_SRC, known_at=date.fromisoformat(known))
+
+
+def test_2a_hash_ignora_volatiles_pero_no_materiales():
+    # precio/ADV/shares distintos → MISMO hash (no invalidan el dossier)
+    volatil_a = DataPack(ticker="OKLO", as_of=date(2026, 10, 20),
+                         puntos=[_dp("precio", 50.0, "2026-10-20"), _dp("shares_outstanding", 1e8, "2026-10-20")])
+    volatil_b = DataPack(ticker="OKLO", as_of=date(2026, 10, 21),
+                         puntos=[_dp("precio", 99.0, "2026-10-21"), _dp("shares_outstanding", 2e8, "2026-10-21")])
+    assert hash_pack(volatil_a) == hash_pack(volatil_b)
+    # un dato MATERIAL nuevo (otro known_at) SÍ cambia el hash
+    mat_a = DataPack(ticker="OKLO", as_of=date(2026, 10, 20), puntos=[_dp("owner_fcf", 10.0, "2026-06-30")])
+    mat_b = DataPack(ticker="OKLO", as_of=date(2026, 10, 20), puntos=[_dp("owner_fcf", 10.0, "2026-09-30")])
+    assert hash_pack(mat_a) != hash_pack(mat_b)
+
+
+def test_2b_cache_persiste_a_disco(tmp_path):
+    ruta = tmp_path / "cache.json"
+    c1 = CacheDossiers(path=ruta)
+    c1.guardar("OKLO", "h1", _dossier(), _verif_pass(), date(2026, 10, 26))
+    # un cache NUEVO sobre el mismo archivo ve el dossier (sobrevive al reinicio del proceso)
+    c2 = CacheDossiers(path=ruta)
+    assert c2.vigente("OKLO", "h1", date(2026, 10, 27)) is not None
+    assert c2.vigente("OKLO", "OTRO_HASH", date(2026, 10, 27)) is None   # hash distinto → no reutiliza
+
+
+def _verif_pass():
+    return sc.VerificationReport(meta=_META, ticker="OKLO", veredicto="pass")

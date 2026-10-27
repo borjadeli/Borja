@@ -12,9 +12,11 @@ Verificador corre sobre el Dossier emitido. El Analista en Batch (−50%) para a
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
+from pathlib import Path
 
 from backend.agentes.presupuesto import LedgerPresupuesto, peor_caso_usd
 from backend.agentes.provenance import DataPack
@@ -28,9 +30,18 @@ BEAR_MODEL, BEAR_MAXTOK, BEAR_USES, BEAR_IN = "claude-sonnet-5-5", 4096, 3, 60_0
 TTL_REUSO_DIAS = 35
 
 
+# Métricas de mercado VOLÁTILES: cambian cada día y NO deben invalidar un dossier (auditoría P0.2a).
+_METRICAS_VOLATILES = {"precio", "adv_30d_usd", "market_cap", "shares_outstanding"}
+
+
 def hash_pack(pack: DataPack) -> str:
-    """Hash del contenido del data pack (métrica/valor/known_at) — clave de reutilización del Dossier."""
-    base = ";".join(f"{p.metric}={p.value}@{p.known_at}" for p in sorted(pack.puntos, key=lambda x: x.metric))
+    """Hash de los insumos MATERIALES del data pack (hechos/filings/calculadoras) — clave de reutilización
+    del Dossier. EXCLUYE las métricas de mercado volátiles (precio/ADV/market cap/shares): que el precio se
+    mueva no invalida el análisis. Un dato material nuevo (otro valor u otro `known_at`, p.ej. un filing
+    nuevo) SÍ cambia el hash y fuerza re-análisis."""
+    materiales = [p for p in pack.puntos if p.metric not in _METRICAS_VOLATILES]
+    base = ";".join(f"{p.metric}={p.value}@{p.known_at}"
+                    for p in sorted(materiales, key=lambda x: (x.metric, str(x.known_at))))
     return hashlib.sha256(base.encode()).hexdigest()[:16]
 
 
@@ -42,11 +53,40 @@ class _Entrada:
     fecha: date
 
 
-class CacheDossiers:
-    """Cache de Dossiers verificados, reusable mientras el hash del data pack no cambie y esté dentro del TTL."""
+_CACHE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "cache_dossiers_v2.json"
 
-    def __init__(self):
+
+class CacheDossiers:
+    """Cache de Dossiers verificados, reusable mientras el hash del data pack no cambie y esté dentro del TTL.
+
+    Puede PERSISTIR a disco (`data/cache_dossiers_v2.json`) para que la reutilización sobreviva al reinicio
+    del proceso (auditoría P0.2b): pasá `path=_CACHE_PATH` (lo hace el ops). `path=None` → solo memoria
+    (default; tests hermético)."""
+
+    def __init__(self, path: Path | str | None = None):
+        self.path = Path(path) if path else None
         self._d: dict[str, _Entrada] = {}
+        if self.path and self.path.exists():
+            self._cargar()
+
+    def _cargar(self) -> None:
+        try:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return
+        for tk, e in data.items():
+            self._d[tk] = _Entrada(hash=e["hash"], fecha=date.fromisoformat(e["fecha"]),
+                                   dossier=Dossier.model_validate(e["dossier"]),
+                                   verif=VerificationReport.model_validate(e["verif"]))
+
+    def _persistir(self) -> None:
+        if not self.path:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        data = {tk: {"hash": e.hash, "fecha": e.fecha.isoformat(),
+                     "dossier": e.dossier.model_dump(mode="json"),
+                     "verif": e.verif.model_dump(mode="json")} for tk, e in self._d.items()}
+        self.path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
     def vigente(self, ticker: str, hash_actual: str, hoy: date) -> _Entrada | None:
         e = self._d.get(ticker.upper())
@@ -56,6 +96,7 @@ class CacheDossiers:
 
     def guardar(self, ticker: str, hash_: str, dossier: Dossier, verif: VerificationReport, fecha: date) -> None:
         self._d[ticker.upper()] = _Entrada(hash=hash_, dossier=dossier, verif=verif, fecha=fecha)
+        self._persistir()
 
 
 @dataclass

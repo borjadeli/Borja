@@ -77,11 +77,14 @@ class RunnerSemanal:
         dossiers: list[tuple[Dossier, VerificationReport]] = []
         hashes: dict[str, str] = {}
         verifs: dict[str, str] = {}
+        flags: dict[str, list[str]] = {}
         for d in research.decisiones:
             if d.dossier is None or d.verif is None:
                 continue
             tk = d.ticker.upper()
             verifs[tk] = d.verif.veredicto
+            if d.verif.flags_supervivencia:
+                flags[tk] = list(d.verif.flags_supervivencia)
             if d.hash:
                 hashes[tk] = d.hash
             if d.verif.veredicto in ("pass", "review"):          # FAIL no justifica compra/aumento
@@ -97,9 +100,9 @@ class RunnerSemanal:
 
         # 4. Gate duro del IPS + Auditor + ledger de decisiones.
         res_dec = self.decision.procesar(decision, cartera_actual=pesos_actual, caja_actual=caja_pct,
-                                         contexto=contexto, ciclo=ciclo, precios=precios,
+                                         contexto=contexto, ciclo=ciclo, hoy=hoy, precios=precios,
                                          dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
-                                         memo_macro=memo_txt)
+                                         flags_por_ticker=flags, memo_macro=memo_txt)
 
         # 5. Paper: ejecuta los fills contra el ledger fiel.
         paper = ejecutar_paper(session, res_dec, precios=precios, fecha_fill=hoy, comision=comision)

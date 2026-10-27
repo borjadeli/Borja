@@ -10,7 +10,7 @@ TRIANGULA antes de codear (doc 54).** Fases 1 y 2 completas. Ramas: `destete-v2-
 pendientes de push con token fresco y de merge del PR 1). El cambio de dirección v2 está cerrado (doc 51),
 arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 530 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 540 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -42,10 +42,17 @@ arquitectura/plan en doc 52.
   - ✅ **PM** (`backend/agentes/pm.py`, Opus 5.5): ve dossiers PASS/REVIEW + cartera + memo + hit-rate +
     flags; emite `PMDecision`. Sizea él (el determinismo no impone tamaño); usa el IPS como **dry-run tool**
     (`validar_ips`) vía nuevo `base.conversacion_tools` (tools cliente). `PMAccion` ganó `conviccion_0_1`
-    (insumo del Brier). 6 tests. El gate/clip final + escritura al ledger los hará el orquestador de decisión.
-  - **Próximo (Fase 4):** **Auditor** (Opus, sin veto, objeciones medidas + demora 1 ciclo en aumentos) ·
-    **orquestador de decisión** (PM → IPS gate/clip → Auditor → ledger → paper) · canal de disputa del FAIL
-    en el Verificador · reescritura de `paper_trader` desde `PMDecision` · 5+ carteras sombra · monitor de eventos.
+    (insumo del Brier). Sin web (decide sobre evidencia ya verificada). 6 tests.
+  - ✅ **Auditor** (`backend/agentes/auditor.py`, Opus 5.5): revisa la `PMDecision` con contexto separado y
+    emite objeciones como **predicciones falsables** (concentración/coherencia/rotación/verif-fallida/IPS);
+    SIN veto. Salida estructurada, sin web. 4 tests.
+  - ✅ **Orquestador de decisión** (`backend/agentes/orquestador_decision.py`): **PM → gate duro del IPS →
+    Auditor → ledger**. local_simple → recorte mecánico a cash (clip); agregada → NO_ACTION; objeción alta
+    sobre aumento → demora 1 ciclo. Desacoplado del PM (recibe la `PMDecision`). 6 tests. Difiere la "1
+    re-propuesta" explícita (el dry-run ya fue la 2a chance).
+  - **Próximo (Fase 4):** canal de disputa del FAIL en el Verificador (doc 55 §4.1: el PM objeta → el
+    Verificador re-corre en contexto fresco) · reescritura de `paper_trader` desde `PMDecision` (honra
+    `pesos_finales` + `demoradas`) · 5+ carteras sombra point-in-time · monitor de eventos.
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

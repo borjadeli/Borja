@@ -103,11 +103,13 @@ class PM:
         self.ag = agente
         self.ips = ips
 
-    def _handler_validar(self, contexto: dict[str, ContextoTicker]):
+    def _handler_validar(self, contexto: dict[str, ContextoTicker], ops_previas: int):
         def _validar(entrada: dict) -> str:
             pesos = {k.upper(): float(val) for k, val in (entrada.get("pesos") or {}).items()
                      if _finito(val) and float(val) > 0}
-            ops = int(entrada.get("ops_semana", 0) or 0)
+            # ops ya USADAS en la semana vienen del LEDGER, no del input del PM (auditoría r2 item 2); la
+            # propuesta suma 1 sesión.
+            ops = ops_previas + 1
             caja = round(1.0 - sum(pesos.values()), 6)
             viol = self.ips.validar(pesos, contexto, caja=caja, ops_semana=ops)
             return json.dumps({
@@ -121,21 +123,32 @@ class PM:
     def decidir(self, *, dossiers: list[tuple[Dossier, VerificationReport]],
                 cartera_actual: dict[str, float], caja_actual: float,
                 contexto: dict[str, ContextoTicker], memo_macro: str = "",
-                hit_rate_resumen: str = "", max_tokens: int = 4096) -> PMDecision:
+                hit_rate_resumen: str = "", ops_semana_previas: int = 0,
+                alertas_previas: list[str] | None = None, feedback: str = "",
+                max_tokens: int = 4096) -> PMDecision:
         flags_txt, _flags = _render_flags(dossiers)
         cartera_txt = ("\n".join(f"- {t}: {w:.1%}" for t, w in sorted(cartera_actual.items()))
                        or "(cartera vacía)")
+        alertas_txt = ("\n".join(f"- {a}" for a in alertas_previas) if alertas_previas
+                       else "(sin alertas pendientes)")
+        extra = ""
+        if feedback:
+            extra += (f"\n=== EL GATE DEL IPS RECHAZÓ TU PROPUESTA ANTERIOR (re-proponé UNA vez) ===\n"
+                      f"{feedback}\n")
         user = (
             f"=== CARTERA ACTUAL (caja {caja_actual:.1%}) ===\n{cartera_txt}\n\n"
+            f"=== ALERTAS DE LA CORRIDA ANTERIOR (resolvé o tené en cuenta) ===\n{alertas_txt}\n\n"
             f"=== MEMO MACRO ===\n{memo_macro or '(sin memo)'}\n\n"
             f"=== TU TRACK RECORD (información, no instrucción) ===\n{hit_rate_resumen or '(sin histórico aún)'}\n\n"
             f"=== DOSSIERS VIGENTES ===\n{_render_dossiers(dossiers)}\n\n"
-            f"=== FLAGS DE SUPERVIVENCIA (respondé a cada uno) ===\n{flags_txt}\n\n"
+            f"=== FLAGS DE SUPERVIVENCIA (respondé a cada uno) ===\n{flags_txt}\n"
+            f"{extra}\n"
             f"Usá validar_ips para chequear tu propuesta y después llamá a emitir_decision."
         )
         payload, meta = self.ag.conversacion_tools(
             system=_PROMPT, user=user, tools=[VALIDAR_IPS_TOOL, EMITIR_DECISION_TOOL],
-            emisor="emitir_decision", manejadores={"validar_ips": self._handler_validar(contexto)},
+            emisor="emitir_decision",
+            manejadores={"validar_ips": self._handler_validar(contexto, ops_semana_previas)},
             max_tokens=max_tokens,
         )
         if payload is None:                         # no emitió ni tras el empujón → NO_ACTION explícito

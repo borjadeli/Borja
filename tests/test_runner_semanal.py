@@ -90,7 +90,7 @@ def test_ciclo_completo_compra_y_registra(tmp_path, sesion):
     pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",
                    cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([_accion()]), _U)])), _ips())
     decision = OrquestadorDecision(_ips(), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
-    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision)
+    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision, alertas_path=None)
 
     res = runner.correr([], session=sesion, precios={"OKLO": 50.0},
                         contexto={"OKLO": ContextoTicker(sector="energia", cuello="smr",
@@ -113,9 +113,22 @@ def test_pm_sin_accion_no_opera(tmp_path, sesion):
                    cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([], operar=False), _U)])),
             _ips())
     decision = OrquestadorDecision(_ips(), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
-    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision)
+    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision, alertas_path=None)
 
     res = runner.correr([], session=sesion, precios={"OKLO": 50.0},
                         contexto={"OKLO": ContextoTicker(sector="energia")}, hoy=F)
     assert res.paper.fills == [] and decision.ledger.decisiones() == []
     assert core.proyectar(sesion, {"OKLO": 50.0})["posiciones"] == {}
+
+
+def test_r2_alertas_se_persisten(tmp_path, sesion):
+    # el PM compra un nombre INADMISIBLE (market cap > 60B) → el gate no lo abre y genera alerta → se persiste
+    pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",
+                   cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([_accion()]), _U)])), _ips())
+    decision = OrquestadorDecision(_ips(), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    ruta = tmp_path / "alertas.json"
+    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision, alertas_path=ruta)
+    runner.correr([], session=sesion, precios={"OKLO": 50.0},
+                  contexto={"OKLO": ContextoTicker(sector="energia", cuello="smr", market_cap=70e9, adv_usd=10e6)},
+                  hoy=F, ciclo="c")
+    assert ruta.exists() and "inadmisible" in ruta.read_text(encoding="utf-8")

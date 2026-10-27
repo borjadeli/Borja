@@ -11,7 +11,7 @@ smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commi
 commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
 de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 557 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 576 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -68,9 +68,16 @@ de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
     paper nuevo en DB SQLite separada (`data/paper_v2.db`). El ops cablea agentes reales (Opus/Sonnet/Haiku
     5.5) + runner → corre el ciclo end-to-end con datos reales. 4 tests (adaptadores); el ops es import-safe.
     **El SMOKE REAL queda listo para disparar** (`python -m ops.correr_semana_v2 OKLO MP RKLB`, ⚠️ gasta ~$4-6).
-  - **Próximo (Fase 4):** 🟢 **DISPARAR EL SMOKE REAL** (acción del operador, cuesta plata) → valida todo el
-    pipeline end-to-end · después: 5+ carteras sombra point-in-time · monitor de eventos (ya hay
-    `ledger.pendientes(hoy)` para falsadores vencidos).
+  - ✅ **P0 de la auditoría externa (2026-10-27) CERRADO** — cada bug reproducido antes de corregir + test
+    de regresión: **1 gate del IPS** (reducciones siempre se ejecutan; admisibilidad no vende a la fuerza;
+    operar_ahora respetado; max_ops por semana calendario; turnover/cap_flag cableados; holding_period
+    sacado); **2 reutilización** (hash_pack estable ignorando volátiles; cache persistente); **3 triage**
+    (cupo de cobertura + bootstrap para nombres nuevos); **4 presupuesto** (mensual persistente desde
+    llm_calls; todos los agentes loguean su costo → /costos). 576 tests verdes.
+  - **Próximo (Fase 4):** 🟢 **DISPARAR EL SMOKE REAL** (acción del operador, cuesta plata; la consola no
+    puede: sin API key/red) → valida el pipeline end-to-end; **no avanzar a P1 sin ese reporte** (regla de
+    la auditoría) · después P1 (data pack con calculadoras, contexto del mapa, verificador de contenido,
+    auditor por-ticker, candidatos desde el universo) · P2 (reescritura de CLAUDE.md, limpieza, doc 53).
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

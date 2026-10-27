@@ -177,8 +177,9 @@ class Orquestador:
             pack = self.data_pack_fn(td.ticker)
             h = hash_pack(pack)
 
-            # 2a. Reutilización: si hay Dossier vigente, no se gasta LLM.
-            vig = self.cache.vigente(td.ticker, h, hoy)
+            # 2a. Reutilización: si hay Dossier vigente, no se gasta LLM. Un EVENTO FUERTE saltea el caché
+            #     y fuerza re-análisis (el dossier vigente pudo quedar viejo por el evento; auditoría r2 item 3).
+            vig = None if senales.tiene_evento_fuerte else self.cache.vigente(td.ticker, h, hoy)
             if vig is not None:
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="reutilizado", triage=td,
                                                   dossier=vig.dossier, verif=vig.verif, hash=h))

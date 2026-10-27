@@ -203,3 +203,13 @@ def test_3_bootstrap_promueve_todos_los_nuevos():
                       ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
     r = orq.correr_semana([("A", _sen(), ""), ("B", _sen(), "")], hoy=HOY, bootstrap=True)
     assert sorted(d.accion for d in r.decisiones) == ["analizado", "analizado"]
+
+
+def test_3_evento_fuerte_saltea_el_cache(tmp_path):
+    an = _Analista()
+    cache = CacheDossiers()
+    cache.guardar("OKLO", hash_pack(_pack("OKLO")), _dossier(), _verif()(_dossier(), []), HOY)
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an, cache=cache)
+    # con evento fuerte NO reutiliza: re-analiza (el dossier vigente pudo quedar viejo por el evento)
+    r = orq.correr_semana([("OKLO", _sen(tiene_evento_fuerte=True), "h")], hoy=HOY)
+    assert r.decisiones[0].accion == "analizado" and an.llamadas == 1

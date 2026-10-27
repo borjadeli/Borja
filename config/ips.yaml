@@ -34,6 +34,7 @@ turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) �
 
 # --- Presupuesto LLM (el ledger de presupuesto lo hace cumplir; acá queda el número) ---
 presupuesto_usd_mes: 40.0
+presupuesto_bootstrap_usd: 25.0     # tope PROPIO de la primera pasada del universo (separado del mensual)
 
 # --- Duro e innegociable ---
 ordenes_reales: false          # PROHIBIDO enviar órdenes reales / conectar bróker con escritura

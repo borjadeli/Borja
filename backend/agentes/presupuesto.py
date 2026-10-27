@@ -10,10 +10,13 @@ Diseño convergido (IA2): `task_budget` NO es tope → el control vive acá, en 
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 
 from backend.agentes.base import PRECIOS
+
+_plog = logging.getLogger("agentes.presupuesto")
 
 
 def peor_caso_usd(model: str, *, max_tokens: int, max_uses: int, input_estimado: int) -> float:
@@ -26,14 +29,19 @@ def peor_caso_usd(model: str, *, max_tokens: int, max_uses: int, input_estimado:
 
 @dataclass
 class LedgerPresupuesto:
-    sobre_semanal: float                 # ej. 9.0 (de $40/mes)
+    sobre_semanal: float                 # ritmo agendado de la corrida (ej. presupuesto_mes / semanas restantes)
     reserva_eventos_pct: float = 0.22     # 20-25% reservado para eventos tardíos
     gastado: float = 0.0                  # costo real confirmado
     reservado: float = 0.0                # peor-caso de llamadas en vuelo
+    tope_evento_usd: float | None = None  # tope para EVENTOS (ej. todo lo que queda del mes); None = sobre
+    modo_forzado: str | None = None       # si está, modo() lo devuelve (fail-closed → "solo_reuso")
 
     def _tope(self, para_evento: bool) -> float:
-        # el trabajo AGENDADO solo accede a (1 - reserva); los EVENTOS pueden usar el sobre completo.
-        return self.sobre_semanal if para_evento else self.sobre_semanal * (1 - self.reserva_eventos_pct)
+        # el trabajo AGENDADO accede a (1 - reserva) del sobre; los EVENTOS pueden tocar `tope_evento_usd`
+        # (todo el resto del mes) o el sobre completo si no se fijó.
+        if para_evento:
+            return self.tope_evento_usd if self.tope_evento_usd is not None else self.sobre_semanal
+        return self.sobre_semanal * (1 - self.reserva_eventos_pct)
 
     def disponible(self, *, para_evento: bool = False) -> float:
         return round(self._tope(para_evento) - self.gastado - self.reservado, 6)
@@ -43,6 +51,8 @@ class LedgerPresupuesto:
         return (self.gastado + self.reservado) / self.sobre_semanal if self.sobre_semanal > 0 else 1.0
 
     def modo(self) -> str:
+        if self.modo_forzado:
+            return self.modo_forzado
         n = self.nivel()
         if n >= 1.0:
             return "corte"          # 100%: no más llamadas
@@ -67,9 +77,10 @@ class LedgerPresupuesto:
 
 # --------------------------------------------------------------------------- presupuesto MENSUAL persistente
 
-def gastado_mes_usd(hoy: date | None = None, *, session=None) -> float:
+def gastado_mes_usd(hoy: date | None = None, *, session=None) -> float | None:
     """Gasto LLM acumulado en el MES CALENDARIO de `hoy`, leído de `llm_calls` (persistente, TODOS los
-    agentes). 0.0 si no hay DB disponible (fail-silent). `session` inyectable para tests."""
+    agentes). Devuelve **None si NO se pudo leer** (sin DB / error) → el caller aplica fail-closed
+    (auditoría r2 4c). 0.0 = se leyó y no hay gasto. `session` inyectable para tests."""
     hoy = hoy or date.today()
     inicio = datetime(hoy.year, hoy.month, 1)
     try:
@@ -86,14 +97,39 @@ def gastado_mes_usd(hoy: date | None = None, *, session=None) -> float:
         from backend.database import session_scope
         with session_scope() as s:
             return _q(s)
-    except Exception:  # noqa: BLE001 — sin DB, el presupuesto arranca de cero (no bloquea)
-        return 0.0
+    except Exception as e:  # noqa: BLE001 — no se pudo leer el gasto → fail-closed en el caller
+        _plog.warning("no pude leer el gasto del mes (fail-closed): %s", e)
+        return None
+
+
+def _semanas_restantes_mes(hoy: date) -> int:
+    """Semanas (calendario, ≥1) que quedan en el mes de `hoy`, contando la actual."""
+    import calendar
+    ultimo = calendar.monthrange(hoy.year, hoy.month)[1]
+    dias_restantes = ultimo - hoy.day + 1
+    return max(1, -(-dias_restantes // 7))        # ceil(dias/7)
 
 
 def ledger_mensual(presupuesto_usd_mes: float, hoy: date | None = None, *,
                    reserva_eventos_pct: float = 0.22, session=None) -> LedgerPresupuesto:
-    """Ledger para ESTA corrida con tope MENSUAL persistente: el 'sobre' disponible = lo que queda del mes
-    (`presupuesto_usd_mes` − gastado del mes, de `llm_calls`). Así el gasto sobrevive al reinicio y respeta
-    el tope mensual del IPS, cubriendo a todos los agentes que loguean su costo."""
-    restante = max(0.0, round(presupuesto_usd_mes - gastado_mes_usd(hoy, session=session), 6))
-    return LedgerPresupuesto(sobre_semanal=restante, reserva_eventos_pct=reserva_eventos_pct)
+    """Ledger de ESTA corrida con tope MENSUAL persistente + RITMO SEMANAL (auditoría r2 4a/4c):
+    - `gastado del mes` se lee de `llm_calls` (persistente, todos los agentes). Si NO se puede leer →
+      **fail-closed**: sobre 0 + modo `solo_reuso` (no se gasta, solo reutilización).
+    - el sobre AGENDADO de la corrida = min(restante del mes, presupuesto_mes / semanas restantes del mes);
+      los EVENTOS pueden tocar todo el restante del mes (`tope_evento_usd`)."""
+    hoy = hoy or date.today()
+    gastado = gastado_mes_usd(hoy, session=session)
+    if gastado is None:
+        return LedgerPresupuesto(sobre_semanal=0.0, reserva_eventos_pct=reserva_eventos_pct,
+                                 modo_forzado="solo_reuso")
+    restante = max(0.0, round(presupuesto_usd_mes - gastado, 6))
+    ritmo = round(min(restante, presupuesto_usd_mes / _semanas_restantes_mes(hoy)), 6)
+    return LedgerPresupuesto(sobre_semanal=ritmo, reserva_eventos_pct=reserva_eventos_pct,
+                             tope_evento_usd=restante)
+
+
+def ledger_bootstrap(presupuesto_bootstrap_usd: float, *, reserva_eventos_pct: float = 0.0) -> LedgerPresupuesto:
+    """Ledger para la primera pasada del universo (bootstrap): tope PROPIO, separado del mensual
+    (auditoría r2 4b; `presupuesto_bootstrap_usd` vive en ips.yaml)."""
+    return LedgerPresupuesto(sobre_semanal=max(0.0, presupuesto_bootstrap_usd),
+                             reserva_eventos_pct=reserva_eventos_pct)

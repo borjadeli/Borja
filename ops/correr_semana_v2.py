@@ -35,7 +35,7 @@ from backend.agentes.macro import Macro
 from backend.agentes.orquestador import CacheDossiers, Orquestador, _CACHE_PATH
 from backend.agentes.orquestador_decision import OrquestadorDecision
 from backend.agentes.pm import PM
-from backend.agentes.presupuesto import gastado_mes_usd, ledger_mensual
+from backend.agentes.presupuesto import gastado_mes_usd, ledger_bootstrap, ledger_mensual
 from backend.agentes.runner_semanal import RunnerSemanal
 from backend.agentes.triage import SenalesTriage, Triage
 
@@ -63,6 +63,9 @@ def main() -> int:
 
     ips = IPS.cargar()
     presupuesto_mes = float(ips.cfg.get("presupuesto_usd_mes", 40.0))
+    # Bootstrap: tope propio del ips.yaml (separado del mensual); si no, ritmo mensual persistente.
+    ledger_pres = (ledger_bootstrap(float(ips.cfg.get("presupuesto_bootstrap_usd", 25.0)))
+                   if args.bootstrap else ledger_mensual(presupuesto_mes, date.today()))
 
     # --- agentes reales (cliente Anthropic real vía services.llm; cada llamada se loguea a llm_calls) ---
     triage = Triage(Agente("triage", m_triage.PROMPT_VERSION, M_HAIKU))
@@ -74,7 +77,7 @@ def main() -> int:
 
     research = Orquestador(
         triage=triage, analista=analista, bear=bear, macro=macro,
-        ledger=ledger_mensual(presupuesto_mes, date.today()),   # tope MENSUAL persistente del IPS (P0.4)
+        ledger=ledger_pres,                              # tope mensual persistente / bootstrap (P0.4)
         cache=CacheDossiers(_CACHE_PATH),                # reutilización PERSISTENTE a disco (P0.2b)
         data_pack_fn=lambda tk: ensamblar(tk),
         contexto_fn=lambda _tk: "",                      # contexto del cuello para el Analista: mejora futura
@@ -104,8 +107,10 @@ def main() -> int:
     print("\n=== SMOKE v2 ===")
     print(f"dossiers considerados (PASS/REVIEW): {res.dossiers_considerados}")
     print(f"gasto research (esta corrida): ${res.research.gastado_usd:.4f}")
-    print(f"gasto LLM del mes (todos los agentes, llm_calls): ${gastado_mes_usd(date.today()):.4f} "
-          f"/ tope ${presupuesto_mes:.0f}")
+    _gm = gastado_mes_usd(date.today())
+    print(f"gasto LLM del mes (todos los agentes, llm_calls): "
+          f"${(_gm if _gm is not None else 0.0):.4f} / tope ${presupuesto_mes:.0f}"
+          + ("  ⚠️ no se pudo leer (fail-closed)" if _gm is None else ""))
     print(f"decisión del PM: operar={res.decision.operar_ahora} · acciones={len(res.decision.acciones)} "
           f"· clip={res.resultado_decision.clip} · no_action={res.resultado_decision.no_action}")
     if res.resultado_decision.demoradas:

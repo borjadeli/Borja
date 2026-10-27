@@ -48,3 +48,25 @@ def test_agente_con_cliente_inyectado_NO_loguea(monkeypatch):
     ag = Agente("x", "v1", "claude-haiku-5-5", cliente=ScriptedLLM([(json.dumps({"a": 1}), FakeUsage())]))
     ag.estructurado(system="s", user="u", payload_schema=schema)
     assert registrados == []
+
+
+# --------------------------------------------------------------------------- P0 r2 item 4
+import backend.agentes.presupuesto as presupuesto  # noqa: E402
+from backend.agentes.presupuesto import ledger_bootstrap  # noqa: E402
+
+
+def test_4a_ritmo_semanal_al_inicio_del_mes():
+    s = _sesion()                                  # gasto 0; 1-oct → 5 semanas → 40/5 = 8
+    ld = ledger_mensual(40.0, date(2026, 10, 1), session=s)
+    assert ld.sobre_semanal == 8.0 and ld.tope_evento_usd == 40.0   # agendado al ritmo; eventos tocan el mes
+
+
+def test_4b_ledger_bootstrap_tope_propio():
+    ld = ledger_bootstrap(25.0)
+    assert ld.sobre_semanal == 25.0
+
+
+def test_4c_fail_closed_si_no_se_lee_el_gasto(monkeypatch):
+    monkeypatch.setattr(presupuesto, "gastado_mes_usd", lambda *a, **k: None)   # lectura falla
+    ld = presupuesto.ledger_mensual(40.0, date(2026, 10, 1))
+    assert ld.sobre_semanal == 0.0 and ld.modo() == "solo_reuso"    # no se gasta, solo reutilización

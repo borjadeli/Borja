@@ -67,6 +67,7 @@ class DecisionOrq:
     bear: BearAttack | None = None
     verif: VerificationReport | None = None
     costo_usd: float = 0.0
+    hash: str | None = None      # hash del data pack del dossier (clave para el ledger de decisiones)
 
 
 @dataclass
@@ -125,7 +126,7 @@ class Orquestador:
             vig = self.cache.vigente(td.ticker, h, hoy)
             if vig is not None:
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="reutilizado", triage=td,
-                                                  dossier=vig.dossier, verif=vig.verif))
+                                                  dossier=vig.dossier, verif=vig.verif, hash=h))
                 continue
             if modo == "solo_reuso" or (modo == "restringido" and not para_evento):
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="saltado_degradacion", triage=td))
@@ -156,7 +157,8 @@ class Orquestador:
             if verif.veredicto != "fail":      # un dossier fail no se cachea como usable
                 self.cache.guardar(td.ticker, h, r_an.dossier, verif, hoy)
             res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="analizado", triage=td,
-                                              dossier=r_an.dossier, bear=atk, verif=verif, costo_usd=round(costo, 6)))
+                                              dossier=r_an.dossier, bear=atk, verif=verif,
+                                              costo_usd=round(costo, 6), hash=h))
 
         res.gastado_usd = round(self.ledger.gastado, 6)
         return res

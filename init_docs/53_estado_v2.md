@@ -11,7 +11,7 @@ smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commi
 commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
 de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 547 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 551 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -55,9 +55,14 @@ de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
     (`backend.ledger.core`): traduce `pesos_finales` → acciones enteras, ventas antes que compras, honra
     `demoradas` y `no_action`; puro sobre `Session`. Reemplaza al `paper_trader` v3 (congelado hasta su
     archivado físico). 7 tests.
-  - **Próximo (Fase 4):** canal de disputa del FAIL en el Verificador (doc 55 §4.1: el PM objeta → el
-    Verificador re-corre en contexto fresco) · **runner semanal** que cablee research→PM→decisión→paper ·
-    5+ carteras sombra point-in-time · monitor de eventos (ya hay `ledger.pendientes(hoy)` para falsadores).
+  - ✅ **Canal de disputa del FAIL** (`backend/agentes/disputa_fail.py`): el FAIL es el nuevo VRNS (doc 55
+    §4.1). El PM objeta (claim + por qué es artefacto + fuente que lo contradice) → el Verificador re-corre
+    en contexto fresco; quien decide es un **re-chequeo independiente** (`refetch_fn`), NO el PM (nunca
+    overridea). `LedgerDisputas` cuenta ganadas/perdidas. 4 tests.
+  - **Próximo (Fase 4):** **runner semanal** que cablee research→PM→decisión→paper (con adaptadores de datos
+    reales: precios, contexto de `nx_nodo`, cartera del ledger) — es el que hace correr todo end-to-end y
+    habilita el smoke real · 5+ carteras sombra point-in-time · monitor de eventos (ya hay
+    `ledger.pendientes(hoy)` para falsadores vencidos).
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

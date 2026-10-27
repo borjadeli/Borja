@@ -2,13 +2,14 @@
 
 > **Fuente viva del estado.** Reemplaza al doc 32 (que describe el estado v1). Si algo acá contradice a un
 > doc más viejo sobre *qué está hecho / qué sigue*, gana este. Directiva: doc 51 · arquitectura/plan: doc 52.
-> Última actualización: **2026-10-26**.
+> Última actualización: **2026-10-27**.
 
 ## Dónde estamos
-**FASE 3 (Agentes de research) — en curso, parte de infraestructura hecha; la capa de agentes LLM se
-TRIANGULA antes de codear (doc 54).** Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commiteadas;
-pendientes de push con token fresco y de merge del PR 1). El cambio de dirección v2 está cerrado (doc 51),
-arquitectura/plan en doc 52.
+**FASE 4 (PM + Auditor + IPS + ledger) — en curso: la CAPA DE DECISIÓN está completa y testeada** (IPS,
+ledger de decisiones, PM, Auditor, orquestador de decisión). Fase 3 componentes completos (falta solo el
+smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commiteadas; Fase 4 sigue
+commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
+de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
 
 **Hecho hasta ahora (todo commiteado, 540 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.

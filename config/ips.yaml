@@ -12,7 +12,8 @@ max_por_sector: 0.30
 max_por_cuello: 0.35           # requiere mapa poblado (nx_nodo) — ya está
 caja_min: 0.0
 caja_max: 1.0                  # puede ir 100% a caja (disciplina sobre actividad)
-max_ops_semana: 2
+max_ops_semana: 2              # por SEMANA CALENDARIO (se cuenta desde el ledger, no por decisión)
+banda_peso_existente: 0.03     # una posición que derivó sobre el cap se recorta solo si supera cap + banda
 
 # --- Admisibilidad del universo ---
 market_cap_min_usd: 150000000       # $150M
@@ -26,8 +27,10 @@ pct_adv_max: 0.10                   # una posición no supera el 10% del ADV
 cap_flag_supervivencia: 0.04
 
 # --- Reglas de riesgo que ANTES eran "juicio del auditor" y ahora son números (doc 55 §4.4) ---
-turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|)
-holding_period_min_dias: 5     # no cerrar una posición abierta hace < N días (salvo falsador disparado)
+turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) — CABLEADO: bloquea aumentos
+# holding_period_min_dias: SACADO a propósito — gatear ventas por antigüedad contradice el principio
+#   risk-off (doc 55 §4.7: las reducciones NUNCA se bloquean). Si se quiere como señal anti-churn, va como
+#   objeción medible del auditor (predicción falsable), no como gate duro.
 
 # --- Presupuesto LLM (el ledger de presupuesto lo hace cumplir; acá queda el número) ---
 presupuesto_usd_mes: 40.0

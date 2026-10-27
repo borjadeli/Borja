@@ -50,9 +50,8 @@ def ejecutar(session: Session, resultado: ResultadoDecision, *, precios: dict[st
     precios = {t.upper(): float(p) for t, p in precios.items() if p and math.isfinite(p) and p > 0}
     demoradas = {t.upper() for t in resultado.demoradas}
 
-    if resultado.no_action:
-        return ResultadoPaper(nota="NO_ACTION (violación agregada del IPS) — no se opera")
-
+    # Se ejecuta SIEMPRE hacia `pesos_finales` (ya pasó el gate: las reducciones quedan aunque los aumentos
+    # se hayan caído por violación agregada; `no_action` es informativo, no bloquea las ventas).
     est = core.proyectar(session, precios)
     equity = est["equity"]
     if equity <= 0:

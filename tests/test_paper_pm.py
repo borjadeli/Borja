@@ -59,9 +59,12 @@ def test_aumento_demorado_no_se_ejecuta(sesion):
     assert core.proyectar(sesion, {"OKLO": 50.0})["posiciones"]["OKLO"].shares == 100   # sin cambios
 
 
-def test_no_action_no_opera(sesion):
-    r = ejecutar(sesion, _res({"OKLO": 0.1}, no_action=True), precios={"OKLO": 50.0}, fecha_fill=F)
-    assert r.fills == [] and r.nota and "NO_ACTION" in r.nota
+def test_no_action_igual_ejecuta_las_reducciones(sesion):
+    # no_action (aumentos bloqueados por violación agregada) NO frena las ventas: pesos_finales manda.
+    core.registrar_fill(sesion, ticker="OKLO", lado="buy", shares=200, precio=50, fecha_fill=F)
+    r = ejecutar(sesion, _res({}, no_action=True), precios={"OKLO": 50.0}, fecha_fill=F)  # OKLO sale → venta
+    assert r.fills == [{"ticker": "OKLO", "lado": "sell", "shares": 200, "precio": 50.0}]
+    assert core.proyectar(sesion, {"OKLO": 50.0})["posiciones"] == {}
 
 
 def test_nombre_sin_precio_no_se_opera(sesion):

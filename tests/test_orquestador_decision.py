@@ -9,6 +9,7 @@ from backend.agentes.schemas import (
     Falsador,
     PMAccion,
     PMDecision,
+    RespuestaFlag,
 )
 
 
@@ -27,9 +28,10 @@ def _accion(ticker="OKLO", peso=0.1, accion="comprar"):
                     que_me_haria_vender="c")
 
 
-def _decision(acciones):
+def _decision(acciones, *, operar=True, respuestas_flags=None):
     return PMDecision(meta=AgentMeta(agent="pm", prompt_version="pm_v1", model="claude-opus-5-5"),
-                      acciones=acciones, operar_ahora=True, razon_timing="evento")
+                      acciones=acciones, operar_ahora=operar,
+                      respuestas_flags=respuestas_flags or [], razon_timing="evento")
 
 
 def _ctx(**over):
@@ -101,3 +103,89 @@ def test_ledger_registra_hash_y_procedencia(tmp_path):
     d = ds[0]
     assert d.dossier_hash == "deadbeef" and d.precio == 42.0 and d.verif_veredicto == "pass"
     assert d.ips_hash == orq.ips.hash() and d.peso_resultante == 0.1 and d.ciclo == "2026-10-27"
+
+
+# --------------------------------------------------------------------------- regresión P0.1 (auditoría)
+from datetime import date  # noqa: E402
+
+
+def _orq_ips(tmp_path, ips, auditor=None):
+    return OrquestadorDecision(ips, LedgerDecisiones(path=tmp_path / "ld.jsonl"), auditor=auditor)
+
+
+def test_1a_tenencia_inadmisible_no_se_vende_a_la_fuerza(tmp_path):
+    # OKLO cruzó $60B; el PM dice mantener → NO se vende, solo alerta (doc 55: admisibilidad no reduce).
+    ctx = _ctx(OKLO=ContextoTicker(sector="energia", cuello="smr", market_cap=70e9, adv_usd=10e6))
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([_accion("OKLO", 0.10, "mantener")]),
+                                              cartera_actual={"OKLO": 0.10}, caja_actual=0.90,
+                                              contexto=ctx, ciclo="c")
+    assert res.pesos_finales == {"OKLO": 0.10} and res.no_action is False
+    assert any("inadmisible" in a for a in res.alertas)
+
+
+def test_1a_no_abre_nombre_inadmisible(tmp_path):
+    ctx = _ctx(OKLO=ContextoTicker(sector="energia", market_cap=70e9, adv_usd=10e6))
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([_accion("OKLO", 0.10, "comprar")]),
+                                              cartera_actual={}, caja_actual=1.0, contexto=ctx, ciclo="c")
+    assert res.pesos_finales == {} and any("inadmisible" in a for a in res.alertas)
+
+
+def test_1b_violacion_agregada_preexistente_no_bloquea_la_venta(tmp_path):
+    # A/B/C mismo sector (0.6 > cap 0.3, preexistente). El PM vende C → la venta se ejecuta igual.
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([_accion("C", 0.0, "vender")]),
+                                              cartera_actual={"A": 0.2, "B": 0.2, "C": 0.2}, caja_actual=0.4,
+                                              contexto=_ctx(A=_ctx()["OKLO"], B=_ctx()["OKLO"], C=_ctx()["OKLO"]),
+                                              ciclo="c")
+    assert res.no_action is False and res.pesos_finales == {"A": 0.2, "B": 0.2}
+
+
+def test_1c_drift_dentro_de_banda_no_se_recorta(tmp_path):
+    # posición derivó a 22% (cap 20%, banda 3pp) → NO se recorta.
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([]), cartera_actual={"OKLO": 0.22}, caja_actual=0.78,
+                                              contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales == {"OKLO": 0.22} and res.clip == "none"
+
+
+def test_1c_drift_fuera_de_banda_se_recorta_al_cap(tmp_path):
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([]), cartera_actual={"OKLO": 0.25}, caja_actual=0.75,
+                                              contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales == {"OKLO": 0.20} and res.clip == "local_simple"
+
+
+def test_1d_operar_ahora_false_no_ejecuta(tmp_path):
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([_accion("OKLO", 0.10, "comprar")], operar=False),
+                                              cartera_actual={}, caja_actual=1.0, contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales == {} and any("no opera" in a.lower() for a in res.alertas)
+
+
+def test_1e_max_ops_semana_cuenta_por_calendario_desde_el_ledger(tmp_path):
+    orq = _orq_ips(tmp_path, _ips(max_ops_semana=2))
+    orq.ledger.registrar_decision(_accion("X"), ciclo="c")   # 2 ops ya hechas esta semana
+    orq.ledger.registrar_decision(_accion("Y"), ciclo="c")
+    res = orq.procesar(_decision([_accion("OKLO", 0.10, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c", hoy=date.today())
+    assert res.no_action is True and res.pesos_finales == {}   # 2+1 > 2 → el aumento se cae
+
+
+def test_1f_turnover_max_bloquea_aumentos(tmp_path):
+    ctx = _ctx(MP=ContextoTicker(sector="commodities", cuello="x", market_cap=8e9, adv_usd=10e6))
+    res = _orq_ips(tmp_path, _ips(turnover_max_semana=0.25)).procesar(
+        _decision([_accion("OKLO", 0.15, "comprar"), _accion("MP", 0.15, "comprar")]),
+        cartera_actual={}, caja_actual=1.0, contexto=ctx, ciclo="c")
+    assert res.no_action is True and res.pesos_finales == {}   # turnover 0.30 > 0.25
+
+
+def test_1f_cap_flag_supervivencia_no_resuelto_topea_el_aumento(tmp_path):
+    orq = _orq_ips(tmp_path, _ips())
+    res = orq.procesar(_decision([_accion("OKLO", 0.15, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c", flags_por_ticker={"OKLO": ["material_weakness"]})
+    assert res.pesos_finales == {"OKLO": 0.04} and res.clip == "local_simple"
+
+
+def test_1f_cap_flag_resuelto_no_topea(tmp_path):
+    orq = _orq_ips(tmp_path, _ips())
+    resp = [RespuestaFlag(flag_id="OKLO:material_weakness", accion="acepta", motivo="falsador fechado")]
+    res = orq.procesar(_decision([_accion("OKLO", 0.15, "comprar")], respuestas_flags=resp),
+                       cartera_actual={}, caja_actual=1.0, contexto=_ctx(), ciclo="c",
+                       flags_por_ticker={"OKLO": ["material_weakness"]})
+    assert res.pesos_finales == {"OKLO": 0.15} and res.clip == "none"

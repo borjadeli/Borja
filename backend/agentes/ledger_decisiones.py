@@ -181,6 +181,14 @@ class LedgerDecisiones:
     def decisiones(self) -> list[RegistroDecision]:
         return [RegistroDecision.model_validate(e) for e in self._eventos() if e.get("tipo") == "decision"]
 
+    def ops_en_semana(self, hoy: date) -> int:
+        """Cantidad de operaciones (compras/ventas/aumentos/recortes) ya registradas en la SEMANA CALENDARIO
+        (ISO) de `hoy` — para el límite `max_ops_semana` del IPS (se cuenta por semana, no por decisión)."""
+        wk = hoy.isocalendar()[:2]
+        mueven = {"comprar", "vender", "aumentar", "recortar"}
+        return sum(1 for d in self.decisiones()
+                   if d.accion in mueven and d.ts.date().isocalendar()[:2] == wk)
+
     def pendientes(self, hoy: date | None = None) -> list[RegistroDecision]:
         """Falsadores VENCIDOS (fecha_limite <= hoy) y aún sin resolver — insumo del monitor de eventos."""
         hoy = hoy or date.today()

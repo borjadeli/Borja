@@ -10,7 +10,7 @@ TRIANGULA antes de codear (doc 54).** Fases 1 y 2 completas. Ramas: `destete-v2-
 pendientes de push con token fresco y de merge del PR 1). El cambio de dirección v2 está cerrado (doc 51),
 arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 482 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 530 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -31,12 +31,20 @@ arquitectura/plan en doc 52.
   una corrida semanal en vivo (≈$4-6, ~20-30 min de llamadas agénticas) → reportar costo real/nombre + 2
   dossiers. Diferido a Fase 4: réplica del Analista al Bear (turno en su hilo) + Analista en Batch (−50%).
 - **Fase 4 — TRIANGULADA (doc 55, principio rector: límite duro = inputs mecánicos O canal de disputa) +
-  arrancada:** ✅ **IPS en código** (`config/ips.yaml` + `backend/agentes/ips.py`): validador determinista,
-  inputs mecánicos-solo, tipos local_simple (recorte a cash) / agregada (NO_ACTION), cap de supervivencia
-  DENTRO del IPS, dry-run + gate final. Testeado.
-  - **Próximo (Fase 4):** ledger de decisiones (append-only, inmutable, "PM+clip", objeciones del auditor
-    como predicciones falsables, signo disparado/cumplido) · **PM** (Opus, sizea bajo IPS, usa el dry-run) ·
-    **Auditor** (Opus, sin veto, objeciones medidas + demora 1 ciclo en aumentos) · canal de disputa del FAIL
+  en curso:**
+  - ✅ **IPS en código** (`config/ips.yaml` + `backend/agentes/ips.py`): validador determinista, inputs
+    mecánicos-solo, tipos local_simple (recorte a cash) / agregada (NO_ACTION), cap de supervivencia DENTRO
+    del IPS, dry-run + gate final. Testeado.
+  - ✅ **Ledger de decisiones** (`backend/agentes/ledger_decisiones.py`): append-only e inmutable (log de
+    eventos → el estado es proyección, mismo patrón que el ledger fiel). Marca "PM+clip", objeciones del
+    auditor como predicciones falsables, signo del falsador en el schema (disparado=tesis falsada /
+    no_disparado), Brier + hit-rate por bucket con conteos + `pendientes(hoy)`. JSONL gitignored. 8 tests.
+  - ✅ **PM** (`backend/agentes/pm.py`, Opus 5.5): ve dossiers PASS/REVIEW + cartera + memo + hit-rate +
+    flags; emite `PMDecision`. Sizea él (el determinismo no impone tamaño); usa el IPS como **dry-run tool**
+    (`validar_ips`) vía nuevo `base.conversacion_tools` (tools cliente). `PMAccion` ganó `conviccion_0_1`
+    (insumo del Brier). 6 tests. El gate/clip final + escritura al ledger los hará el orquestador de decisión.
+  - **Próximo (Fase 4):** **Auditor** (Opus, sin veto, objeciones medidas + demora 1 ciclo en aumentos) ·
+    **orquestador de decisión** (PM → IPS gate/clip → Auditor → ledger → paper) · canal de disputa del FAIL
     en el Verificador · reescritura de `paper_trader` desde `PMDecision` · 5+ carteras sombra · monitor de eventos.
 
 ## Decisiones del operador (cerradas)

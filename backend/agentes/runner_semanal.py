@@ -64,12 +64,14 @@ class RunnerSemanal:
 
     def correr(self, candidatos, *, session, precios: dict[str, float],
                contexto: dict[str, ContextoTicker], memo_macro=None, hoy: date | None = None,
-               ciclo: str | None = None, comision: float = 0.0) -> ResultadoRunner:
+               ciclo: str | None = None, comision: float = 0.0,
+               cupo_cobertura: int = 0, bootstrap: bool = False) -> ResultadoRunner:
         hoy = hoy or date.today()
         ciclo = ciclo or hoy.isoformat()
 
-        # 1. Research bajo presupuesto → dossiers verificados por nombre.
-        research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy)
+        # 1. Research bajo presupuesto → dossiers verificados por nombre (con cupo de cobertura/bootstrap).
+        research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy,
+                                               cupo_cobertura=cupo_cobertura, bootstrap=bootstrap)
         memo_txt = research.memo.resumen if research.memo else ""
 
         dossiers: list[tuple[Dossier, VerificationReport]] = []

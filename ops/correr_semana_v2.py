@@ -57,6 +57,8 @@ def main() -> int:
     ap.add_argument("--con-macro", action="store_true", help="incluir el memo macro (otro Opus+web)")
     ap.add_argument("--capital", type=float, default=100_000.0, help="capital inicial del paper (1a vez)")
     ap.add_argument("--presupuesto", type=float, default=9.0, help="sobre semanal USD (de los $40/mes)")
+    ap.add_argument("--cupo", type=int, default=0, help="cupo de cobertura: nombres nuevos a promover")
+    ap.add_argument("--bootstrap", action="store_true", help="primera pasada: promueve todos los nuevos")
     args = ap.parse_args()
     tickers = [t.upper() for t in (args.tickers or ["OKLO"])]
 
@@ -91,7 +93,7 @@ def main() -> int:
     paper = abrir_paper(capital_inicial=args.capital, fecha=date.today())
     try:
         res = runner.correr(_candidatos(tickers), session=paper, precios=precios, contexto=contexto,
-                            hoy=date.today())
+                            hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap)
         paper.commit()
     finally:
         paper.close()

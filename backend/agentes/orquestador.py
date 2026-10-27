@@ -133,7 +133,12 @@ class Orquestador:
         self.contexto_fn = contexto_fn or (lambda _t: "")
 
     def correr_semana(self, candidatos: list[tuple[str, SenalesTriage, str]], *,
-                      memo_macro: MacroMemo | None = None, hoy: date | None = None) -> ResultadoSemana:
+                      memo_macro: MacroMemo | None = None, hoy: date | None = None,
+                      cupo_cobertura: int = 0, bootstrap: bool = False) -> ResultadoSemana:
+        """`cupo_cobertura`: cuántos nombres NUNCA analizados se promueven a research esta semana aunque el
+        triage no los marque (ordenados por la prioridad de su cuello) — resuelve que un nombre nuevo
+        prometedor nunca entre (auditoría P0.3). `bootstrap=True`: promueve TODOS los nuevos (primera pasada
+        del universo); el gasto lo acota igual el ledger de presupuesto (su propio tope)."""
         hoy = hoy or date.today()
         memo = memo_macro or (self.macro.evaluar() if self.macro else None)
         memo_txt = memo.resumen if memo else ""
@@ -143,6 +148,15 @@ class Orquestador:
         for ticker, senales, resumen in candidatos:
             td = self.triage.evaluar(ticker, senales, resumen_hechos_nuevos=resumen)
             triages.append((senales, resumen, td))
+
+        # 1b. Cupo de cobertura: promover nombres NUNCA analizados (sin dossier) que el triage no marcó,
+        #     ordenados por la prioridad de su cuello en el mapa. Bootstrap = todos (primera pasada).
+        if cupo_cobertura > 0 or bootstrap:
+            nuevos = [t for t in triages if not t[2].research_profundo and t[0].dias_desde_dossier is None]
+            nuevos.sort(key=lambda t: t[0].prioridad_cuello, reverse=True)
+            for senales, _r, td in (nuevos if bootstrap else nuevos[:cupo_cobertura]):
+                td.research_profundo = True
+                td.motivo = f"{td.motivo} · cupo de cobertura" if td.motivo else "cupo de cobertura"
 
         # 2. Ranking: research_profundo primero, por (prioridad, incertidumbre) desc.
         triages.sort(key=lambda x: (x[2].research_profundo, x[2].prioridad_0_3, x[2].incertidumbre_0_1),

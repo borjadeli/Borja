@@ -62,7 +62,7 @@ class _StubResearch:
     def __init__(self, resultado):
         self._r = resultado
 
-    def correr_semana(self, candidatos, *, memo_macro=None, hoy=None):
+    def correr_semana(self, candidatos, *, memo_macro=None, hoy=None, cupo_cobertura=0, bootstrap=False):
         return self._r
 
 

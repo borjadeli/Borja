@@ -170,3 +170,36 @@ def test_2b_cache_persiste_a_disco(tmp_path):
 
 def _verif_pass():
     return sc.VerificationReport(meta=_META, ticker="OKLO", veredicto="pass")
+
+
+# --------------------------------------------------------------------------- regresión P0.3 (auditoría)
+
+def test_3_cupo_de_cobertura_promueve_un_nombre_nuevo():
+    an = _Analista()
+    orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
+                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
+    # sin cupo → el nombre nuevo se descarta (prioridad 1 < 2)
+    assert orq.correr_semana([("NUEVA", _sen(), "")], hoy=HOY).decisiones[0].accion == "triage_descarta"
+    assert an.llamadas == 0
+    # con cupo=1 → se promueve y se analiza
+    r = orq.correr_semana([("NUEVA", _sen(), "")], hoy=HOY, cupo_cobertura=1)
+    assert r.decisiones[0].accion == "analizado" and an.llamadas == 1
+
+
+def test_3_cupo_ordena_por_prioridad_de_cuello():
+    an = _Analista()
+    orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
+                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
+    # dos nuevos, cupo 1 → entra el de cuello más prioritario (B)
+    r = orq.correr_semana([("A", _sen(prioridad_cuello=1), ""), ("B", _sen(prioridad_cuello=3), "")],
+                          hoy=HOY, cupo_cobertura=1)
+    analizados = [d.ticker for d in r.decisiones if d.accion == "analizado"]
+    assert analizados == ["B"]
+
+
+def test_3_bootstrap_promueve_todos_los_nuevos():
+    an = _Analista()
+    orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
+                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
+    r = orq.correr_semana([("A", _sen(), ""), ("B", _sen(), "")], hoy=HOY, bootstrap=True)
+    assert sorted(d.accion for d in r.decisiones) == ["analizado", "analizado"]

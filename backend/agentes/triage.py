@@ -41,6 +41,7 @@ class SenalesTriage:
     precio_vs_tesis_pct: float | None  # movimiento de precio vs la tesis (abs %, None = sin dato)
     es_posicion: bool = False
     tiene_evento_fuerte: bool = False  # CRR crítico / ≥N red flags / filing material
+    prioridad_cuello: int = 0          # prioridad del cuello de la empresa en el mapa (0-3) — ordena el cupo
 
 
 def _clamp01(x: float) -> float:

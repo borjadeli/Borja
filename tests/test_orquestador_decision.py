@@ -158,21 +158,22 @@ def test_1d_operar_ahora_false_no_ejecuta(tmp_path):
     assert res.pesos_finales == {} and any("no opera" in a.lower() for a in res.alertas)
 
 
-def test_1e_max_ops_semana_cuenta_por_calendario_desde_el_ledger(tmp_path):
+def test_1e_max_ops_semana_cuenta_SESIONES_por_calendario(tmp_path):
     orq = _orq_ips(tmp_path, _ips(max_ops_semana=2))
-    orq.ledger.registrar_decision(_accion("X"), ciclo="c")   # 2 ops ya hechas esta semana
-    orq.ledger.registrar_decision(_accion("Y"), ciclo="c")
+    orq.ledger.registrar_decision(_accion("X"), ciclo="c1")   # 2 SESIONES con ops ejecutadas esta semana
+    orq.ledger.registrar_decision(_accion("Y"), ciclo="c2")
     res = orq.procesar(_decision([_accion("OKLO", 0.10, "comprar")]), cartera_actual={}, caja_actual=1.0,
-                       contexto=_ctx(), ciclo="c", hoy=date.today())
-    assert res.no_action is True and res.pesos_finales == {}   # 2+1 > 2 → el aumento se cae
+                       contexto=_ctx(), ciclo="c3", hoy=date.today())
+    assert res.no_action is True and res.pesos_finales == {}   # 2+1 sesiones > 2 → el aumento se cae
 
 
-def test_1f_turnover_max_bloquea_aumentos(tmp_path):
-    ctx = _ctx(MP=ContextoTicker(sector="commodities", cuello="x", market_cap=8e9, adv_usd=10e6))
+def test_1f_turnover_max_bloquea_rotacion(tmp_path):
+    # ROTACIÓN: vender A 0.30 (otro sector) y comprar OKLO+MP 0.15 c/u (energia 0.30 = cap) → rotación 0.30 > 0.25
+    ctx = _ctx(A=ContextoTicker(sector="defensa", cuello="x", market_cap=8e9, adv_usd=10e6))
     res = _orq_ips(tmp_path, _ips(turnover_max_semana=0.25)).procesar(
-        _decision([_accion("OKLO", 0.15, "comprar"), _accion("MP", 0.15, "comprar")]),
-        cartera_actual={}, caja_actual=1.0, contexto=ctx, ciclo="c")
-    assert res.no_action is True and res.pesos_finales == {}   # turnover 0.30 > 0.25
+        _decision([_accion("A", 0.0, "vender"), _accion("OKLO", 0.15, "comprar"), _accion("MP", 0.15, "comprar")]),
+        cartera_actual={"A": 0.30}, caja_actual=0.70, contexto=ctx, ciclo="c")
+    assert res.no_action is True and "A" not in res.pesos_finales   # A se vendió; los aumentos cayeron
 
 
 def test_1f_cap_flag_supervivencia_no_resuelto_topea_el_aumento(tmp_path):
@@ -189,3 +190,54 @@ def test_1f_cap_flag_resuelto_no_topea(tmp_path):
                        cartera_actual={}, caja_actual=1.0, contexto=_ctx(), ciclo="c",
                        flags_por_ticker={"OKLO": ["material_weakness"]})
     assert res.pesos_finales == {"OKLO": 0.15} and res.clip == "none"
+
+
+# --------------------------------------------------------------------------- regresión P0 r2 (auditoría)
+_EN = dict(market_cap=5e9, adv_usd=10e6)
+
+
+def test_r2_1a_cinco_compras_una_sesion_no_excede_max_ops(tmp_path):
+    ctx = {t: ContextoTicker(sector=f"s{i}", **_EN) for i, t in enumerate("ABCDE")}
+    res = _orq_ips(tmp_path, _ips(max_ops_semana=2)).procesar(
+        _decision([_accion(t, 0.05, "comprar") for t in "ABCDE"]),
+        cartera_actual={}, caja_actual=1.0, contexto=ctx, ciclo="c")
+    assert res.no_action is False and len(res.pesos_finales) == 5   # 1 sesión ≤ 2
+
+
+def test_r2_1b_despliegue_desde_caja_no_es_turnover(tmp_path):
+    ctx = _ctx(MP=ContextoTicker(sector="commodities", cuello="x", **_EN))
+    res = _orq_ips(tmp_path, _ips(turnover_max_semana=0.25)).procesar(
+        _decision([_accion("OKLO", 0.15, "comprar"), _accion("MP", 0.15, "comprar")]),
+        cartera_actual={}, caja_actual=1.0, contexto=ctx, ciclo="c")
+    assert res.no_action is False and res.pesos_finales == {"OKLO": 0.15, "MP": 0.15}
+
+
+def test_r2_1c_agregado_de_grupo_no_bloquea_otro_sector(tmp_path):
+    ctx = {"A": ContextoTicker(sector="energia", **_EN), "B": ContextoTicker(sector="energia", **_EN),
+           "C": ContextoTicker(sector="energia", **_EN), "D": ContextoTicker(sector="commodities", **_EN)}
+    res = _orq_ips(tmp_path, _ips()).procesar(_decision([_accion("D", 0.10, "comprar")]),
+                                              cartera_actual={"A": 0.2, "B": 0.2, "C": 0.2}, caja_actual=0.4,
+                                              contexto=ctx, ciclo="c")
+    assert res.no_action is False and res.pesos_finales.get("D") == 0.10   # energia excedido no frena a D
+
+
+def test_r2_1d_repropuesta_una_vez_con_holguras(tmp_path):
+    orq = _orq_ips(tmp_path, _ips())
+    llamadas = []
+
+    def repro(holguras):
+        llamadas.append(holguras)
+        return _decision([_accion("OKLO", 0.15, "comprar"), _accion("MP", 0.15, "comprar")])
+
+    res = orq.procesar(_decision([_accion("OKLO", 0.2, "comprar"), _accion("MP", 0.2, "comprar")]),
+                       cartera_actual={}, caja_actual=1.0, contexto=_ctx(), ciclo="c", repropuesta_fn=repro)
+    assert len(llamadas) == 1 and any(h.regla == "max_por_sector" for h in llamadas[0])
+    assert res.no_action is False and res.pesos_finales == {"OKLO": 0.15, "MP": 0.15}
+
+
+def test_r2_6_operar_ahora_false_no_llama_al_auditor(tmp_path):
+    aud = _FakeAuditor([AuditObjecion(tipo="concentracion", detalle="x", severidad="alta")])
+    res = _orq_ips(tmp_path, _ips(), auditor=aud).procesar(
+        _decision([_accion("OKLO", 0.1, "comprar")], operar=False),
+        cartera_actual={}, caja_actual=1.0, contexto=_ctx(), ciclo="c")
+    assert res.auditoria is None and res.demoradas == []

@@ -1,25 +1,21 @@
 """Orquestador de decisión (v2 Fase 4, doc 55 §4) — el capstone de la capa de decisión.
 
 Une PM → **gate duro del IPS** → **Auditor** → **ledger**. Desacoplado del PM: recibe una `PMDecision` ya
-emitida + el contexto mecánico, así es testeable y el runner semanal cablea `pm.decidir() → procesar()`.
+emitida + el contexto mecánico (el runner cablea `pm.decidir() → procesar()`).
 
-Principio del gate (doc 55 §4.1/§4.7 + auditoría externa 2026-10-27):
-- **Las REDUCCIONES (vender/recortar/bajar peso) SIEMPRE se ejecutan** — en risk-off la velocidad importa;
-  nunca las bloquea una violación agregada ni la admisibilidad.
-- El gate DURO aplica **solo a lo que agrega riesgo** (abrir/aumentar):
-  - `admisibilidad` (market cap / ADV fuera de rango) → NO se abre/aumenta ese nombre; una tenencia que ya
-    quedó inadmisible se **ALERTA, nunca se vende a la fuerza**.
-  - cap por nombre: un aumento se recorta al cap (estricto); una posición EXISTENTE que derivó sobre el cap
-    se recorta solo si supera el cap + banda (evita churn por drift de precio).
-  - flag de supervivencia NO resuelto → el aumento se topea a `cap_flag_supervivencia` (doc 55 §4.5).
-  - violación `agregada` (sector/cuello/caja/ops/turnover) → el código NO elige qué recortar → **NO_ACTION
-    sobre los aumentos** (se caen todos); las reducciones ya aplicadas quedan.
-- `operar_ahora=False` → no se ejecuta nada (se registra la intención).
-- `max_ops_semana` se cuenta por **semana calendario** desde el ledger (no por decisión); `turnover_max_semana`
-  = suma de |Δpeso| de la decisión.
-
-El ledger es por ACCIÓN; la auditoría es por DECISIÓN → las objeciones se anclan a la primera acción.
-La ejecución efectiva (aplicar `pesos_finales`, honrar `demoradas`) es del paper nuevo.
+Principio del gate (doc 55 §4 + auditoría externa 2026-10-27, r1 y r2):
+- **Las REDUCCIONES (vender/recortar/bajar peso) SIEMPRE se ejecutan** (risk-off; nunca las bloquea nada).
+- El gate DURO aplica solo a lo que AGREGA riesgo (abrir/aumentar):
+  - admisibilidad (market cap/ADV) → no se abre/aumenta; una tenencia ya inadmisible se ALERTA, no se vende.
+  - cap por nombre: aumento recortado al cap (estricto); existente sobre el cap solo con banda (drift).
+  - flag de supervivencia no resuelto → aumento topeado a `cap_flag_supervivencia`.
+  - violación AGREGADA de grupo (sector/cuello) → bloquea SOLO los aumentos que empeoran ESE grupo (1c);
+    violación global (caja/ops/turnover/max_pos) → bloquea todos los aumentos restantes.
+  - lo bloqueado se devuelve al PM UNA vez con la holgura exacta (`repropuesta_fn`); si no hay re-propuesta
+    válida → NO_ACTION sobre esos aumentos (1d). Las reducciones ya aplicadas quedan.
+- `max_ops_semana` = SESIONES con ops ejecutadas por semana calendario (1a); `turnover` = ROTACIÓN =
+  compras financiadas con ventas = min(Σaumentos, Σreducciones) (1b, el despliegue desde caja no cuenta).
+- `operar_ahora=False` → no se ejecuta nada y NO se llama al Auditor (6).
 """
 from __future__ import annotations
 
@@ -27,18 +23,18 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from backend.agentes.auditor import Auditor
-from backend.agentes.ips import IPS, ContextoTicker
+from backend.agentes.ips import IPS, ContextoTicker, Violacion
 from backend.agentes.ledger_decisiones import LedgerDecisiones
 from backend.agentes.schemas import AuditReport, PMDecision
 
 _AUMENTOS = {"comprar", "aumentar"}
 _REDUCCIONES = {"vender", "recortar"}
 _OPS_QUE_MUEVEN = _AUMENTOS | _REDUCCIONES
+_GRUPO_REGLAS = {"max_por_sector", "max_por_cuello"}
 
 
 def aplicar_decision(cartera_actual: dict[str, float], acciones) -> dict[str, float]:
-    """Cartera-objetivo NAIVE (pre-gate), para reporte: cada acción fija el `peso_objetivo` de su nombre;
-    vender/caja lo sacan; los no mencionados quedan como están. Caja = 1 − suma."""
+    """Cartera-objetivo NAIVE (pre-gate), para reporte."""
     pesos = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
     for a in acciones:
         tk = a.ticker.upper()
@@ -50,7 +46,6 @@ def aplicar_decision(cartera_actual: dict[str, float], acciones) -> dict[str, fl
 
 
 def _inadmisible(ctx: ContextoTicker | None, ips: IPS) -> bool:
-    """¿El nombre viola admisibilidad mecánica (market cap fuera de rango / ADV bajo)?"""
     if ctx is None:
         return False
     mc_min = float(ips.cfg.get("market_cap_min_usd", 0.0))
@@ -58,21 +53,50 @@ def _inadmisible(ctx: ContextoTicker | None, ips: IPS) -> bool:
     adv_min = float(ips.cfg.get("adv_min_usd", 0.0))
     if ctx.market_cap is not None and not (mc_min <= ctx.market_cap <= mc_max):
         return True
-    if ctx.adv_usd is not None and ctx.adv_usd < adv_min:
-        return True
-    return False
+    return ctx.adv_usd is not None and ctx.adv_usd < adv_min
+
+
+def _rotacion(cartera: dict[str, float], finales: dict[str, float]) -> float:
+    """Rotación = compras financiadas con ventas = min(Σaumentos, Σreducciones). El despliegue neto desde
+    caja (aumentos sin ventas que los financien) NO cuenta como rotación (auditoría r2 1b)."""
+    tk = set(cartera) | set(finales)
+    incr = sum(max(0.0, finales.get(t, 0.0) - cartera.get(t, 0.0)) for t in tk)
+    decr = sum(max(0.0, cartera.get(t, 0.0) - finales.get(t, 0.0)) for t in tk)
+    return round(min(incr, decr), 6)
+
+
+def _grupos_excedidos(pesos: dict[str, float], contexto: dict[str, ContextoTicker],
+                      ips: IPS) -> tuple[set[str], set[str], list[Violacion]]:
+    """Sectores y cuellos que superan su cap en `pesos`. Devuelve (sectores_over, cuellos_over, holguras)."""
+    cap_s, cap_c = float(ips.cfg.get("max_por_sector", 1.0)), float(ips.cfg.get("max_por_cuello", 1.0))
+    acc_s: dict[str, float] = {}
+    acc_c: dict[str, float] = {}
+    for tk, w in pesos.items():
+        ctx = contexto.get(tk)
+        if ctx and ctx.sector:
+            acc_s[ctx.sector] = acc_s.get(ctx.sector, 0.0) + w
+        if ctx and ctx.cuello:
+            acc_c[ctx.cuello] = acc_c.get(ctx.cuello, 0.0) + w
+    sec = {s for s, v in acc_s.items() if v > cap_s + 1e-9}
+    cue = {c for c, v in acc_c.items() if v > cap_c + 1e-9}
+    holg = [Violacion("max_por_sector", f"sector={s}: {acc_s[s]:.1%} > {cap_s:.0%}",
+                      round(cap_s - acc_s[s], 6), "agregada") for s in sec]
+    holg += [Violacion("max_por_cuello", f"cuello={c}: {acc_c[c]:.1%} > {cap_c:.0%}",
+                       round(cap_c - acc_c[c], 6), "agregada") for c in cue]
+    return sec, cue, holg
 
 
 @dataclass
 class ResultadoDecision:
-    pesos_objetivo: dict[str, float]           # cartera-objetivo naive del PM (pre-gate)
-    pesos_finales: dict[str, float]            # post-gate (lo que ejecuta el paper)
+    pesos_objetivo: dict[str, float]
+    pesos_finales: dict[str, float]
     caja_final: float
     clip: str                                  # none | local_simple | agregada
-    no_action: bool                            # True si los aumentos se cayeron por violación agregada
+    no_action: bool                            # True si cayeron aumentos (agregado)
     auditoria: AuditReport | None = None
-    demoradas: list[str] = field(default_factory=list)   # aumentos demorados 1 ciclo por objeción alta
-    alertas: list[str] = field(default_factory=list)     # p.ej. tenencia inadmisible (no se vende), no-opera
+    demoradas: list[str] = field(default_factory=list)
+    alertas: list[str] = field(default_factory=list)
+    holguras: list[Violacion] = field(default_factory=list)   # para la re-propuesta del PM
     decision_ids: list[str] = field(default_factory=list)
 
 
@@ -88,44 +112,60 @@ class OrquestadorDecision:
                  dossier_hash_por_ticker: dict[str, str] | None = None,
                  verif_por_ticker: dict[str, str] | None = None,
                  flags_por_ticker: dict[str, list[str]] | None = None,
-                 memo_macro: str = "") -> ResultadoDecision:
+                 memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
         precios = {t.upper(): p for t, p in (precios or {}).items()}
         hashes = {t.upper(): h for t, h in (dossier_hash_por_ticker or {}).items()}
         verifs = {t.upper(): v for t, v in (verif_por_ticker or {}).items()}
         flags = {t.upper(): list(f) for t, f in (flags_por_ticker or {}).items()}
-        objetivo = aplicar_decision(cartera, decision.acciones)
 
-        # operar_ahora=False → no se ejecuta nada (se registra la intención).
+        # operar_ahora=False → no se ejecuta nada; NO se llama al Auditor (item 6).
         if not decision.operar_ahora:
-            res = ResultadoDecision(pesos_objetivo=objetivo, pesos_finales=dict(cartera),
-                                    caja_final=caja_actual, clip="none", no_action=False,
-                                    alertas=["PM no opera ahora (operar_ahora=False)"])
-            self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                                      hashes, verifs, memo_macro, viol=[])
+            res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, decision.acciones),
+                                    pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
+                                    no_action=False, alertas=["PM no opera ahora (operar_ahora=False)"])
+            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo)
             return res
 
-        # 1. Reducciones primero (SIEMPRE se aplican); juntar aumentos aparte.
-        pesos = dict(cartera)
-        aumentos: dict[str, float] = {}
+        res = self._gate(decision, cartera, contexto, flags, hoy)
+
+        # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
+        if res.no_action and repropuesta_fn is not None:
+            nueva = repropuesta_fn(res.holguras)
+            if nueva is not None:
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy)
+                res, decision = res2, nueva
+
+        self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
+                                  hashes, verifs, memo_macro)
+        return res
+
+    def _gate(self, decision: PMDecision, cartera: dict[str, float],
+              contexto: dict[str, ContextoTicker], flags: dict[str, list[str]], hoy: date) -> ResultadoDecision:
+        peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
+        cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
+        banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
         alertas: list[str] = []
         clip_local = False
+
+        # 1. Reducciones (siempre) y aumentos aparte.
+        pesos = dict(cartera)
+        aumentos: dict[str, float] = {}
+        hay_reduccion = False
         for a in decision.acciones:
             tk = a.ticker.upper()
             cur = cartera.get(tk, 0.0)
             tgt = 0.0 if a.accion in ("vender", "caja") else a.peso_objetivo
             if a.accion in _REDUCCIONES or tgt < cur - 1e-9:
                 pesos.pop(tk, None) if tgt <= 0 else pesos.__setitem__(tk, tgt)
+                hay_reduccion = True
             elif a.accion in _AUMENTOS or tgt > cur + 1e-9:
                 aumentos[tk] = tgt
-            # else: mantener al mismo peso → sin cambio
-        pesos_tras_reduccion = {t: w for t, w in pesos.items() if w > 0}
+        tras_red = {t: w for t, w in pesos.items() if w > 0}
 
-        # 2. Clip de AUMENTOS: admisibilidad (no abrir inadmisible) + cap local (estricto) + flag supervivencia.
-        peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
-        cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
-        candidato = dict(pesos_tras_reduccion)
+        # 2. Clip de aumentos: admisibilidad + cap + flag supervivencia.
+        ok: dict[str, float] = {}
         for tk, tgt in aumentos.items():
             if _inadmisible(contexto.get(tk), self.ips):
                 alertas.append(f"{tk}: inadmisible (market cap/ADV) — no se abre/aumenta")
@@ -136,59 +176,74 @@ class OrquestadorDecision:
                 alertas.append(f"{tk}: flag de supervivencia no resuelto → tope {tope:.0%}")
             if tgt > tope + 1e-9:
                 tgt, clip_local = tope, True
-            candidato[tk] = tgt
+            ok[tk] = tgt
 
-        # 3. Trim por DRIFT de posiciones existentes (banda) — mecánico, es reducción.
-        banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
-        for tk, w in list(candidato.items()):
+        # 3. Drift trim de existentes (banda).
+        cand = {**tras_red, **ok}
+        for tk, w in list(cand.items()):
             if tk not in aumentos and w > peso_max + banda + 1e-9:
-                candidato[tk], clip_local = peso_max, True
-        candidato = {t: w for t, w in candidato.items() if w > 0}
+                cand[tk], clip_local = peso_max, True
+        cand = {t: w for t, w in cand.items() if w > 0}
 
-        # 4. Gate AGREGADO sobre el candidato (solo bloquea aumentos). ops por semana calendario + turnover.
-        caja_cand = round(1.0 - sum(candidato.values()), 6)
-        ops_dec = sum(1 for a in decision.acciones if a.accion in _OPS_QUE_MUEVEN)
-        ops_semana = self.ledger.ops_en_semana(hoy) + ops_dec
-        turnover = sum(abs(candidato.get(t, 0.0) - cartera.get(t, 0.0))
-                       for t in set(candidato) | set(cartera))
-        viol = self.ips.validar(candidato, contexto, caja=caja_cand, ops_semana=ops_semana, turnover=turnover)
-        aumentos_efectivos = {tk for tk in aumentos
-                              if candidato.get(tk, 0.0) > pesos_tras_reduccion.get(tk, 0.0) + 1e-9}
+        holguras: list[Violacion] = []
+        caidos = False
 
-        if aumentos_efectivos and IPS.hay_agregada(viol):  # NO_ACTION sobre los aumentos; las reducciones quedan
-            res = ResultadoDecision(pesos_objetivo=objetivo, pesos_finales=pesos_tras_reduccion,
-                                    caja_final=round(1.0 - sum(pesos_tras_reduccion.values()), 6),
-                                    clip="agregada", no_action=True, alertas=alertas)
-        else:
-            res = ResultadoDecision(pesos_objetivo=objetivo, pesos_finales=candidato, caja_final=caja_cand,
-                                    clip="local_simple" if clip_local else "none", no_action=False,
-                                    alertas=alertas)
+        # 4. Agregado de GRUPO (sector/cuello): bloquea SOLO aumentos que empeoran el grupo violado (1c).
+        sec_over, cue_over, holg_grp = _grupos_excedidos(cand, contexto, self.ips)
+        if sec_over or cue_over:
+            for tk in list(ok):
+                ctx = contexto.get(tk)
+                if ctx and (ctx.sector in sec_over or ctx.cuello in cue_over):
+                    del ok[tk]
+                    caidos = True
+                    holguras += [h for h in holg_grp
+                                 if (ctx.sector and h.detalle.startswith(f"sector={ctx.sector}"))
+                                 or (ctx.cuello and h.detalle.startswith(f"cuello={ctx.cuello}"))]
+            cand = {t: w for t, w in {**tras_red, **ok}.items() if w > 0}
 
-        # Alertas por tenencia EXISTENTE inadmisible (1a: se avisa, NO se vende).
+        # 5. Agregado GLOBAL (caja/ops-sesión/turnover-rotación/max_pos): bloquea TODOS los aumentos restantes.
+        caja_cand = round(1.0 - sum(cand.values()), 6)
+        ops_sesiones = self.ledger.sesiones_ops_en_semana(hoy) + (1 if (hay_reduccion or ok) else 0)
+        rot = _rotacion(cartera, cand)
+        glob = [v for v in self.ips.validar(cand, contexto, caja=caja_cand, ops_semana=ops_sesiones,
+                                            turnover=rot)
+                if v.tipo == "agregada" and v.regla not in _GRUPO_REGLAS]
+        if glob and ok:
+            holguras += glob
+            caidos = True
+            ok = {}
+            cand = {t: w for t, w in tras_red.items() if w > 0}
+            caja_cand = round(1.0 - sum(cand.values()), 6)
+
+        clip = "agregada" if caidos else ("local_simple" if clip_local else "none")
+        res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, decision.acciones),
+                                pesos_finales=cand, caja_final=caja_cand, clip=clip, no_action=caidos,
+                                alertas=alertas, holguras=holguras)
         for tk in res.pesos_finales:
             if tk in cartera and _inadmisible(contexto.get(tk), self.ips):
                 res.alertas.append(f"{tk}: posición existente quedó inadmisible (market cap/ADV) — "
                                    f"ALERTA al PM, no se vende a la fuerza")
-
-        self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                                  hashes, verifs, memo_macro, viol=viol)
         return res
 
     def _auditar_y_registrar(self, res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                             hashes, verifs, memo_macro, *, viol) -> None:
+                             hashes, verifs, memo_macro) -> None:
         if self.auditor is not None:
+            viol = list(res.holguras)
             res.auditoria = self.auditor.auditar(
                 decision, cartera_actual=cartera, caja_actual=caja_actual,
                 memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol)
             if any(o.severidad == "alta" for o in res.auditoria.objeciones):
                 res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
+        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo)
 
+    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo) -> None:
         for i, a in enumerate(decision.acciones):
             tk = a.ticker.upper()
             resultante = res.pesos_finales.get(tk, 0.0)
+            ejecutada = abs(resultante - cartera.get(tk, 0.0)) > 1e-9
             self._id_append(res, self.ledger.registrar_decision(
                 a.model_copy(update={"dossier_hash": hashes.get(tk, a.dossier_hash)}),
-                ciclo=ciclo, peso_resultante=resultante, clip=res.clip,
+                ciclo=ciclo, peso_resultante=resultante, ejecutada=ejecutada, clip=res.clip,
                 precio=precios.get(tk), verif_veredicto=verifs.get(tk), ips_hash=self.ips.hash(),
                 prompt_version=decision.meta.prompt_version, model=decision.meta.model,
                 auditoria=res.auditoria if i == 0 else None))
@@ -199,12 +254,7 @@ class OrquestadorDecision:
 
 
 def _flag_no_resuelto(ticker: str, flags: list[str], respuestas) -> bool:
-    """¿La empresa tiene un flag de supervivencia que el PM NO resolvió? Resuelto = hay una `RespuestaFlag`
-    para ese flag con acción distinta de `no_opera` (refutó o lo aceptó como riesgo; doc 55 §4.5)."""
     if not flags:
         return False
     resueltos = {r.flag_id for r in respuestas if getattr(r, "accion", None) != "no_opera"}
-    for f in flags:
-        if f"{ticker}:{f}" not in resueltos and f not in resueltos:
-            return True
-    return False
+    return any(f"{ticker}:{f}" not in resueltos and f not in resueltos for f in flags)

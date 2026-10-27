@@ -67,6 +67,7 @@ class RegistroDecision(BaseModel):
     falsador_afirmacion: str
     falsador_fecha_limite: str                # YYYY-MM-DD
     conviccion_0_1: float
+    ejecutada: bool = True                     # ¿la acción movió el libro? (False = intención/bloqueada)
     precio: float | None = None
     dossier_hash: str | None = None
     verif_veredicto: str | None = None        # pass/review/fail
@@ -134,7 +135,7 @@ class LedgerDecisiones:
             f.write(evento.model_dump_json() + "\n")
 
     def registrar_decision(self, accion: PMAccion, *, ciclo: str,
-                            peso_resultante: float | None = None,
+                            peso_resultante: float | None = None, ejecutada: bool = True,
                             clip: ClipTipo = "none", precio: float | None = None,
                             verif_veredicto: str | None = None, ips_hash: str = "",
                             prompt_version: str = "", model: str = "",
@@ -149,7 +150,7 @@ class LedgerDecisiones:
             ciclo=ciclo, ticker=accion.ticker.upper(), accion=accion.accion,
             peso_objetivo=accion.peso_objetivo,
             peso_resultante=accion.peso_objetivo if peso_resultante is None else peso_resultante,
-            clip=clip, tesis=accion.tesis,
+            clip=clip, ejecutada=ejecutada, tesis=accion.tesis,
             falsador_afirmacion=accion.falsador.afirmacion,
             falsador_fecha_limite=accion.falsador.fecha_limite,
             conviccion_0_1=accion.conviccion_0_1, precio=precio, dossier_hash=accion.dossier_hash,
@@ -181,13 +182,15 @@ class LedgerDecisiones:
     def decisiones(self) -> list[RegistroDecision]:
         return [RegistroDecision.model_validate(e) for e in self._eventos() if e.get("tipo") == "decision"]
 
-    def ops_en_semana(self, hoy: date) -> int:
-        """Cantidad de operaciones (compras/ventas/aumentos/recortes) ya registradas en la SEMANA CALENDARIO
-        (ISO) de `hoy` — para el límite `max_ops_semana` del IPS (se cuenta por semana, no por decisión)."""
+    def sesiones_ops_en_semana(self, hoy: date) -> int:
+        """Cantidad de SESIONES (ciclos distintos) con al menos una operación EJECUTADA en la SEMANA
+        CALENDARIO (ISO) de `hoy` — es lo que mide `max_ops_semana` del IPS (sesiones con ops, no órdenes;
+        no cuenta intenciones ni bloqueadas → sólo `ejecutada=True`). Auditoría P0 r2 (1a, 2)."""
         wk = hoy.isocalendar()[:2]
         mueven = {"comprar", "vender", "aumentar", "recortar"}
-        return sum(1 for d in self.decisiones()
-                   if d.accion in mueven and d.ts.date().isocalendar()[:2] == wk)
+        ciclos = {d.ciclo for d in self.decisiones()
+                  if d.ejecutada and d.accion in mueven and d.ts.date().isocalendar()[:2] == wk}
+        return len(ciclos)
 
     def pendientes(self, hoy: date | None = None) -> list[RegistroDecision]:
         """Falsadores VENCIDOS (fecha_limite <= hoy) y aún sin resolver — insumo del monitor de eventos."""

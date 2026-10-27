@@ -78,10 +78,16 @@ de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
     despliegue desde caja), agregado de grupo bloquea solo el sector/cuello violado, re-propuesta UNA vez con
     holguras, evento fuerte saltea el caché, presupuesto con ritmo semanal + bootstrap + fail-closed, dry-run
     con ops del ledger, alertas persistidas al PM, sin Auditor si no opera. 588 tests verdes.
-  - **Próximo (Fase 4):** 🟢 **DISPARAR EL SMOKE REAL** (acción del operador, cuesta plata; la consola no
-    puede: sin API key/red) → valida el pipeline end-to-end; **no avanzar a P1 sin ese reporte** (regla de
-    la auditoría) · después P1 (data pack con calculadoras, contexto del mapa, verificador de contenido,
-    auditor por-ticker, candidatos desde el universo) · P2 (reescritura de CLAUDE.md, limpieza, doc 53).
+  - ✅ **SMOKE REAL corrido (2026-10-27)** — `ops.correr_semana_v2 OKLO RKLB ACHR`, exit 0, **$2.09**
+    (Analista $1.65/18 web · Bear $0.34 · PM $0.09 · Verificador/Auditor $0). Pipeline end-to-end OK con LLMs
+    reales. Dossiers reales y ricos (OKLO 9 claims/4 red flags, RKLB 7 claims, bull/bear independientes,
+    falsadores fechados). **Los 3 → REVIEW** (motivo: "la tesis se apoya en declaración de empresa"). El PM
+    eligió **CAJA** (operar_ahora=False, disciplina) → Auditor no corrió (✓ item 6), 0 fills.
+    **Hallazgo clave:** sin fact_store/calculadoras (P1) la evidencia es company-stated → nada llega a PASS →
+    **el sistema NO puede comprar hasta P1**. El smoke confirma que P1 es la prioridad real.
+  - **Próximo (Fase 4 → P1):** data pack con calculadoras + fact_store · **verificador de CONTENIDO** (que
+    un claim central deje de ser solo declaración de empresa) · contexto del mapa al Analista · auditor
+    por-ticker · candidatos desde el universo. Después P2 (reescribir CLAUDE.md, limpieza).
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

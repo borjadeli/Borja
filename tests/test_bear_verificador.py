@@ -132,3 +132,11 @@ def test_numerico_contradice_xbrl_es_fail():
     r = verificar(_dossier([c], soporte=["c1"]), ["https://sec.gov/a"],
                   pack={"cash": _dp_ref("cash", 1_430_000_000)})
     assert r.veredicto == "fail" and any("CONTRADICE" in m for m in r.motivos)
+
+
+def test_review_de_no_central_deja_motivo_explicito():
+    # REVIEW por un claim NO-central sin procedencia ya NO es silencioso (antes motivos quedaba vacío)
+    d = _dossier([_claim("c1", "https://sec.gov/a"),
+                  _claim("c2", "https://inventada.com/x", mat="secundaria")], soporte=["c1"])
+    r = verificar(d, FUENTES)
+    assert r.veredicto == "review" and any("c2" in m for m in r.motivos)

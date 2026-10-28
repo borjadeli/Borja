@@ -109,6 +109,7 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
                 motivos.append(f"central {c.claim_id} CONTRADICE XBRL: {contraste.detalle}")
             else:
                 hay_review = True
+                motivos.append(f"no-central {c.claim_id} contradice XBRL: {contraste.detalle}")
         elif contraste is not None and contraste.ok:
             continue                                                # hecho verificado por XBRL (gana a la URL)
         elif not proc_url:
@@ -117,6 +118,7 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
                 motivos.append(f"central {c.claim_id} sin procedencia")
             else:
                 hay_review = True
+                motivos.append(f"no-central {c.claim_id} sin procedencia (→ REVIEW)")
         elif no_primaria and es_central:
             hay_review = True
             motivos.append(f"central {c.claim_id}: fuente NO primaria ({clase}) — no es un hecho verificado")

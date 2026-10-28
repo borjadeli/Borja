@@ -97,6 +97,13 @@ def _pit(entries: list[dict], as_of: date, *, anual: bool) -> dict | None:
     return max(cand, key=lambda e: (e["end"], e["filed"])) if cand else None
 
 
+def _pit_cercano(entries: list[dict], as_of: date, objetivo: date) -> dict | None:
+    """Instant con `filed <= as_of` cuyo `end` esté MÁS CERCA de `objetivo` (para la foto de hace ~1 año)."""
+    cand = [e for e in entries if _d(e.get("filed")) and _d(e.get("end"))
+            and _d(e["filed"]) <= as_of]
+    return min(cand, key=lambda e: abs((_d(e["end"]) - objetivo).days)) if cand else None
+
+
 def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) -> list[DataPoint]:
     """XBRL de SEC companyfacts como DataPoints ORIGINAL point-in-time (P1 paso 1, doc 59/60). Cada punto
     lleva `known_at`=fecha de filing (public), período y la accession en `note` (linaje). Toma SIEMPRE lo
@@ -135,24 +142,75 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
         emit(metric, _pit(_extract_concept(facts, tag, unit=unit), as_of, anual=True), unit, "FY")
     if rev_fn is not None:                            # revenue concatena tags (ASC 606); solo en modo real
         emit("revenue", _pit(rev_fn(facts), as_of, anual=True), "USD", "FY")
+    # Acciones de hace ~1 año (insumo de dilución); separado para no colisionar con el latest.
+    sh = _extract_concept(facts, "EntityCommonStockSharesOutstanding", unit="shares")
+    from datetime import timedelta
+    emit("shares_outstanding_1y", _pit_cercano(sh, as_of, as_of - timedelta(days=365)), "shares", "instant")
     return out
 
 
-# Fuentes que se ejecutan por default. Las calculadoras deterministas se agregan acá cuando se
-# conectan sus insumos; cada una devuelve DataPoints kind=DERIVED con `inputs`.
+# --------------------------------------------------------------------------- fuente derivada (calculadoras)
+
+def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[DataPoint]:
+    """Calculadoras P1-A como DERIVED sobre los DataPoints del pack (NO re-pega a edgar; doc 59). Emite
+    SIEMPRE un DataPoint explícito (COMPUTED / MISSING / NOT_APPLICABLE) para que el Analista no invente."""
+    tk = ticker.upper()
+    idx = {p.metric: p for p in puntos}
+    cash, burn = idx.get("cash"), idx.get("cash_used_ops")
+    sh, sh1y = idx.get("shares_outstanding"), idx.get("shares_outstanding_1y")
+    out: list[DataPoint] = []
+
+    # cash_runway_months = caja / (quema mensual). burn (cash_used_ops anual) negativo = quema.
+    if not (cash and cash.value is not None) or not (burn and burn.value is not None):
+        falta = "cash" if not (cash and cash.value is not None) else "cash_used_ops"
+        out.append(DataPoint.derivado(tk, "cash_runway_months", None, unit="meses", formula_id="runway:v1",
+                                      insumos=[p for p in (cash, burn) if p], estado="MISSING",
+                                      note=f"falta insumo: {falta}"))
+    elif burn.value >= 0:
+        out.append(DataPoint.derivado(tk, "cash_runway_months", None, unit="meses", formula_id="runway:v1",
+                                      insumos=[cash, burn], estado="NOT_APPLICABLE",
+                                      note="flujo operativo no-negativo: no quema caja"))
+    else:
+        meses = round(cash.value / (abs(burn.value) / 12.0), 1)
+        out.append(DataPoint.derivado(tk, "cash_runway_months", meses, unit="meses", formula_id="runway:v1",
+                                      insumos=[cash, burn]))
+
+    # dilucion_12m_pct = (acciones hoy / acciones -1y − 1). Requiere la serie de acciones.
+    if sh and sh.value and sh1y and sh1y.value:
+        dil = round((sh.value / sh1y.value - 1.0) * 100, 2)
+        out.append(DataPoint.derivado(tk, "dilucion_12m_pct", dil, unit="pct", formula_id="dilucion_12m:v1",
+                                      insumos=[sh, sh1y]))
+    else:
+        out.append(DataPoint.derivado(tk, "dilucion_12m_pct", None, unit="pct", formula_id="dilucion_12m:v1",
+                                      insumos=[p for p in (sh, sh1y) if p], estado="MISSING",
+                                      note="falta serie de acciones (actual o −1y)"))
+    return out
+
+
+FuenteDerivada = Callable[[str, date, list[DataPoint]], list[DataPoint]]
+
+# Fuentes ORIGINAL (traen datos crudos) y DERIVADAS (calculadoras sobre esos datos). Dos fases: las
+# derivadas reciben los puntos ya reunidos (consumen DataPoints del pack, no re-pegan a la fuente; doc 59).
 FUENTES_DEFAULT: list[Fuente] = [fuente_mercado, fuente_xbrl]
+FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_calculadoras]
 
 
-def ensamblar(ticker: str, *, as_of: date | None = None,
-              fuentes: list[Fuente] | None = None) -> DataPack:
-    """Corre cada fuente y junta sus DataPoints en un DataPack. Una fuente que falla NO tumba el pack
-    (se loguea y se sigue) — el data pack es best-effort y declara lo que tiene."""
+def ensamblar(ticker: str, *, as_of: date | None = None, fuentes: list[Fuente] | None = None,
+              fuentes_derivadas: list[FuenteDerivada] | None = None) -> DataPack:
+    """Reúne el DataPack en dos fases: ORIGINAL (mercado, XBRL) y luego DERIVADAS (calculadoras sobre los
+    puntos ya reunidos). Una fuente que falla NO tumba el pack (se loguea) — best-effort, declara lo que tiene."""
     as_of = as_of or date.today()
     fuentes = fuentes if fuentes is not None else FUENTES_DEFAULT
+    fuentes_derivadas = fuentes_derivadas if fuentes_derivadas is not None else FUENTES_DERIVADAS_DEFAULT
     puntos: list[DataPoint] = []
     for f in fuentes:
         try:
             puntos.extend(f(ticker, as_of))
         except Exception as e:  # noqa: BLE001 — una fuente rota no debe tumbar el pack
             log.warning("fuente %s falló para %s: %s", getattr(f, "__name__", f), ticker, e)
+    for fd in fuentes_derivadas:
+        try:
+            puntos.extend(fd(ticker, as_of, puntos))
+        except Exception as e:  # noqa: BLE001
+            log.warning("fuente derivada %s falló para %s: %s", getattr(fd, "__name__", fd), ticker, e)
     return DataPack(ticker=ticker.upper(), as_of=as_of, puntos=puntos)

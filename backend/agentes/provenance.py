@@ -63,9 +63,27 @@ class DataPoint(BaseModel):
     verification: Verification | None = None
     source: Source
     known_at: date | None = None                # disponibilidad pública (point-in-time)
-    inputs: list[str] = Field(default_factory=list)   # métricas/ids insumo (para DERIVED)
+    inputs: list[str] = Field(default_factory=list)       # métricas insumo (legible, para DERIVED)
+    input_refs: list[str] = Field(default_factory=list)   # ids/accn de los hechos insumo (linaje, P1)
+    stalest_input_at: date | None = None         # known_at del insumo MÁS VIEJO (antigüedad del derivado)
+    estado: str | None = None                    # COMPUTED | MISSING | STALE | CONFLICTED | NOT_APPLICABLE
     author: str | None = None                   # agente / persona (ESTIMATE / INTERPRETATION)
     note: str | None = None
+
+    @classmethod
+    def derivado(cls, entity: str, metric: str, value: float | None, *, unit: str, formula_id: str,
+                 insumos: list["DataPoint"], estado: str = "COMPUTED", note: str | None = None) -> "DataPoint":
+        """Construye un DataPoint DERIVED con el contrato de linaje de P1 (doc 59): `known_at = max(insumos)`
+        (NO el más viejo — eso es look-ahead), `stalest_input_at = min(insumos)`, refs de insumo, estado."""
+        conocidos = [p.known_at for p in insumos if p.known_at is not None]
+        return cls(
+            entity=entity, metric=metric, value=value, unit=unit, kind=DataKind.DERIVED, verification=None,
+            source=Source(name=formula_id, document_type="calculadora"),
+            known_at=max(conocidos) if conocidos else None,
+            stalest_input_at=min(conocidos) if conocidos else None,
+            inputs=[p.metric for p in insumos],
+            input_refs=[(p.note or p.metric) for p in insumos],
+            estado=estado, note=note)
 
     @field_validator("value")
     @classmethod

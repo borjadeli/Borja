@@ -25,7 +25,7 @@ def _fuente_fake(snap):
 def test_fuente_mercado_tagea_procedencia():
     snap = FakeSnap("OKLO", precio_actual=50.0, volumen_diario_promedio_30d=3e7,
                     market_cap=4.9e9, shares_outstanding=1e8)
-    pack = dp.ensamblar("oklo", as_of=AS_OF, fuentes=[_fuente_fake(snap)])
+    pack = dp.ensamblar("oklo", as_of=AS_OF, fuentes=[_fuente_fake(snap)], fuentes_derivadas=[])
     metrics = {p.metric: p for p in pack.puntos}
     assert pack.ticker == "OKLO"
     assert metrics["market_cap"].value == 4.9e9
@@ -45,7 +45,7 @@ def test_market_cap_derivado_si_falta_en_el_feed():
 
 
 def test_snapshot_none_no_rompe():
-    pack = dp.ensamblar("X", as_of=AS_OF, fuentes=[_fuente_fake(None)])
+    pack = dp.ensamblar("X", as_of=AS_OF, fuentes=[_fuente_fake(None)], fuentes_derivadas=[])
     assert pack.puntos == []
 
 
@@ -120,3 +120,46 @@ def test_xbrl_de_un_filing_es_confirmed_filing():
     from backend.agentes.provenance import Verification
     pts = _xbrl("OKLO", date(2026, 10, 27))
     assert all(p.verification == Verification.CONFIRMED_FILING for p in pts)   # vs Yahoo=None
+
+
+# --------------------------------------------------------------------------- fuente_calculadoras (P1 paso 2)
+def _dp_in(metric, value, known, unit="USD"):
+    from backend.agentes.provenance import DataKind, DataPoint, Source, Verification
+    return DataPoint(entity="OKLO", metric=metric, value=value, unit=unit, kind=DataKind.ORIGINAL,
+                     verification=Verification.CONFIRMED_FILING, source=Source(name="SEC"),
+                     known_at=known, note=f"accn={metric}")
+
+
+def test_calc_runway_y_dilucion_con_linaje():
+    pts = [_dp_in("cash", 1644e6, date(2026, 8, 7)), _dp_in("cash_used_ops", -82.2e6, date(2026, 3, 17)),
+           _dp_in("shares_outstanding", 186e6, date(2026, 8, 7), unit="shares"),
+           _dp_in("shares_outstanding_1y", 150e6, date(2025, 8, 7), unit="shares")]
+    der = {p.metric: p for p in dp.fuente_calculadoras("OKLO", date(2026, 10, 27), pts)}
+    rw = der["cash_runway_months"]
+    assert rw.estado == "COMPUTED" and abs(rw.value - 1644e6 / (82.2e6 / 12)) < 1
+    assert rw.kind == DataKind.DERIVED
+    assert rw.known_at == date(2026, 8, 7)              # max(insumos) — NO look-ahead
+    assert rw.stalest_input_at == date(2026, 3, 17)     # min(insumos)
+    assert set(rw.inputs) == {"cash", "cash_used_ops"} and "accn=cash" in rw.input_refs
+    dil = der["dilucion_12m_pct"]
+    assert dil.estado == "COMPUTED" and abs(dil.value - (186 / 150 - 1) * 100) < 0.1
+
+
+def test_calc_missing_emite_datapoint_explicito():
+    der = {p.metric: p for p in dp.fuente_calculadoras("OKLO", date(2026, 10, 27),
+                                                        [_dp_in("cash", 1000e6, date(2026, 8, 7))])}
+    assert der["cash_runway_months"].value is None and der["cash_runway_months"].estado == "MISSING"
+
+
+def test_calc_not_applicable_si_genera_caja():
+    pts = [_dp_in("cash", 1000e6, date(2026, 8, 7)), _dp_in("cash_used_ops", 50e6, date(2026, 3, 17))]
+    der = {p.metric: p for p in dp.fuente_calculadoras("OKLO", date(2026, 10, 27), pts)}
+    assert der["cash_runway_months"].estado == "NOT_APPLICABLE" and der["cash_runway_months"].value is None
+
+
+def test_ensamblar_dos_fases_corre_derivadas():
+    orig = lambda tk, ao: [_dp_in("cash", 1200e6, date(2026, 8, 7)),  # noqa: E731
+                           _dp_in("cash_used_ops", -120e6, date(2026, 3, 17))]
+    pack = dp.ensamblar("OKLO", as_of=date(2026, 10, 27), fuentes=[orig])   # derivadas = default
+    m = {p.metric: p for p in pack.puntos}
+    assert m["cash_runway_months"].value == 120.0 and m["cash_runway_months"].kind == DataKind.DERIVED

@@ -1,11 +1,22 @@
 00. MISION & ROL
-Desbes convertirte en un especialista financiero QUANT worldclass de Wall Street para crear un algoritmo hiper robusto de trading.
+Sos un especialista financiero QUANT worldclass de Wall Street construyendo BORJA: un **sistema de PM de IA
+multiagente** (ADVISORY — asesora, el humano ejecuta) para small/mid caps de industrias del futuro. El
+determinismo informa y limita; un PM-LLM decide la cartera. (Framing v1 "algoritmo/reglas" superado por v2,
+2026-10-26 — ver §05.bis.)
 
-01. CARACTERISTICAS DEL ALGORITMO:
-Enfocarnos en small/mid caps de industrias del futuro. Es lo mas riesgoso, pero tambien que es el sector donde mas diferencial puede generar un sistema como el que queremos generar.
+01. CARACTERISTICAS:
+Enfocarnos en small/mid caps de industrias del futuro (AI infra, nuclear/energía, defensa, commodities,
+espacio, robótica, biotech, fotónica, semis). Es lo más riesgoso, pero el sector donde más diferencial puede
+generar un sistema disciplinado como el que queremos (tesis power-law).
 
-02. DESCRIPCION BÁSICA DEL ALGORITMO:
-El sistema está compuesto por reglas para analizar y elegir empresas. Tiene una view macro configurada por nosotros que la idea es ir adaptandola a nuestro gusto. A partir de ahi surgen las reglas y los criterios de analisis de empresas de la manera más objetiva posible.
+02. DESCRIPCION BÁSICA (v2):
+Un **comité de agentes** investiga y verifica, y un **PM-LLM decide**. El determinismo trae **datos con
+procedencia** (XBRL point-in-time de EDGAR + calculadoras citadas: owner-FCF, dilución, runway, reverse-DCF/
+T*, burden) y los **límites del operador** (el IPS: pesos, concentración, market cap, liquidez, caja,
+presupuesto). Sobre eso: Macro fija el marco → Triage selecciona → Analista (Opus+web) arma el dossier →
+Bear lo ataca → Verificador exige que los claims centrales sean hechos verificados (contraste XBRL / fuente
+primaria) → PM sizea bajo el IPS → Auditor cuestiona → paper ejecuta. **El determinismo NO elige nombres ni
+tamaños.** La view macro la da el agente Macro + el operador vía el IPS.
 
 03 METAS:
 03.a) la especificacion de agentes seria el modelo ideal a tener. puede ser ambicioso en esta instancia, pero es bueno tenerlo como referencia y apuntar hacia allí.

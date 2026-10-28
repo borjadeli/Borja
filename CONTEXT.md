@@ -52,11 +52,13 @@ el LLM no hace mejor: **datos + límites + triage**.
   desde el día 1 (equal-weight, "Opus+web solo", ETFs temáticos).
 
 ## 4. Estado actual — ver doc 53 (vivo)
-**DESTETE v2 Fase 1 en curso (2026-10-26).** Hecho: cortado el gasto LLM del sistema v3 (jobs `paper_ciclo`/
-`paper_reextraccion`/`paper_pm` desactivados en `scheduler.py`); paper v3 **congelado** (libros en
-`data/_archivo_v3/`); huérfanos (`pipeline.py`, `sparring.py`, `discovery.py`) movidos a `backend/_archivo/`;
-suite en verde (465 tests). Pendiente de Fase 1: reescritura de docs (este archivo), commit + PR. Diferido con
-criterio: move físico del núcleo de decisión v3 → **Fase 4**; upgrade del SDK anthropic → **inicio de Fase 3**.
+**DESTETE v2: Fases 1-3 completas; Fase 4 + P1 validados en vivo (2026-10-28).** El comité completo existe y
+corre end-to-end: `fuente_xbrl` (datos point-in-time) + calculadoras (runway/dilución) → Analista/Bear/
+Verificador (con contraste numérico vs XBRL y clase epistémica por URL) → PM (sizea bajo IPS) → Auditor →
+paper nuevo (`paper_pm.py` sobre el ledger fiel). **Primera compra real: el PM compró OKLO 3% en el smoke #2.**
+Dos auditorías externas (docs 57/58) convergidas (59); P0/r2 cerrados. Lectura advisory: `ops.estado_v2`.
+Suite: ~612 tests verdes. Lo vivo y el "qué falta" están en el doc 53. (El framing v1 "el determinismo decide"
+quedó invertido; el método v1 se conserva como herramienta — ver `init_docs/00_MAPA_DOCUMENTOS.md`.)
 
 ## 5. Mapa del código
 - `backend/nucleo/` — **motor de evidencia + calculadoras CONSERVADOS** (fact_store, extractor_citado,

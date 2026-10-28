@@ -1,10 +1,32 @@
 # 00 — MAPA DE DOCUMENTOS (leer PRIMERO)
 
-> **Puerta de entrada a `init_docs/`.** Hay ~22 documentos que se acumularon durante el rediseño;
-> muchos son andamiaje o quedaron superados. Este mapa dice **qué está vigente y qué es historia**,
-> para no leer (ni citar) algo viejo. Auditado 2026-08-13.
+> **Puerta de entrada a `init_docs/`.** Actualizado 2026-10-28 (cambio de dirección **v2**).
 >
-> **Regla de oro:** ante cualquier duda de ESTADO manda **[32]**; de MÉTODO manda **[33]**; de
+> ## ★ CANÓNICO v2 (leé ESTO primero)
+> BORJA dejó de ser "núcleo determinista que decide" y es un **sistema de PM de IA multiagente** (advisory).
+> | Doc | Qué es |
+> |-----|--------|
+> | **53** `estado_v2` | **ESTADO VIVO** — en qué fase estamos, qué se hizo, qué falta. **Entrada principal.** |
+> | **51** `prompt_pm_ia` | DIRECTIVA fundacional de v2 (qué se construye y por qué). |
+> | **52** `pm_ia_arquitectura` | ARQUITECTURA + plan por fases + presupuesto + mapa de módulos. |
+> | **49** `ablation_pm` | la medición que justifica usar Opus agéntico (por qué el LLM, no el atajo barato). |
+> | 54/55 | triangulaciones del comité (54) y de la capa de decisión PM/Auditor/IPS (55). |
+> | 56–60 | P1: brief + 2 auditorías externas + convergencia + medición de cobertura XBRL. |
+>
+> **Regla de oro (v2):** de ESTADO manda **[53]**; de DIRECTIVA **[51]**; de ARQUITECTURA **[52]**. Si un doc
+> viejo (abajo) contradice a estos sobre *qué está hecho / qué sigue / quién decide*, **ganan 51/52/53**.
+>
+> ⚠️ Los docs v1 de abajo (32 estado, 14 pendientes, 34 flujo, 27/28 arquitectura) describen el paradigma
+> **"el determinismo decide"**, que v2 **invierte**. Pero el **trabajo intelectual del MÉTODO** (33, owner-FCF,
+> reverse underwriting, dilución, T*/burden, falsadores, 31 pre-revenue, 22 motor de evidencia) se
+> **CONSERVA como herramienta** que reciben los agentes. Leelos como *método*, no como *quién decide*.
+
+---
+
+## Mapa v1 (historia + herramientas de método conservadas)
+
+> La "regla de oro" de abajo es **v1 y está superada** por 51/52/53 (se deja por trazabilidad).
+> **Regla de oro (v1, SUPERADA):** ante cualquier duda de ESTADO manda **[32]**; de MÉTODO manda **[33]**; de
 > PENDIENTES manda **[14]**. Si un doc viejo contradice a estos tres, ganan estos tres.
 
 ---

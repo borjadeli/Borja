@@ -15,7 +15,7 @@ import logging
 from collections.abc import Callable
 from datetime import date
 
-from backend.agentes.provenance import DataKind, DataPack, DataPoint, Source
+from backend.agentes.provenance import DataKind, DataPack, DataPoint, Source, Verification
 
 log = logging.getLogger("agentes.data_pack")
 
@@ -54,9 +54,93 @@ def fuente_mercado(ticker: str, as_of: date, *, snapshot_fn: Callable | None = N
     return out
 
 
+# --------------------------------------------------------------------------- fuente XBRL (companyfacts)
+
+# Conceptos XBRL de primera clase (P1, doc 60: companyfacts cubre el backbone financiero point-in-time).
+# INSTANT = dato de balance (último instant); ANUAL = flujo del último año fiscal (~365d).
+_XBRL_INSTANT = [
+    ("cash", "CashAndCashEquivalentsAtCarryingValue", "USD"),
+    ("stockholders_equity", "StockholdersEquity", "USD"),
+    ("goodwill", "Goodwill", "USD"),
+    ("intangibles_ex_goodwill", "IntangibleAssetsNetExcludingGoodwill", "USD"),
+    ("shares_outstanding", "EntityCommonStockSharesOutstanding", "shares"),
+]
+_XBRL_ANUAL = [
+    ("operating_income_loss", "OperatingIncomeLoss", "USD"),
+    ("cash_used_ops", "NetCashProvidedByUsedInOperatingActivities", "USD"),
+    ("gross_profit", "GrossProfit", "USD"),
+    ("cost_of_revenue", "CostOfRevenue", "USD"),
+]
+
+
+def _d(s: str | None) -> date | None:
+    try:
+        return date.fromisoformat(s) if s else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _pit(entries: list[dict], as_of: date, *, anual: bool) -> dict | None:
+    """Entry POINT-IN-TIME: el más reciente con `filed <= as_of` (anti look-ahead + trae lo ÚLTIMO, no lo
+    viejo — doc 60). `anual`: solo duraciones ~1 año fiscal; si no, el último instant."""
+    cand = []
+    for e in entries:
+        f = _d(e.get("filed"))
+        end = _d(e.get("end"))
+        if not f or not end or f > as_of:
+            continue
+        if anual:
+            start = _d(e.get("start"))
+            if not start or not (350 <= (end - start).days <= 380):
+                continue
+        cand.append(e)
+    return max(cand, key=lambda e: (e["end"], e["filed"])) if cand else None
+
+
+def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) -> list[DataPoint]:
+    """XBRL de SEC companyfacts como DataPoints ORIGINAL point-in-time (P1 paso 1, doc 59/60). Cada punto
+    lleva `known_at`=fecha de filing (public), período y la accession en `note` (linaje). Toma SIEMPRE lo
+    último disponible al `as_of` (arregla el freshness del smoke: usaba Q4-25 teniendo Q2-26)."""
+    if companyfacts_fn is None or cik_fn is None:
+        from backend.services.edgar import _get_companyfacts, _revenue_concept, get_cik
+        cik_fn = cik_fn or get_cik
+        companyfacts_fn = companyfacts_fn or _get_companyfacts
+        rev_fn = _revenue_concept
+    else:
+        rev_fn = None
+    cik = cik_fn(ticker)
+    facts = companyfacts_fn(cik) if cik else None
+    if not facts:
+        return []
+    tk = ticker.upper()
+    out: list[DataPoint] = []
+
+    def emit(metric: str, entry: dict | None, unit: str, period_type: str) -> None:
+        if entry is None or entry.get("val") is None:
+            return
+        out.append(DataPoint(
+            entity=tk, metric=metric, value=float(entry["val"]), unit=unit, currency="USD",
+            period_end=_d(entry.get("end")), period_type=period_type,
+            fiscal_label=f"{entry.get('fp') or ''} {entry.get('fy') or ''}".strip() or None,
+            # XBRL SÍ es un filing → CONFIRMED_FILING honesto (caso legítimo, a diferencia de Yahoo=None).
+            kind=DataKind.ORIGINAL, verification=Verification.CONFIRMED_FILING,
+            source=Source(name="SEC XBRL (companyfacts)", document_type=entry.get("form"),
+                          published_at=_d(entry.get("end"))),
+            known_at=_d(entry.get("filed")), note=f"accn={entry.get('accn')}"))
+
+    from backend.services.edgar import _extract_concept
+    for metric, tag, unit in _XBRL_INSTANT:
+        emit(metric, _pit(_extract_concept(facts, tag, unit=unit), as_of, anual=False), unit, "instant")
+    for metric, tag, unit in _XBRL_ANUAL:
+        emit(metric, _pit(_extract_concept(facts, tag, unit=unit), as_of, anual=True), unit, "FY")
+    if rev_fn is not None:                            # revenue concatena tags (ASC 606); solo en modo real
+        emit("revenue", _pit(rev_fn(facts), as_of, anual=True), "USD", "FY")
+    return out
+
+
 # Fuentes que se ejecutan por default. Las calculadoras deterministas se agregan acá cuando se
-# conectan sus insumos (hechos del fact store); cada una devuelve DataPoints kind=DERIVED con `inputs`.
-FUENTES_DEFAULT: list[Fuente] = [fuente_mercado]
+# conectan sus insumos; cada una devuelve DataPoints kind=DERIVED con `inputs`.
+FUENTES_DEFAULT: list[Fuente] = [fuente_mercado, fuente_xbrl]
 
 
 def ensamblar(ticker: str, *, as_of: date | None = None,

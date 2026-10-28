@@ -50,11 +50,13 @@ def test_review_si_claim_no_central_sin_procedencia():
     assert r.veredicto == "review"
 
 
-def test_review_si_tesis_se_apoya_en_declaracion_de_empresa():
-    d = _dossier([_claim("c1", "https://sec.gov/a", tipo="declaracion_empresa",
-                         verif="company_statement")], soporte=["c1"])
-    r = verificar(d, FUENTES)
-    assert r.veredicto == "review"        # trazable pero es declaración tratada como central
+def test_review_si_central_de_fuente_no_primaria():
+    # la clase la deriva la URL, NO la etiqueta del Analista: un press release (globenewswire) como central,
+    # aunque el LLM lo marque confirmed_by_filing, cae a REVIEW (no es fuente primaria regulatoria).
+    url = "https://www.globenewswire.com/news/x"
+    d = _dossier([_claim("c1", url, tipo="hecho", verif="confirmed_by_filing")], soporte=["c1"])
+    r = verificar(d, [url])
+    assert r.veredicto == "review" and any("no primaria" in m.lower() for m in r.motivos)
 
 
 def test_flags_supervivencia_detectadas():

@@ -15,8 +15,30 @@ narrativa↔números; nunca lo mejora. El chequeo numérico fino (cited_text vs 
 from __future__ import annotations
 
 from collections.abc import Callable
+from urllib.parse import urlparse
 
 from backend.agentes.schemas import AgentMeta, Check, Dossier, VerificationReport
+
+# Clase epistémica DERIVADA DEL CÓDIGO (de la URL), no de lo que declare el Analista (auditoría P1, corr. 4).
+_DOM_REGULADOR = ("sec.gov", "nrc.gov", "fda.gov", "ferc.gov", "federalregister.gov", "uspto.gov",
+                  "energy.gov", "treasury.gov", "cftc.gov", "europa.eu")
+_MARCA_PR = ("globenewswire", "prnewswire", "businesswire", "newswire", "accesswire", "/press-release",
+             "ir.", "investors.", "/investors")
+
+
+def clase_por_url(url: str | None) -> str:
+    """Clase epistémica de una fuente SEGÚN SU URL (no según la etiqueta del LLM):
+    `primaria_regulatoria` (SEC/NRC/FDA…) · `company_statement` (press release / IR) · `media_o_busqueda` ·
+    `sin_fuente`. Un central que NO es primaria no cuenta como hecho verificado → REVIEW."""
+    if not url:
+        return "sin_fuente"
+    dom = urlparse(url).netloc.lower()
+    u = url.lower()
+    if any(d in dom for d in _DOM_REGULADOR):
+        return "primaria_regulatoria"
+    if any(m in u for m in _MARCA_PR):
+        return "company_statement"
+    return "media_o_busqueda"
 
 PROMPT_VERSION = "verificador_v1"
 
@@ -61,11 +83,14 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
 
     for c in dossier.claims:
         proc = bool(c.source_url) and c.source_url in trazables
-        es_decl = (c.tipo == "declaracion_empresa") or (c.verification == "company_statement")
+        # La clase la deriva el CÓDIGO de la URL, NO la etiqueta del Analista (mata la auto-declaración):
+        # un central que no es fuente primaria regulatoria no cuenta como hecho verificado.
+        clase = clase_por_url(c.source_url)
+        no_primaria = clase in ("company_statement", "media_o_busqueda", "sin_fuente")
         checks.append(Check(
-            claim_id=c.claim_id, procedencia_ok=proc, numeros_ok=True,   # chequeo numérico fino: mejora futura
-            es_declaracion_corporativa=es_decl, dato_vigente=True,
-            motivo=("procedencia trazable" if proc else "source_url no trazable en fuentes/fact store"),
+            claim_id=c.claim_id, procedencia_ok=proc, numeros_ok=True,   # contraste numérico: paso 3 (contraste.py)
+            es_declaracion_corporativa=no_primaria, dato_vigente=True,
+            motivo=(f"procedencia trazable ({clase})" if proc else "source_url no trazable en fuentes/fact store"),
         ))
         if not proc:
             if c.claim_id in central:
@@ -73,9 +98,9 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
                 motivos.append(f"claim central {c.claim_id} sin procedencia")
             else:
                 hay_review = True
-        elif es_decl and c.claim_id in central:
+        elif no_primaria and c.claim_id in central:
             hay_review = True
-            motivos.append(f"tesis se apoya en declaración de empresa ({c.claim_id})")
+            motivos.append(f"central {c.claim_id}: fuente NO primaria ({clase}) — no es un hecho verificado")
 
     flags = flags_supervivencia(dossier.red_flags)
     if falla_central:

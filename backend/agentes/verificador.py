@@ -48,6 +48,17 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
     falla_central = False
     hay_review = False
 
+    # Un dossier sin claims centrales, o con centrales COLGANTES (ids que no existen en `claims`), no tiene
+    # respaldo verificable para su tesis → FAIL (antes daba PASS; auditoría P1 §2-B / bug IA 1).
+    ids_existentes = {c.claim_id for c in dossier.claims}
+    colgantes = central - ids_existentes
+    if not central:
+        falla_central = True
+        motivos.append("sin claims centrales (tesis_claims_soporte vacío): la tesis no tiene respaldo")
+    if colgantes:
+        falla_central = True
+        motivos.append(f"tesis_claims_soporte referencia ids inexistentes: {sorted(colgantes)}")
+
     for c in dossier.claims:
         proc = bool(c.source_url) and c.source_url in trazables
         es_decl = (c.tipo == "declaracion_empresa") or (c.verification == "company_statement")

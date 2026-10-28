@@ -57,7 +57,10 @@ class DataPoint(BaseModel):
     period_type: str | None = None              # FY, Q, TTM, instant, spot
     fiscal_label: str | None = None             # "FY2025", "Q2 2026"
     kind: DataKind = DataKind.ORIGINAL
-    verification: Verification = Verification.CONFIRMED_FILING
+    # NO default a CONFIRMED_FILING (auditoría P1): marcaba datos de mercado/Yahoo como "confirmados por
+    # filing". None = no aseverado (p.ej. un dato de mercado, que no es un hecho cualitativo de un filing);
+    # los hechos cualitativos DEBEN setear su grado explícitamente.
+    verification: Verification | None = None
     source: Source
     known_at: date | None = None                # disponibilidad pública (point-in-time)
     inputs: list[str] = Field(default_factory=list)   # métricas/ids insumo (para DERIVED)

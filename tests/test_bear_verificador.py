@@ -89,3 +89,17 @@ def test_bear_emite_objeciones():
     atk = bear.atacar(d)
     assert len(atk.objeciones) == 1 and atk.objeciones[0].severidad == "alta"
     assert atk.replica_analista is None and atk.meta.cost_usd > 0
+
+
+def test_fail_si_central_vacio():
+    # tesis_claims_soporte vacío → no hay respaldo verificable → FAIL (antes daba PASS; auditoría P1)
+    d = _dossier([_claim("c1", "https://sec.gov/a")], soporte=[])
+    r = verificar(d, FUENTES)
+    assert r.veredicto == "fail" and any("vacío" in m or "sin claims centrales" in m for m in r.motivos)
+
+
+def test_fail_si_central_colgante():
+    # un id central que no existe como claim → FAIL (antes daba PASS)
+    d = _dossier([_claim("c1", "https://sec.gov/a")], soporte=["c1", "NO_EXISTE"])
+    r = verificar(d, FUENTES)
+    assert r.veredicto == "fail" and any("NO_EXISTE" in m for m in r.motivos)

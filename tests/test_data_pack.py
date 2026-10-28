@@ -55,3 +55,18 @@ def test_fuente_que_falla_no_tumba_el_pack():
     snap = FakeSnap("X", 10.0, 2e6, 1e9, 1e8)
     pack = dp.ensamblar("X", as_of=AS_OF, fuentes=[rota, _fuente_fake(snap)])
     assert any(p.metric == "market_cap" for p in pack.puntos)     # la buena igual entró
+
+
+def test_datapoint_no_defaultea_a_confirmed_filing():
+    # auditoría P1: un DataPoint sin `verification` NO debe quedar como confirmed_by_filing (marcaría datos de
+    # mercado como "confirmados por filing"). Default seguro = None (no aseverado).
+    from backend.agentes.provenance import DataPoint, Source
+    p = DataPoint(entity="OKLO", metric="precio", value=27.37, source=Source(name="Yahoo", document_type="api"))
+    assert p.verification is None
+
+
+def test_fuente_mercado_no_queda_confirmada_por_filing():
+    snap = FakeSnap("OKLO", precio_actual=27.37, volumen_diario_promedio_30d=1e7,
+                    market_cap=5e9, shares_outstanding=1.8e8)
+    pts = dp.fuente_mercado("OKLO", date(2026, 10, 27), snapshot_fn=lambda _t: snap)
+    assert pts and all(p.verification is None for p in pts)   # precios/market cap NO son confirmed_by_filing

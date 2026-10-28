@@ -95,7 +95,7 @@ class Analista:
         self.ag = agente
 
     def analizar(self, ticker: str, *, data_pack: DataPack, contexto_cuello: str = "",
-                 memo_macro: str = "", max_tokens: int = 8192) -> ResultadoAnalista:
+                 memo_macro: str = "", max_tokens: int = 16384) -> ResultadoAnalista:
         user = (
             f"Empresa a analizar: {ticker}\n\n"
             f"=== DATA PACK (números deterministas, con procedencia) ===\n{_render_pack(data_pack)}\n\n"

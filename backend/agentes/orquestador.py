@@ -27,7 +27,9 @@ from backend.agentes.verificador import verificar as _verificar_det
 
 # Peor-caso por nombre (para reservar antes de correr). Sobre-estima a propósito (el loop acumula input).
 log = logging.getLogger("agentes.orquestador")
-ANALISTA_MODEL, ANALISTA_MAXTOK, ANALISTA_USES, ANALISTA_IN = "claude-opus-5-5", 8192, 6, 200_000
+# max_tokens 16384 (no 8192): con los claims numéricos + ref el dossier se agrandó y topaba el límite ANTES
+# del falsador (regresión del smoke #6/7). Opus 5.5 lo soporta de sobra.
+ANALISTA_MODEL, ANALISTA_MAXTOK, ANALISTA_USES, ANALISTA_IN = "claude-opus-5-5", 16384, 6, 200_000
 BEAR_MODEL, BEAR_MAXTOK, BEAR_USES, BEAR_IN = "claude-sonnet-5-5", 4096, 3, 60_000
 TTL_REUSO_DIAS = 35
 
@@ -202,7 +204,8 @@ class Orquestador:
             #     tumbar el ciclo entero → se saltea y se sigue (resiliencia; auditoría del smoke #6).
             try:
                 r_an = self.analista.analizar(td.ticker, data_pack=pack,
-                                              contexto_cuello=self.contexto_fn(td.ticker), memo_macro=memo_txt)
+                                              contexto_cuello=self.contexto_fn(td.ticker), memo_macro=memo_txt,
+                                              max_tokens=ANALISTA_MAXTOK)
                 costo = r_an.meta.cost_usd
                 if r_an.dossier is None:
                     self.ledger.confirmar(peor, costo)

@@ -213,3 +213,20 @@ def test_3_evento_fuerte_saltea_el_cache(tmp_path):
     # con evento fuerte NO reutiliza: re-analiza (el dossier vigente pudo quedar viejo por el evento)
     r = orq.correr_semana([("OKLO", _sen(tiene_evento_fuerte=True), "h")], hoy=HOY)
     assert r.decisiones[0].accion == "analizado" and an.llamadas == 1
+
+
+def test_falla_en_un_nombre_no_tumba_el_ciclo():
+    # resiliencia (smoke #6): si el análisis de un nombre explota, se saltea y el ciclo sigue con el resto.
+    class _AnalistaRompe:
+        def __init__(self): self.llamadas = 0
+        def analizar(self, ticker, **kw):
+            self.llamadas += 1
+            if ticker == "BOOM":
+                raise RuntimeError("dossier inválido (sin falsador)")
+            return ResultadoAnalista(dossier=_dossier(ticker), fuentes=["https://sec.gov/a"],
+                                     meta=_META.model_copy(update={"cost_usd": 0.5}))
+    orq = Orquestador(triage=_Triage(), analista=_AnalistaRompe(), bear=_Bear(),
+                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
+    r = orq.correr_semana([("BOOM", _sen(), "h"), ("OKLO", _sen(), "h")], hoy=HOY)
+    acc = {d.ticker: d.accion for d in r.decisiones}
+    assert acc["BOOM"] == "error_analisis" and acc["OKLO"] == "analizado"

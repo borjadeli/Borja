@@ -7,6 +7,7 @@ Las URLs que trajo web_search se devuelven como `fuentes` (procedencia para el V
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from backend.agentes.base import Agente
 from backend.agentes.provenance import DataPack
 from backend.agentes.schemas import AgentMeta, Dossier
 
+_log = logging.getLogger("agentes.analista")
 PROMPT_VERSION = "analista_v1"
 _PROMPT = (Path(__file__).resolve().parent.parent.parent / "prompts" / "analista_v1.md").read_text()
 
@@ -108,5 +110,9 @@ class Analista:
         if payload is None:
             return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
         payload["conviccion_0_1"] = max(0.0, min(1.0, float(payload.get("conviccion_0_1", 0.0))))
-        dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
+        try:
+            dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
+        except Exception as e:  # noqa: BLE001 — dossier incompleto (p.ej. sin falsador) → sin_dossier, no crash
+            _log.warning("analista: dossier inválido para %s (%s) → sin_dossier", ticker, e)
+            return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
         return ResultadoAnalista(dossier=dossier, fuentes=fuentes, meta=meta)

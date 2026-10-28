@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
@@ -25,6 +26,7 @@ from backend.agentes.triage import SenalesTriage
 from backend.agentes.verificador import verificar as _verificar_det
 
 # Peor-caso por nombre (para reservar antes de correr). Sobre-estima a propósito (el loop acumula input).
+log = logging.getLogger("agentes.orquestador")
 ANALISTA_MODEL, ANALISTA_MAXTOK, ANALISTA_USES, ANALISTA_IN = "claude-opus-5-5", 8192, 6, 200_000
 BEAR_MODEL, BEAR_MAXTOK, BEAR_USES, BEAR_IN = "claude-sonnet-5-5", 4096, 3, 60_000
 TTL_REUSO_DIAS = 35
@@ -196,20 +198,28 @@ class Orquestador:
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="saltado_presupuesto", triage=td))
                 continue
 
-            # 2c. Analista → Bear → Verificador.
-            r_an = self.analista.analizar(td.ticker, data_pack=pack, contexto_cuello=self.contexto_fn(td.ticker),
-                                          memo_macro=memo_txt)
-            costo = r_an.meta.cost_usd
-            if r_an.dossier is None:
+            # 2c. Analista → Bear → Verificador. Una falla en UN nombre (LLM flojo, red, validación) no debe
+            #     tumbar el ciclo entero → se saltea y se sigue (resiliencia; auditoría del smoke #6).
+            try:
+                r_an = self.analista.analizar(td.ticker, data_pack=pack,
+                                              contexto_cuello=self.contexto_fn(td.ticker), memo_macro=memo_txt)
+                costo = r_an.meta.cost_usd
+                if r_an.dossier is None:
+                    self.ledger.confirmar(peor, costo)
+                    res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="sin_dossier", triage=td,
+                                                      costo_usd=costo))
+                    continue
+                atk = self.bear.atacar(r_an.dossier)
+                costo += atk.meta.cost_usd
+                # el verificador recibe el pack (métrica→DataPoint) para contrastar los claims numéricos vs XBRL.
+                verif = self.verificar_fn(r_an.dossier, r_an.fuentes, pack={p.metric: p for p in pack.puntos})
+                costo += verif.meta.cost_usd
                 self.ledger.confirmar(peor, costo)
-                res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="sin_dossier", triage=td, costo_usd=costo))
+            except Exception as e:  # noqa: BLE001
+                log.warning("orquestador: falló el análisis de %s (%s) → saltado", td.ticker, e)
+                self.ledger.confirmar(peor, 0.0)   # libera la reserva de peor-caso
+                res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="error_analisis", triage=td))
                 continue
-            atk = self.bear.atacar(r_an.dossier)
-            costo += atk.meta.cost_usd
-            # el verificador recibe el pack (métrica→DataPoint) para contrastar los claims numéricos vs XBRL.
-            verif = self.verificar_fn(r_an.dossier, r_an.fuentes, pack={p.metric: p for p in pack.puntos})
-            costo += verif.meta.cost_usd
-            self.ledger.confirmar(peor, costo)
 
             if verif.veredicto != "fail":      # un dossier fail no se cachea como usable
                 self.cache.guardar(td.ticker, h, r_an.dossier, verif, hoy)

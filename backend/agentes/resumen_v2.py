@@ -37,7 +37,7 @@ def _pct(x: float) -> str:
 
 def render_digest(*, ciclo: str, equity: float, caja_pct: float, posiciones: list[PosicionResumen],
                   decisiones: list, dossiers: dict[str, DossierResumen],
-                  gasto_mes: float, tope_mes: float) -> str:
+                  gasto_mes: float, tope_mes: float, sombras: dict[str, float] | None = None) -> str:
     """Arma el texto del digest. `decisiones` = RegistroDecision del último ciclo (o cualquier objeto con
     ticker/accion/peso_resultante/conviccion_0_1/verif_veredicto/tesis/falsador_afirmacion/…)."""
     L: list[str] = []
@@ -74,6 +74,13 @@ def render_digest(*, ciclo: str, equity: float, caja_pct: float, posiciones: lis
             L.append(f"      red flags: {', '.join(ds.red_flags)}")
         if ds.falsador:
             L.append(f"      falsador: {ds.falsador} (límite {ds.falsador_fecha})")
+
+    if sombras:
+        L.append("")
+        L.append("CARTERAS SOMBRA (índice equity, base 1.0; necesita varios ciclos para ser significativo):")
+        for cart, idx in sorted(sombras.items(), key=lambda kv: -kv[1]):
+            marca = "  ← PM" if cart == "pm" else ""
+            L.append(f"  {cart:10s} {idx:.4f} ({_pct(idx - 1.0)}){marca}")
 
     L.append("")
     nivel = gasto_mes / tope_mes if tope_mes else 0.0

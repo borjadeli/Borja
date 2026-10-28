@@ -54,9 +54,11 @@ def main() -> int:
             falsador=d["falsador"]["afirmacion"][:180], falsador_fecha=d["falsador"]["fecha_limite"],
             red_flags=[f"{r['tipo']}[{r['severidad']}]" for r in d.get("red_flags", [])])
 
+    from backend.agentes.carteras_sombra import LedgerSombras
     print(render_digest(ciclo=ciclo, equity=equity, caja_pct=caja_pct, posiciones=posiciones,
                         decisiones=decisiones, dossiers=dossiers,
-                        gasto_mes=(gastado_mes_usd(date.today()) or 0.0), tope_mes=tope))
+                        gasto_mes=(gastado_mes_usd(date.today()) or 0.0), tope_mes=tope,
+                        sombras=LedgerSombras().resumen()))
     return 0
 
 

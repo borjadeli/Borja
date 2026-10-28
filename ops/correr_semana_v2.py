@@ -51,6 +51,26 @@ def _candidatos(tickers: list[str]) -> list[tuple[str, SenalesTriage, str]]:
     return [(t.upper(), señales, "") for t in tickers]
 
 
+def _registrar_sombras(paper, precios, res) -> None:
+    """Fase 5: registra el snapshot de carteras sombra del ciclo (pm / ew_pass / ETFs). No gasta API; si
+    falla no debe tumbar la corrida."""
+    try:
+        from backend.agentes.carteras_sombra import ETFS_DEFAULT, LedgerSombras
+        from backend.ledger import core
+        est = core.proyectar(paper, precios)
+        eq = est["equity"]
+        pm_pesos = ({t: (p.shares * precios.get(t, 0.0)) / eq for t, p in est["posiciones"].items()}
+                    if eq > 0 else {})
+        pass_nombres = [d.ticker for d in res.research.decisiones
+                        if d.verif and d.verif.veredicto == "pass"]
+        etf_precios = precios_de(recolectar_snapshots(list(ETFS_DEFAULT.values())))
+        LedgerSombras().registrar_ciclo(date.today().isoformat(), pm_pesos=pm_pesos,
+                                        pass_nombres=pass_nombres, precios={**precios, **etf_precios})
+        print("carteras sombra: snapshot del ciclo registrado")
+    except Exception as e:  # noqa: BLE001
+        print(f"aviso: no se registraron carteras sombra: {e}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Smoke real del ciclo semanal v2")
     ap.add_argument("tickers", nargs="*", default=["OKLO"], help="nombres a correr (default OKLO)")
@@ -100,6 +120,7 @@ def main() -> int:
         res = runner.correr(_candidatos(tickers), session=paper, precios=precios, contexto=contexto,
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap)
         paper.commit()
+        _registrar_sombras(paper, precios, res)      # Fase 5: snapshot de carteras sombra del ciclo
     finally:
         paper.close()
 

@@ -43,3 +43,10 @@ def test_render_marca_no_ejecutada():
     out = render_digest(ciclo="c", equity=100_000, caja_pct=1.0, posiciones=[], decisiones=dec,
                         dossiers={}, gasto_mes=0.0, tope_mes=40.0)
     assert "NO EJECUTADA" in out
+
+
+def test_render_muestra_carteras_sombra():
+    out = render_digest(ciclo="c", equity=100_000, caja_pct=1.0, posiciones=[], decisiones=[],
+                        dossiers={}, gasto_mes=0.0, tope_mes=40.0,
+                        sombras={"pm": 1.03, "ew_pass": 1.05, "spy": 1.01})
+    assert "CARTERAS SOMBRA" in out and "pm" in out and "← PM" in out and "ew_pass" in out

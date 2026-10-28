@@ -78,6 +78,8 @@ def main() -> int:
     ap.add_argument("--capital", type=float, default=100_000.0, help="capital inicial del paper (1a vez)")
     ap.add_argument("--cupo", type=int, default=0, help="cupo de cobertura: nombres nuevos a promover")
     ap.add_argument("--bootstrap", action="store_true", help="primera pasada: promueve todos los nuevos")
+    ap.add_argument("--sin-opus-solo", action="store_true",
+                    help="no correr el baseline 'Opus+web solo' de Fase 5 (ahorra ~$0.5-1)")
     args = ap.parse_args()
     tickers = [t.upper() for t in (args.tickers or ["OKLO"])]
 
@@ -120,9 +122,24 @@ def main() -> int:
         res = runner.correr(_candidatos(tickers), session=paper, precios=precios, contexto=contexto,
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap)
         paper.commit()
-        _registrar_sombras(paper, precios, res)      # Fase 5: snapshot de carteras sombra del ciclo
+        _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:
         paper.close()
+
+    # Fase 5: baseline "Opus+web solo" (la vara que dice si el COMITÉ agrega). Gasta ~$0.5-1.
+    if not args.sin_opus_solo:
+        try:
+            from backend.agentes.carteras_sombra import LedgerSombras, SnapshotSombra
+            from backend.agentes.opus_solo import OpusSolo
+            r_os = OpusSolo(Agente("opus_solo", "opus_solo_v1", M_OPUS)).elegir(
+                tickers, peso_max=float(ips.cfg.get("peso_max_nombre", 0.20)))
+            LedgerSombras().registrar(SnapshotSombra(
+                fecha=date.today().isoformat(), cartera="opus_solo", pesos=r_os.pesos,
+                precios={t: precios[t] for t in r_os.pesos if t in precios}))
+            costo = r_os.meta.cost_usd if r_os.meta else 0.0
+            print(f"opus_solo (baseline Fase 5): {r_os.pesos}  (${costo:.4f})")
+        except Exception as e:  # noqa: BLE001
+            print(f"aviso: baseline opus_solo falló: {e}")
 
     # --- resumen ---
     print("\n=== SMOKE v2 ===")

@@ -206,7 +206,8 @@ class Orquestador:
                 continue
             atk = self.bear.atacar(r_an.dossier)
             costo += atk.meta.cost_usd
-            verif = self.verificar_fn(r_an.dossier, r_an.fuentes)
+            # el verificador recibe el pack (métrica→DataPoint) para contrastar los claims numéricos vs XBRL.
+            verif = self.verificar_fn(r_an.dossier, r_an.fuentes, pack={p.metric: p for p in pack.puntos})
             costo += verif.meta.cost_usd
             self.ledger.confirmar(peor, costo)
 

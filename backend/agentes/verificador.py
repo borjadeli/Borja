@@ -17,6 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from urllib.parse import urlparse
 
+from backend.agentes.contraste import contrastar_numero
 from backend.agentes.schemas import AgentMeta, Check, Dossier, VerificationReport
 
 # Clase epistémica DERIVADA DEL CÓDIGO (de la URL), no de lo que declare el Analista (auditoría P1, corr. 4).
@@ -61,6 +62,7 @@ def flags_supervivencia(red_flags) -> list[str]:
 
 
 def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] | None = None,
+              pack: dict | None = None,
               consistencia_fn: Callable[[Dossier], tuple[str | None, list[str], AgentMeta | None]] | None = None,
               model: str = "claude-sonnet-5-5") -> VerificationReport:
     trazables = set(fuentes) | set(hechos_store or [])
@@ -82,23 +84,40 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
         motivos.append(f"tesis_claims_soporte referencia ids inexistentes: {sorted(colgantes)}")
 
     for c in dossier.claims:
-        proc = bool(c.source_url) and c.source_url in trazables
-        # La clase la deriva el CÓDIGO de la URL, NO la etiqueta del Analista (mata la auto-declaración):
-        # un central que no es fuente primaria regulatoria no cuenta como hecho verificado.
+        es_central = c.claim_id in central
         clase = clase_por_url(c.source_url)
         no_primaria = clase in ("company_statement", "media_o_busqueda", "sin_fuente")
-        checks.append(Check(
-            claim_id=c.claim_id, procedencia_ok=proc, numeros_ok=True,   # contraste numérico: paso 3 (contraste.py)
-            es_declaracion_corporativa=no_primaria, dato_vigente=True,
-            motivo=(f"procedencia trazable ({clase})" if proc else "source_url no trazable en fuentes/fact store"),
-        ))
-        if not proc:
-            if c.claim_id in central:
+        proc_url = bool(c.source_url) and c.source_url in trazables
+
+        # Contraste NUMÉRICO contra nuestro XBRL del pack (paso 3): si el claim referencia una métrica y
+        # tenemos ese DataPoint, la fuente primaria la tenemos NOSOTROS → vale sin importar la URL citada.
+        contraste = None
+        if pack is not None and c.ref_metrica and c.valor_num is not None:
+            contraste = contrastar_numero(c.valor_num, pack.get(c.ref_metrica),
+                                          escala=(c.escala or 1.0), periodo=c.periodo)
+
+        numeros_ok = not (contraste is not None and contraste.contradice)
+        proc = (contraste.ok if contraste is not None else False) or proc_url
+        motivo = (f"XBRL: {contraste.detalle}" if contraste is not None
+                  else (f"procedencia trazable ({clase})" if proc_url else "source_url no trazable"))
+        checks.append(Check(claim_id=c.claim_id, procedencia_ok=proc, numeros_ok=numeros_ok,
+                            es_declaracion_corporativa=no_primaria, dato_vigente=True, motivo=motivo))
+
+        if contraste is not None and contraste.contradice:          # el número CONTRADICE el XBRL
+            if es_central:
                 falla_central = True
-                motivos.append(f"claim central {c.claim_id} sin procedencia")
+                motivos.append(f"central {c.claim_id} CONTRADICE XBRL: {contraste.detalle}")
             else:
                 hay_review = True
-        elif no_primaria and c.claim_id in central:
+        elif contraste is not None and contraste.ok:
+            continue                                                # hecho verificado por XBRL (gana a la URL)
+        elif not proc_url:
+            if es_central:
+                falla_central = True
+                motivos.append(f"central {c.claim_id} sin procedencia")
+            else:
+                hay_review = True
+        elif no_primaria and es_central:
             hay_review = True
             motivos.append(f"central {c.claim_id}: fuente NO primaria ({clase}) — no es un hecho verificado")
 

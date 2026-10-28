@@ -42,11 +42,19 @@ class ResultadoContraste:
         return self.estado == "contradice"
 
 
+def _decimales_de(valor: float) -> int:
+    """Decimales informados del número (1.4 → 1; 139300 → 0) para la media-unidad del último dígito."""
+    s = repr(float(valor))
+    if "e" in s or "E" in s:
+        return 0
+    return len(s.split(".", 1)[1].rstrip("0")) if "." in s else 0
+
+
 def _half_ulp(valor: float, escala: float, decimales: int | None) -> float:
-    """Media unidad del último dígito informado (para no rechazar números redondeados como '~1.4B')."""
-    if decimales is None:
-        return 0.0
-    return 0.5 * (10.0 ** (-decimales)) * escala
+    """Media unidad del último dígito informado (para no rechazar redondeos como '~1.4B'). Si no se pasan
+    `decimales`, se infieren del propio número."""
+    d = _decimales_de(valor) if decimales is None else decimales
+    return 0.5 * (10.0 ** (-d)) * escala
 
 
 def contrastar_numero(valor_claim: float, dp_ref: DataPoint | None, *, escala: str | float = 1.0,

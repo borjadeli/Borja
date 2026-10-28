@@ -44,6 +44,11 @@ class Claim(BaseModel):
     known_at: str | None = None             # fecha en que el sistema incorporó el dato (point-in-time)
     materiality: Literal["central", "soporte", "secundaria"]
     verification: VerificationLit
+    # Para claims NUMÉRICOS: a qué métrica del data pack se contrasta (por id, no por NLP; doc 59 paso 3/4).
+    ref_metrica: str | None = None          # p.ej. "cash", "operating_income_loss", "revenue"
+    valor_num: float | None = None          # el número afirmado, en la escala `escala`
+    escala: str = ""                        # "", "M", "B", "K" (millones/miles-de-millones/miles)
+    periodo: str | None = None              # "FY" | "Q" | "instant" (para no comparar Q vs FY)
 
 
 class AgentMeta(BaseModel):

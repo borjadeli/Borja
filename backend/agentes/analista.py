@@ -42,6 +42,8 @@ def _emitir_dossier_schema() -> dict:
         "source_url": _S, "cited_text": _S, "source_date": _S, "known_at": _S,
         "materiality": {"type": "string", "enum": _MATERIALITY},
         "verification": {"type": "string", "enum": _VERIF},
+        # claim NUMÉRICO: a qué métrica del data pack se contrasta (por id). "" / null si no es numérico.
+        "ref_metrica": _S, "valor_num": {"type": ["number", "null"]}, "escala": _S, "periodo": _S,
     })
     evidencia = _obj({"claim": _S, "source_url": _S, "source_date": _S,
                       "verification": {"type": "string", "enum": _VERIF}})

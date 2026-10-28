@@ -105,3 +105,30 @@ def test_fail_si_central_colgante():
     d = _dossier([_claim("c1", "https://sec.gov/a")], soporte=["c1", "NO_EXISTE"])
     r = verificar(d, FUENTES)
     assert r.veredicto == "fail" and any("NO_EXISTE" in m for m in r.motivos)
+
+
+def _dp_ref(metric, value, period="instant"):
+    from backend.agentes.provenance import DataKind, DataPoint, Source
+    return DataPoint(entity="OKLO", metric=metric, value=value, unit="USD", kind=DataKind.ORIGINAL,
+                     source=Source(name="SEC XBRL"), period_type=period)
+
+
+def test_numerico_matchea_xbrl_pasa_aunque_url_no_primaria():
+    # caja ~1.4B citando alpha-sense (no primaria) PERO coincide con el XBRL del pack → PASS (la primaria la
+    # tenemos nosotros). Es el unlock de OKLO.
+    c = sc.Claim(claim_id="c1", contenido="caja ~1.4B", tipo="hecho", source_url="https://www.alpha-sense.com/x",
+                 cited_text="x", source_date="2026-03-17", known_at="2026-03-17", materiality="central",
+                 verification="media_report", ref_metrica="cash", valor_num=1.4, escala="B", periodo="instant")
+    r = verificar(_dossier([c], soporte=["c1"]), ["https://www.alpha-sense.com/x"],
+                  pack={"cash": _dp_ref("cash", 1_430_000_000)})
+    assert r.veredicto == "pass"
+
+
+def test_numerico_contradice_xbrl_es_fail():
+    c = sc.Claim(claim_id="c1", contenido="caja 5B", tipo="hecho", source_url="https://sec.gov/a",
+                 cited_text="x", source_date="2026-03-17", known_at="2026-03-17", materiality="central",
+                 verification="confirmed_by_filing", ref_metrica="cash", valor_num=5.0, escala="B",
+                 periodo="instant")
+    r = verificar(_dossier([c], soporte=["c1"]), ["https://sec.gov/a"],
+                  pack={"cash": _dp_ref("cash", 1_430_000_000)})
+    assert r.veredicto == "fail" and any("CONTRADICE" in m for m in r.motivos)

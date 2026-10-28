@@ -121,7 +121,8 @@ def test_reutiliza_dossier_vigente_sin_llamar_analista():
 
 def test_corte_de_presupuesto_salta_el_segundo():
     an = _Analista(cost=0.6)
-    orq = _orq(LedgerPresupuesto(sobre_semanal=1.3, reserva_eventos_pct=0.0), analista=an)
+    # sobre para UN nombre (peor-caso ≈ $1.38/nombre con max_tokens 16384) pero no dos → el 2º se salta.
+    orq = _orq(LedgerPresupuesto(sobre_semanal=2.0, reserva_eventos_pct=0.0), analista=an)
     r = orq.correr_semana([("OKLO", _sen(), "h"), ("NNE", _sen(), "h")], hoy=HOY)
     acc = [d.accion for d in r.decisiones]
     assert acc[0] == "analizado" and acc[1] == "saltado_presupuesto" and an.llamadas == 1

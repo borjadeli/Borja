@@ -11,7 +11,7 @@ smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commi
 commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
 de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
 
-**Hecho hasta ahora (todo commiteado, 588 tests verdes):**
+**Hecho hasta ahora (todo commiteado, 609 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -85,9 +85,17 @@ de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
     eligió **CAJA** (operar_ahora=False, disciplina) → Auditor no corrió (✓ item 6), 0 fills.
     **Hallazgo clave:** sin fact_store/calculadoras (P1) la evidencia es company-stated → nada llega a PASS →
     **el sistema NO puede comprar hasta P1**. El smoke confirma que P1 es la prioridad real.
-  - **Próximo (Fase 4 → P1):** data pack con calculadoras + fact_store · **verificador de CONTENIDO** (que
-    un claim central deje de ser solo declaración de empresa) · contexto del mapa al Analista · auditor
-    por-ticker · candidatos desde el universo. Después P2 (reescribir CLAUDE.md, limpieza).
+  - ✅ **P1 CABLEADO Y VALIDADO EN VIVO (2026-10-28)** — auditado 2× (docs 57/58), convergido (doc 59),
+    medido (doc 60: companyfacts cubre el backbone → sin parser de instance). Pasos:
+    1 `fuente_xbrl` (backbone financiero point-in-time, arregla el freshness) · 2 calculadoras DERIVED
+    (runway/dilución, `known_at=max`, estados MISSING/COMPUTED) · 3 contraste numérico por ref
+    (signo/escala/período/tolerancia) · 4a clase epistémica por URL (mata la auto-declaración) · 4b
+    contraste numérico cableado al verificador (un central numérico que matchea el XBRL del pack = hecho
+    verificado aunque el Analista cite un agregador; contradice = FAIL). **SMOKE #2 (OKLO/RKLB/ACHR, $1.82):
+    OKLO y ACHR → PASS, RKLB → REVIEW (tesis cualitativa), y el PM COMPRÓ OKLO 3% ($26.56) — primera compra
+    de v2.** 609 tests verdes.
+  - **Próximo:** paso 4c opcional (persistir texto de EDGAR + entailment, para PASS cualitativo riguroso —
+    autónomo, difierible en advisory) · P2 (reescribir CLAUDE.md, limpieza) · Fase 5 (carteras sombra).
 
 ## Decisiones del operador (cerradas)
 - **Dirección:** PM de IA multiagente; el determinismo informa/limita, no decide (doc 51/52).

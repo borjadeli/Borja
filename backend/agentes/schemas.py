@@ -174,7 +174,8 @@ class VerificationReport(BaseModel):
     # (en tesis_claims_soporte) sin procedencia, o contradicción central. `fail` no justifica compra/aumento.
     veredicto: Literal["pass", "review", "fail"]
     flags_supervivencia: list[str] = Field(default_factory=list)   # going-concern / material weakness / restatement
-    motivos: list[str] = Field(default_factory=list)
+    motivos: list[str] = Field(default_factory=list)               # por qué el veredicto (gates duros)
+    notas: list[str] = Field(default_factory=list)                 # gaps no-materiales (PASS con notas, doc 64 B1)
 
 
 # --------------------------------------------------------------------------- 7. PM

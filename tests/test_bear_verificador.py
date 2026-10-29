@@ -43,11 +43,20 @@ def test_fail_si_claim_central_sin_procedencia():
     assert any("c1" in m for m in r.motivos)
 
 
-def test_review_si_claim_no_central_sin_procedencia():
+def test_gap_no_central_aislado_es_pass_con_nota():
+    # doc 64 B1: un gap no-central aislado NO baja a REVIEW — queda como NOTA (antes daba review).
     d = _dossier([_claim("c1", "https://sec.gov/a"),
                   _claim("c2", "https://inventada.com/x", mat="secundaria")], soporte=["c1"])
     r = verificar(d, FUENTES)
-    assert r.veredicto == "review"
+    assert r.veredicto == "pass" and any("c2" in n for n in r.notas)
+
+
+def test_tasa_alta_de_gaps_no_centrales_baja_a_review():
+    # muchos no-centrales sin procedencia (>3 y >1/3) → el Analista citó de memoria → REVIEW
+    claims = [_claim("c1", "https://sec.gov/a")]   # central ok
+    claims += [_claim(f"n{i}", "https://inventada.com/x", mat="secundaria") for i in range(5)]  # 5 gaps
+    r = verificar(_dossier(claims, soporte=["c1"]), FUENTES)
+    assert r.veredicto == "review" and any("tasa alta" in m for m in r.motivos)
 
 
 def test_review_si_central_de_fuente_no_primaria():
@@ -134,9 +143,9 @@ def test_numerico_contradice_xbrl_es_fail():
     assert r.veredicto == "fail" and any("CONTRADICE" in m for m in r.motivos)
 
 
-def test_review_de_no_central_deja_motivo_explicito():
-    # REVIEW por un claim NO-central sin procedencia ya NO es silencioso (antes motivos quedaba vacío)
+def test_gap_no_central_queda_explicito_en_notas():
+    # un gap no-central aislado deja NOTA explícita (no silencioso) — y el veredicto es PASS (doc 64 B1)
     d = _dossier([_claim("c1", "https://sec.gov/a"),
                   _claim("c2", "https://inventada.com/x", mat="secundaria")], soporte=["c1"])
     r = verificar(d, FUENTES)
-    assert r.veredicto == "review" and any("c2" in m for m in r.motivos)
+    assert r.veredicto == "pass" and any("c2" in n for n in r.notas)

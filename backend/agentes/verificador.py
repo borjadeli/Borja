@@ -69,8 +69,11 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
     central = set(dossier.tesis_claims_soporte)
     checks: list[Check] = []
     motivos: list[str] = []
+    notas: list[str] = []
     falla_central = False
     hay_review = False
+    n_no_central = 0
+    gaps_no_central = 0           # no-centrales sin procedencia (doc 64 B1: tasa, no cada uno)
 
     # Un dossier sin claims centrales, o con centrales COLGANTES (ids que no existen en `claims`), no tiene
     # respaldo verificable para su tesis → FAIL (antes daba PASS; auditoría P1 §2-B / bug IA 1).
@@ -85,6 +88,8 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
 
     for c in dossier.claims:
         es_central = c.claim_id in central
+        if not es_central:
+            n_no_central += 1
         clase = clase_por_url(c.source_url)
         no_primaria = clase in ("company_statement", "media_o_busqueda", "sin_fuente")
         proc_url = bool(c.source_url) and c.source_url in trazables
@@ -107,7 +112,7 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
             if es_central:
                 falla_central = True
                 motivos.append(f"central {c.claim_id} CONTRADICE XBRL: {contraste.detalle}")
-            else:
+            else:                                                   # contradicción no-central es material → REVIEW
                 hay_review = True
                 motivos.append(f"no-central {c.claim_id} contradice XBRL: {contraste.detalle}")
         elif contraste is not None and contraste.ok:
@@ -116,12 +121,20 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
             if es_central:
                 falla_central = True
                 motivos.append(f"central {c.claim_id} sin procedencia")
-            else:
-                hay_review = True
-                motivos.append(f"no-central {c.claim_id} sin procedencia (→ REVIEW)")
+            else:                                                   # gap no-central: NOTA (no baja a REVIEW por sí solo)
+                gaps_no_central += 1
+                notas.append(f"no-central {c.claim_id} sin procedencia")
         elif no_primaria and es_central:
             hay_review = True
             motivos.append(f"central {c.claim_id}: fuente NO primaria ({clase}) — no es un hecho verificado")
+
+    # Tasa de gaps no-centrales (doc 64 B1): PASS con notas mientras sean pocos — ≤3 absoluto O ≤1/3 del total
+    # (OR permisivo: gaps aislados no bajan a REVIEW). Solo si una fracción ALTA no tiene procedencia el
+    # Analista citó de memoria → contamina la confianza → REVIEW.
+    if gaps_no_central > 3 and gaps_no_central > n_no_central / 3:
+        hay_review = True
+        motivos.append(f"tasa alta de gaps no-centrales ({gaps_no_central}/{n_no_central}) — "
+                       f"el dossier cita de memoria")
 
     flags = flags_supervivencia(dossier.red_flags)
     if falla_central:
@@ -143,4 +156,4 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
                 veredicto = override
 
     return VerificationReport(meta=meta, ticker=dossier.ticker, checks=checks,
-                              veredicto=veredicto, flags_supervivencia=flags, motivos=motivos)
+                              veredicto=veredicto, flags_supervivencia=flags, motivos=motivos, notas=notas)

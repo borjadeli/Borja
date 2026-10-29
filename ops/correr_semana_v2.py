@@ -76,31 +76,20 @@ def _prioridad_cuello_fn(session):
 
 
 def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
-    """Imprime qué se analizaría bajo la lógica del EMBUDO (doc 64), SIN llamar a Analista/Bear/PM (r4 #1c).
-    FUERZAN deep: evento fuerte (red flag/dilución/8-K material/posición-con-evento) o precio fuerte (|z|).
-    Los nunca-analizados van por CUPO (no fuerzan). Earnings próximo / sin trigger → no van."""
-    from backend.agentes.embudo import precio_dispara
-    forzados, precio_fuerte, nuevos, saltados = [], [], [], []
-    for tk, s, resumen in candidatos:
-        if s.tiene_evento_fuerte or s.es_posicion:
-            forzados.append((tk, resumen))
-        elif precio_dispara(s.precio_vs_tesis_pct, None, es_posicion=False):
-            precio_fuerte.append((tk, resumen))
-        elif s.dias_desde_dossier is None:
-            nuevos.append((tk, s.prioridad_cuello))
-        else:
-            saltados.append(tk)
-    nuevos.sort(key=lambda x: -x[1])
-    promovidos = nuevos[:cupo]
-    n_deep = len(forzados) + len(precio_fuerte) + len(promovidos)
-    print("\n=== DRY-RUN --universo (lógica del embudo; sin gasto de Analista/Bear/PM) ===")
+    """Imprime qué se analizaría usando la MISMA función de selección del embudo que la corrida real
+    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c)."""
+    from backend.agentes.embudo import seleccionar_para_deep
+    sel = seleccionar_para_deep(candidatos, cupo=cupo,
+                                pre_earnings_top_n=int(ips.cfg.get("pre_earnings_top_n", 3)),
+                                dias_earnings=int(ips.cfg.get("dias_earnings_proximo", 10)))
+    n_deep = len(sel["deep"])
+    print("\n=== DRY-RUN --universo (misma selección que la corrida real; sin gasto de Analista/Bear/PM) ===")
     print(f"candidatos: {len(candidatos)}")
-    print(f"FORZADOS por evento fuerte/posición ({len(forzados)}):")
-    for tk, res in forzados:
-        print(f"  {tk:6s} {res[:74]}")
-    print(f"POR PRECIO FUERTE (|z|≥umbral) ({len(precio_fuerte)}): {[t for t, _ in precio_fuerte]}")
-    print(f"PROMOVIDOS por cupo ({len(promovidos)}/{cupo}): {[t for t, _ in promovidos]}")
-    print(f"nunca-analizados en espera: {len(nuevos) - len(promovidos)} · con dossier sin trigger: {len(saltados)}")
+    print(f"FORZADOS evento fuerte/posición ({len(sel['forzados'])}): {[t for t, _ in sel['forzados']]}")
+    print(f"PRECIO fuerte ({len(sel['precio'])}): {[t for t, _ in sel['precio']]}")
+    print(f"PRE-EARNINGS top ({len(sel['pre_earnings'])}): {[t for t, _ in sel['pre_earnings']]}")
+    print(f"PROMOVIDOS por cupo ({len(sel['promovidos'])}/{cupo}): {[t for t, _ in sel['promovidos']]}")
+    print(f"en espera (post-earnings / cola / sin trigger): {len(sel['espera'])}")
     print(f"→ análisis profundos estimados: {n_deep}  ·  costo estimado: ~${n_deep * 0.68:.2f}")
 
 

@@ -15,6 +15,11 @@ caja_max: 1.0                  # puede ir 100% a caja (disciplina sobre activida
 max_ops_semana: 2              # por SEMANA CALENDARIO (se cuenta desde el ledger, no por decisión)
 banda_peso_existente: 0.03     # una posición que derivó sobre el cap se recorta solo si supera cap + banda
 
+# --- Embudo de análisis (doc 64 + decisión del operador sobre earnings) ---
+pre_earnings_top_n: 3          # earnings próximo → deep solo para posiciones + los N mejores candidatos
+                               #   (por prioridad de cuello); el resto espera el dato (post-earnings)
+dias_earnings_proximo: 10      # "earnings próximo" = a <= N días del evento estimado
+
 # --- Admisibilidad del universo ---
 market_cap_min_usd: 150000000       # $150M
 market_cap_max_usd: 60000000000     # $60B

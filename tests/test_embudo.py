@@ -160,3 +160,45 @@ def test_categorias_habilitadas_por_nivel_mensual():
     h2 = categorias_habilitadas(37, 40)                           # 92% → solo posiciones+red flags
     assert h2 == {"red_flag_posicion", "posicion_con_evento"}
     assert categorias_habilitadas(40, 40) == {"red_flag_posicion"}  # 100% → solo red flag en posición
+
+
+# --- selección de deep (fuente única dry-run = real; decisión de earnings del operador) ---
+from backend.agentes.embudo import seleccionar_para_deep  # noqa: E402
+from backend.agentes.triage import SenalesTriage  # noqa: E402
+
+
+def _cand(tk, **kw):
+    base = dict(dias_desde_dossier=10, hechos_nuevos=0, dias_a_evento=None, precio_vs_tesis_pct=None,
+                es_posicion=False, tiene_evento_fuerte=False, prioridad_cuello=0)
+    base.update(kw)
+    return (tk, SenalesTriage(**base), "")
+
+
+def test_seleccion_posicion_y_evento_fuerte_van_a_deep():
+    cands = [_cand("POS", es_posicion=True), _cand("EVT", tiene_evento_fuerte=True), _cand("NADA")]
+    sel = seleccionar_para_deep(cands, cupo=0)
+    assert "POS" in sel["deep"] and "EVT" in sel["deep"] and "NADA" not in sel["deep"]
+
+
+def test_seleccion_earnings_proximo_solo_top_n_no_posiciones():
+    # 4 nombres con earnings próximo (no-posición), prioridad de cuello 3/2/1/0; top_n=2 → los 2 de mayor cuello
+    cands = [_cand("A", dias_a_evento=5, prioridad_cuello=3, dias_desde_dossier=20),
+             _cand("B", dias_a_evento=5, prioridad_cuello=2, dias_desde_dossier=20),
+             _cand("C", dias_a_evento=5, prioridad_cuello=1, dias_desde_dossier=20),
+             _cand("D", dias_a_evento=5, prioridad_cuello=0, dias_desde_dossier=20)]
+    sel = seleccionar_para_deep(cands, cupo=0, pre_earnings_top_n=2, dias_earnings=10)
+    assert {t for t, _ in sel["pre_earnings"]} == {"A", "B"}      # los 2 mejores por cuello
+    assert "C" not in sel["deep"] and "D" not in sel["deep"]      # el resto espera post-earnings
+
+
+def test_seleccion_posicion_con_earnings_proximo_igual_va():
+    # una POSICIÓN con earnings próximo va a deep aunque no sea top (decisión del operador)
+    sel = seleccionar_para_deep([_cand("P", es_posicion=True, dias_a_evento=3)], cupo=0, pre_earnings_top_n=0)
+    assert "P" in sel["deep"]
+
+
+def test_seleccion_cupo_promueve_nuevos_por_cuello():
+    cands = [_cand("N1", dias_desde_dossier=None, prioridad_cuello=1),
+             _cand("N2", dias_desde_dossier=None, prioridad_cuello=3)]
+    sel = seleccionar_para_deep(cands, cupo=1)
+    assert [t for t, _ in sel["promovidos"]] == ["N2"]           # el de mayor cuello

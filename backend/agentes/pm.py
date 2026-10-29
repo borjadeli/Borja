@@ -11,6 +11,7 @@ Sin web: el PM decide sobre evidencia ya verificada (el research agéntico lo hi
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 from backend.agentes.base import Agente
@@ -136,6 +137,7 @@ class PM:
             extra += (f"\n=== EL GATE DEL IPS RECHAZÓ TU PROPUESTA ANTERIOR (re-proponé UNA vez) ===\n"
                       f"{feedback}\n")
         user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n\n"
             f"=== CARTERA ACTUAL (caja {caja_actual:.1%}) ===\n{cartera_txt}\n\n"
             f"=== ALERTAS DE LA CORRIDA ANTERIOR (resolvé o tené en cuenta) ===\n{alertas_txt}\n\n"
             f"=== MEMO MACRO ===\n{memo_macro or '(sin memo)'}\n\n"

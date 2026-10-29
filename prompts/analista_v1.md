@@ -17,6 +17,12 @@ REGLAS DURAS
   (el texto citado), tipo (`hecho` / `declaracion_empresa` / `estimacion` / `inferencia`) y `materiality`
   (`central` / `soporte` / `secundaria`). Una declaración de la empresa NO es un hecho verificado: marcala
   `declaracion_empresa`.
+- **PROTOCOLO DE FRESCURA (crítico).** Arriba tenés la *fecha de hoy* y el *known_at* de cada dato del pack.
+  (1) Buscá PRIMERO el último 10-Q/10-K/8-K y las noticias de los últimos 90 días — no razones sobre un
+  trimestre viejo creyendo que es el actual. (2) Si tu evidencia central tiene **más de 120 días**, decilo
+  explícitamente y **bajá la convicción**. (3) **Explicá todo movimiento de precio mayor al 30% en 6 meses**
+  (qué pasó); si no lo podés explicar, declaralo y agregá una red flag tipo `brecha_informativa`. (4) El
+  `falsador` debe tener una `fecha_limite` FUTURA (posterior a hoy); no pongas una fecha ya vencida.
 - **Fuente PRIMARIA para los centrales.** El Verificador deriva la clase de la fuente de la URL: un claim
   central sostenido por un **filing de SEC** (sec.gov) o un regulador (NRC/FDA…) es un hecho verificado; uno
   sostenido por un **press release, la página de IR de la empresa o un agregador/noticia** (globenewswire,

@@ -7,6 +7,8 @@ este agente solo produce las objeciones.
 """
 from __future__ import annotations
 
+from datetime import date
+
 from pathlib import Path
 
 from backend.agentes.base import Agente
@@ -62,6 +64,7 @@ class Bear:
 
     def atacar(self, dossier: Dossier, *, hechos_crudos: str = "", max_tokens: int = 4096) -> BearAttack:
         user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n"
             f"Empresa: {dossier.ticker}\n\n=== DOSSIER DEL ANALISTA (sin convicción) ===\n"
             f"{_render_dossier_sin_conviccion(dossier)}\n\n=== HECHOS CRUDOS ===\n"
             f"{hechos_crudos or '(sin hechos adicionales)'}\n\n"

@@ -8,6 +8,7 @@ concentración) lo maneja el IPS; el Auditor aporta el juicio que el número no 
 """
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from backend.agentes.base import Agente
@@ -58,6 +59,7 @@ class Auditor:
         viol_txt = ("\n".join(f"- {x.regla}: {x.detalle} ({x.tipo})" for x in ips_violaciones)
                     if ips_violaciones else "(sin violaciones del IPS)")
         user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n\n"
             f"=== CARTERA ACTUAL (caja {caja_actual:.1%}) ===\n{cartera_txt}\n\n"
             f"=== MEMO MACRO ===\n{memo_macro or '(sin memo)'}\n\n"
             f"=== DECISIÓN DEL PM (operar_ahora={decision.operar_ahora}) ===\n{_render_decision(decision)}\n"

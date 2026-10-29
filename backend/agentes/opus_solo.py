@@ -8,6 +8,8 @@ Opus investigando agénticamente; esto testea si ADEMÁS el comité le gana a es
 """
 from __future__ import annotations
 
+from datetime import date
+
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -50,6 +52,7 @@ class OpusSolo:
     def elegir(self, tickers: list[str], *, caps_texto: str = "", peso_max: float = 0.20,
                max_tokens: int = 6144) -> ResultadoOpusSolo:
         user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n"
             f"Universo del ciclo: {', '.join(t.upper() for t in tickers)}\n"
             f"Límites del operador (IPS): {caps_texto or f'peso máx {peso_max:.0%}/nombre'}\n"
             f"Elegí tu cartera-objetivo: investigá con web_search y después llamá a emitir_cartera. "

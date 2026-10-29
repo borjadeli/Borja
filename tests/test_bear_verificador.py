@@ -149,3 +149,36 @@ def test_gap_no_central_queda_explicito_en_notas():
                   _claim("c2", "https://inventada.com/x", mat="secundaria")], soporte=["c1"])
     r = verificar(d, FUENTES)
     assert r.veredicto == "pass" and any("c2" in n for n in r.notas)
+
+
+# --- r3 #1 frescura + #2 clase epistémica ---
+from datetime import date as _date  # noqa: E402
+from backend.agentes.verificador import clase_por_url  # noqa: E402
+
+
+def test_r3_clase_ex99_en_sec_es_company_statement():
+    # un EX-99 (press release adjunto) en sec.gov NO es primaria; mismo comunicado en IR → misma clase
+    assert clase_por_url("https://www.sec.gov/Archives/edgar/data/1/000/ex99-1.htm") == "company_statement"
+    assert clase_por_url("https://investors.archer.com/news/x") == "company_statement"
+    # el cuerpo del 10-Q sí es primaria
+    assert clase_por_url("https://www.sec.gov/Archives/edgar/data/1/000/oklo-20260630.htm") == "primaria_regulatoria"
+
+
+def test_r3_central_mas_viejo_que_ultimo_filing_es_review():
+    # central con source_date de hace ~12m y hay un filing más nuevo en el pack → REVIEW por dato viejo (1d)
+    c = sc.Claim(claim_id="c1", contenido="caja", tipo="hecho", source_url="https://sec.gov/a",
+                 cited_text="x", source_date="2025-10-01", known_at="2025-10-01", materiality="central",
+                 verification="confirmed_by_filing")
+    d = _dossier([c], soporte=["c1"])
+    r = verificar(d, ["https://sec.gov/a"], ultimo_filing_periodico=_date(2026, 8, 7), hoy=_date(2026, 10, 28))
+    assert r.veredicto == "review" and any("dato viejo" in m for m in r.motivos)
+
+
+def test_r3_falsador_vencido_es_fail():
+    c = _claim("c1", "https://sec.gov/a")
+    d = sc.Dossier(meta=_META, ticker="OKLO", negocio_y_posicion_cuello="SMR", claims=[c],
+                   tesis_claims_soporte=["c1"], valuacion_que_exige_el_precio="T*", bull=_ESC, bear=_ESC,
+                   falsador=sc.Falsador(afirmacion="x", fecha_limite="2026-01-01", que_lo_mataria="y"),
+                   conviccion_0_1=0.5)
+    r = verificar(d, FUENTES, hoy=_date(2026, 10, 28))
+    assert r.veredicto == "fail" and any("falsador vencido" in m for m in r.motivos)

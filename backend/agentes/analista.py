@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 from backend.agentes.base import Agente
@@ -86,8 +87,13 @@ class ResultadoAnalista:
 def _render_pack(pack: DataPack) -> str:
     if not pack.puntos:
         return "(sin datos deterministas)"
-    return "\n".join(f"- {p.metric} = {p.value} {p.unit} [{p.kind.value}, {p.source.name}]"
-                     for p in pack.puntos)
+    # muestra known_at (point-in-time) de cada dato → el Analista ve qué tan fresca es su evidencia (r3 #1b).
+    lineas = [f"- {p.metric} = {p.value} {p.unit} [{p.kind.value}, {p.source.name}, known_at={p.known_at}]"
+              for p in pack.puntos]
+    knowns = [p.known_at for p in pack.puntos if p.known_at is not None]
+    if knowns:
+        lineas.append(f"(último dato disponible: {max(knowns)})")
+    return "\n".join(lineas)
 
 
 class Analista:
@@ -97,6 +103,7 @@ class Analista:
     def analizar(self, ticker: str, *, data_pack: DataPack, contexto_cuello: str = "",
                  memo_macro: str = "", max_tokens: int = 16384) -> ResultadoAnalista:
         user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n"
             f"Empresa a analizar: {ticker}\n\n"
             f"=== DATA PACK (números deterministas, con procedencia) ===\n{_render_pack(data_pack)}\n\n"
             f"=== CONTEXTO DEL CUELLO DE BOTELLA ===\n{contexto_cuello or '(sin contexto de mapa)'}\n\n"

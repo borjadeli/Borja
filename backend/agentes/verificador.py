@@ -15,6 +15,7 @@ narrativa↔números; nunca lo mejora. El chequeo numérico fino (cited_text vs 
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import date
 from urllib.parse import urlparse
 
 from backend.agentes.contraste import contrastar_numero
@@ -27,16 +28,30 @@ _MARCA_PR = ("globenewswire", "prnewswire", "businesswire", "newswire", "accessw
              "ir.", "investors.", "/investors")
 
 
+# Marcas de PRESS RELEASE dentro de un filing SEC (anexos EX-99.x): son comunicados de la empresa, NO el
+# cuerpo del 10-K/10-Q/8-K → company_statement, no primaria regulatoria (auditoría r3 #2).
+_MARCA_EX99 = ("ex99", "ex-99", "ex_99", "/press", "pressr", "-pr.", "_pr.")
+
+
+def _fecha_iso(s) -> date | None:
+    try:
+        return date.fromisoformat(s) if s else None
+    except (TypeError, ValueError):
+        return None
+
+
 def clase_por_url(url: str | None) -> str:
     """Clase epistémica de una fuente SEGÚN SU URL (no según la etiqueta del LLM):
-    `primaria_regulatoria` (SEC/NRC/FDA…) · `company_statement` (press release / IR) · `media_o_busqueda` ·
-    `sin_fuente`. Un central que NO es primaria no cuenta como hecho verificado → REVIEW."""
+    `primaria_regulatoria` (cuerpo de filing SEC / regulador) · `company_statement` (press release / IR /
+    EX-99 adjunto) · `media_o_busqueda` · `sin_fuente`. Un central que NO es primaria no cuenta como hecho
+    verificado → REVIEW."""
     if not url:
         return "sin_fuente"
     dom = urlparse(url).netloc.lower()
     u = url.lower()
     if any(d in dom for d in _DOM_REGULADOR):
-        return "primaria_regulatoria"
+        # dentro de sec.gov un EX-99.x (comunicado adjunto) NO es el cuerpo del filing → company_statement.
+        return "company_statement" if any(m in u for m in _MARCA_EX99) else "primaria_regulatoria"
     if any(m in u for m in _MARCA_PR):
         return "company_statement"
     return "media_o_busqueda"
@@ -62,9 +77,11 @@ def flags_supervivencia(red_flags) -> list[str]:
 
 
 def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] | None = None,
-              pack: dict | None = None,
+              pack: dict | None = None, ultimo_filing_periodico: date | None = None,
+              hoy: date | None = None,
               consistencia_fn: Callable[[Dossier], tuple[str | None, list[str], AgentMeta | None]] | None = None,
               model: str = "claude-sonnet-5-5") -> VerificationReport:
+    hoy = hoy or date.today()
     trazables = set(fuentes) | set(hechos_store or [])
     central = set(dossier.tesis_claims_soporte)
     checks: list[Check] = []
@@ -85,6 +102,13 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
     if colgantes:
         falla_central = True
         motivos.append(f"tesis_claims_soporte referencia ids inexistentes: {sorted(colgantes)}")
+
+    # 1e — falsador VENCIDO: si la fecha límite ya pasó, el dossier es viejo y no es decidible (FAIL). El
+    # monitoreo de eventos (o una re-corrida) tiene que resolver el falsador antes de que el PM lo use.
+    fl = _fecha_iso(getattr(dossier.falsador, "fecha_limite", None))
+    if fl is not None and fl < hoy:
+        falla_central = True
+        motivos.append(f"falsador vencido ({dossier.falsador.fecha_limite} < hoy {hoy}): dossier desactualizado")
 
     for c in dossier.claims:
         es_central = c.claim_id in central
@@ -127,6 +151,17 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
         elif no_primaria and es_central:
             hay_review = True
             motivos.append(f"central {c.claim_id}: fuente NO primaria ({clase}) — no es un hecho verificado")
+
+        # 1d — vigencia: un claim central cuya fuente es ANTERIOR al último filing periódico del pack está
+        # desactualizado (hay data más nueva que no se incorporó) → REVIEW. Solo si NO se verificó por XBRL
+        # (el XBRL ya es point-in-time). `dato_vigente` deja de ser fijo True.
+        if es_central and ultimo_filing_periodico is not None and not (contraste is not None and contraste.ok):
+            sd = _fecha_iso(c.source_date)
+            if sd is not None and sd < ultimo_filing_periodico:
+                hay_review = True
+                checks[-1].dato_vigente = False
+                motivos.append(f"central {c.claim_id}: fuente del {c.source_date} anterior al último filing "
+                               f"({ultimo_filing_periodico}) — dato viejo")
 
     # Tasa de gaps no-centrales (doc 64 B1): PASS con notas mientras sean pocos — ≤3 absoluto O ≤1/3 del total
     # (OR permisivo: gaps aislados no bajan a REVIEW). Solo si una fracción ALTA no tiene procedencia el

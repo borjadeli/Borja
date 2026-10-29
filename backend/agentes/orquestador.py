@@ -214,8 +214,12 @@ class Orquestador:
                     continue
                 atk = self.bear.atacar(r_an.dossier)
                 costo += atk.meta.cost_usd
-                # el verificador recibe el pack (métrica→DataPoint) para contrastar los claims numéricos vs XBRL.
-                verif = self.verificar_fn(r_an.dossier, r_an.fuentes, pack={p.metric: p for p in pack.puntos})
+                # el verificador recibe el pack (para contraste XBRL) + el known_at más nuevo (proxy del
+                # último filing, para la regla de vigencia 1d) + hoy (falsador vencido 1e).
+                knowns = [p.known_at for p in pack.puntos if p.known_at is not None]
+                verif = self.verificar_fn(r_an.dossier, r_an.fuentes,
+                                          pack={p.metric: p for p in pack.puntos},
+                                          ultimo_filing_periodico=max(knowns) if knowns else None, hoy=hoy)
                 costo += verif.meta.cost_usd
                 self.ledger.confirmar(peor, costo)
             except Exception as e:  # noqa: BLE001

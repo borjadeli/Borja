@@ -6,6 +6,8 @@ en vivo por el Analista (base.agentico). NO elige empresas ni tamaños; da el ma
 """
 from __future__ import annotations
 
+from datetime import date
+
 from pathlib import Path
 
 from backend.agentes.base import Agente
@@ -51,6 +53,7 @@ class Macro:
 
     def evaluar(self, *, prioridades_previas: str = "", max_tokens: int = 6144) -> MacroMemo | None:
         user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n"
             "Evaluá el estado macro de esta semana para el universo de BORJA (small/mid caps de industrias "
             "del futuro).\n\n=== PRIORIDADES DE CUELLOS DE LA SEMANA ANTERIOR ===\n"
             f"{prioridades_previas or '(primera corrida — no hay previa)'}\n\n"

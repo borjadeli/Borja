@@ -12,6 +12,7 @@ earnings-consumado > precio > cobertura (doc 64).
 """
 from __future__ import annotations
 
+import math
 from datetime import date, datetime
 
 # --- Whitelist de materialidad (doc 64 §A1; converge IA1+IA2) ---
@@ -75,6 +76,51 @@ def eventos_materiales_desde(filings: list, desde: date | None) -> list:
     return out
 
 
+# Umbrales de precio (doc 64 §A1): movimiento residual normalizado |z|, más bajo para posiciones.
+UMBRAL_Z_NO_POSICION = 2.5
+UMBRAL_Z_POSICION = 2.0
+RESPALDO_ABS_PCT = 25.0            # respaldo absoluto: ±25% desde el dossier siempre es señal
+
+
+def _retornos(serie: list[float]) -> list[float]:
+    return [serie[i] / serie[i - 1] - 1.0 for i in range(1, len(serie)) if serie[i - 1]]
+
+
+def precio_z(precio_hist: list[float] | None, *, mercado_hist: list[float] | None = None,
+             n_desde_dossier: int | None = None) -> float | None:
+    """Movimiento residual normalizado desde el inicio de la serie (doc 64 §A1): cuánto se movió el nombre,
+    en desviaciones estándar de su propia volatilidad, descontando el mercado si se pasa `mercado_hist`.
+    `z = (r_nombre − β·r_mercado) / (σ_resid · √n)`. Sin `mercado_hist` → β=0 (z crudo vol-normalizado).
+    Devuelve None si no hay serie suficiente."""
+    if not precio_hist or len(precio_hist) < 20 or not precio_hist[0]:
+        return None
+    r_tot = precio_hist[-1] / precio_hist[0] - 1.0
+    rn = _retornos(precio_hist)
+    beta, resid = 0.0, rn
+    if mercado_hist and len(mercado_hist) == len(precio_hist):
+        rm = _retornos(mercado_hist)
+        var_m = sum(x * x for x in rm) / len(rm) if rm else 0.0
+        if var_m > 0:
+            beta = (sum(a * b for a, b in zip(rn, rm)) / len(rn)) / var_m
+            resid = [a - beta * b for a, b in zip(rn, rm)]
+    r_mercado_tot = (mercado_hist[-1] / mercado_hist[0] - 1.0) if (mercado_hist and mercado_hist[0]) else 0.0
+    mu = sum(resid) / len(resid) if resid else 0.0
+    sigma = math.sqrt(sum((x - mu) ** 2 for x in resid) / len(resid)) if resid else 0.0
+    n = n_desde_dossier or len(rn)
+    if sigma <= 0 or n <= 0:
+        return None
+    return round((r_tot - beta * r_mercado_tot) / (sigma * math.sqrt(n)), 2)
+
+
+def precio_dispara(z: float | None, pct_abs: float | None, *, es_posicion: bool) -> bool:
+    """¿El movimiento de precio amerita ser candidato? |z| sobre el umbral (más bajo para posiciones) O el
+    respaldo absoluto (±25%)."""
+    umbral = UMBRAL_Z_POSICION if es_posicion else UMBRAL_Z_NO_POSICION
+    if z is not None and abs(z) >= umbral:
+        return True
+    return pct_abs is not None and pct_abs >= RESPALDO_ABS_PCT
+
+
 # Orden de prioridad del candidato (doc 64 §A1; menor = más prioritario). No es un OR: es una cola ordenada.
 PRIORIDAD = {
     "posicion_con_evento": 0,
@@ -87,17 +133,22 @@ PRIORIDAD = {
 }
 
 
-def clasificar_candidato(*, es_posicion: bool, eventos_materiales: list, z_precio: float | None,
-                         umbral_z: float) -> tuple[str, int]:
-    """Clasifica el candidato en su nivel de prioridad (doc 64). `eventos_materiales` ya filtrado por cursor.
-    Devuelve (motivo, prioridad). `sin_trigger` = no amerita deep (se reutiliza o se saltea)."""
+def clasificar_candidato(*, es_posicion: bool, eventos_materiales: list, z_precio: float | None = None,
+                         precio_vs_pct: float | None = None, dias_a_evento: int | None = None,
+                         diferir_dias: int = 10) -> tuple[str, int]:
+    """Clasifica el candidato en su nivel de prioridad (doc 64 §A1). `eventos_materiales` ya filtrado por el
+    cursor. Devuelve (motivo, prioridad). `sin_trigger`/`diferido` = no amerita deep ahora.
+
+    Earnings DIFERIDO (doc 64): una NO-posición con earnings dentro de `diferir_dias` no dispara deep — se
+    espera al evento consumado (el 10-Q/8-K-2.02 posterior) para no pagar un análisis que el balance deja
+    obsoleto. El earnings YA publicado (en `eventos_materiales`) sí dispara."""
     red = any(es_red_flag(f) for f in eventos_materiales)
     dil = any(getattr(f, "tipo", "") in FORMS_DILUCION for f in eventos_materiales)
     earn = any(getattr(f, "tipo", "") == "8-K" and "2.02" in _items(f) for f in eventos_materiales) \
         or any(getattr(f, "tipo", "") in ("10-Q", "10-K") for f in eventos_materiales)
-    precio_fuerte = z_precio is not None and abs(z_precio) >= umbral_z
+    precio_fuerte = precio_dispara(z_precio, precio_vs_pct, es_posicion=es_posicion)
 
-    if es_posicion and (red or dil or earn or eventos_materiales):
+    if es_posicion and eventos_materiales:
         return "posicion_con_evento", PRIORIDAD["posicion_con_evento"]
     if red:
         return "red_flag", PRIORIDAD["red_flag"]
@@ -105,6 +156,9 @@ def clasificar_candidato(*, es_posicion: bool, eventos_materiales: list, z_preci
         return "dilucion", PRIORIDAD["dilucion"]
     if earn:
         return "earnings_consumado", PRIORIDAD["earnings_consumado"]
+    # earnings PRÓXIMO (no consumado) en una no-posición → diferir (no gastar un deep que el balance invalida)
+    if not es_posicion and dias_a_evento is not None and dias_a_evento <= diferir_dias:
+        return "diferido", PRIORIDAD["sin_trigger"]
     if precio_fuerte:
         return "precio", PRIORIDAD["precio"]
     return "sin_trigger", PRIORIDAD["sin_trigger"]

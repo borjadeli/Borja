@@ -21,7 +21,7 @@ def test_nombre_nuevo_cuenta_solo_eventos_materiales_en_la_ventana():
                                          _f("10-Q", "2026-08-07")],               # material pero viejo
                                 precio_hist=[20.0, 27.0], es_posicion=False)
     assert s.dias_desde_dossier is None and s.hechos_nuevos == 1 and s.tiene_evento_fuerte is True
-    assert abs(s.precio_vs_tesis_pct - 35.0) < 0.1          # +35%
+    assert s.precio_vs_tesis_pct is None                   # serie de 2 puntos → z no computable (ok)
     assert "8-K/1.01" in resumen
 
 
@@ -61,3 +61,20 @@ def test_candidatos_del_universo_arma_la_lista():
     assert len(cands) == 1 and cands[0][0] == "OKLO"
     tk, señal, resumen = cands[0]
     assert señal.es_posicion is True and señal.tiene_evento_fuerte is True
+
+
+def test_garantia_cache_no_oculta_evento_material():
+    # GARANTÍA al operador: un dossier vigente NO puede ocultar un 8-K material nuevo.
+    # Con dossier del 2026-10-01 y un 8-K 1.01 del 2026-10-20 → tiene_evento_fuerte=True (el orquestador,
+    # que saltea el cache si tiene_evento_fuerte, re-analiza en vez de reutilizar el dossier obsoleto).
+    s, _ = señales_ticker("OKLO", hoy=HOY, fecha_dossier=date(2026, 10, 1),
+                          filings=[_f("8-K", "2026-10-20", items="1.01")],
+                          precio_hist=None, es_posicion=True)
+    assert s.tiene_evento_fuerte is True and s.hechos_nuevos == 1
+
+    # sin evento material posterior al dossier → NO se fuerza re-análisis (se reutiliza, barato)
+    s2, _ = señales_ticker("OKLO", hoy=HOY, fecha_dossier=date(2026, 10, 1),
+                           filings=[_f("8-K", "2026-10-20", items="9.01"),   # accesorio, no material
+                                    _f("4", "2026-10-22")],                   # ruido
+                           precio_hist=None, es_posicion=True)
+    assert s2.tiene_evento_fuerte is False and s2.hechos_nuevos == 0

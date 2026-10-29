@@ -122,7 +122,10 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
         # tenemos ese DataPoint, la fuente primaria la tenemos NOSOTROS → vale sin importar la URL citada.
         contraste = None
         if pack is not None and c.ref_metrica and c.valor_num is not None:
-            contraste = contrastar_numero(c.valor_num, pack.get(c.ref_metrica),
+            # si el claim es trimestral, buscar la métrica `_q` del pack (revenue_q, etc.); si no, la base.
+            dp_ref = pack.get(f"{c.ref_metrica}_q") if (c.periodo or "").upper() == "Q" else None
+            dp_ref = dp_ref or pack.get(c.ref_metrica)
+            contraste = contrastar_numero(c.valor_num, dp_ref,
                                           escala=(c.escala or 1.0), periodo=c.periodo)
 
         numeros_ok = not (contraste is not None and contraste.contradice)

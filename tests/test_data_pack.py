@@ -163,3 +163,16 @@ def test_ensamblar_dos_fases_corre_derivadas():
     pack = dp.ensamblar("OKLO", as_of=date(2026, 10, 27), fuentes=[orig])   # derivadas = default
     m = {p.metric: p for p in pack.puntos}
     assert m["cash_runway_months"].value == 120.0 and m["cash_runway_months"].kind == DataKind.DERIVED
+
+
+def test_xbrl_emite_version_trimestral_de_flujos():
+    facts = _facts()
+    # agrego un op-loss trimestral (~90d) al fake
+    facts["facts"]["us-gaap"]["OperatingIncomeLoss"]["units"]["USD"].append(
+        {"val": -73, "start": "2026-04-01", "end": "2026-06-30", "filed": "2026-08-01",
+         "form": "10-Q", "fy": 2026, "fp": "Q2", "accn": "a-q2b"})
+    pts = {(p.metric, p.period_type): p for p in dp.fuente_xbrl(
+        "OKLO", date(2026, 10, 27), companyfacts_fn=lambda _c: facts, cik_fn=lambda _t: "0")}
+    assert ("operating_income_loss", "FY") in pts        # FY (−139, del 10-K)
+    assert ("operating_income_loss_q", "Q") in pts       # Q (−73, del 10-Q)
+    assert pts[("operating_income_loss_q", "Q")].value == -73

@@ -193,3 +193,15 @@ def test_r3_falsador_vencido_es_fail():
                    conviccion_0_1=0.5)
     r = verificar(d, FUENTES, hoy=_date(2026, 10, 28))
     assert r.veredicto == "fail" and any("falsador vencido" in m for m in r.motivos)
+
+
+def test_r3_claim_trimestral_contrasta_contra_metrica_q():
+    # un claim de revenue TRIMESTRAL (periodo=Q) contrasta contra revenue_q del pack (no contra el FY)
+    c = sc.Claim(claim_id="c1", contenido="revenue Q2 234M", tipo="hecho", source_url="https://sec.gov/ex99",
+                 cited_text="x", source_date="2026-08-10", known_at="2026-08-10", materiality="central",
+                 verification="confirmed_by_filing", ref_metrica="revenue", valor_num=234.0, escala="M",
+                 periodo="Q")
+    pack = {"revenue": _dp_ref("revenue", 602e6, period="FY"),
+            "revenue_q": _dp_ref("revenue_q", 234e6, period="Q")}
+    r = verificar(_dossier([c], soporte=["c1"]), ["https://sec.gov/ex99"], pack=pack, hoy=_date(2026, 10, 28))
+    assert r.veredicto == "pass"     # contrastó contra revenue_q (234M) aunque la URL sea EX-99

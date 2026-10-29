@@ -80,18 +80,20 @@ def _d(s: str | None) -> date | None:
         return None
 
 
-def _pit(entries: list[dict], as_of: date, *, anual: bool) -> dict | None:
+def _pit(entries: list[dict], as_of: date, *, anual: bool, dur_dias: tuple[int, int] | None = None) -> dict | None:
     """Entry POINT-IN-TIME: el más reciente con `filed <= as_of` (anti look-ahead + trae lo ÚLTIMO, no lo
-    viejo — doc 60). `anual`: solo duraciones ~1 año fiscal; si no, el último instant."""
+    viejo — doc 60). `anual`: solo duraciones ~1 año fiscal (350-380d). `dur_dias=(lo,hi)`: filtra por
+    duración (p.ej. trimestral ~80-100d). Sin ninguno: el último instant."""
+    rango = (350, 380) if anual else dur_dias
     cand = []
     for e in entries:
         f = _d(e.get("filed"))
         end = _d(e.get("end"))
         if not f or not end or f > as_of:
             continue
-        if anual:
+        if rango is not None:
             start = _d(e.get("start"))
-            if not start or not (350 <= (end - start).days <= 380):
+            if not start or not (rango[0] <= (end - start).days <= rango[1]):
                 continue
         cand.append(e)
     return max(cand, key=lambda e: (e["end"], e["filed"])) if cand else None
@@ -136,12 +138,19 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
             known_at=_d(entry.get("filed")), note=f"accn={entry.get('accn')}"))
 
     from backend.services.edgar import _extract_concept
+    _Q = (80, 100)   # duración trimestral ~90d
     for metric, tag, unit in _XBRL_INSTANT:
         emit(metric, _pit(_extract_concept(facts, tag, unit=unit), as_of, anual=False), unit, "instant")
     for metric, tag, unit in _XBRL_ANUAL:
-        emit(metric, _pit(_extract_concept(facts, tag, unit=unit), as_of, anual=True), unit, "FY")
+        ents = _extract_concept(facts, tag, unit=unit)
+        emit(metric, _pit(ents, as_of, anual=True), unit, "FY")
+        # versión TRIMESTRAL (Q) del mismo flujo → contrasta claims de earnings (revenue/burn del trimestre),
+        # que antes caían a REVIEW por "período distinto" (smoke #3). metric_q para no colisionar con el FY.
+        emit(f"{metric}_q", _pit(ents, as_of, anual=False, dur_dias=_Q), unit, "Q")
     if rev_fn is not None:                            # revenue concatena tags (ASC 606); solo en modo real
-        emit("revenue", _pit(rev_fn(facts), as_of, anual=True), "USD", "FY")
+        rev = rev_fn(facts)
+        emit("revenue", _pit(rev, as_of, anual=True), "USD", "FY")
+        emit("revenue_q", _pit(rev, as_of, anual=False, dur_dias=_Q), "USD", "Q")
     # Acciones de hace ~1 año (insumo de dilución); separado para no colisionar con el latest.
     sh = _extract_concept(facts, "EntityCommonStockSharesOutstanding", unit="shares")
     from datetime import timedelta

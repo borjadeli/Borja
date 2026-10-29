@@ -15,6 +15,7 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.agentes.embudo import es_red_flag, eventos_materiales_desde
 from backend.agentes.triage import SenalesTriage
 from backend.ledger.models import NxEmpresa
 
@@ -27,19 +28,27 @@ def tickers_universo(session: Session) -> list[str]:
     return [t for t, e in rows if (e or "").lower() not in _ESTADOS_INACTIVOS]
 
 
+# Cursor de monitoreo inicial para empresas NUNCA analizadas (doc 64 §A1 bug): known_at=null NO puede
+# significar "todo el historial es nuevo" (dispararía el universo entero). Un nombre nuevo mira solo los
+# eventos materiales de los últimos N días, no toda su vida de filings.
+VENTANA_MONITOREO_INICIAL_DIAS = 30
+
+
 def señales_ticker(ticker: str, *, hoy: date, fecha_dossier: date | None, filings: list,
                    precio_hist: list[float] | None, es_posicion: bool,
                    prioridad_cuello: int = 0) -> tuple[SenalesTriage, str]:
-    """Señales DETERMINISTAS + un resumen de los filings nuevos (insumo del juez de materialidad del Triage).
-    `filings` = objetos con `.tipo` y `.fecha` (datetime); `precio_hist` = serie de cierres."""
+    """Señales DETERMINISTAS + resumen de eventos materiales nuevos. `filings` = RecentFiling (.tipo/.fecha/
+    .items); `precio_hist` = serie de cierres. Usa la whitelist de materialidad del embudo (no todo filing)."""
     dias_dossier = (hoy - fecha_dossier).days if fecha_dossier else None
-    nuevos = [f for f in (filings or []) if fecha_dossier is None or f.fecha.date() > fecha_dossier]
-    tiene_evento = any(f.tipo == "8-K" for f in nuevos)
+    # Cursor: si ya hubo dossier, eventos POSTERIORES a él; si nunca se analizó, solo la ventana reciente.
+    cursor = fecha_dossier if fecha_dossier is not None else hoy - timedelta(days=VENTANA_MONITOREO_INICIAL_DIAS)
+    nuevos = eventos_materiales_desde(filings, desde=cursor)
+    tiene_evento = any(es_red_flag(f) for f in nuevos) or len(nuevos) > 0
 
     periodicos = sorted((f for f in (filings or []) if f.tipo in ("10-Q", "10-K")), key=lambda f: f.fecha)
     dias_a_evento = None
     if periodicos:
-        prox = periodicos[-1].fecha.date() + timedelta(days=90)   # aprox por ciclo trimestral (doc 61 A4)
+        prox = periodicos[-1].fecha.date() + timedelta(days=90)   # aprox por ciclo (solo para DIFERIR, doc 64 A4)
         dias_a_evento = max(0, (prox - hoy).days)
 
     precio_vs = None
@@ -50,8 +59,8 @@ def señales_ticker(ticker: str, *, hoy: date, fecha_dossier: date | None, filin
                       dias_a_evento=dias_a_evento, precio_vs_tesis_pct=precio_vs,
                       es_posicion=es_posicion, tiene_evento_fuerte=tiene_evento,
                       prioridad_cuello=prioridad_cuello)
-    resumen = (" · ".join(f"{f.tipo} {f.fecha.date()}" for f in nuevos[:6])
-               if nuevos else "")
+    resumen = (" · ".join(f"{f.tipo}{'/' + f.items if getattr(f, 'items', '') else ''} {f.fecha.date()}"
+                          for f in nuevos[:6]) if nuevos else "")
     return s, resumen
 
 

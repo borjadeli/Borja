@@ -87,6 +87,7 @@ class RecentFiling:
     accession_number: str
     primary_doc: str
     url: str
+    items: str = ""   # ítems del 8-K separados por coma (p.ej. "1.01,2.02,9.01"); "" si no aplica
 
 
 # ---------- Session y cache ----------
@@ -679,6 +680,7 @@ def get_recent_filings(ticker: str, tipos: tuple[str, ...] = ("10-Q", "10-K", "8
     dates = recent.get("filingDate", [])
     accns = recent.get("accessionNumber", [])
     prim_docs = recent.get("primaryDocument", [])
+    items_l = recent.get("items", [])
 
     result: list[RecentFiling] = []
     cutoff = utcnow() - timedelta(days=dias)
@@ -695,7 +697,9 @@ def get_recent_filings(ticker: str, tipos: tuple[str, ...] = ("10-Q", "10-K", "8
         prim = prim_docs[i] if i < len(prim_docs) else ""
         accn_clean = accn.replace("-", "")
         url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accn_clean}/{prim}"
-        result.append(RecentFiling(tipo=form, fecha=fecha, accession_number=accn, primary_doc=prim, url=url))
+        items = items_l[i] if i < len(items_l) else ""
+        result.append(RecentFiling(tipo=form, fecha=fecha, accession_number=accn, primary_doc=prim,
+                                   url=url, items=items))
     return result
 
 

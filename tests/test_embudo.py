@@ -108,3 +108,55 @@ def test_precio_dispara_umbral_mas_bajo_para_posicion():
 
 def test_precio_z_sin_serie_suficiente_es_none():
     assert precio_z([100.0, 101.0]) is None
+
+
+# --- A3: cobertura / bootstrap ---
+from types import SimpleNamespace as _NS  # noqa: E402
+from backend.agentes.embudo import cupo_bootstrap, gate_invertibilidad, ordenar_cobertura  # noqa: E402
+
+_IPS = {"market_cap_min_usd": 150e6, "market_cap_max_usd": 60e9, "adv_min_usd": 3e6}
+
+
+def _ctx(mc=5e9, adv=10e6):
+    return _NS(market_cap=mc, adv_usd=adv)
+
+
+def test_gate_invertibilidad():
+    assert gate_invertibilidad(_ctx(5e9, 10e6), _IPS) is True
+    assert gate_invertibilidad(_ctx(70e9, 10e6), _IPS) is False   # market cap fuera de rango
+    assert gate_invertibilidad(_ctx(5e9, 1e6), _IPS) is False     # ADV bajo
+    assert gate_invertibilidad(_ctx(None, None), _IPS) is True    # sin datos → invertible (gate duro luego)
+
+
+def test_cupo_bootstrap_acelerado_y_regimen():
+    assert cupo_bootstrap(1) == 6 and cupo_bootstrap(10) == 6     # primeras 10 semanas
+    assert cupo_bootstrap(11) == 2 and cupo_bootstrap(30) == 2    # régimen
+
+
+def test_ordenar_cobertura_filtra_invertibles_y_ordena_por_cuello():
+    nuevos = [("A", _NS(prioridad_cuello=1), ""), ("B", _NS(prioridad_cuello=3), ""),
+              ("C", _NS(prioridad_cuello=2), "")]
+    ctx = {"A": _ctx(5e9), "B": _ctx(70e9), "C": _ctx(5e9)}       # B no invertible
+    orden = ordenar_cobertura(nuevos, ips_cfg=_IPS, ctx_fn=lambda t: ctx[t])
+    tks = [c[0] for c in orden]
+    assert "B" not in tks and tks == ["C", "A"]                   # B fuera; C(2) antes que A(1)
+
+
+def test_ordenar_cobertura_excluye_earnings_proximos():
+    nuevos = [("A", _NS(prioridad_cuello=1), ""), ("B", _NS(prioridad_cuello=1), "")]
+    orden = ordenar_cobertura(nuevos, ips_cfg=_IPS, ctx_fn=lambda t: _ctx(),
+                              dias_a_evento_fn=lambda t: 5 if t == "A" else 40)
+    assert [c[0] for c in orden] == ["B"]                         # A reporta en 5d → se difiere
+
+
+# --- A5: escalera mensual por categorías ---
+from backend.agentes.presupuesto import categorias_habilitadas  # noqa: E402
+
+
+def test_categorias_habilitadas_por_nivel_mensual():
+    assert "bootstrap" in categorias_habilitadas(10, 40)          # <70% → todo
+    h = categorias_habilitadas(30, 40)                            # 75% → sin bootstrap/cobertura
+    assert "bootstrap" not in h and "cobertura" not in h and "novedad_material" in h
+    h2 = categorias_habilitadas(37, 40)                           # 92% → solo posiciones+red flags
+    assert h2 == {"red_flag_posicion", "posicion_con_evento"}
+    assert categorias_habilitadas(40, 40) == {"red_flag_posicion"}  # 100% → solo red flag en posición

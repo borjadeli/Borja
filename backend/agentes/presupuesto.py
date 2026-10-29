@@ -133,3 +133,24 @@ def ledger_bootstrap(presupuesto_bootstrap_usd: float, *, reserva_eventos_pct: f
     (auditoría r2 4b; `presupuesto_bootstrap_usd` vive en ips.yaml)."""
     return LedgerPresupuesto(sobre_semanal=max(0.0, presupuesto_bootstrap_usd),
                              reserva_eventos_pct=reserva_eventos_pct)
+
+
+# --------------------------------------------------------------------------- escalera MENSUAL por categorías
+
+# Categorías de trabajo del embudo, de más a menos prioritaria (doc 64 §A5).
+CATEGORIAS = ("red_flag_posicion", "posicion_con_evento", "novedad_material", "cobertura", "bootstrap",
+              "reanalisis_sin_novedades")
+
+
+def categorias_habilitadas(gastado_mes: float, tope_mes: float) -> set[str]:
+    """Qué categorías de gasto están habilitadas según el nivel del sobre MENSUAL (doc 64 §A5):
+    <70% todo · 70-90% se cortan bootstrap+cobertura+reanálisis · 90-100% solo posiciones con evento +
+    red flags · ≥100% solo red flag en posición (con override manual). Arrastre: es sobre el MES, no semanal."""
+    nivel = (gastado_mes / tope_mes) if tope_mes > 0 else 1.0
+    if nivel >= 1.0:
+        return {"red_flag_posicion"}
+    if nivel >= 0.90:
+        return {"red_flag_posicion", "posicion_con_evento"}
+    if nivel >= 0.70:
+        return {"red_flag_posicion", "posicion_con_evento", "novedad_material"}
+    return set(CATEGORIAS)

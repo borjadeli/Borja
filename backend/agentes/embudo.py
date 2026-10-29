@@ -121,6 +121,50 @@ def precio_dispara(z: float | None, pct_abs: float | None, *, es_posicion: bool)
     return pct_abs is not None and pct_abs >= RESPALDO_ABS_PCT
 
 
+# --------------------------------------------------------------------------- cobertura / bootstrap (doc 64 §A3)
+
+def gate_invertibilidad(ctx, ips_cfg: dict) -> bool:
+    """¿El nombre es INVERTIBLE bajo el IPS (market cap + ADV en rango)? No gastar $0.68 en algo que no se
+    puede comprar al tamaño de posición del operador (doc 64 §A3). Sin datos → se asume invertible (el
+    screening barato ya lo trajo; el gate duro real lo aplica el orquestador de decisión)."""
+    mc = getattr(ctx, "market_cap", None)
+    adv = getattr(ctx, "adv_usd", None)
+    if mc is not None and not (float(ips_cfg.get("market_cap_min_usd", 0)) <= mc
+                               <= float(ips_cfg.get("market_cap_max_usd", 1e18))):
+        return False
+    if adv is not None and adv < float(ips_cfg.get("adv_min_usd", 0)):
+        return False
+    return True
+
+
+def cupo_bootstrap(semana_n: int, *, semanas_aceleradas: int = 10, cupo_inicial: int = 6,
+                   cupo_regimen: int = 2) -> int:
+    """Nombres nuevos a promover esta semana (doc 64 §A3): BOOTSTRAP acelerado (6/sem) las primeras ~10
+    semanas para cubrir el universo, luego régimen (2/sem). `semana_n` arranca en 1."""
+    return cupo_inicial if semana_n <= semanas_aceleradas else cupo_regimen
+
+
+def ordenar_cobertura(nuevos: list, *, ips_cfg: dict, ctx_fn, dias_a_evento_fn=None,
+                      slot_azar_cada: int = 5, rng=None) -> list:
+    """Ordena los candidatos NUEVOS (nunca analizados) para la cobertura (doc 64 §A3):
+    (1) gate de invertibilidad · (2) excluir los que reportan ≤10d (conviene esperar el balance) ·
+    (3) orden por `prioridad_cuello` desc, desempate 10-Q reciente (implícito en el orden de entrada) ·
+    (4) reservar ~1 de cada `slot_azar_cada` a un nombre AL AZAR entre los invertibles (chequeo del mapa).
+    `nuevos` = tuplas (ticker, SenalesTriage, resumen). `ctx_fn(ticker)->ContextoTicker`."""
+    import random
+    rng = rng or random.Random(0)
+    invertibles = [c for c in nuevos if gate_invertibilidad(ctx_fn(c[0]), ips_cfg)]
+    elegibles = [c for c in invertibles
+                 if not (dias_a_evento_fn and (dias_a_evento_fn(c[0]) or 99) <= 10)]
+    por_cuello = sorted(elegibles, key=lambda c: getattr(c[1], "prioridad_cuello", 0), reverse=True)
+    # Insertar un slot al azar cada `slot_azar_cada` posiciones (entre los invertibles no ya elegidos arriba).
+    if por_cuello and len(por_cuello) > slot_azar_cada:
+        resto = por_cuello[slot_azar_cada:]
+        azar = rng.choice(resto)
+        por_cuello = por_cuello[:slot_azar_cada] + [azar] + [c for c in resto if c is not azar]
+    return por_cuello
+
+
 # Orden de prioridad del candidato (doc 64 §A1; menor = más prioritario). No es un OR: es una cola ordenada.
 PRIORIDAD = {
     "posicion_con_evento": 0,

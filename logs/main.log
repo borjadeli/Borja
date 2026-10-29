@@ -27,3 +27,9 @@
 2026-09-04 18:55:03,441 [INFO] backend.main: BORJA starting — env=dev db=./data/borja.db model=claude-opus-4-8
 2026-09-04 18:55:03,467 [INFO] backend.main: BORJA — scheduler autostart activado
 2026-09-04 18:55:03,469 [INFO] backend.main: BORJA shutting down
+2026-10-20 15:45:29,581 [INFO] backend.main: BORJA shutting down
+2026-10-26 11:19:26,311 [INFO] backend.main: BORJA starting — env=dev db=./data/borja.db model=claude-opus-4-8
+2026-10-26 11:19:26,693 [INFO] backend.main: BORJA — scheduler autostart activado
+2026-10-26 18:59:38,543 [WARNING] backend.main: ADMIN — reinicio solicitado desde UI (PID 3165132) — saliendo en 0.5s
+2026-10-26 18:59:44,783 [INFO] backend.main: BORJA starting — env=dev db=./data/borja.db model=claude-opus-4-8
+2026-10-26 18:59:44,811 [INFO] backend.main: BORJA — scheduler autostart activado

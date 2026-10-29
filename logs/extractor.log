@@ -154,3 +154,8 @@
 2026-09-13 23:04:23,132 [WARNING] backend.nucleo.extractor: reextraer — MP falló: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf2GtaXfXmJSZeGKBsqK8'}
 2026-09-13 23:04:30,014 [WARNING] backend.nucleo.extractor: reextraer — IBM falló: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011Cf2Gu5qHFm17SscaPoA8D'}
 2026-09-13 23:04:30,014 [INFO] backend.nucleo.extractor: reextraer — 0 ok, 37 fallaron
+2026-09-20 23:11:21,018 [INFO] backend.nucleo.extractor: reextraer — 37 ok, 0 fallaron
+2026-09-27 23:10:56,961 [INFO] backend.nucleo.extractor: reextraer — 37 ok, 0 fallaron
+2026-10-04 23:10:37,506 [INFO] backend.nucleo.extractor: reextraer — 37 ok, 0 fallaron
+2026-10-11 23:10:39,413 [INFO] backend.nucleo.extractor: reextraer — 37 ok, 0 fallaron
+2026-10-18 23:10:45,997 [INFO] backend.nucleo.extractor: reextraer — 37 ok, 0 fallaron

@@ -23,7 +23,7 @@ tamaños.** La view macro la da el agente Macro + el operador vía el IPS.
 03.b) el mvp es lo ideal a trabajar en esta primera instancia.
 
 04) VISUALIZACION
-Todos los outputs que genere el modelo deben verse en un dashboard web en Flask, muy elegante y corporativo estilo Banking & Finace.
+Todos los outputs que genere el modelo deben verse en un dashboard web (FastAPI + Jinja2), muy elegante y corporativo estilo Banking & Finance.
 
 05) INSTRUCCIONES
 Los lineamientos vigentes viven en `init_docs/`. Los docx iniciales (01/02/03) son el origen histórico de la visión, pero BORJA está en un **cambio de dirección (v2, 2026-10-26)**. Documentos CANÓNICOS hoy:

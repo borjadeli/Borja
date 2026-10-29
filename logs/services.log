@@ -5276,3 +5276,316 @@
 2026-09-09 22:54:43,329 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=WKHS&region=US&lang=en-US) fallo: HTTP Error 502: 
 2026-09-09 22:54:45,237 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=EVTL&region=US&lang=en-US) fallo: HTTP Error 502: 
 2026-09-14 12:00:02,231 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'
+2026-09-16 19:01:10,901 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=1.06s tokens=32/9 cache=0/0 cost=$0.0012 json_ok=True
+2026-09-16 19:06:40,891 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=50.10s tokens=52419/2898 searches=4/5 cost=$1.0436 json_ok=True
+2026-09-16 19:07:38,798 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=57.85s tokens=55298/3495 searches=4/5 cost=$1.1316 json_ok=True
+2026-09-16 19:08:44,042 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=65.24s tokens=97898/3858 searches=5/5 cost=$1.8078 json_ok=True
+2026-09-16 19:09:46,117 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=62.07s tokens=56165/3593 searches=4/5 cost=$1.1519 json_ok=True
+2026-09-16 19:10:41,078 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=54.96s tokens=98958/3244 searches=5/5 cost=$1.7777 json_ok=True
+2026-09-16 19:33:07,708 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=32.46s tokens=400/1966 cache=0/1219 cost=$0.1763 json_ok=True
+2026-09-16 19:33:56,623 [INFO] backend.services.llm: LLM+web_search — model=claude-haiku-4-5-20251001 latency=48.89s tokens=22889/4103 searches=5/3 cost=$0.0934 json_ok=True
+2026-09-16 19:34:34,285 [INFO] backend.services.llm: LLM call — model=claude-haiku-4-5-20251001 latency=37.66s tokens=1179/4007 cache=0/0 cost=$0.0212 json_ok=True
+2026-09-16 19:35:11,350 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=36.05s tokens=292/2165 cache=1219/0 cost=$0.1686 json_ok=True
+2026-09-16 19:35:41,178 [INFO] backend.services.llm: LLM+web_search — model=claude-haiku-4-5-20251001 latency=29.82s tokens=23404/2702 searches=4/3 cost=$0.0769 json_ok=True
+2026-09-16 19:36:10,649 [INFO] backend.services.llm: LLM call — model=claude-haiku-4-5-20251001 latency=29.47s tokens=1089/2819 cache=0/0 cost=$0.0152 json_ok=True
+2026-09-16 19:36:41,206 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=29.74s tokens=267/1738 cache=1219/0 cost=$0.1362 json_ok=True
+2026-09-16 19:37:24,837 [INFO] backend.services.llm: LLM+web_search — model=claude-haiku-4-5-20251001 latency=43.63s tokens=23180/3656 searches=4/3 cost=$0.0815 json_ok=True
+2026-09-16 19:38:01,135 [INFO] backend.services.llm: LLM call — model=claude-haiku-4-5-20251001 latency=36.29s tokens=1070/3310 cache=0/0 cost=$0.0176 json_ok=True
+2026-09-17 10:00:03,981 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=3.96s tokens=270/225 cache=0/1751 cost=$0.0538 json_ok=True
+2026-09-17 10:00:35,211 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=31.22s tokens=333/2550 cache=0/1748 cost=$0.2290 json_ok=True
+2026-09-17 10:01:16,070 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=40.85s tokens=323/3061 cache=0/1758 cost=$0.2674 json_ok=True
+2026-09-17 10:01:53,959 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=37.88s tokens=324/2968 cache=0/1759 cost=$0.2604 json_ok=True
+2026-09-17 10:02:28,174 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=34.21s tokens=325/2889 cache=0/1760 cost=$0.2545 json_ok=True
+2026-09-17 18:57:10,600 [INFO] backend.services.llm: LLM+web_search — model=claude-haiku-4-5-20251001 latency=19.66s tokens=34518/1566 searches=5/5 cost=$0.0923 json_ok=True
+2026-09-17 18:57:38,680 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=28.06s tokens=1918/1752 cache=0/1219 cost=$0.1830 json_ok=True
+2026-09-17 18:57:59,103 [INFO] backend.services.llm: LLM+web_search — model=claude-haiku-4-5-20251001 latency=19.10s tokens=29584/1526 searches=4/5 cost=$0.0772 json_ok=True
+2026-09-17 18:58:27,442 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=28.33s tokens=1718/1700 cache=1219/0 cost=$0.1551 json_ok=True
+2026-09-17 18:58:45,682 [INFO] backend.services.llm: LLM+web_search — model=claude-haiku-4-5-20251001 latency=17.20s tokens=60655/1547 searches=5/5 cost=$0.1184 json_ok=True
+2026-09-17 18:59:08,279 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=22.59s tokens=1661/1433 cache=1219/0 cost=$0.1342 json_ok=True
+2026-09-20 23:00:16,044 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.47s tokens=230/1400 cache=0/3997 cost=$0.1834 json_ok=True
+2026-09-20 23:00:34,209 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.42s tokens=236/1602 cache=3997/0 cost=$0.1297 json_ok=True
+2026-09-20 23:00:53,441 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.50s tokens=233/1541 cache=3997/0 cost=$0.1251 json_ok=True
+2026-09-20 23:01:12,980 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.86s tokens=232/1648 cache=3997/0 cost=$0.1331 json_ok=True
+2026-09-20 23:01:28,916 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.71s tokens=233/1351 cache=3997/0 cost=$0.1108 json_ok=True
+2026-09-20 23:01:58,777 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.00s tokens=241/1626 cache=3997/0 cost=$0.1316 json_ok=True
+2026-09-20 23:02:19,089 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.91s tokens=231/1434 cache=3997/0 cost=$0.1170 json_ok=True
+2026-09-20 23:02:36,126 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.44s tokens=231/1427 cache=3997/0 cost=$0.1165 json_ok=True
+2026-09-20 23:02:54,266 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.69s tokens=231/1595 cache=3997/0 cost=$0.1291 json_ok=True
+2026-09-20 23:03:11,368 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.68s tokens=230/1576 cache=3997/0 cost=$0.1276 json_ok=True
+2026-09-20 23:03:31,432 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.69s tokens=237/1650 cache=3997/0 cost=$0.1333 json_ok=True
+2026-09-20 23:03:49,566 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.68s tokens=239/1632 cache=3997/0 cost=$0.1320 json_ok=True
+2026-09-20 23:04:06,618 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.71s tokens=238/1560 cache=3997/0 cost=$0.1266 json_ok=True
+2026-09-20 23:04:23,463 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.40s tokens=231/1436 cache=3997/0 cost=$0.1172 json_ok=True
+2026-09-20 23:04:39,612 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.85s tokens=231/1399 cache=3997/0 cost=$0.1144 json_ok=True
+2026-09-20 23:04:56,893 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.74s tokens=229/1557 cache=3997/0 cost=$0.1262 json_ok=True
+2026-09-20 23:05:13,331 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.91s tokens=233/1526 cache=3997/0 cost=$0.1239 json_ok=True
+2026-09-20 23:05:30,909 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.34s tokens=233/1603 cache=3997/0 cost=$0.1297 json_ok=True
+2026-09-20 23:05:49,887 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.62s tokens=232/1658 cache=3997/0 cost=$0.1338 json_ok=True
+2026-09-20 23:06:08,767 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.59s tokens=237/1677 cache=3997/0 cost=$0.1353 json_ok=True
+2026-09-20 23:06:25,070 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.01s tokens=229/1443 cache=3997/0 cost=$0.1177 json_ok=True
+2026-09-20 23:06:41,862 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.50s tokens=227/1498 cache=3997/0 cost=$0.1218 json_ok=True
+2026-09-20 23:07:00,805 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.58s tokens=236/1650 cache=3997/0 cost=$0.1333 json_ok=True
+2026-09-20 23:07:17,316 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.01s tokens=233/1550 cache=3997/0 cost=$0.1257 json_ok=True
+2026-09-20 23:07:40,414 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=20.01s tokens=232/1599 cache=3997/0 cost=$0.1294 json_ok=True
+2026-09-20 23:07:59,272 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.16s tokens=232/1653 cache=3997/0 cost=$0.1335 json_ok=True
+2026-09-20 23:08:18,761 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.05s tokens=238/1502 cache=3997/0 cost=$0.1222 json_ok=True
+2026-09-20 23:08:35,682 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.23s tokens=231/1598 cache=3997/0 cost=$0.1293 json_ok=True
+2026-09-20 23:08:55,338 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.33s tokens=233/1656 cache=3997/0 cost=$0.1337 json_ok=True
+2026-09-20 23:09:10,645 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.95s tokens=239/1342 cache=3997/0 cost=$0.1102 json_ok=True
+2026-09-20 23:09:30,004 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.53s tokens=236/1646 cache=3997/0 cost=$0.1330 json_ok=True
+2026-09-20 23:09:47,104 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.35s tokens=231/1541 cache=3997/0 cost=$0.1250 json_ok=True
+2026-09-20 23:10:03,923 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.45s tokens=231/1454 cache=3997/0 cost=$0.1185 json_ok=True
+2026-09-20 23:10:24,293 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.80s tokens=230/1673 cache=3997/0 cost=$0.1349 json_ok=True
+2026-09-20 23:10:41,380 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.35s tokens=237/1529 cache=3997/0 cost=$0.1242 json_ok=True
+2026-09-20 23:11:01,796 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=20.13s tokens=233/1712 cache=3997/0 cost=$0.1379 json_ok=True
+2026-09-20 23:11:21,012 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.92s tokens=238/1632 cache=3997/0 cost=$0.1320 json_ok=True
+2026-09-21 00:01:14,506 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=74.49s tokens=77199/4017 searches=5/5 cost=$1.5093 json_ok=True
+2026-09-21 12:00:03,444 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'
+2026-09-24 06:54:05,707 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=COHR&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:06,237 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=POET&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:06,789 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=VRT&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:08,122 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAOI&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:08,628 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=S&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:09,244 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=RBRK&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:09,715 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=VRNS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:10,188 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=KTOS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:11,806 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=SYM&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:12,302 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVTS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:12,783 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=MP&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:13,470 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=UEC&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:13,955 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=IPX&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:14,456 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=USAR&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:15,021 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NNE&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:16,063 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=RKLB&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:16,628 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=LITE&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:17,149 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=AEIS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:17,650 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=KLIC&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:18,121 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=MTSI&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:18,622 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CLS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:19,749 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVMI&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:20,242 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=TENB&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:21,362 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NABL&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:21,799 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CW&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:22,321 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=DRS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:22,836 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CACI&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:23,332 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=SAIC&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:23,819 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=PSN&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:24,374 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=TER&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:24,939 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CGNX&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:25,447 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=ALGM&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:25,956 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NNDM&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:26,542 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=LEU&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:27,058 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=ATI&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:27,539 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CRML&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:28,078 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=NXE&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:28,587 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=SMR&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:29,136 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=OKLO&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:29,708 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=UROY&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:30,781 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=LUNR&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:31,932 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CVLT&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:32,424 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=ALOY&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:33,030 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=TMC&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:33,569 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=ICHR&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:34,040 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=RDW&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:34,581 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=BKSY&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:35,076 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPIR&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:35,621 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=LCID&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:36,143 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=WKHS&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:36,621 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=OPEN&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:37,156 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=CHPT&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:37,653 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=EVTL&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:38,136 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=IBM&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:38,908 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=VCYT&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:39,389 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-24 06:54:39,911 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=AI&region=US&lang=en-US) fallo: HTTP Error 500: 
+2026-09-26 10:00:30,962 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=30.94s tokens=333/2459 cache=0/1752 cost=$0.2223 json_ok=True
+2026-09-26 10:01:03,331 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=32.36s tokens=319/2674 cache=0/1748 cost=$0.2381 json_ok=True
+2026-09-27 23:00:17,529 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.03s tokens=230/1613 cache=0/3997 cost=$0.1994 json_ok=True
+2026-09-27 23:00:33,024 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.25s tokens=236/1371 cache=3997/0 cost=$0.1124 json_ok=True
+2026-09-27 23:00:48,220 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.69s tokens=233/1382 cache=3997/0 cost=$0.1131 json_ok=True
+2026-09-27 23:01:04,543 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.97s tokens=232/1530 cache=3997/0 cost=$0.1242 json_ok=True
+2026-09-27 23:01:22,452 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.70s tokens=233/1585 cache=3997/0 cost=$0.1284 json_ok=True
+2026-09-27 23:01:42,246 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.53s tokens=241/1714 cache=3997/0 cost=$0.1382 json_ok=True
+2026-09-27 23:02:06,667 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=24.15s tokens=231/2036 cache=3997/0 cost=$0.1622 json_ok=True
+2026-09-27 23:02:24,191 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.01s tokens=231/1486 cache=3997/0 cost=$0.1209 json_ok=True
+2026-09-27 23:02:40,530 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.80s tokens=231/1563 cache=3997/0 cost=$0.1267 json_ok=True
+2026-09-27 23:02:57,425 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.59s tokens=230/1570 cache=3997/0 cost=$0.1272 json_ok=True
+2026-09-27 23:03:12,997 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.27s tokens=237/1387 cache=3997/0 cost=$0.1136 json_ok=True
+2026-09-27 23:03:31,742 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.49s tokens=239/1666 cache=3997/0 cost=$0.1345 json_ok=True
+2026-09-27 23:03:50,159 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.17s tokens=238/1542 cache=3997/0 cost=$0.1252 json_ok=True
+2026-09-27 23:04:06,669 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.15s tokens=231/1474 cache=3997/0 cost=$0.1200 json_ok=True
+2026-09-27 23:04:21,560 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.37s tokens=231/1382 cache=3997/0 cost=$0.1131 json_ok=True
+2026-09-27 23:04:38,474 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.38s tokens=229/1573 cache=3997/0 cost=$0.1274 json_ok=True
+2026-09-27 23:04:55,088 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.32s tokens=233/1591 cache=3997/0 cost=$0.1288 json_ok=True
+2026-09-27 23:05:13,899 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.58s tokens=233/1636 cache=3997/0 cost=$0.1322 json_ok=True
+2026-09-27 23:05:34,119 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.78s tokens=232/1618 cache=3997/0 cost=$0.1308 json_ok=True
+2026-09-27 23:05:55,838 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=20.93s tokens=237/1790 cache=3997/0 cost=$0.1438 json_ok=True
+2026-09-27 23:06:13,127 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.68s tokens=229/1576 cache=3997/0 cost=$0.1276 json_ok=True
+2026-09-27 23:06:32,509 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.12s tokens=227/1582 cache=3997/0 cost=$0.1281 json_ok=True
+2026-09-27 23:06:50,257 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.14s tokens=236/1487 cache=3997/0 cost=$0.1211 json_ok=True
+2026-09-27 23:07:07,630 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.53s tokens=233/1630 cache=3997/0 cost=$0.1317 json_ok=True
+2026-09-27 23:07:23,836 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.57s tokens=232/1437 cache=3997/0 cost=$0.1173 json_ok=True
+2026-09-27 23:07:42,330 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.15s tokens=232/1569 cache=3997/0 cost=$0.1272 json_ok=True
+2026-09-27 23:07:58,661 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.01s tokens=238/1549 cache=3997/0 cost=$0.1257 json_ok=True
+2026-09-27 23:08:17,139 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.17s tokens=231/1654 cache=3997/0 cost=$0.1335 json_ok=True
+2026-09-27 23:08:35,270 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.89s tokens=233/1618 cache=3997/0 cost=$0.1308 json_ok=True
+2026-09-27 23:08:51,625 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.08s tokens=239/1432 cache=3997/0 cost=$0.1170 json_ok=True
+2026-09-27 23:09:09,288 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.41s tokens=236/1599 cache=3997/0 cost=$0.1295 json_ok=True
+2026-09-27 23:09:26,521 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.96s tokens=231/1605 cache=3997/0 cost=$0.1298 json_ok=True
+2026-09-27 23:09:42,593 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.73s tokens=231/1374 cache=3997/0 cost=$0.1125 json_ok=True
+2026-09-27 23:10:01,582 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.69s tokens=230/1630 cache=3997/0 cost=$0.1317 json_ok=True
+2026-09-27 23:10:19,427 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.26s tokens=237/1519 cache=3997/0 cost=$0.1235 json_ok=True
+2026-09-27 23:10:39,476 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.48s tokens=233/1722 cache=3997/0 cost=$0.1386 json_ok=True
+2026-09-27 23:10:56,958 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.86s tokens=238/1537 cache=3997/0 cost=$0.1248 json_ok=True
+2026-09-28 00:00:51,835 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=51.82s tokens=79235/2967 searches=5/5 cost=$1.4611 json_ok=True
+2026-09-28 12:00:03,301 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'
+2026-10-02 10:00:32,847 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=32.83s tokens=333/2834 cache=0/1748 cost=$0.2503 json_ok=True
+2026-10-03 22:54:11,006 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=MRCY&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-10-04 23:00:16,341 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.84s tokens=230/1420 cache=0/3997 cost=$0.1849 json_ok=True
+2026-10-04 23:00:34,311 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.29s tokens=237/1600 cache=3997/0 cost=$0.1296 json_ok=True
+2026-10-04 23:00:53,434 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.42s tokens=233/1353 cache=3997/0 cost=$0.1110 json_ok=True
+2026-10-04 23:01:10,159 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.31s tokens=232/1562 cache=3997/0 cost=$0.1266 json_ok=True
+2026-10-04 23:01:27,537 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.13s tokens=233/1607 cache=3997/0 cost=$0.1300 json_ok=True
+2026-10-04 23:01:46,967 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.94s tokens=241/1666 cache=3997/0 cost=$0.1346 json_ok=True
+2026-10-04 23:02:04,628 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.42s tokens=231/1486 cache=3997/0 cost=$0.1209 json_ok=True
+2026-10-04 23:02:21,389 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.24s tokens=231/1429 cache=3997/0 cost=$0.1166 json_ok=True
+2026-10-04 23:02:37,269 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.62s tokens=231/1503 cache=3997/0 cost=$0.1222 json_ok=True
+2026-10-04 23:02:53,182 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.69s tokens=230/1561 cache=3997/0 cost=$0.1265 json_ok=True
+2026-10-04 23:03:07,974 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.51s tokens=237/1383 cache=3997/0 cost=$0.1133 json_ok=True
+2026-10-04 23:03:23,726 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.52s tokens=239/1423 cache=3997/0 cost=$0.1163 json_ok=True
+2026-10-04 23:03:40,955 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.00s tokens=238/1568 cache=3997/0 cost=$0.1272 json_ok=True
+2026-10-04 23:03:57,374 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.83s tokens=231/1438 cache=3997/0 cost=$0.1173 json_ok=True
+2026-10-04 23:04:13,203 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.57s tokens=231/1458 cache=3997/0 cost=$0.1188 json_ok=True
+2026-10-04 23:04:30,814 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.02s tokens=229/1513 cache=3997/0 cost=$0.1229 json_ok=True
+2026-10-04 23:04:47,060 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.65s tokens=233/1524 cache=3997/0 cost=$0.1238 json_ok=True
+2026-10-04 23:05:04,997 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.75s tokens=233/1656 cache=3997/0 cost=$0.1337 json_ok=True
+2026-10-04 23:05:22,241 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.07s tokens=232/1489 cache=3997/0 cost=$0.1212 json_ok=True
+2026-10-04 23:05:40,938 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.43s tokens=237/1656 cache=3997/0 cost=$0.1338 json_ok=True
+2026-10-04 23:05:56,927 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.79s tokens=229/1545 cache=3997/0 cost=$0.1253 json_ok=True
+2026-10-04 23:06:14,264 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.01s tokens=227/1551 cache=3997/0 cost=$0.1257 json_ok=True
+2026-10-04 23:06:32,906 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.37s tokens=236/1618 cache=3997/0 cost=$0.1309 json_ok=True
+2026-10-04 23:06:49,022 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.89s tokens=233/1556 cache=3997/0 cost=$0.1262 json_ok=True
+2026-10-04 23:07:06,612 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.15s tokens=232/1636 cache=3997/0 cost=$0.1322 json_ok=True
+2026-10-04 23:07:25,658 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.64s tokens=232/1551 cache=3997/0 cost=$0.1258 json_ok=True
+2026-10-04 23:07:42,908 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.93s tokens=238/1577 cache=3997/0 cost=$0.1278 json_ok=True
+2026-10-04 23:07:58,868 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.57s tokens=231/1379 cache=3997/0 cost=$0.1129 json_ok=True
+2026-10-04 23:08:20,577 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.31s tokens=233/1710 cache=3997/0 cost=$0.1377 json_ok=True
+2026-10-04 23:08:35,608 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.66s tokens=239/1368 cache=3997/0 cost=$0.1122 json_ok=True
+2026-10-04 23:08:52,830 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.90s tokens=236/1587 cache=3997/0 cost=$0.1286 json_ok=True
+2026-10-04 23:09:10,070 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.94s tokens=231/1568 cache=3997/0 cost=$0.1271 json_ok=True
+2026-10-04 23:09:26,654 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.74s tokens=231/1409 cache=3997/0 cost=$0.1151 json_ok=True
+2026-10-04 23:09:43,986 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.05s tokens=232/1556 cache=3997/0 cost=$0.1262 json_ok=True
+2026-10-04 23:10:00,765 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.53s tokens=237/1577 cache=3997/0 cost=$0.1278 json_ok=True
+2026-10-04 23:10:19,567 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.50s tokens=233/1654 cache=3997/0 cost=$0.1335 json_ok=True
+2026-10-04 23:10:37,503 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.56s tokens=238/1616 cache=3997/0 cost=$0.1308 json_ok=True
+2026-10-05 00:00:51,036 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=51.03s tokens=81125/3193 searches=5/5 cost=$1.5064 json_ok=True
+2026-10-05 12:00:03,444 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'
+2026-10-06 14:54:43,273 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=OPEN&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-10-07 10:54:14,748 [WARNING] backend.services.news: news _http_get(https://feeds.finance.yahoo.com/rss/2.0/headline?s=IPX&region=US&lang=en-US) fallo: HTTP Error 502: 
+2026-10-11 23:00:17,920 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.18s tokens=230/1593 cache=0/3997 cost=$0.1979 json_ok=True
+2026-10-11 23:00:43,943 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=25.72s tokens=237/2148 cache=3997/0 cost=$0.1707 json_ok=True
+2026-10-11 23:01:01,379 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.80s tokens=233/1458 cache=3997/0 cost=$0.1188 json_ok=True
+2026-10-11 23:01:15,957 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.35s tokens=232/1352 cache=3997/0 cost=$0.1109 json_ok=True
+2026-10-11 23:01:33,686 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.08s tokens=233/1559 cache=3997/0 cost=$0.1264 json_ok=True
+2026-10-11 23:01:51,225 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.17s tokens=241/1591 cache=3997/0 cost=$0.1289 json_ok=True
+2026-10-11 23:02:16,480 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=24.85s tokens=231/2079 cache=3997/0 cost=$0.1654 json_ok=True
+2026-10-11 23:02:31,380 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.24s tokens=231/1273 cache=3997/0 cost=$0.1049 json_ok=True
+2026-10-11 23:02:44,698 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=12.85s tokens=231/1282 cache=3997/0 cost=$0.1056 json_ok=True
+2026-10-11 23:03:01,706 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.66s tokens=230/1607 cache=3997/0 cost=$0.1300 json_ok=True
+2026-10-11 23:03:18,838 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.84s tokens=237/1631 cache=3997/0 cost=$0.1319 json_ok=True
+2026-10-11 23:03:37,701 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.38s tokens=239/1713 cache=3997/0 cost=$0.1381 json_ok=True
+2026-10-11 23:03:53,568 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.30s tokens=238/1445 cache=3997/0 cost=$0.1179 json_ok=True
+2026-10-11 23:04:09,447 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.47s tokens=231/1433 cache=3997/0 cost=$0.1169 json_ok=True
+2026-10-11 23:04:24,590 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.81s tokens=231/1352 cache=3997/0 cost=$0.1109 json_ok=True
+2026-10-11 23:04:39,369 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.24s tokens=229/1333 cache=3997/0 cost=$0.1094 json_ok=True
+2026-10-11 23:04:56,314 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.39s tokens=233/1543 cache=3997/0 cost=$0.1252 json_ok=True
+2026-10-11 23:05:13,183 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.55s tokens=233/1573 cache=3997/0 cost=$0.1275 json_ok=True
+2026-10-11 23:05:30,761 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.35s tokens=232/1633 cache=3997/0 cost=$0.1320 json_ok=True
+2026-10-11 23:05:48,323 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.91s tokens=237/1462 cache=3997/0 cost=$0.1192 json_ok=True
+2026-10-11 23:06:06,663 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.77s tokens=229/1613 cache=3997/0 cost=$0.1304 json_ok=True
+2026-10-11 23:06:24,275 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.28s tokens=227/1444 cache=3997/0 cost=$0.1177 json_ok=True
+2026-10-11 23:06:40,663 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.09s tokens=236/1576 cache=3997/0 cost=$0.1277 json_ok=True
+2026-10-11 23:06:57,959 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.01s tokens=233/1632 cache=3997/0 cost=$0.1319 json_ok=True
+2026-10-11 23:07:17,536 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.95s tokens=232/1701 cache=3997/0 cost=$0.1371 json_ok=True
+2026-10-11 23:07:34,815 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.84s tokens=232/1469 cache=3997/0 cost=$0.1197 json_ok=True
+2026-10-11 23:07:51,016 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.85s tokens=238/1546 cache=3997/0 cost=$0.1255 json_ok=True
+2026-10-11 23:08:05,832 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.07s tokens=231/1349 cache=3997/0 cost=$0.1106 json_ok=True
+2026-10-11 23:08:24,029 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.87s tokens=233/1669 cache=3997/0 cost=$0.1347 json_ok=True
+2026-10-11 23:08:37,992 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=13.63s tokens=239/1337 cache=3997/0 cost=$0.1099 json_ok=True
+2026-10-11 23:08:53,590 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.39s tokens=236/1430 cache=3997/0 cost=$0.1168 json_ok=True
+2026-10-11 23:09:10,692 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.72s tokens=231/1595 cache=3997/0 cost=$0.1291 json_ok=True
+2026-10-11 23:09:26,615 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.60s tokens=231/1391 cache=3997/0 cost=$0.1138 json_ok=True
+2026-10-11 23:09:45,507 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.04s tokens=232/1639 cache=3997/0 cost=$0.1324 json_ok=True
+2026-10-11 23:10:02,347 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.52s tokens=237/1581 cache=3997/0 cost=$0.1281 json_ok=True
+2026-10-11 23:10:22,160 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.50s tokens=233/1713 cache=3997/0 cost=$0.1380 json_ok=True
+2026-10-11 23:10:39,410 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.86s tokens=238/1617 cache=3997/0 cost=$0.1308 json_ok=True
+2026-10-12 00:00:56,803 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=56.79s tokens=102321/2827 searches=5/5 cost=$1.7968 json_ok=True
+2026-10-12 12:00:02,332 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'
+2026-10-17 10:00:41,853 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=41.83s tokens=333/3443 cache=0/1748 cost=$0.2960 json_ok=True
+2026-10-18 10:00:03,058 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=3.02s tokens=270/207 cache=0/1751 cost=$0.0524 json_ok=True
+2026-10-18 10:00:37,241 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=34.17s tokens=323/2527 cache=0/1758 cost=$0.2273 json_ok=True
+2026-10-18 10:01:09,530 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=32.28s tokens=324/2523 cache=0/1759 cost=$0.2271 json_ok=True
+2026-10-18 10:01:43,786 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=34.25s tokens=325/2875 cache=0/1760 cost=$0.2535 json_ok=True
+2026-10-18 10:02:13,975 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=30.18s tokens=333/2399 cache=0/1752 cost=$0.2178 json_ok=True
+2026-10-18 10:02:44,756 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=30.77s tokens=319/2524 cache=0/1748 cost=$0.2269 json_ok=True
+2026-10-18 23:00:16,833 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.13s tokens=230/1491 cache=0/3997 cost=$0.1902 json_ok=True
+2026-10-18 23:00:34,555 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.06s tokens=236/1578 cache=3997/0 cost=$0.1279 json_ok=True
+2026-10-18 23:00:51,484 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.21s tokens=233/1606 cache=3997/0 cost=$0.1299 json_ok=True
+2026-10-18 23:01:08,474 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.52s tokens=232/1549 cache=3997/0 cost=$0.1257 json_ok=True
+2026-10-18 23:01:25,677 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.98s tokens=233/1607 cache=3997/0 cost=$0.1300 json_ok=True
+2026-10-18 23:01:43,060 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.08s tokens=241/1583 cache=3997/0 cost=$0.1283 json_ok=True
+2026-10-18 23:01:59,811 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.42s tokens=231/1466 cache=3997/0 cost=$0.1194 json_ok=True
+2026-10-18 23:02:15,635 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.28s tokens=231/1449 cache=3997/0 cost=$0.1181 json_ok=True
+2026-10-18 23:02:32,337 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.32s tokens=231/1403 cache=3997/0 cost=$0.1147 json_ok=True
+2026-10-18 23:02:48,381 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.78s tokens=230/1570 cache=3997/0 cost=$0.1272 json_ok=True
+2026-10-18 23:03:04,117 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.46s tokens=237/1356 cache=3997/0 cost=$0.1113 json_ok=True
+2026-10-18 23:03:21,925 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.52s tokens=239/1651 cache=3997/0 cost=$0.1334 json_ok=True
+2026-10-18 23:03:38,995 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.85s tokens=238/1634 cache=3997/0 cost=$0.1321 json_ok=True
+2026-10-18 23:03:55,075 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.85s tokens=231/1562 cache=3997/0 cost=$0.1266 json_ok=True
+2026-10-18 23:04:08,444 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=13.14s tokens=231/1313 cache=3997/0 cost=$0.1079 json_ok=True
+2026-10-18 23:04:24,650 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.96s tokens=229/1529 cache=3997/0 cost=$0.1241 json_ok=True
+2026-10-18 23:04:40,905 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.95s tokens=233/1496 cache=3997/0 cost=$0.1217 json_ok=True
+2026-10-18 23:04:57,692 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.55s tokens=233/1415 cache=3997/0 cost=$0.1156 json_ok=True
+2026-10-18 23:05:15,199 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.02s tokens=232/1592 cache=3997/0 cost=$0.1289 json_ok=True
+2026-10-18 23:05:34,199 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.66s tokens=237/1656 cache=3997/0 cost=$0.1338 json_ok=True
+2026-10-18 23:06:01,368 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=26.95s tokens=229/2211 cache=3997/0 cost=$0.1753 json_ok=True
+2026-10-18 23:06:20,726 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.16s tokens=227/1556 cache=3997/0 cost=$0.1261 json_ok=True
+2026-10-18 23:06:39,731 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.53s tokens=236/1681 cache=3997/0 cost=$0.1356 json_ok=True
+2026-10-18 23:06:56,859 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.81s tokens=233/1584 cache=3997/0 cost=$0.1283 json_ok=True
+2026-10-18 23:07:15,247 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.87s tokens=232/1624 cache=3997/0 cost=$0.1313 json_ok=True
+2026-10-18 23:07:30,305 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.70s tokens=232/1372 cache=3997/0 cost=$0.1124 json_ok=True
+2026-10-18 23:07:47,177 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.60s tokens=238/1539 cache=3997/0 cost=$0.1250 json_ok=True
+2026-10-18 23:08:03,375 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=15.86s tokens=231/1422 cache=3997/0 cost=$0.1161 json_ok=True
+2026-10-18 23:08:22,715 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=19.07s tokens=233/1680 cache=3997/0 cost=$0.1355 json_ok=True
+2026-10-18 23:08:39,680 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.63s tokens=239/1585 cache=3997/0 cost=$0.1285 json_ok=True
+2026-10-18 23:08:56,982 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.88s tokens=236/1626 cache=3997/0 cost=$0.1315 json_ok=True
+2026-10-18 23:09:13,602 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.12s tokens=231/1537 cache=3997/0 cost=$0.1247 json_ok=True
+2026-10-18 23:09:29,195 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=14.94s tokens=231/1367 cache=3997/0 cost=$0.1120 json_ok=True
+2026-10-18 23:09:47,784 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=17.79s tokens=232/1610 cache=3997/0 cost=$0.1302 json_ok=True
+2026-10-18 23:10:04,504 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.35s tokens=237/1429 cache=3997/0 cost=$0.1167 json_ok=True
+2026-10-18 23:10:27,847 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=18.75s tokens=233/1592 cache=3997/0 cost=$0.1289 json_ok=True
+2026-10-18 23:10:45,994 [INFO] backend.services.llm: LLM call — model=claude-opus-4-8 latency=16.15s tokens=238/1411 cache=3997/0 cost=$0.1154 json_ok=True
+2026-10-19 00:00:46,717 [INFO] backend.services.llm: LLM+web_search — model=claude-opus-4-8 latency=46.71s tokens=75375/2879 searches=5/5 cost=$1.3965 json_ok=True
+2026-10-19 12:00:03,571 [INFO] backend.services.mailer: mailer SENT — to=juan.brana@gmail.com subject='[BORJA · REPORTE] Reporte semanal · Estado atención requerida'
+2026-10-26 17:12:17,692 [WARNING] backend.services.market_data: get_price_snapshot(BESI) fallo: RetryError[<Future at 0x7f33c1a78b90 state=finished raised HTTPError>]
+2026-10-26 17:12:27,636 [WARNING] backend.services.market_data: get_price_snapshot(SOI) fallo: RetryError[<Future at 0x7f33c1a6f710 state=finished raised HTTPError>]
+2026-10-26 17:12:31,595 [WARNING] backend.services.market_data: get_price_snapshot(AIXA) fallo: RetryError[<Future at 0x7f33c1a6edd0 state=finished raised HTTPError>]
+2026-10-26 17:12:41,969 [WARNING] backend.services.market_data: get_price_snapshot(ABBN) fallo: RetryError[<Future at 0x7f33c1a876d0 state=finished raised HTTPError>]
+2026-10-26 17:12:45,247 [WARNING] backend.services.market_data: get_price_snapshot(SIE) fallo: RetryError[<Future at 0x7f33c1a84ed0 state=finished raised HTTPError>]
+2026-10-26 17:12:48,523 [WARNING] backend.services.market_data: get_price_snapshot(LR) fallo: RetryError[<Future at 0x7f33c1a7f2d0 state=finished raised HTTPError>]
+2026-10-26 17:12:58,118 [WARNING] backend.services.market_data: get_price_snapshot(HPS.A) fallo: RetryError[<Future at 0x7f33c1a78890 state=finished raised HTTPError>]
+2026-10-26 17:13:02,695 [WARNING] backend.services.market_data: get_price_snapshot(WEGE3) fallo: RetryError[<Future at 0x7f33c1a869d0 state=finished raised HTTPError>]
+2026-10-26 17:13:06,161 [WARNING] backend.services.market_data: get_price_snapshot(PRY) fallo: RetryError[<Future at 0x7f33c1a87b10 state=finished raised HTTPError>]
+2026-10-26 17:13:09,519 [WARNING] backend.services.market_data: get_price_snapshot(NEX) fallo: RetryError[<Future at 0x7f33c1a8dd90 state=finished raised HTTPError>]
+2026-10-26 17:13:12,815 [WARNING] backend.services.market_data: get_price_snapshot(NKT) fallo: RetryError[<Future at 0x7f33c1a8e650 state=finished raised HTTPError>]
+2026-10-26 17:13:16,800 [WARNING] backend.services.market_data: get_price_snapshot(WRT1V) fallo: RetryError[<Future at 0x7f33c1a97c10 state=finished raised HTTPError>]
+2026-10-26 17:13:23,097 [WARNING] backend.services.market_data: get_price_snapshot(IFX) fallo: RetryError[<Future at 0x7f33c1a87590 state=finished raised HTTPError>]
+2026-10-26 17:13:28,587 [WARNING] backend.services.market_data: get_price_snapshot(KAP) fallo: RetryError[<Future at 0x7f33c1a951d0 state=finished raised HTTPError>]
+2026-10-26 17:13:32,320 [WARNING] backend.services.market_data: get_price_snapshot(U.UN) fallo: RetryError[<Future at 0x7f33c1a87110 state=finished raised HTTPError>]
+2026-10-26 17:13:36,599 [WARNING] backend.services.market_data: get_price_snapshot(GLEN) fallo: RetryError[<Future at 0x7f33c1a6d390 state=finished raised HTTPError>]
+2026-10-26 17:13:39,863 [WARNING] backend.services.market_data: get_price_snapshot(ANTO) fallo: RetryError[<Future at 0x7f33c1a7f2d0 state=finished raised HTTPError>]
+2026-10-26 17:13:43,118 [WARNING] backend.services.market_data: get_price_snapshot(IVN) fallo: RetryError[<Future at 0x7f33c1a8ea90 state=finished raised HTTPError>]
+2026-10-26 17:13:46,793 [WARNING] backend.services.market_data: get_price_snapshot(FM) fallo: RetryError[<Future at 0x7f33c1a8f890 state=finished raised HTTPError>]
+2026-10-26 17:13:50,455 [WARNING] backend.services.market_data: get_price_snapshot(CS) fallo: RetryError[<Future at 0x7f33c1a7f9d0 state=finished raised HTTPError>]
+2026-10-26 17:13:56,766 [WARNING] backend.services.market_data: get_price_snapshot(TPRO) fallo: RetryError[<Future at 0x7f33c1a7ba90 state=finished raised HTTPError>]
+2026-10-26 17:14:01,362 [WARNING] backend.services.market_data: get_price_snapshot(MTLN) fallo: RetryError[<Future at 0x7f33c1a8ef10 state=finished raised HTTPError>]

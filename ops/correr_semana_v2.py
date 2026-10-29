@@ -89,6 +89,9 @@ def main() -> int:
     ap.add_argument("--capital", type=float, default=100_000.0, help="capital inicial del paper (1a vez)")
     ap.add_argument("--cupo", type=int, default=0, help="cupo de cobertura: nombres nuevos a promover")
     ap.add_argument("--bootstrap", action="store_true", help="primera pasada: promueve todos los nuevos")
+    ap.add_argument("--universo", action="store_true",
+                    help="armar candidatos desde TODO nx_empresa con señales reales (el embudo decide qué va "
+                         "a deep), en vez de forzar los tickers pasados")
     ap.add_argument("--sin-opus-solo", action="store_true",
                     help="no correr el baseline 'Opus+web solo' de Fase 5 (ahorra ~$0.5-1)")
     args = ap.parse_args()
@@ -124,13 +127,24 @@ def main() -> int:
     sin_precio = [t for t in tickers if t not in precios]
     if sin_precio:
         print(f"⚠️  sin precio (se saltean en el paper): {sin_precio}")
+    # --universo (r3 #7): candidatos desde TODO nx con señales reales (el Triage/embudo filtra qué va a deep).
     from backend.database import session_scope
+    if args.universo:
+        from backend.agentes.universo import candidatos_del_universo
+        with session_scope() as s_nx:
+            candidatos = candidatos_del_universo(s_nx, hoy=date.today())
+        tickers = [c[0] for c in candidatos]
+        snaps = recolectar_snapshots(tickers)
+        precios = precios_de(snaps)
+        print(f"universo: {len(candidatos)} candidatos triageados (el embudo decide cuáles van a deep)")
+    else:
+        candidatos = _candidatos(tickers)
     with session_scope() as s_nx:
         contexto = contexto_de(tickers, snaps, session=s_nx)
 
     paper = abrir_paper(capital_inicial=args.capital, fecha=date.today())
     try:
-        res = runner.correr(_candidatos(tickers), session=paper, precios=precios, contexto=contexto,
+        res = runner.correr(candidatos, session=paper, precios=precios, contexto=contexto,
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap)
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
@@ -142,13 +156,18 @@ def main() -> int:
         try:
             from backend.agentes.carteras_sombra import LedgerSombras, SnapshotSombra
             from backend.agentes.opus_solo import OpusSolo
+            # PARIDAD de gasto (r3 #3): darle al baseline búsquedas proporcionales a lo que corrió el comité
+            # (~9 búsquedas por nombre ANALIZADO: 6 Analista + 3 Bear).
+            n_analizados = sum(1 for d in res.research.decisiones if d.accion == "analizado")
+            max_web = max(6, n_analizados * 9)
             r_os = OpusSolo(Agente("opus_solo", "opus_solo_v1", M_OPUS)).elegir(
-                tickers, peso_max=float(ips.cfg.get("peso_max_nombre", 0.20)))
+                tickers, peso_max=float(ips.cfg.get("peso_max_nombre", 0.20)), max_web=max_web)
             LedgerSombras().registrar(SnapshotSombra(
                 fecha=date.today().isoformat(), cartera="opus_solo", pesos=r_os.pesos,
                 precios={t: precios[t] for t in r_os.pesos if t in precios}))
             costo = r_os.meta.cost_usd if r_os.meta else 0.0
-            print(f"opus_solo (baseline Fase 5): {r_os.pesos}  (${costo:.4f})")
+            print(f"opus_solo (baseline Fase 5, max_web={max_web}): {r_os.pesos}  "
+                  f"(${costo:.4f} vs comité ${res.research.gastado_usd:.4f})")
         except Exception as e:  # noqa: BLE001
             print(f"aviso: baseline opus_solo falló: {e}")
 

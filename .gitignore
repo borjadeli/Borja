@@ -17,3 +17,8 @@ data/
 # SO / editor
 .DS_Store
 *.swp
+
+# runtime/scratch
+nohup.out
+uvicorn_manual.log
+solo

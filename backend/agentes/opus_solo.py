@@ -19,7 +19,10 @@ from backend.agentes.schemas import AgentMeta
 PROMPT_VERSION = "opus_solo_v1"
 _PROMPT = (Path(__file__).resolve().parent.parent.parent / "prompts" / "opus_solo_v1.md").read_text()
 
-WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 6}
+def _web_tool(max_uses: int) -> dict:
+    return {"type": "web_search_20260209", "name": "web_search", "max_uses": max(1, max_uses)}
+
+
 _S = {"type": "string"}
 
 
@@ -50,7 +53,9 @@ class OpusSolo:
         self.ag = agente
 
     def elegir(self, tickers: list[str], *, caps_texto: str = "", peso_max: float = 0.20,
-               max_tokens: int = 6144) -> ResultadoOpusSolo:
+               max_web: int = 6, max_tokens: int = 6144) -> ResultadoOpusSolo:
+        """`max_web` = presupuesto de búsquedas, para PARIDAD con el comité (r3 #3): el caller lo setea
+        proporcional a lo que gastó el comité (~9 búsquedas por nombre analizado)."""
         user = (
             f"Fecha de hoy: {date.today().isoformat()}\n"
             f"Universo del ciclo: {', '.join(t.upper() for t in tickers)}\n"
@@ -59,7 +64,7 @@ class OpusSolo:
             f"Podés quedarte parcial o 100% en caja si no hay convicción."
         )
         payload, _fuentes, meta = self.ag.agentico(
-            system=_PROMPT, user=user, tools=[WEB_SEARCH_TOOL, EMITIR_CARTERA_TOOL],
+            system=_PROMPT, user=user, tools=[_web_tool(max_web), EMITIR_CARTERA_TOOL],
             emisor="emitir_cartera", max_tokens=max_tokens)
         if payload is None:
             return ResultadoOpusSolo(pesos={}, meta=meta)       # no emitió → 100% caja

@@ -2,14 +2,17 @@
 
 > **Fuente viva del estado.** Reemplaza al doc 32 (que describe el estado v1). Si algo acá contradice a un
 > doc más viejo sobre *qué está hecho / qué sigue*, gana este. Directiva: doc 51 · arquitectura/plan: doc 52.
-> Última actualización: **2026-10-27**.
+> Última actualización: **2026-10-29**.
 
 ## Dónde estamos
-**FASE 4 (PM + Auditor + IPS + ledger) — en curso: la CAPA DE DECISIÓN está completa y testeada** (IPS,
-ledger de decisiones, PM, Auditor, orquestador de decisión). Fase 3 componentes completos (falta solo el
-smoke real en vivo). Fases 1 y 2 completas. Ramas: `destete-v2-fase1/2/3` (commiteadas; Fase 4 sigue
-commiteando sobre `destete-v2-fase3`; pendientes de push con token fresco y de merge del PR 1). El cambio
-de dirección v2 está cerrado (doc 51), arquitectura/plan en doc 52.
+**FASE 4 + P1 + EMBUDO completos y validados en vivo; el PM ya compró (OKLO 3%).** El comité corre
+end-to-end (fuente_xbrl point-in-time + calculadoras → Analista/Bear/Verificador con contraste XBRL, clase
+epistémica por URL y protocolo de frescura → PM bajo IPS → Auditor → paper). **Embudo** de priorización
+construido (doc 64): materialidad por ítem de 8-K, precio residual normalizado, earnings diferido, bootstrap
+acelerado, presupuesto mensual con arrastre, `candidatos_del_universo` cableado (`--universo`). **4 rondas de
+auditoría externa** trianguladas y cerradas (P0/r2 docs 57-59, embudo+verificador docs 61-64, frescura r3 doc
+65). ~660 tests verdes. Rama `destete-v2-fase3` (en GitHub). **Falta correr:** cablear al scheduler + el
+smoke #3 de validación de frescura. El cambio de dirección v2 está cerrado (doc 51), arquitectura/plan doc 52.
 
 **Hecho hasta ahora (todo commiteado, 609 tests verdes):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.

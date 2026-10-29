@@ -152,10 +152,12 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
             hay_review = True
             motivos.append(f"central {c.claim_id}: fuente NO primaria ({clase}) — no es un hecho verificado")
 
-        # 1d — vigencia: un claim central cuya fuente es ANTERIOR al último filing periódico del pack está
-        # desactualizado (hay data más nueva que no se incorporó) → REVIEW. Solo si NO se verificó por XBRL
-        # (el XBRL ya es point-in-time). `dato_vigente` deja de ser fijo True.
-        if es_central and ultimo_filing_periodico is not None and not (contraste is not None and contraste.ok):
+        # 1d — vigencia: un DATO FINANCIERO central (lleva `ref_metrica`) cuya fuente es ANTERIOR al último
+        # filing periódico y NO se pudo contrastar contra XBRL está desactualizado → REVIEW. Solo aplica a
+        # datos que se actualizan cada filing (caja/revenue/…), NO a hechos cualitativos (una licencia/OTA de
+        # mayo no se "vence" porque después salga un 10-Q; falso positivo detectado en el smoke #3).
+        if (es_central and c.ref_metrica and ultimo_filing_periodico is not None
+                and not (contraste is not None and contraste.ok)):
             sd = _fecha_iso(c.source_date)
             if sd is not None and sd < ultimo_filing_periodico:
                 hay_review = True

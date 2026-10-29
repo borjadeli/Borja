@@ -164,14 +164,25 @@ def test_r3_clase_ex99_en_sec_es_company_statement():
     assert clase_por_url("https://www.sec.gov/Archives/edgar/data/1/000/oklo-20260630.htm") == "primaria_regulatoria"
 
 
-def test_r3_central_mas_viejo_que_ultimo_filing_es_review():
-    # central con source_date de hace ~12m y hay un filing más nuevo en el pack → REVIEW por dato viejo (1d)
+def test_r3_dato_financiero_viejo_sin_contraste_es_review():
+    # dato financiero (con ref_metrica) de hace ~12m, sin contraste XBRL, y hay filing más nuevo → REVIEW (1d)
     c = sc.Claim(claim_id="c1", contenido="caja", tipo="hecho", source_url="https://sec.gov/a",
                  cited_text="x", source_date="2025-10-01", known_at="2025-10-01", materiality="central",
-                 verification="confirmed_by_filing")
+                 verification="confirmed_by_filing", ref_metrica="cash", valor_num=1.0, escala="B")
     d = _dossier([c], soporte=["c1"])
     r = verificar(d, ["https://sec.gov/a"], ultimo_filing_periodico=_date(2026, 8, 7), hoy=_date(2026, 10, 28))
     assert r.veredicto == "review" and any("dato viejo" in m for m in r.motivos)
+
+
+def test_r3_hecho_cualitativo_viejo_NO_se_vence():
+    # un hecho CUALITATIVO (sin ref_metrica: licencia/OTA regulatoria de mayo) NO es "dato viejo" aunque haya
+    # un 10-Q posterior — no se actualiza cada filing (falso positivo corregido tras el smoke #3).
+    c = sc.Claim(claim_id="c1", contenido="firmó OTA con el DOE", tipo="hecho", source_url="https://nrc.gov/b",
+                 cited_text="x", source_date="2026-05-18", known_at="2026-05-18", materiality="central",
+                 verification="confirmed_by_filing")
+    d = _dossier([c], soporte=["c1"])
+    r = verificar(d, FUENTES, ultimo_filing_periodico=_date(2026, 8, 7), hoy=_date(2026, 10, 28))
+    assert r.veredicto == "pass"
 
 
 def test_r3_falsador_vencido_es_fail():

@@ -217,9 +217,12 @@ class Orquestador:
                     continue
                 atk = self.bear.atacar(r_an.dossier)
                 costo += atk.meta.cost_usd
-                # el verificador recibe el pack (para contraste XBRL) + el known_at más nuevo (proxy del
-                # último filing, para la regla de vigencia 1d) + hoy (falsador vencido 1e).
-                knowns = [p.known_at for p in pack.puntos if p.known_at is not None]
+                # el verificador recibe el pack (para contraste XBRL) + el known_at más nuevo de los datos de
+                # FILING (XBRL), para la regla de vigencia 1d, + hoy (falsador vencido 1e). OJO: NO usar el
+                # max del pack entero — los datos de mercado (Yahoo) tienen known_at=hoy y contaminarían el
+                # proxy del "último filing" (bug detectado en el smoke #3: todo quedaba "dato viejo").
+                knowns = [p.known_at for p in pack.puntos
+                          if p.known_at is not None and "xbrl" in (p.source.name or "").lower()]
                 verif = self.verificar_fn(r_an.dossier, r_an.fuentes,
                                           pack={p.metric: p for p in pack.puntos},
                                           ultimo_filing_periodico=max(knowns) if knowns else None, hoy=hoy)

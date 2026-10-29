@@ -143,3 +143,29 @@ _Supuestos:_ ['El certificado de tipo se demora más allá de 2028 o exige cambi
 **Catalizadores:** Resultados del 3T26: caja, consumo de caja y estado del eIPP (2026-11); Primeras operaciones en EE.UU. bajo el eIPP (2026-12-31); Adjudicaciones por fases del programa de defensa híbrido/aut (2026-4T a 2027-1S); Avance de los ensayos finales de cumplimiento de la FAA (vue (2027); Nuevas ampliaciones de capital o programa ATM (continuo)
 
 **Motivos del Verificador:** ['tesis se apoya en declaración de empresa (C1)', 'tesis se apoya en declaración de empresa (C4)']
+
+
+# Smoke #3 (2026-10-29) — validación de frescura (r3)
+
+> Con fecha de hoy + contexto del mapa + protocolo de frescura + vigencia. OKLO→PASS (tras fix de
+> vigencia); RKLB/ACHR→REVIEW porque el Analista citó el EX-99 de earnings (company_statement) y su
+> revenue es trimestral (el pack solo tiene FY) → mejora anotada: pack con métricas Q.
+
+
+## OKLO — REVIEW
+- negocio: Oklo desarrolla Aurora, un reactor rápido refrigerado por sodio de tipo pileta (hasta 75 MWe; Aurora-INL arranca derrateado a ~45 MWe). Usa combustible metálico HALEU y el modelo es "build-own-operate
+- bull: El mercado castigó a Oklo junto con todo el sector (−61% en el año, SMR y NNE también cayeron) mientras la empresa ejecutaba. Groves llegó a criticidad en menos
+- bear: Oklo es un vehículo de emisión de acciones. Levantó US$1.900M en 2026 y ya abrió otro ATM de US$1.000M. Su primer reactor comercial no tiene licencia de la NRC 
+- falsador: Si al 2027-12-31 Oklo no presentó formalmente (y la NRC no aceptó a revisión) la COLA de Aurora, o anunció que el arranq (lím 2027-12-31)
+
+## RKLB — REVIEW
+- negocio: Rocket Lab (RKLB) está integrada verticalmente en el sector espacial. Tiene dos negocios: (1) Launch, con Electron (cohete chico, ya opera de forma recurrente: 98ª misión en oct-2026) y Neutron (cohet
+- bull: RKLB es el único competidor occidental creíble de SpaceX con integración vertical real. Space Systems más Electron ya generan un crecimiento de 60% interanual y
+- bear: El mercado pone precio de ganador a una empresa cuyo producto diferencial (Neutron) acumula demoras desde 2024 y nunca voló. El margen bruto se deteriora: la gu
+- falsador: Al 2027-12-31 Neutron completa su primer lanzamiento orbital exitoso. (lím 2027-12-31)
+
+## ACHR — REVIEW
+- negocio: Archer Aviation (ACHR) está desarrollando el eVTOL Midnight para taxis aéreos urbanos. Todavía no tiene ingresos recurrentes de aviones certificados. El poco revenue que reporta sale de operar el aero
+- bull: Archer es de los dos jugadores de eVTOL en EE.UU. más avanzados en certificación (cerró la Fase 3, C5). Tiene US$1.56B de liquidez (C1), que financian unos 2 añ
+- bear: Archer es una opción de certificación que vive de emitir acciones. Revenue del FY25 de US$0.3M, pérdida operativa de US$729M (C10) y burn en aumento (C2, C4), c
+- falsador: Archer empieza los vuelos for-credit de TIA con la FAA para Midnight y mantiene la liquidez por encima de US$1B sin una  (lím 2027-06-30)

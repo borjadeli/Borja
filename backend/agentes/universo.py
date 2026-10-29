@@ -28,6 +28,32 @@ def tickers_universo(session: Session) -> list[str]:
     return [t for t, e in rows if (e or "").lower() not in _ESTADOS_INACTIVOS]
 
 
+def contexto_mapa(session: Session, ticker: str) -> str:
+    """Contexto del CUELLO desde `nx_*` para el Analista (r3 #5): nodo primario (nombre, cluster, factor
+    macro, estado de confirmación) + las empresas vinculadas al mismo nodo (dependencias/competencia).
+    Texto plano; "" si el nombre no está mapeado. NO inventa — sale del mapa poblado en Fase 2."""
+    from backend.ledger.models import NxEmpresaNodo, NxNodo
+    tk = ticker.upper()
+    fila = session.execute(
+        select(NxNodo).join(NxEmpresaNodo, NxEmpresaNodo.nodo_id == NxNodo.id)
+        .where(NxEmpresaNodo.ticker == tk)
+        .order_by(NxEmpresaNodo.es_primario.desc(), NxNodo.id)).scalars().first()
+    if fila is None:
+        return ""
+    vinculadas = session.execute(
+        select(NxEmpresaNodo.ticker).where(NxEmpresaNodo.nodo_id == fila.id,
+                                           NxEmpresaNodo.ticker != tk)).scalars().all()
+    partes = [f"CUELLO: {fila.nombre}"]
+    if fila.cluster:
+        partes.append(f"cluster={fila.cluster}")
+    if fila.factor_macro:
+        partes.append(f"factor macro={fila.factor_macro}")
+    partes.append(f"estado del cuello={fila.estado_confirmacion}")
+    if vinculadas:
+        partes.append(f"empresas en el mismo cuello (competencia/dependencia): {', '.join(vinculadas[:12])}")
+    return " · ".join(partes)
+
+
 # Cursor de monitoreo inicial para empresas NUNCA analizadas (doc 64 §A1 bug): known_at=null NO puede
 # significar "todo el historial es nuevo" (dispararía el universo entero). Un nombre nuevo mira solo los
 # eventos materiales de los últimos N días, no toda su vida de filings.

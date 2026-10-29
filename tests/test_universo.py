@@ -78,3 +78,28 @@ def test_garantia_cache_no_oculta_evento_material():
                                     _f("4", "2026-10-22")],                   # ruido
                            precio_hist=None, es_posicion=True)
     assert s2.tiene_evento_fuerte is False and s2.hechos_nuevos == 0
+
+
+def test_contexto_mapa_arma_texto_desde_nx():
+    from types import SimpleNamespace as NS
+    from backend.agentes import universo as U
+    # stub de sesión: devuelve un nodo y sus empresas vinculadas
+    nodo = NS(id=1, nombre="HALEU supply", cluster="fuel", factor_macro="supply", estado_confirmacion="confirmado")
+    class _S:
+        def execute(self, *a, **k):
+            # 1ª llamada: el nodo; 2ª: tickers vinculados
+            if not hasattr(self, "_n"):
+                self._n = True
+                return NS(scalars=lambda: NS(first=lambda: nodo))
+            return NS(scalars=lambda: NS(all=lambda: ["LEU", "CCJ"]))
+    txt = U.contexto_mapa(_S(), "OKLO")
+    assert "HALEU supply" in txt and "fuel" in txt and "confirmado" in txt and "LEU" in txt
+
+
+def test_contexto_mapa_vacio_si_no_mapeado():
+    from types import SimpleNamespace as NS
+    from backend.agentes import universo as U
+    class _S:
+        def execute(self, *a, **k):
+            return NS(scalars=lambda: NS(first=lambda: None))
+    assert U.contexto_mapa(_S(), "ZZZ") == ""

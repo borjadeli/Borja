@@ -51,6 +51,17 @@ def _candidatos(tickers: list[str]) -> list[tuple[str, SenalesTriage, str]]:
     return [(t.upper(), señales, "") for t in tickers]
 
 
+def _contexto_mapa_fn(ticker: str) -> str:
+    """Contexto del cuello desde nx_* para el Analista (abre su propia sesión; fail-silent)."""
+    try:
+        from backend.agentes.universo import contexto_mapa
+        from backend.database import session_scope
+        with session_scope() as s:
+            return contexto_mapa(s, ticker)
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def _registrar_sombras(paper, precios, res) -> None:
     """Fase 5: registra el snapshot de carteras sombra del ciclo (pm / ew_pass / ETFs). No gasta API; si
     falla no debe tumbar la corrida."""
@@ -102,7 +113,7 @@ def main() -> int:
         ledger=ledger_pres,                              # tope mensual persistente / bootstrap (P0.4)
         cache=CacheDossiers(_CACHE_PATH),                # reutilización PERSISTENTE a disco (P0.2b)
         data_pack_fn=lambda tk: ensamblar(tk),
-        contexto_fn=lambda _tk: "",                      # contexto del cuello para el Analista: mejora futura
+        contexto_fn=_contexto_mapa_fn,                   # contexto del cuello desde nx_* (r3 #5)
     )
     decision = OrquestadorDecision(ips, LedgerDecisiones(), auditor=auditor)
     runner = RunnerSemanal(research=research, pm=pm, decision=decision)

@@ -231,3 +231,17 @@ def test_falla_en_un_nombre_no_tumba_el_ciclo():
     r = orq.correr_semana([("BOOM", _sen(), "h"), ("OKLO", _sen(), "h")], hoy=HOY)
     acc = {d.ticker: d.accion for d in r.decisiones}
     assert acc["BOOM"] == "error_analisis" and acc["OKLO"] == "analizado"
+
+
+def test_r3_hash_ignora_derivadas_volatiles():
+    # r3 #4: el hash NO debe cambiar si una métrica DERIVED (dilucion_12m_pct, que depende de shares Yahoo)
+    # varía; solo los ORIGINAL materiales cuentan.
+    from backend.agentes.provenance import DataKind, DataPoint, Source
+    src = Source(name="x")
+    def _pk(dil):
+        return DataPack(ticker="OKLO", as_of=HOY, puntos=[
+            DataPoint(entity="OKLO", metric="cash", value=1e9, unit="USD", kind=DataKind.ORIGINAL,
+                      source=src, known_at=HOY),
+            DataPoint(entity="OKLO", metric="dilucion_12m_pct", value=dil, unit="pct",
+                      kind=DataKind.DERIVED, source=src, known_at=HOY)])
+    assert hash_pack(_pk(19.0)) == hash_pack(_pk(19.3))

@@ -39,11 +39,14 @@ _METRICAS_VOLATILES = {"precio", "adv_30d_usd", "market_cap", "shares_outstandin
 
 
 def hash_pack(pack: DataPack) -> str:
-    """Hash de los insumos MATERIALES del data pack (hechos/filings/calculadoras) — clave de reutilización
-    del Dossier. EXCLUYE las métricas de mercado volátiles (precio/ADV/market cap/shares): que el precio se
-    mueva no invalida el análisis. Un dato material nuevo (otro valor u otro `known_at`, p.ej. un filing
-    nuevo) SÍ cambia el hash y fuerza re-análisis."""
-    materiales = [p for p in pack.puntos if p.metric not in _METRICAS_VOLATILES]
+    """Hash de los insumos MATERIALES ORIGINALES del data pack — clave de reutilización del Dossier.
+    EXCLUYE: (a) métricas de mercado volátiles (precio/ADV/market cap/shares) y (b) DataPoints DERIVED
+    (calculadoras): son función de los originales, y un derivado como `dilucion_12m_pct` puede moverse por
+    un insumo volátil (shares de Yahoo) sin que haya cambiado nada material (auditoría r3 #4). Si un
+    ORIGINAL material cambia (otro valor/`known_at`, p.ej. un filing nuevo) → el hash cambia y re-analiza."""
+    from backend.agentes.provenance import DataKind
+    materiales = [p for p in pack.puntos
+                  if p.metric not in _METRICAS_VOLATILES and p.kind == DataKind.ORIGINAL]
     base = ";".join(f"{p.metric}={p.value}@{p.known_at}"
                     for p in sorted(materiales, key=lambda x: (x.metric, str(x.known_at))))
     return hashlib.sha256(base.encode()).hexdigest()[:16]

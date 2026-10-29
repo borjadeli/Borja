@@ -51,6 +51,59 @@ def _candidatos(tickers: list[str]) -> list[tuple[str, SenalesTriage, str]]:
     return [(t.upper(), señales, "") for t in tickers]
 
 
+def _fechas_dossier(cache) -> dict:
+    """ticker → fecha del dossier cacheado (para el cursor de eventos del embudo)."""
+    return {tk: e.fecha for tk, e in getattr(cache, "_d", {}).items()}
+
+
+def _posiciones_paper(paper) -> set[str]:
+    from backend.ledger import core
+    return set(core.proyectar(paper, {})["posiciones"].keys())
+
+
+def _prioridad_cuello_fn(session):
+    """prioridad del cuello (0-2) desde nx_*: confirmado=2 · vigilancia=1 · promesa/otro=0. Determinista."""
+    from sqlalchemy import select
+    from backend.ledger.models import NxEmpresaNodo, NxNodo
+    _MAP = {"confirmado": 2, "vigilancia": 1}
+    def _fn(ticker: str) -> int:
+        fila = session.execute(
+            select(NxNodo.estado_confirmacion).join(NxEmpresaNodo, NxEmpresaNodo.nodo_id == NxNodo.id)
+            .where(NxEmpresaNodo.ticker == ticker.upper())
+            .order_by(NxEmpresaNodo.es_primario.desc(), NxNodo.id)).first()
+        return _MAP.get((fila[0] if fila else "").lower(), 0)
+    return _fn
+
+
+def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
+    """Imprime qué se analizaría bajo la lógica del EMBUDO (doc 64), SIN llamar a Analista/Bear/PM (r4 #1c).
+    FUERZAN deep: evento fuerte (red flag/dilución/8-K material/posición-con-evento) o precio fuerte (|z|).
+    Los nunca-analizados van por CUPO (no fuerzan). Earnings próximo / sin trigger → no van."""
+    from backend.agentes.embudo import precio_dispara
+    forzados, precio_fuerte, nuevos, saltados = [], [], [], []
+    for tk, s, resumen in candidatos:
+        if s.tiene_evento_fuerte or s.es_posicion:
+            forzados.append((tk, resumen))
+        elif precio_dispara(s.precio_vs_tesis_pct, None, es_posicion=False):
+            precio_fuerte.append((tk, resumen))
+        elif s.dias_desde_dossier is None:
+            nuevos.append((tk, s.prioridad_cuello))
+        else:
+            saltados.append(tk)
+    nuevos.sort(key=lambda x: -x[1])
+    promovidos = nuevos[:cupo]
+    n_deep = len(forzados) + len(precio_fuerte) + len(promovidos)
+    print("\n=== DRY-RUN --universo (lógica del embudo; sin gasto de Analista/Bear/PM) ===")
+    print(f"candidatos: {len(candidatos)}")
+    print(f"FORZADOS por evento fuerte/posición ({len(forzados)}):")
+    for tk, res in forzados:
+        print(f"  {tk:6s} {res[:74]}")
+    print(f"POR PRECIO FUERTE (|z|≥umbral) ({len(precio_fuerte)}): {[t for t, _ in precio_fuerte]}")
+    print(f"PROMOVIDOS por cupo ({len(promovidos)}/{cupo}): {[t for t, _ in promovidos]}")
+    print(f"nunca-analizados en espera: {len(nuevos) - len(promovidos)} · con dossier sin trigger: {len(saltados)}")
+    print(f"→ análisis profundos estimados: {n_deep}  ·  costo estimado: ~${n_deep * 0.68:.2f}")
+
+
 def _contexto_mapa_fn(ticker: str) -> str:
     """Contexto del cuello desde nx_* para el Analista (abre su propia sesión; fail-silent)."""
     try:
@@ -92,6 +145,9 @@ def main() -> int:
     ap.add_argument("--universo", action="store_true",
                     help="armar candidatos desde TODO nx_empresa con señales reales (el embudo decide qué va "
                          "a deep), en vez de forzar los tickers pasados")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="con --universo: imprime qué se analizaría (forzados/promovidos/saltados + costo) "
+                         "SIN gastar en Analista/Bear/PM")
     ap.add_argument("--sin-opus-solo", action="store_true",
                     help="no correr el baseline 'Opus+web solo' de Fase 5 (ahorra ~$0.5-1)")
     args = ap.parse_args()
@@ -127,16 +183,28 @@ def main() -> int:
     sin_precio = [t for t in tickers if t not in precios]
     if sin_precio:
         print(f"⚠️  sin precio (se saltean en el paper): {sin_precio}")
-    # --universo (r3 #7): candidatos desde TODO nx con señales reales (el Triage/embudo filtra qué va a deep).
+    # --universo (r3 #7 / r4 #1b): candidatos desde TODO nx con señales reales + fechas del cache +
+    # posiciones del paper + prioridad del cuello del mapa. El Triage/embudo filtra qué va a deep.
     from backend.database import session_scope
     if args.universo:
         from backend.agentes.universo import candidatos_del_universo
+        cache = CacheDossiers(_CACHE_PATH)
+        _paper_tmp = abrir_paper(capital_inicial=args.capital, fecha=date.today())
+        try:
+            posiciones = _posiciones_paper(_paper_tmp)
+        finally:
+            _paper_tmp.close()
         with session_scope() as s_nx:
-            candidatos = candidatos_del_universo(s_nx, hoy=date.today())
+            candidatos = candidatos_del_universo(
+                s_nx, hoy=date.today(), fechas_dossier=_fechas_dossier(cache),
+                posiciones=posiciones, prioridad_fn=_prioridad_cuello_fn(s_nx))
         tickers = [c[0] for c in candidatos]
+        print(f"universo: {len(candidatos)} candidatos triageados (posiciones={sorted(posiciones)})")
+        if args.dry_run:
+            _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6)
+            return 0
         snaps = recolectar_snapshots(tickers)
         precios = precios_de(snaps)
-        print(f"universo: {len(candidatos)} candidatos triageados (el embudo decide cuáles van a deep)")
     else:
         candidatos = _candidatos(tickers)
     with session_scope() as s_nx:

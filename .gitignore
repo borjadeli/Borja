@@ -22,3 +22,6 @@ data/
 nohup.out
 uvicorn_manual.log
 solo
+
+# logs de runtime (tienen datos del operador)
+logs/

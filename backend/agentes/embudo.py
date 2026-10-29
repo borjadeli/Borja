@@ -58,6 +58,16 @@ def es_red_flag(f) -> bool:
     return getattr(f, "tipo", "") == "8-K" and bool(_items(f) & ITEMS_8K_REDFLAG)
 
 
+def es_evento_fuerte(f) -> bool:
+    """¿Es un EVENTO FUERTE que fuerza reconsiderar la empresa aunque NO sea posición (r4 #1a)? Red flag +
+    dilución (S-1/S-3/424B5) + activismo (SC 13D) + 8-K material. Un 10-Q/10-K de RUTINA NO es fuerte por sí
+    solo (suma a hechos_nuevos → materialidad del Triage); solo fuerza si el nombre es posición en cartera."""
+    tipo = getattr(f, "tipo", "")
+    if es_red_flag(f) or tipo in FORMS_DILUCION or tipo in FORMS_ACTIVISMO:
+        return True
+    return tipo == "8-K" and bool(_items(f) & ITEMS_8K_MATERIALES)
+
+
 def _fecha(f) -> date | None:
     d = getattr(f, "fecha", None)
     return d.date() if isinstance(d, datetime) else (d if isinstance(d, date) else None)

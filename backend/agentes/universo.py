@@ -15,7 +15,7 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.agentes.embudo import es_red_flag, eventos_materiales_desde, precio_z
+from backend.agentes.embudo import es_evento_fuerte, eventos_materiales_desde, precio_z
 from backend.agentes.triage import SenalesTriage
 from backend.ledger.models import NxEmpresa
 
@@ -69,7 +69,10 @@ def señales_ticker(ticker: str, *, hoy: date, fecha_dossier: date | None, filin
     # Cursor: si ya hubo dossier, eventos POSTERIORES a él; si nunca se analizó, solo la ventana reciente.
     cursor = fecha_dossier if fecha_dossier is not None else hoy - timedelta(days=VENTANA_MONITOREO_INICIAL_DIAS)
     nuevos = eventos_materiales_desde(filings, desde=cursor)
-    tiene_evento = any(es_red_flag(f) for f in nuevos) or len(nuevos) > 0
+    # tiene_evento_fuerte (fuerza análisis + saltea caché): un evento fuerte de verdad (red flag/dilución/
+    # SC 13D/8-K material) para CUALQUIERA; un 10-Q/10-K de rutina SOLO si es posición (r4 #1a). El resto de
+    # los materiales suman a hechos_nuevos (→ el Triage juzga su materialidad), no fuerzan.
+    tiene_evento = any(es_evento_fuerte(f) for f in nuevos) or (es_posicion and len(nuevos) > 0)
 
     periodicos = sorted((f for f in (filings or []) if f.tipo in ("10-Q", "10-K")), key=lambda f: f.fecha)
     dias_a_evento = None

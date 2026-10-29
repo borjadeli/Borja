@@ -90,9 +90,12 @@ def _render_pack(pack: DataPack) -> str:
     # muestra known_at (point-in-time) de cada dato → el Analista ve qué tan fresca es su evidencia (r3 #1b).
     lineas = [f"- {p.metric} = {p.value} {p.unit} [{p.kind.value}, {p.source.name}, known_at={p.known_at}]"
               for p in pack.puntos]
-    knowns = [p.known_at for p in pack.puntos if p.known_at is not None]
+    # "último filing periódico": solo known_at de datos XBRL/filing — NO del mercado (Yahoo, known_at=hoy),
+    # que contaminaría la fecha (mismo bug que se corrigió en el Verificador; r4 #3).
+    knowns = [p.known_at for p in pack.puntos
+              if p.known_at is not None and "xbrl" in (p.source.name or "").lower()]
     if knowns:
-        lineas.append(f"(último dato disponible: {max(knowns)})")
+        lineas.append(f"(último filing periódico disponible: {max(knowns)})")
     return "\n".join(lineas)
 
 

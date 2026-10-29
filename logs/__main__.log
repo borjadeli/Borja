@@ -1,9 +1,0 @@
-2026-09-04 16:36:04,353 [INFO] __main__: sizing S: cap=5.4% dest=hb
-2026-09-04 16:36:04,902 [INFO] __main__: sizing NET: cap=4.0% dest=hb
-2026-09-04 16:36:05,394 [INFO] __main__: sizing VRNS: cap=4.0% dest=hb
-2026-09-04 16:36:05,882 [INFO] __main__: sizing PL: cap=4.0% dest=hb
-2026-09-04 16:36:06,573 [INFO] __main__: sizing KTOS: cap=4.0% dest=hb
-2026-09-04 16:36:07,147 [INFO] __main__: sizing LEU: cap=4.0% dest=hb
-2026-09-04 16:36:07,643 [INFO] __main__: sizing SDGR: cap=4.0% dest=hb
-2026-09-04 16:36:08,286 [INFO] __main__: sizing AAOI: cap=0.0% dest=carril
-2026-09-04 16:36:08,732 [INFO] __main__: sizing RKLB: cap=0.0% dest=carril

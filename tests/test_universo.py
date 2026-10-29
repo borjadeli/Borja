@@ -103,3 +103,26 @@ def test_contexto_mapa_vacio_si_no_mapeado():
         def execute(self, *a, **k):
             return NS(scalars=lambda: NS(first=lambda: None))
     assert U.contexto_mapa(_S(), "ZZZ") == ""
+
+
+# --- r4 #1a: 10-Q de rutina fuerza solo para posiciones ---
+
+def test_r4_no_posicion_con_10q_rutina_no_forzada():
+    # un 10-Q de rutina (sin red flag/dilución) en una NO-posición → no es evento fuerte (suma a hechos_nuevos)
+    s, _ = señales_ticker("X", hoy=HOY, fecha_dossier=date(2026, 10, 1),
+                          filings=[_f("10-Q", "2026-10-20")], precio_hist=None, es_posicion=False)
+    assert s.tiene_evento_fuerte is False and s.hechos_nuevos == 1
+
+
+def test_r4_posicion_con_10q_forzada():
+    # el mismo 10-Q de rutina, pero el nombre ES posición → evento fuerte (monitoreo de cartera)
+    s, _ = señales_ticker("X", hoy=HOY, fecha_dossier=date(2026, 10, 1),
+                          filings=[_f("10-Q", "2026-10-20")], precio_hist=None, es_posicion=True)
+    assert s.tiene_evento_fuerte is True
+
+
+def test_r4_no_posicion_con_424b5_forzada():
+    # dilución (424B5) es evento fuerte aunque no sea posición
+    s, _ = señales_ticker("X", hoy=HOY, fecha_dossier=date(2026, 10, 1),
+                          filings=[_f("424B5", "2026-10-20")], precio_hist=None, es_posicion=False)
+    assert s.tiene_evento_fuerte is True

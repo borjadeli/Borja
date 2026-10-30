@@ -87,7 +87,18 @@ def _orq(ledger, analista=None, verificar_fn=None, cache=None):
 
 
 def _sen(**kw):
-    base = dict(dias_desde_dossier=None, hechos_nuevos=1, dias_a_evento=None, precio_vs_tesis_pct=None)
+    # por default: un nombre que AMERITA deep (evento fuerte) — el embudo (seleccionar_para_deep) decide por
+    # las señales, no por el research_profundo del Triage stub.
+    base = dict(dias_desde_dossier=10, hechos_nuevos=1, dias_a_evento=None, precio_vs_tesis_pct=None,
+                tiene_evento_fuerte=True)
+    base.update(kw)
+    return SenalesTriage(**base)
+
+
+def _sin_trigger(**kw):
+    # señal que NO amerita deep: con dossier, sin evento/posición/precio/earnings → el embudo la deja en espera.
+    base = dict(dias_desde_dossier=10, hechos_nuevos=0, dias_a_evento=None, precio_vs_tesis_pct=None,
+                tiene_evento_fuerte=False, es_posicion=False)
     base.update(kw)
     return SenalesTriage(**base)
 
@@ -101,12 +112,10 @@ def test_flujo_feliz_analiza_bajo_presupuesto():
     assert r.gastado_usd > 0 and all(d.verif.veredicto == "pass" for d in r.decisiones)
 
 
-def test_triage_descarta_no_llama_analista():
+def test_sin_trigger_no_va_a_deep():
     an = _Analista()
-    orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
-                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(),
-                      data_pack_fn=_pack)
-    r = orq.correr_semana([("OKLO", _sen(), "")], hoy=HOY)
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an)
+    r = orq.correr_semana([("OKLO", _sin_trigger(), "")], hoy=HOY)   # sin trigger → el embudo no lo manda
     assert r.decisiones[0].accion == "triage_descarta" and an.llamadas == 0
 
 
@@ -115,7 +124,8 @@ def test_reutiliza_dossier_vigente_sin_llamar_analista():
     cache = CacheDossiers()
     cache.guardar("OKLO", hash_pack(_pack("OKLO")), _dossier(), _verif()( _dossier(), []), HOY)
     orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an, cache=cache)
-    r = orq.correr_semana([("OKLO", _sen(), "")], hoy=HOY)
+    # posición (va a deep) SIN evento fuerte (no saltea el cache) + dossier vigente → reutiliza
+    r = orq.correr_semana([("OKLO", _sin_trigger(es_posicion=True), "")], hoy=HOY)
     assert r.decisiones[0].accion == "reutilizado" and an.llamadas == 0
 
 
@@ -179,20 +189,20 @@ def test_3_cupo_de_cobertura_promueve_un_nombre_nuevo():
     an = _Analista()
     orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
                       ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
-    # sin cupo → el nombre nuevo se descarta (prioridad 1 < 2)
-    assert orq.correr_semana([("NUEVA", _sen(), "")], hoy=HOY).decisiones[0].accion == "triage_descarta"
+    # nuevo (sin dossier) sin trigger: sin cupo → en espera; con cupo=1 → promovido y analizado
+    nuevo = ("NUEVA", _sin_trigger(dias_desde_dossier=None), "")
+    assert orq.correr_semana([nuevo], hoy=HOY).decisiones[0].accion == "triage_descarta"
     assert an.llamadas == 0
-    # con cupo=1 → se promueve y se analiza
-    r = orq.correr_semana([("NUEVA", _sen(), "")], hoy=HOY, cupo_cobertura=1)
+    r = orq.correr_semana([nuevo], hoy=HOY, cupo_cobertura=1)
     assert r.decisiones[0].accion == "analizado" and an.llamadas == 1
 
 
 def test_3_cupo_ordena_por_prioridad_de_cuello():
     an = _Analista()
-    orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
-                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
-    # dos nuevos, cupo 1 → entra el de cuello más prioritario (B)
-    r = orq.correr_semana([("A", _sen(prioridad_cuello=1), ""), ("B", _sen(prioridad_cuello=3), "")],
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an)
+    # dos nuevos sin trigger, cupo 1 → entra el de cuello más prioritario (B)
+    r = orq.correr_semana([("A", _sin_trigger(dias_desde_dossier=None, prioridad_cuello=1), ""),
+                           ("B", _sin_trigger(dias_desde_dossier=None, prioridad_cuello=3), "")],
                           hoy=HOY, cupo_cobertura=1)
     analizados = [d.ticker for d in r.decisiones if d.accion == "analizado"]
     assert analizados == ["B"]
@@ -200,9 +210,9 @@ def test_3_cupo_ordena_por_prioridad_de_cuello():
 
 def test_3_bootstrap_promueve_todos_los_nuevos():
     an = _Analista()
-    orq = Orquestador(triage=_Triage(research=False), analista=an, bear=_Bear(),
-                      ledger=LedgerPresupuesto(sobre_semanal=10.0), verificar_fn=_verif(), data_pack_fn=_pack)
-    r = orq.correr_semana([("A", _sen(), ""), ("B", _sen(), "")], hoy=HOY, bootstrap=True)
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an)
+    r = orq.correr_semana([("A", _sin_trigger(dias_desde_dossier=None), ""),
+                           ("B", _sin_trigger(dias_desde_dossier=None), "")], hoy=HOY, bootstrap=True)
     assert sorted(d.accion for d in r.decisiones) == ["analizado", "analizado"]
 
 

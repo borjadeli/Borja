@@ -56,6 +56,17 @@ def _emitir_dossier_schema() -> dict:
                         "tipo": {"type": "string", "enum": _CAT_TIPO}})
     red_flag = _obj({"tipo": _S, "severidad": {"type": "string", "enum": _SEV}, "cita": evidencia})
     falsador = _obj({"afirmacion": _S, "fecha_limite": _S, "que_lo_mataria": _S})
+    # ficha de invertibilidad temporal (doc 70 D2) — el análisis de FUTURO
+    invertibilidad = _obj({
+        "riesgo_remanente": {"type": "string", "enum": ["cientifico", "ingenieria", "comercial", "escala"]},
+        "next_value_inflection": _S, "months_to_inflection": {"type": ["integer", "null"]},
+        "fundamental_impact_if_successful": _S, "independent_evidence": _S,
+        "traccion_0_4": {"type": "integer"},
+        "milestone_funding_coverage": _S, "stress_funding_gap": _S, "subsequent_capital_need": _S,
+        "dilution_exposure": _S, "price_implied_requirements": _S, "dependencia_politica_publica": _S,
+        "critical_unverified_assumption": _S, "test_de_atraso": _S,
+        "analyst_classification": {"type": "string", "enum": ["core", "satelite", "especulativa", "watchlist"]},
+    })
     return _obj({
         "negocio_y_posicion_cuello": _S,
         "claims": {"type": "array", "items": claim},
@@ -65,6 +76,7 @@ def _emitir_dossier_schema() -> dict:
         "catalizadores": {"type": "array", "items": catalizador},
         "red_flags": {"type": "array", "items": red_flag},
         "falsador": falsador,
+        "invertibilidad": invertibilidad,
         "conviccion_0_1": {"type": "number"},
     })
 
@@ -120,6 +132,9 @@ class Analista:
         if payload is None:
             return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
         payload["conviccion_0_1"] = max(0.0, min(1.0, float(payload.get("conviccion_0_1", 0.0))))
+        inv = payload.get("invertibilidad")
+        if isinstance(inv, dict) and "traccion_0_4" in inv:     # acotar el entero (el schema no fija rango)
+            inv["traccion_0_4"] = max(0, min(4, int(inv.get("traccion_0_4") or 0)))
         try:
             dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
         except Exception as e:  # noqa: BLE001 — dossier incompleto (p.ej. sin falsador) → sin_dossier, no crash

@@ -38,6 +38,8 @@ def test_datakind_y_verification_son_enums():
 # ---- schemas de agentes ----
 
 _META = sc.AgentMeta(agent="triage", prompt_version="v1", model="claude-haiku-5-5")
+_ESC = sc.Escenario(tesis="t", supuestos=["a"], contraste_con_calculadoras="vs T*")
+_FALS = sc.Falsador(afirmacion="x", fecha_limite="2027-01-01", que_lo_mataria="y")
 
 
 def test_triage_valida_rangos():
@@ -99,3 +101,28 @@ def test_pm_peso_objetivo_acotado():
                     por_que_ese_tamano="", tesis="",
                     falsador=sc.Falsador(afirmacion="x", fecha_limite="2027-01-01", que_lo_mataria="y"),
                     que_me_haria_vender="")
+
+
+def test_invertibilidad_ficha_opcional_y_valida():
+    import backend.agentes.schemas as s
+    inv = s.Invertibilidad(
+        riesgo_remanente="comercial", next_value_inflection="PPA firme con hyperscaler",
+        months_to_inflection=12, fundamental_impact_if_successful="valida demanda y margen",
+        independent_evidence="8-K con el contrato", traccion_0_4=3,
+        milestone_funding_coverage="caja cubre 18m", stress_funding_gap="gap 0 bajo estrés",
+        subsequent_capital_need="~$400M capex a 2030", dilution_exposure="ATM $1B vigente",
+        price_implied_requirements="exige 2GW a 2032; base rate <5%",
+        critical_unverified_assumption="que la NRC licencie antes de 2028",
+        test_de_atraso="si arranca en 2030 en vez de 2028, el EV se recorta ~30% por dilución",
+        analyst_classification="satelite")
+    d = s.Dossier(meta=_META.model_copy(update={"agent": "analista"}), ticker="OKLO",
+                  negocio_y_posicion_cuello="n", valuacion_que_exige_el_precio="v",
+                  bull=_ESC, bear=_ESC, falsador=_FALS, conviccion_0_1=0.4, invertibilidad=inv)
+    assert d.invertibilidad.riesgo_remanente == "comercial" and d.invertibilidad.traccion_0_4 == 3
+
+
+def test_dossier_sin_invertibilidad_sigue_valido():
+    import backend.agentes.schemas as s
+    d = s.Dossier(meta=_META, ticker="X", negocio_y_posicion_cuello="n", valuacion_que_exige_el_precio="v",
+                  bull=_ESC, bear=_ESC, falsador=_FALS, conviccion_0_1=0.3)
+    assert d.invertibilidad is None       # legacy / opcional

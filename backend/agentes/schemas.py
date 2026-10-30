@@ -123,6 +123,35 @@ class Falsador(BaseModel):
     que_lo_mataria: str
 
 
+RiesgoRemanente = Literal["cientifico", "ingenieria", "comercial", "escala"]
+ClasifInvertibilidad = Literal["core", "satelite", "especulativa", "watchlist"]
+
+
+class Invertibilidad(BaseModel):
+    """Ficha de invertibilidad temporal (doc 70 D2) — el corazón del análisis de futuro. NO es un score:
+    son campos que el Analista completa y el PM usa para clasificar. Separa 'futuro prometedor' de
+    'inversión atractiva hoy'. La herramienta clave: la primera INFLEXIÓN DE VALOR (no un catalizador de
+    precio) dentro del horizonte de inversión, con camino financiado y evidencia externa."""
+    # Qué tipo de pregunta sigue abierta (lo que separa la cuántica por la razón correcta):
+    riesgo_remanente: RiesgoRemanente
+    # Primera inflexión de VALOR verificable (hecho con relación causal al valor económico; NO "sube la acción"):
+    next_value_inflection: str
+    months_to_inflection: int | None = None
+    fundamental_impact_if_successful: str    # por qué ese hito mueve ingresos/márgenes/financiación/flujos
+    independent_evidence: str                # evidencia externa de que el hito es alcanzable y relevante
+    traccion_0_4: int = Field(ge=0, le=4, description="0 PR/MOU · 1 piloto pago · 2 vinc.c/cond · 3 vinc. · 4 revenue recurrente")
+    # Camino financiado (determinista cuando hay datos; el Analista lo resume citando el pack):
+    milestone_funding_coverage: str          # ¿la caja+financiación comprometida llega al próximo hito?
+    stress_funding_gap: str                  # gap bajo estrés razonable
+    subsequent_capital_need: str             # qué capital hace falta DESPUÉS para monetizar
+    dilution_exposure: str                   # overhang: ATM/warrants/convertibles/lockups
+    price_implied_requirements: str          # qué exige el precio (reverse underwriting) + base rate
+    dependencia_politica_publica: str = ""   # subsidio/crédito/préstamo de agencia que una elección revierte
+    critical_unverified_assumption: str      # el supuesto que, si es falso, tumba la tesis
+    test_de_atraso: str                      # ★ "¿qué pasa si todo sale bien pero 2 años más tarde?"
+    analyst_classification: ClasifInvertibilidad
+
+
 class Dossier(BaseModel):
     meta: AgentMeta
     ticker: str
@@ -136,6 +165,7 @@ class Dossier(BaseModel):
     catalizadores: list[Catalizador] = Field(default_factory=list)
     red_flags: list[RedFlag] = Field(default_factory=list)
     falsador: Falsador
+    invertibilidad: Invertibilidad | None = None   # ficha de futuro (doc 70 D2); None = dossier legacy
     conviccion_0_1: float = Field(ge=0, le=1)
 
 

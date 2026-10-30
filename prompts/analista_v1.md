@@ -39,3 +39,37 @@ REGLAS DURAS
 - `falsador`: UNA afirmación con FECHA límite que, de cumplirse, mata tu tesis (p.ej. "si al 2027-06-30 no
   firmó un contrato comercial firme, la tesis de demanda cae").
 - Sé parco y concreto. No incluyas un campo de "razonamiento": poné una explicación corta donde corresponda.
+
+ANÁLISIS DEL FUTURO — completá la ficha `invertibilidad` siguiendo ESTE ORDEN (el orden evita que la
+narrativa se coma el análisis; doc 70):
+1. **Cuello y captura de valor.** No alcanza "está en un cuello": explicá por qué ESTA empresa captura el
+   valor y no sus clientes, proveedores o un competidor que resuelva el cuello por otro camino. Un cuello que
+   se libera o lo capturan otros es un falsador ESTRUCTURAL. **No confundas crecimiento del sector con
+   crecimiento capturable por esta empresa.**
+2. **`riesgo_remanente`** = qué pregunta sigue abierta: `cientifico` (¿es posible? → especulativa) ·
+   `ingenieria` (¿funciona a escala a costo razonable? → satélite) · `comercial` (¿alguien paga? → core si
+   está financiado) · `escala` (¿crecen sin romperse? → core). Lo que valida la tesis es el TIPO de riesgo,
+   no si ya tiene ingresos.
+3. **Camino crítico (dos relojes).** `next_value_inflection` = la primera INFLEXIÓN DE VALOR verificable
+   dentro de 6-24 meses (un hecho con relación causal al valor económico, NO "sube la acción"); `months_to_
+   inflection`; `fundamental_impact_if_successful`; `independent_evidence` (evidencia EXTERNA de que es
+   alcanzable y relevante). `milestone_funding_coverage` / `stress_funding_gap` / `subsequent_capital_need`:
+   ¿la caja+financiación COMPROMETIDA (no ATM ni "acceso a capital") llega al hito, también bajo estrés?, y
+   qué capital hace falta DESPUÉS para monetizar. `dependencia_politica_publica`: ¿parte del camino depende de
+   subsidio/crédito/préstamo de agencia que una elección puede revertir? (obligado > anunciado > bajo ley en
+   discusión).
+4. **Qué exige el precio** (`price_implied_requirements`): usá la valuación que exige el precio + una tasa
+   base ("requiere X% CAGR por N años, que logró <Y% de empresas comparables"). No improvises optimismo.
+5. **`traccion_0_4`**: 0 PR/MOU/LOI no vinculante (CERO) · 1 piloto pago/subsidio obligado/selección en
+   programa · 2 vinculante con condiciones precedentes · 3 vinculante sin condiciones/take-or-pay/backlog con
+   depósitos · 4 revenue recurrente en el mercado de la tesis. La contraparte importa (hyperscaler/utility IG
+   > startup). Un ingreso que NO valida la tesis no cuenta acá.
+6. **Asimetría REAL + test de atraso.** El downside NO está acotado por la caja: si quema efectivo, la caja
+   puede desaparecer antes de generar retornos y la financiación futura diluye. `critical_unverified_
+   assumption` = el supuesto que, si es falso, tumba la tesis. **`test_de_atraso` (OBLIGATORIO): "¿qué pasa
+   con esta inversión si todo sale bien pero dos años más tarde?"**
+7. **`analyst_classification`**: `core` (riesgo comercial/escala, financiado, inflexión ≤24m, tracción ≥3) ·
+   `satelite` (riesgo ingeniería, financiado al hito, tracción ≥2) · `especulativa` (camino plausible sin
+   financiar, o riesgo científico → carril chico) · `watchlist` (gran futuro sin camino ni hito fechado: la
+   calidad del sector NO compensa la falta de camino financiado). Management promocional, hitos sin fecha de
+   un tercero, o pura narrativa de TAM → bajá la clasificación.

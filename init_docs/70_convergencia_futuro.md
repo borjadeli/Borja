@@ -115,6 +115,38 @@ antes de dimensionar.
 3. **D3** — el Bear ataca la madurez; el Verificador verifica los insumos del gate; el Auditor mide calibración.
 4. **D6** — prompts del Analista (orden + test de atraso) y PM (convicción vs madurez). D1/D5 ajustes menores.
 
+## Adenda (3ª IA, incorporada al diseño)
+- **MANAGEMENT — solo lo MEDIBLE (nunca "visión/liderazgo/carisma").** El management promocional ES el
+  patrón de riesgo en small caps; un LLM se deja seducir igual que un humano. Entra solo conducta con rastro
+  en filings, y **como DESCUENTO** (baja un tier; NO hay "buen management" que suba): (a) cumplimiento de
+  hitos guiados (ya en D1, lo más importante); (b) **asignación de capital** — ¿emitieron en subas (bien) o
+  en mínimos por desesperación?, capital consumido por hito, M&A caro con acciones propias; (c) **alineación**
+  — insiders, **Form 4 compras en mercado abierto** (dicen más que ventas), contra qué está atada la
+  compensación (hitos operativos vs precio/market cap); (d) **gobierno corporativo** — rotación de CFO/
+  auditor, going concern, transacciones con partes relacionadas, reestructuración de segmentos, y **mucho
+  press release con poco 8-K sustantivo** (señal clásica). Trabajo del **Verificador / data pack**, no del
+  juicio del PM.
+- **SENTIMIENTO — NO como input separado.** El reverse underwriting + base rates YA lo mide y cuantifica
+  ("el precio exige 60% CAGR/7a que logró <1%" = euforia medida). Sumar un indicador de sentimiento (redes/
+  momentum) mide lo mismo peor y sesga al PM hacia lo de moda. Donde sí importa ya tiene lugar:
+  reflexividad del financiamiento → la ventana de financiamiento (D5); overhang/short/lockups → estructura
+  de capital del nombre en el dossier (D5).
+- **LIQUIDEZ / capacidad de salida — DIFERIDA por decisión del operador** (entra con poco capital, no le
+  pega). Queda anotado: cap de tamaño determinista por días de volumen para cuando el capital crezca.
+- **DEPENDENCIA DE POLÍTICA PÚBLICA — eje propio (modificador de financiación).** Energía/nuclear/semis/
+  defensa dependen de subsidios/créditos fiscales/préstamos de agencias que una elección puede revertir. No
+  es riesgo de mercado ni de ejecución. Gradación: subsidio **obligado** > **anunciado** > anunciado **bajo
+  una ley en discusión** (vale menos). Modifica el eje de financiación de D2.
+- **CORRELACIONES OCULTAS EN CARTERA (Auditor).** 10 nombres "diversificados" pueden depender del mismo
+  cuello, el mismo hyperscaler, la misma ventana de financiamiento o el mismo programa de gobierno. El
+  Auditor mapea **exposición por FACTOR DE TESIS**, no solo por sector/ticker.
+- **★ CONGELAR LA TESIS ORIGINAL (el error más caro y más fácil de prevenir).** Al dispararse un falsador, la
+  tentación (humana y del LLM) es reescribir la tesis ("en realidad el valor está en otro segmento"). Regla:
+  **la tesis y los falsadores quedan CONGELADOS con fecha**; si se dispara un falsador, la posición se revisa
+  con la tesis ORIGINAL. Una tesis nueva = **decisión nueva que pasa por el gate desde cero**, no una
+  continuación. El Auditor mide cuántas posiciones siguen vivas con una tesis distinta a la de entrada.
+  (Encaja con el ledger de decisiones append-only ya construido.)
+
 ## Lo que NO se re-abre
 Paradigma, método canónico (reverse underwriting/pre-revenue/carril especulativo), rigor de hechos presentes,
 comité ya construido. Esto es **cómo el análisis pondera presente+futuro y filtra la invertibilidad temporal**

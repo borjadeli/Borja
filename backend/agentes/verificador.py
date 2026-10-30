@@ -176,6 +176,19 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
         motivos.append(f"tasa alta de gaps no-centrales ({gaps_no_central}/{n_no_central}) — "
                        f"el dossier cita de memoria")
 
+    # D3 — verificar el INSUMO del gate de invertibilidad que es un hecho presente: una tracción ALTA
+    # (≥3 = contrato vinculante / take-or-pay) tiene que estar respaldada por un claim de FUENTE PRIMARIA.
+    # Si se declara ≥3 sin ningún central primario que lo sostenga → tracción inflada (MOU vendido como
+    # contrato) → REVIEW. El Verificador verifica la EVIDENCIA de la tesis, no la tesis (doc 70 D3).
+    inv = dossier.invertibilidad
+    if inv is not None and inv.traccion_0_4 >= 3:
+        hay_primaria = any(clase_por_url(c.source_url) in ("primaria_regulatoria",)
+                           for c in dossier.claims if c.claim_id in central)
+        if not hay_primaria:
+            hay_review = True
+            motivos.append(f"tracción declarada {inv.traccion_0_4}/4 (vinculante) sin claim central de fuente "
+                           f"primaria que lo respalde — posible MOU inflado")
+
     flags = flags_supervivencia(dossier.red_flags)
     if falla_central:
         veredicto = "fail"

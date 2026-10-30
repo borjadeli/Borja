@@ -205,3 +205,18 @@ def test_r3_claim_trimestral_contrasta_contra_metrica_q():
             "revenue_q": _dp_ref("revenue_q", 234e6, period="Q")}
     r = verificar(_dossier([c], soporte=["c1"]), ["https://sec.gov/ex99"], pack=pack, hoy=_date(2026, 10, 28))
     assert r.veredicto == "pass"     # contrastó contra revenue_q (234M) aunque la URL sea EX-99
+
+
+def test_r4d3_traccion_alta_sin_primaria_es_review():
+    # tracción 3 (contrato vinculante) declarada pero el central viene de un agregador → MOU inflado → REVIEW
+    inv = sc.Invertibilidad(riesgo_remanente="comercial", next_value_inflection="PPA", months_to_inflection=12,
+                            fundamental_impact_if_successful="x", independent_evidence="y", traccion_0_4=3,
+                            milestone_funding_coverage="", stress_funding_gap="", subsequent_capital_need="",
+                            dilution_exposure="", price_implied_requirements="", critical_unverified_assumption="",
+                            test_de_atraso="z", analyst_classification="core")
+    c = _claim("c1", "https://www.fool.com/x", verif="media_report")   # central NO primaria
+    d = sc.Dossier(meta=_META, ticker="OKLO", negocio_y_posicion_cuello="n", claims=[c],
+                   tesis_claims_soporte=["c1"], valuacion_que_exige_el_precio="v", bull=_ESC, bear=_ESC,
+                   falsador=_FALS, invertibilidad=inv, conviccion_0_1=0.5)
+    r = verificar(d, ["https://www.fool.com/x"])
+    assert r.veredicto == "review" and any("MOU inflado" in m or "tracción" in m for m in r.motivos)

@@ -72,6 +72,10 @@ _XBRL_ANUAL = [
     ("capex", "PaymentsToAcquirePropertyPlantAndEquipment", "USD"),
     ("gross_profit", "GrossProfit", "USD"),
     ("cost_of_revenue", "CostOfRevenue", "USD"),
+    # evidencia de instrumentos dilutivos (preferidas convertibles / warrants): su CONVERSIÓN a acciones NO
+    # está en companyfacts (vive en las notas, Fase 2). Sirven para disparar la señal de overhang (doc 72 B1).
+    ("convertible_pref_proceeds", "ProceedsFromIssuanceOfConvertiblePreferredStock", "USD"),
+    ("warrant_proceeds", "ProceedsFromIssuanceOfWarrants", "USD"),
 ]
 
 # Recursos líquidos: caja + valores negociables. Los emisores TAGEAN DISTINTO lo mismo (fragmentación XBRL):
@@ -179,6 +183,9 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
     emit_primero("cash_and_sti", _LIQ_COMBINADO)
     emit_primero("short_term_investments", _MKT_SEC_CURRENT)
     emit_primero("long_term_investments", _MKT_SEC_NONCURRENT)
+    emit("warrants_outstanding",                        # conteo de warrants vigentes (cuando está tageado)
+         _pit(_extract_concept(facts, "ClassOfWarrantOrRightOutstanding", unit="shares"), as_of, anual=False),
+         "shares", "instant")
     return out
 
 
@@ -231,15 +238,31 @@ def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
                                       note=(f"liquidez {liq_val:,.0f} / quema FCF {abs(burn_total):,.0f}/año "
                                             f"(operativo {burn.value:,.0f} − capex {cap:,.0f}){sin_capex}")))
 
-    # dilucion_12m_pct = (acciones hoy / acciones -1y − 1). Requiere la serie de acciones.
+    # dilucion_12m_pct = (acciones hoy / acciones -1y − 1). Dilución REALIZADA TTM (cover-page SEC), con la
+    # ventana EXPLÍCITA. NO incluye el overhang de convertibles/warrants (ver dilucion_overhang). doc 72 B1.
     if sh and sh.value and sh1y and sh1y.value:
         dil = round((sh.value / sh1y.value - 1.0) * 100, 2)
         out.append(DataPoint.derivado(tk, "dilucion_12m_pct", dil, unit="pct", formula_id="dilucion_12m:v1",
-                                      insumos=[sh, sh1y]))
+                                      insumos=[sh, sh1y],
+                                      note=(f"ventana {sh1y.period_end}→{sh.period_end}; dilución REALIZADA, "
+                                            f"NO incluye conversión de preferidas/warrants")))
     else:
         out.append(DataPoint.derivado(tk, "dilucion_12m_pct", None, unit="pct", formula_id="dilucion_12m:v1",
                                       insumos=[p for p in (sh, sh1y) if p], estado="MISSING",
                                       note="falta serie de acciones (actual o −1y)"))
+
+    # overhang dilutivo que companyfacts NO cuantifica a nivel de acciones (preferidas convertibles, warrants):
+    # su conversión vive en las NOTAS (Fase 2). Señal binaria para que un dilucion_12m_pct bajo NO se lea como
+    # "dilución baja" — el bug del smoke: MP (DoD preferred+warrants ITM, ~9%) salía con 0,49%. doc 72 B1.
+    conv, warr, warr_out = idx.get("convertible_pref_proceeds"), idx.get("warrant_proceeds"), idx.get("warrants_outstanding")
+    evid = [p for p in (conv, warr, warr_out) if p and p.value]
+    if evid:
+        detalle = ", ".join(f"{p.metric}={p.value:,.0f}" for p in evid)
+        out.append(DataPoint.derivado(tk, "dilucion_overhang", 1.0, unit="flag", formula_id="overhang:v1",
+                                      insumos=evid,
+                                      note=(f"instrumentos convertibles/warrants presentes ({detalle}); su "
+                                            f"CONVERSIÓN a acciones NO está en XBRL → dilucion_12m_pct (realizada) "
+                                            f"NO lo incluye. El Analista debe leer las notas del filing")))
 
     # runway bajo ESTRÉS (doc 70 D4): la quema puede ser peor que la histórica → escenario de supervivencia.
     # Sobre la liquidez completa y la quema FCF (op−capex), igual que el runway base (doc 72).

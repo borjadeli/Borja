@@ -200,6 +200,29 @@ def test_calc_runway_sin_capex_usa_solo_opex_y_avisa():
     assert "capex no disponible" in rw.note
 
 
+def test_calc_dilucion_overhang_marca_convertibles_invisibles():
+    # doc 72 B1: un dilucion_12m_pct BAJO no debe leerse como "dilución baja" si hay convertibles/warrants
+    # cuya conversión NO está en XBRL (MP: DoD preferred+warrants ITM ~9% salían con 0,49% realizado).
+    pts = [_dp_in("shares_outstanding", 178.1e6, date(2026, 8, 7), unit="shares"),
+           _dp_in("shares_outstanding_1y", 177.2e6, date(2025, 10, 31), unit="shares"),
+           _dp_in("convertible_pref_proceeds", 299.4e6, date(2026, 3, 1)),
+           _dp_in("warrant_proceeds", 189.0e6, date(2026, 3, 1))]
+    der = {p.metric: p for p in dp.fuente_calculadoras("MP", date(2026, 10, 27), pts)}
+    assert abs(der["dilucion_12m_pct"].value - 0.51) < 0.1                  # realizada, baja
+    assert "NO incluye" in der["dilucion_12m_pct"].note                     # ventana + caveat explícito
+    assert der["dilucion_overhang"].value == 1.0                           # pero la señal de overhang salta
+    assert "notas del filing" in der["dilucion_overhang"].note
+
+
+def test_calc_sin_overhang_no_inventa_la_senal():
+    # OKLO-style: dilución por equity directo (sin convertibles/warrants) → NO se emite la señal (no falso +)
+    pts = [_dp_in("shares_outstanding", 186e6, date(2026, 8, 7), unit="shares"),
+           _dp_in("shares_outstanding_1y", 156e6, date(2025, 11, 7), unit="shares")]
+    der = {p.metric: p for p in dp.fuente_calculadoras("OKLO", date(2026, 10, 27), pts)}
+    assert abs(der["dilucion_12m_pct"].value - 19.23) < 0.3                 # dilución realizada visible
+    assert "dilucion_overhang" not in der
+
+
 def test_xbrl_resuelve_valores_negociables_por_candidatos():
     facts = _facts()
     g = facts["facts"]["us-gaap"]

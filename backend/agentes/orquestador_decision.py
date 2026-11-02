@@ -113,7 +113,7 @@ class OrquestadorDecision:
                  verif_por_ticker: dict[str, str] | None = None,
                  flags_por_ticker: dict[str, list[str]] | None = None,
                  factores_por_ticker: dict[str, list[str]] | None = None,
-                 clasif_por_ticker: dict | None = None,
+                 clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
@@ -127,7 +127,7 @@ class OrquestadorDecision:
             res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, decision.acciones),
                                     pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
                                     no_action=False, alertas=["PM no opera ahora (operar_ahora=False)"])
-            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo)
+            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
             return res
 
         res = self._gate(decision, cartera, contexto, flags, hoy)
@@ -141,7 +141,7 @@ class OrquestadorDecision:
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
                                   hashes, verifs, memo_macro, factores=factores_por_ticker,
-                                  clasif=clasif_por_ticker)
+                                  clasif=clasif_por_ticker, bull=bull_por_ticker)
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
@@ -229,7 +229,7 @@ class OrquestadorDecision:
         return res
 
     def _auditar_y_registrar(self, res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                             hashes, verifs, memo_macro, factores=None, clasif=None) -> None:
+                             hashes, verifs, memo_macro, factores=None, clasif=None, bull=None) -> None:
         if self.auditor is not None:
             viol = list(res.holguras)
             # análisis de cartera determinista para el Auditor (doc 70 D3): concentración por factor de tesis
@@ -246,7 +246,7 @@ class OrquestadorDecision:
                 cartera_analisis=cartera_analisis)
             if any(o.severidad == "alta" for o in res.auditoria.objeciones):
                 res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
-        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo)
+        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull)
 
     def _sizing_shadow(self, pesos: dict, clasif: dict | None, factores: dict | None) -> str:
         """D4 en modo SOMBRA (doc 74): señal de banda por clasificación + caps agregados para el Auditor. No
@@ -263,7 +263,8 @@ class OrquestadorDecision:
                              peso_max_nombre=float(g("peso_max_nombre", 1.0)))
         return "\n\n" + render_sizing(an, g("sizing_modo", "sombra"), cap_bucket=cap_b, cap_cluster=cap_c)
 
-    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo) -> None:
+    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo, bull=None) -> None:
+        bull = bull or {}
         for i, a in enumerate(decision.acciones):
             tk = a.ticker.upper()
             resultante = res.pesos_finales.get(tk, 0.0)
@@ -273,7 +274,7 @@ class OrquestadorDecision:
                 ciclo=ciclo, peso_resultante=resultante, ejecutada=ejecutada, clip=res.clip,
                 precio=precios.get(tk), verif_veredicto=verifs.get(tk), ips_hash=self.ips.hash(),
                 prompt_version=decision.meta.prompt_version, model=decision.meta.model,
-                auditoria=res.auditoria if i == 0 else None))
+                auditoria=res.auditoria if i == 0 else None, bull=bull.get(tk)))
 
     @staticmethod
     def _id_append(res: ResultadoDecision, did: str) -> None:

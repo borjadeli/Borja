@@ -104,3 +104,54 @@ def test_persistencia_releyendo_desde_disco(tmp_path):
     LedgerDecisiones(path=ruta).registrar_decision(_accion(conviccion=0.7), ciclo="c")
     # un ledger nuevo sobre el mismo archivo ve la decisión (la verdad vive en el log)
     assert len(LedgerDecisiones(path=ruta).decisiones()) == 1
+
+
+# --------------------------------------------------------------------------- D1: persistencia + Brier de bull
+
+_BULL = {"prob": 0.3, "prob_implicita": 0.63, "horizonte_fecha": "2027-01-01",
+         "escenarios": [{"nombre": "bull", "metrica_terminal": 9e8, "multiplo_salida": 8, "anios": 1, "prob": 0.3}]}
+
+
+def test_persiste_snapshot_del_puente():
+    from backend.agentes.ledger_decisiones import LedgerDecisiones
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as tmp:
+        ld = LedgerDecisiones(path=Path(tmp) / "ld.jsonl")
+        did = ld.registrar_decision(_accion("RGTI"), ciclo="c", bull=_BULL)
+        d = {x.decision_id: x for x in ld.decisiones()}[did]
+        assert d.prob_bull == 0.3 and d.prob_bull_implicita == 0.63
+        assert d.horizonte_bull_fecha == "2027-01-01" and len(d.escenarios) == 1
+
+
+def test_pendientes_bull_solo_vencidos_sin_resolver(tmp_path):
+    from backend.agentes.ledger_decisiones import LedgerDecisiones
+    from datetime import date
+    ld = LedgerDecisiones(path=tmp_path / "ld.jsonl")
+    vencido = ld.registrar_decision(_accion("A"), ciclo="c", bull={**_BULL, "horizonte_fecha": "2026-01-01"})
+    ld.registrar_decision(_accion("B"), ciclo="c", bull={**_BULL, "horizonte_fecha": "2027-06-01"})
+    pend = ld.pendientes_bull(date(2026, 10, 30))
+    assert [p.decision_id for p in pend] == [vencido]          # solo el vencido
+    ld.resolver_bull(vencido, "materializado")
+    assert ld.pendientes_bull(date(2026, 10, 30)) == []        # ya resuelto
+
+
+def test_brier_bull_se_calcula(tmp_path):
+    from backend.agentes.ledger_decisiones import LedgerDecisiones
+    ld = LedgerDecisiones(path=tmp_path / "ld.jsonl")
+    a = ld.registrar_decision(_accion("A"), ciclo="c", bull={**_BULL, "prob": 0.3})
+    b = ld.registrar_decision(_accion("B"), ciclo="c", bull={**_BULL, "prob": 0.8})
+    ld.resolver_bull(a, "no_materializado")    # outcome=0, pred=0.3 → 0.09
+    ld.resolver_bull(b, "materializado")       # outcome=1, pred=0.8 → 0.04
+    m = ld.metricas()
+    assert m.n_bull_resueltos == 2 and abs(m.brier_bull - (0.09 + 0.04) / 2) < 1e-9
+    # el Brier de FALSADORES es independiente (no se mezcla)
+    assert m.n_resueltos == 0 and m.brier is None
+
+
+def test_sin_bull_no_rompe_metricas(tmp_path):
+    from backend.agentes.ledger_decisiones import LedgerDecisiones
+    ld = LedgerDecisiones(path=tmp_path / "ld.jsonl")
+    ld.registrar_decision(_accion("A"), ciclo="c")             # decisión legacy sin bull
+    m = ld.metricas()
+    assert m.brier_bull is None and m.n_bull_resueltos == 0

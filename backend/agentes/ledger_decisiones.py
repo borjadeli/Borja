@@ -41,6 +41,7 @@ BUCKETS: tuple[tuple[str, float, float], ...] = (
 ClipTipo = Literal["none", "local_simple", "agregada"]          # "PM+clip" para la atribución (doc 55 §4.1)
 EstadoFalsador = Literal["disparado", "no_disparado"]           # disparado = tesis FALSADA; no_disparado = se sostuvo
 EstadoObjecion = Literal["acertada", "errada"]
+EstadoBull = Literal["materializado", "no_materializado"]       # ¿el escenario bull se dio al horizonte? (doc 74 D1)
 
 
 # --------------------------------------------------------------------------- eventos (inmutables)
@@ -75,6 +76,13 @@ class RegistroDecision(BaseModel):
     prompt_version: str = ""
     model: str = ""
     objeciones_auditor: list[ObjecionRegistrada] = Field(default_factory=list)
+    # Puente económico (doc 74 D1) — snapshot para puntuar ex-post si Tier B mejora la OPORTUNIDAD, no solo
+    # viste de números. prob_bull = P(bull) que asignó el analista (la predicción a puntuar con Brier);
+    # prob_bull_implicita = P(bull) que EXIGE el precio (contexto, no se puntúa). Todo opcional = legacy.
+    prob_bull: float | None = None
+    prob_bull_implicita: float | None = None
+    horizonte_bull_fecha: str | None = None   # YYYY-MM-DD en que se resuelve el bull (hoy + años del escenario)
+    escenarios: list[dict] = Field(default_factory=list)      # snapshot: nombre/metrica/multiplo/anios/prob
 
 
 class ResolucionFalsador(BaseModel):
@@ -82,6 +90,14 @@ class ResolucionFalsador(BaseModel):
     ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     decision_id: str
     estado: EstadoFalsador
+    nota: str | None = None
+
+
+class ResolucionBull(BaseModel):
+    tipo: Literal["resolucion_bull"] = "resolucion_bull"
+    ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    decision_id: str
+    estado: EstadoBull
     nota: str | None = None
 
 
@@ -110,6 +126,9 @@ class Metricas(BaseModel):
     por_bucket: list[CalibracionBucket] = Field(default_factory=list)
     objeciones_resueltas: int = 0
     objeciones_acertadas: int = 0
+    # Calibración del puente económico (doc 74 D1): Brier de la P(bull) del analista vs si el bull se dio.
+    n_bull_resueltos: int = 0
+    brier_bull: float | None = None
 
 
 def _bucket(conv: float) -> str:
@@ -139,13 +158,15 @@ class LedgerDecisiones:
                             clip: ClipTipo = "none", precio: float | None = None,
                             verif_veredicto: str | None = None, ips_hash: str = "",
                             prompt_version: str = "", model: str = "",
-                            auditoria: AuditReport | None = None) -> str:
+                            auditoria: AuditReport | None = None, bull: dict | None = None) -> str:
         """Append de una decisión del PM. Devuelve `decision_id`. `peso_resultante` = objetivo si no hubo clip.
 
-        La convicción (P tesis se sostiene, insumo del Brier) la lleva la propia `PMAccion`.
+        La convicción (P tesis se sostiene, insumo del Brier) la lleva la propia `PMAccion`. `bull` = snapshot
+        del puente económico (doc 74 D1): {prob, prob_implicita, horizonte_fecha, escenarios}.
         """
         objeciones = [ObjecionRegistrada(tipo=o.tipo, detalle=o.detalle, severidad=o.severidad)
                       for o in (auditoria.objeciones if auditoria else [])]
+        b = bull or {}
         reg = RegistroDecision(
             ciclo=ciclo, ticker=accion.ticker.upper(), accion=accion.accion,
             peso_objetivo=accion.peso_objetivo,
@@ -155,12 +176,17 @@ class LedgerDecisiones:
             falsador_fecha_limite=accion.falsador.fecha_limite,
             conviccion_0_1=accion.conviccion_0_1, precio=precio, dossier_hash=accion.dossier_hash,
             verif_veredicto=verif_veredicto, ips_hash=ips_hash,
-            prompt_version=prompt_version, model=model, objeciones_auditor=objeciones)
+            prompt_version=prompt_version, model=model, objeciones_auditor=objeciones,
+            prob_bull=b.get("prob"), prob_bull_implicita=b.get("prob_implicita"),
+            horizonte_bull_fecha=b.get("horizonte_fecha"), escenarios=b.get("escenarios") or [])
         self._append(reg)
         return reg.decision_id
 
     def resolver_falsador(self, decision_id: str, estado: EstadoFalsador, *, nota: str | None = None) -> None:
         self._append(ResolucionFalsador(decision_id=decision_id, estado=estado, nota=nota))
+
+    def resolver_bull(self, decision_id: str, estado: EstadoBull, *, nota: str | None = None) -> None:
+        self._append(ResolucionBull(decision_id=decision_id, estado=estado, nota=nota))
 
     def resolver_objecion(self, decision_id: str, objecion_idx: int, estado: EstadoObjecion, *,
                           nota: str | None = None) -> None:
@@ -208,6 +234,21 @@ class LedgerDecisiones:
                 out.append(d)
         return out
 
+    def pendientes_bull(self, hoy: date | None = None) -> list[RegistroDecision]:
+        """Predicciones de bull VENCIDAS (horizonte_bull_fecha <= hoy) y sin resolver (doc 74 D1)."""
+        hoy = hoy or date.today()
+        resueltos = {e["decision_id"] for e in self._eventos() if e.get("tipo") == "resolucion_bull"}
+        out = []
+        for d in self.decisiones():
+            if d.decision_id in resueltos or not d.horizonte_bull_fecha or d.prob_bull is None:
+                continue
+            try:
+                if date.fromisoformat(d.horizonte_bull_fecha) <= hoy:
+                    out.append(d)
+            except ValueError:
+                continue
+        return out
+
     def metricas(self) -> Metricas:
         """Proyección: Brier + hit-rate de falsadores calibrado por bucket (doc 55 §4.8)."""
         eventos = self._eventos()
@@ -231,6 +272,17 @@ class LedgerDecisiones:
             disparados += int(not sostenido)
             n += 1
 
+        # Brier del puente económico (doc 74 D1): P(bull) del analista vs si el bull se materializó.
+        suma_bull = 0.0
+        n_bull = 0
+        for r in (e for e in eventos if e.get("tipo") == "resolucion_bull"):
+            d = decisiones.get(r["decision_id"])
+            if d is None or d.prob_bull is None:
+                continue
+            outcome = 1.0 if r["estado"] == "materializado" else 0.0
+            suma_bull += (d.prob_bull - outcome) ** 2
+            n_bull += 1
+
         obj_res = [e for e in eventos if e.get("tipo") == "resolucion_objecion"]
         return Metricas(
             n_resueltos=n,
@@ -238,4 +290,6 @@ class LedgerDecisiones:
             hit_rate_falsadores=round(disparados / n, 4) if n else None,
             por_bucket=[buckets[nombre] for nombre, _, _ in BUCKETS],
             objeciones_resueltas=len(obj_res),
-            objeciones_acertadas=sum(1 for e in obj_res if e.get("estado") == "acertada"))
+            objeciones_acertadas=sum(1 for e in obj_res if e.get("estado") == "acertada"),
+            n_bull_resueltos=n_bull,
+            brier_bull=round(suma_bull / n_bull, 4) if n_bull else None)

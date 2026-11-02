@@ -127,6 +127,34 @@ class RunnerSemanal:
                 revenue_recurrente=(inv.traccion_0_4 == 4),
                 tiene_puente=bool(d.escenarios))
 
+        # Persistencia Brier (doc 74 D1): snapshot del puente por nombre para puntuar ex-post la P(bull) del
+        # analista (¿se materializó al horizonte?) + la implícita como contexto. Lo que mide si Tier B mejoró
+        # la OPORTUNIDAD o solo la vistió de números.
+        from datetime import timedelta
+        from backend.agentes.futuro import Escenario as _EscFut
+        from backend.agentes.futuro import probabilidad_implicita_bull as _pimpl
+        bull_por_ticker: dict[str, dict] = {}
+        for d, _v in dossiers:
+            bull = next((e for e in d.escenarios if e.nombre == "bull"), None)
+            if bull is None:
+                continue
+            ctx = contexto.get(d.ticker.upper())
+            prob_impl = None
+            if ctx is not None and ctx.market_cap:
+                escs = [_EscFut(e.nombre, e.metrica_terminal, e.multiplo_salida, e.anios, e.prob)
+                        for e in d.escenarios]
+                resto = [e for e in escs if e.nombre != "bull"]
+                if resto:
+                    prob_impl = _pimpl(ctx.market_cap, next(e for e in escs if e.nombre == "bull"), resto,
+                                       anios=bull.anios, dilucion_pct=(d.dilucion_esperada_pct or 0.0),
+                                       caja_neta_terminal=(d.caja_neta_terminal or 0.0)).p_bull
+            bull_por_ticker[d.ticker.upper()] = {
+                "prob": bull.prob, "prob_implicita": prob_impl,
+                "horizonte_fecha": (hoy + timedelta(days=365 * bull.anios)).isoformat(),
+                "escenarios": [{"nombre": e.nombre, "metrica_terminal": e.metrica_terminal,
+                                "multiplo_salida": e.multiplo_salida, "anios": e.anios, "prob": e.prob}
+                               for e in d.escenarios]}
+
         # 2. Cartera actual (proyección del ledger fiel) + hit-rate + ops de la semana + alertas previas.
         pesos_actual, caja_pct, _equity = cartera_desde_ledger(session, precios)
         hr = self._hit_rate_resumen()
@@ -145,8 +173,8 @@ class RunnerSemanal:
         res_dec = self.decision.procesar(
             decision, cartera_actual=pesos_actual, caja_actual=caja_pct, contexto=contexto, ciclo=ciclo,
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
-            flags_por_ticker=flags, clasif_por_ticker=clasif_por_ticker, memo_macro=memo_txt,
-            repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
+            flags_por_ticker=flags, clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
+            memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
 
         # 5. Paper + persistir alertas para la corrida siguiente (item 5).
         paper = ejecutar_paper(session, res_dec, precios=precios, fecha_fill=hoy, comision=comision)

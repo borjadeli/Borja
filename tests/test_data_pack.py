@@ -165,6 +165,55 @@ def test_ensamblar_dos_fases_corre_derivadas():
     assert m["cash_runway_months"].value == 120.0 and m["cash_runway_months"].kind == DataKind.DERIVED
 
 
+def test_calc_liquidez_suma_valores_negociables():
+    # OKLO/RGTI-style: sin tag combinado → liquidez = caja + ST current + securities noncurrent (ladder).
+    # Bug del smoke (doc 72): tomábamos solo `cash` ($27,8M en RGTI) en vez de $541,3M reales.
+    pts = [_dp_in("cash", 27.763e6, date(2026, 8, 7)),
+           _dp_in("short_term_investments", 365.946e6, date(2026, 8, 7)),
+           _dp_in("long_term_investments", 147.586e6, date(2026, 8, 7)),
+           _dp_in("cash_used_ops", -58.543e6, date(2026, 3, 17)),
+           _dp_in("capex", 18.676e6, date(2026, 3, 17))]
+    der = {p.metric: p for p in dp.fuente_calculadoras("RGTI", date(2026, 10, 27), pts)}
+    assert abs(der["liquidez"].value - 541.295e6) < 1e4
+    rw = der["cash_runway_months"]                               # capex SUMA a la quema (op−capex)
+    assert rw.estado == "COMPUTED"
+    assert abs(rw.value - 541.295e6 / ((58.543e6 + 18.676e6) / 12)) < 0.5
+    assert {"cash", "short_term_investments", "long_term_investments", "cash_used_ops", "capex"} <= set(rw.inputs)
+
+
+def test_calc_liquidez_prefiere_combinado_sin_doble_contar_caja():
+    # MP-style: el tag combinado ya incluye caja+ST → NO sumar `cash` otra vez (sería doble conteo).
+    pts = [_dp_in("cash", 429.075e6, date(2026, 8, 7)),
+           _dp_in("cash_and_sti", 1452.639e6, date(2026, 8, 7)),
+           _dp_in("cash_used_ops", -155.755e6, date(2026, 3, 17)),
+           _dp_in("capex", 172.375e6, date(2026, 3, 17))]
+    der = {p.metric: p for p in dp.fuente_calculadoras("MP", date(2026, 10, 27), pts)}
+    assert abs(der["liquidez"].value - 1452.639e6) < 1e4        # NO 429 + 1452
+    assert abs(der["cash_runway_months"].value - 1452.639e6 / ((155.755e6 + 172.375e6) / 12)) < 0.5
+
+
+def test_calc_runway_sin_capex_usa_solo_opex_y_avisa():
+    # Si el emisor no tagea capex, no se silencia: runway sobre opex PERO la nota marca el hueco.
+    pts = [_dp_in("cash", 1000e6, date(2026, 8, 7)), _dp_in("cash_used_ops", -120e6, date(2026, 3, 17))]
+    rw = {p.metric: p for p in dp.fuente_calculadoras("X", date(2026, 10, 27), pts)}["cash_runway_months"]
+    assert abs(rw.value - 1000e6 / (120e6 / 12)) < 0.5          # 100 meses, solo opex
+    assert "capex no disponible" in rw.note
+
+
+def test_xbrl_resuelve_valores_negociables_por_candidatos():
+    facts = _facts()
+    g = facts["facts"]["us-gaap"]
+    g["DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent"] = {"units": {"USD": [
+        {"val": 820, "end": "2026-06-30", "filed": "2026-08-01", "form": "10-Q", "fy": 2026, "fp": "Q2", "accn": "c"}]}}
+    g["DebtSecuritiesAvailableForSaleExcludingAccruedInterestNoncurrent"] = {"units": {"USD": [
+        {"val": 541, "end": "2026-06-30", "filed": "2026-08-01", "form": "10-Q", "fy": 2026, "fp": "Q2", "accn": "n"}]}}
+    pts = {p.metric: p for p in dp.fuente_xbrl("OKLO", date(2026, 10, 27),
+                                               companyfacts_fn=lambda _c: facts, cik_fn=lambda _t: "0")}
+    assert pts["short_term_investments"].value == 820 and pts["long_term_investments"].value == 541
+    from backend.agentes.provenance import Verification
+    assert pts["short_term_investments"].verification == Verification.CONFIRMED_FILING   # ORIGINAL de un tag
+
+
 def test_xbrl_emite_version_trimestral_de_flujos():
     facts = _facts()
     # agrego un op-loss trimestral (~90d) al fake

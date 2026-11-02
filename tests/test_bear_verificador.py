@@ -164,6 +164,14 @@ def test_r3_clase_ex99_en_sec_es_company_statement():
     assert clase_por_url("https://www.sec.gov/Archives/edgar/data/1/000/oklo-20260630.htm") == "primaria_regulatoria"
 
 
+def test_b4_browse_edgar_no_es_primaria():
+    # doc 72 B4: una página de BÚSQUEDA/índice de EDGAR (no un documento) NO verifica un hecho central
+    assert clase_por_url("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=MP") == "media_o_busqueda"
+    assert clase_por_url("https://efts.sec.gov/LATEST/search-index?q=MP") == "media_o_busqueda"
+    # pero el filing real en /Archives/ sigue siendo primaria (no demotemos de más)
+    assert clase_por_url("https://www.sec.gov/Archives/edgar/data/1/000/mp-20260630.htm") == "primaria_regulatoria"
+
+
 def test_r3_dato_financiero_viejo_sin_contraste_es_review():
     # dato financiero (con ref_metrica) de hace ~12m, sin contraste XBRL, y hay filing más nuevo → REVIEW (1d)
     c = sc.Claim(claim_id="c1", contenido="caja", tipo="hecho", source_url="https://sec.gov/a",

@@ -32,6 +32,12 @@ _MARCA_PR = ("globenewswire", "prnewswire", "businesswire", "newswire", "accessw
 # cuerpo del 10-K/10-Q/8-K → company_statement, no primaria regulatoria (auditoría r3 #2).
 _MARCA_EX99 = ("ex99", "ex-99", "ex_99", "/press", "pressr", "-pr.", "_pr.")
 
+# Páginas de BÚSQUEDA/ÍNDICE dentro de un dominio regulador (p.ej. browse-edgar, full-text search): NO son
+# un documento, no verifican nada → media_o_busqueda, no primaria (doc 72, B4). Un filing real vive en
+# /Archives/edgar/data/<cik>/<accession>/...
+_MARCA_BUSQUEDA = ("browse-edgar", "cgi-bin", "efts.sec.gov", "/search", "searchedgar", "action=getcompany",
+                   "full-text")
+
 
 def _fecha_iso(s) -> date | None:
     try:
@@ -49,6 +55,8 @@ def clase_por_url(url: str | None) -> str:
         return "sin_fuente"
     dom = urlparse(url).netloc.lower()
     u = url.lower()
+    if any(m in u for m in _MARCA_BUSQUEDA):
+        return "media_o_busqueda"       # página de búsqueda/índice (browse-edgar, FTS): no es un documento
     if any(d in dom for d in _DOM_REGULADOR):
         # dentro de sec.gov un EX-99.x (comunicado adjunto) NO es el cuerpo del filing → company_statement.
         return "company_statement" if any(m in u for m in _MARCA_EX99) else "primaria_regulatoria"

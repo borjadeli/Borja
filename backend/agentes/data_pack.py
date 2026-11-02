@@ -68,9 +68,22 @@ _XBRL_INSTANT = [
 _XBRL_ANUAL = [
     ("operating_income_loss", "OperatingIncomeLoss", "USD"),
     ("cash_used_ops", "NetCashProvidedByUsedInOperatingActivities", "USD"),
+    # capex (salida de caja, valor positivo) → la quema REAL en capital-intensivas (doc 72, bug del smoke).
+    ("capex", "PaymentsToAcquirePropertyPlantAndEquipment", "USD"),
     ("gross_profit", "GrossProfit", "USD"),
     ("cost_of_revenue", "CostOfRevenue", "USD"),
 ]
+
+# Recursos líquidos: caja + valores negociables. Los emisores TAGEAN DISTINTO lo mismo (fragmentación XBRL):
+# se resuelve por candidatos, primero-encontrado. El combinado ya incluye caja+ST (MP); si no, caja + ST
+# current (OKLO/RGTI) + securities noncurrent (ladder de tesorería, igual de líquido para financiar la op).
+# Arregla el bug del smoke: tomábamos solo CashAndCashEquivalents ($429M en MP vs $1.452,6M reales). doc 72.
+_LIQ_COMBINADO = ["CashCashEquivalentsAndShortTermInvestments"]
+_MKT_SEC_CURRENT = ["DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent",
+                    "AvailableForSaleSecuritiesDebtSecuritiesCurrent", "ShortTermInvestments",
+                    "MarketableSecuritiesCurrent"]
+_MKT_SEC_NONCURRENT = ["DebtSecuritiesAvailableForSaleExcludingAccruedInterestNoncurrent",
+                       "MarketableSecuritiesNoncurrent", "LongTermInvestments"]
 
 
 def _d(s: str | None) -> date | None:
@@ -155,6 +168,17 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
     sh = _extract_concept(facts, "EntityCommonStockSharesOutstanding", unit="shares")
     from datetime import timedelta
     emit("shares_outstanding_1y", _pit_cercano(sh, as_of, as_of - timedelta(days=365)), "shares", "instant")
+    # Valores negociables (componentes crudos de liquidez) — primero-encontrado entre tags equivalentes. Se
+    # emiten como ORIGINAL (un tag) para la lineage; la suma (liquidez) la deriva fuente_calculadoras. doc 72.
+    def emit_primero(metric: str, tags: list[str]) -> None:
+        for t in tags:
+            e = _pit(_extract_concept(facts, t, unit="USD"), as_of, anual=False)
+            if e and e.get("val") is not None:
+                emit(metric, e, "USD", "instant")
+                return
+    emit_primero("cash_and_sti", _LIQ_COMBINADO)
+    emit_primero("short_term_investments", _MKT_SEC_CURRENT)
+    emit_primero("long_term_investments", _MKT_SEC_NONCURRENT)
     return out
 
 
@@ -166,23 +190,46 @@ def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
     tk = ticker.upper()
     idx = {p.metric: p for p in puntos}
     cash, burn = idx.get("cash"), idx.get("cash_used_ops")
+    combined, sti, lti = idx.get("cash_and_sti"), idx.get("short_term_investments"), idx.get("long_term_investments")
+    capex = idx.get("capex")
     sh, sh1y = idx.get("shares_outstanding"), idx.get("shares_outstanding_1y")
     out: list[DataPoint] = []
 
-    # cash_runway_months = caja / (quema mensual). burn (cash_used_ops anual) negativo = quema.
-    if not (cash and cash.value is not None) or not (burn and burn.value is not None):
-        falta = "cash" if not (cash and cash.value is not None) else "cash_used_ops"
-        out.append(DataPoint.derivado(tk, "cash_runway_months", None, unit="meses", formula_id="runway:v1",
-                                      insumos=[p for p in (cash, burn) if p], estado="MISSING",
-                                      note=f"falta insumo: {falta}"))
-    elif burn.value >= 0:
-        out.append(DataPoint.derivado(tk, "cash_runway_months", None, unit="meses", formula_id="runway:v1",
-                                      insumos=[cash, burn], estado="NOT_APPLICABLE",
-                                      note="flujo operativo no-negativo: no quema caja"))
+    # liquidez = recursos líquidos reales = (combinado caja+ST | caja + ST) + valores negociables noncurrent
+    # (ladder de tesorería). Arregla el bug del smoke: MP salía $429M (solo caja) vs $1.452,6M reales. doc 72.
+    liq_comp = [combined] if (combined and combined.value is not None) else \
+               [p for p in (cash, sti) if p and p.value is not None]
+    if lti and lti.value is not None:
+        liq_comp.append(lti)
+    liq_val = sum(p.value for p in liq_comp) if liq_comp else None
+    if liq_val is not None:
+        out.append(DataPoint.derivado(tk, "liquidez", round(liq_val, 0), unit="USD", formula_id="liquidez:v1",
+                                      insumos=liq_comp, note="caja + valores negociables (ST + ladder de tesorería)"))
+
+    # quema REAL de caja = flujo operativo − capex (capex positivo = salida). En capital-intensivas el capex
+    # DOMINA la quema; medir solo con opex sobreestima la pista (bug del smoke MP/OKLO, doc 72). El runway usa
+    # la liquidez completa como numerador y la quema FCF (op−capex) como divisor; lineage = componentes crudos.
+    burn_total = None
+    if burn and burn.value is not None:
+        burn_total = burn.value - (capex.value if (capex and capex.value is not None) else 0.0)
+    run_ins = liq_comp + [p for p in (burn, capex) if p and p.value is not None]
+
+    if liq_val is None or burn_total is None:
+        falta = "liquidez" if liq_val is None else "cash_used_ops"
+        out.append(DataPoint.derivado(tk, "cash_runway_months", None, unit="meses", formula_id="runway:v2",
+                                      insumos=run_ins, estado="MISSING", note=f"falta insumo: {falta}"))
+    elif burn_total >= 0:
+        out.append(DataPoint.derivado(tk, "cash_runway_months", None, unit="meses", formula_id="runway:v2",
+                                      insumos=run_ins, estado="NOT_APPLICABLE",
+                                      note="flujo libre (operativo − capex) no-negativo: no quema caja"))
     else:
-        meses = round(cash.value / (abs(burn.value) / 12.0), 1)
-        out.append(DataPoint.derivado(tk, "cash_runway_months", meses, unit="meses", formula_id="runway:v1",
-                                      insumos=[cash, burn]))
+        meses = round(liq_val / (abs(burn_total) / 12.0), 1)
+        cap = capex.value if (capex and capex.value is not None) else 0.0
+        sin_capex = "" if (capex and capex.value is not None) else "  ⚠ capex no disponible: solo opex"
+        out.append(DataPoint.derivado(tk, "cash_runway_months", meses, unit="meses", formula_id="runway:v2",
+                                      insumos=run_ins,
+                                      note=(f"liquidez {liq_val:,.0f} / quema FCF {abs(burn_total):,.0f}/año "
+                                            f"(operativo {burn.value:,.0f} − capex {cap:,.0f}){sin_capex}")))
 
     # dilucion_12m_pct = (acciones hoy / acciones -1y − 1). Requiere la serie de acciones.
     if sh and sh.value and sh1y and sh1y.value:
@@ -195,13 +242,14 @@ def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
                                       note="falta serie de acciones (actual o −1y)"))
 
     # runway bajo ESTRÉS (doc 70 D4): la quema puede ser peor que la histórica → escenario de supervivencia.
-    if cash and cash.value is not None and burn and burn.value is not None and burn.value < 0:
+    # Sobre la liquidez completa y la quema FCF (op−capex), igual que el runway base (doc 72).
+    if liq_val is not None and burn_total is not None and burn_total < 0:
         from backend.agentes.futuro import meses_runway
-        r = meses_runway(cash.value, burn.value, estres=1.3)
+        r = meses_runway(liq_val, burn_total, estres=1.3)
         if r.valor is not None:
             out.append(DataPoint.derivado(tk, "cash_runway_months_stress", r.valor, unit="meses",
-                                          formula_id="runway_stress:v1", insumos=[cash, burn],
-                                          note="estrés 1.3x la quema histórica"))
+                                          formula_id="runway_stress:v2", insumos=run_ins,
+                                          note="estrés 1.3x la quema FCF (operativo − capex)"))
     return out
 
 

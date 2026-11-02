@@ -2,7 +2,31 @@
 
 > **Fuente viva del estado.** Reemplaza al doc 32 (que describe el estado v1). Si algo acá contradice a un
 > doc más viejo sobre *qué está hecho / qué sigue*, gana este. Directiva: doc 51 · arquitectura/plan: doc 52.
-> Última actualización: **2026-10-29**.
+> Última actualización: **2026-11-02**.
+
+## Actualización 2026-11-02 — calidad del análisis: Tier A + Tier B (docs 72/73/74)
+
+**3 IAs externas triangularon la CALIDAD de los dossiers** (OKLO/RGTI/MP, doc 72). Hallazgo central (3/3): el
+sistema **analiza bien el RIESGO y mal la OPORTUNIDAD** — el futuro salía narrativo, no económico; faltaba el
+puente `hechos → tesis → precio → retorno del accionista`. Y compramos el nombre con MÁS errores de dato (MP).
+Se abrió un plan en 3 tiers; Tier A y el core de Tier B están **HECHOS y testeados (~737 verdes)**.
+
+- **Tier A — bugs deterministas (reproducidos con datos reales + regresión):** liquidez (resolver de valores
+  negociables: caja+ST+ladder — MP $429M→$1.452,6M, exacto vs filings) + runway capex-aware; `browse-edgar` ya
+  no es fuente primaria; señal `dilucion_overhang` (convertibles/warrants que XBRL no cuantifica).
+- **Tier B — el puente económico (doc 74, convergido con 2 IAs):**
+  - **D1 (corazón)** puente INVERSO: `metrica_requerida_por_precio` (reverse burden) + `probabilidad_implicita_bull`
+    (expectations investing) + render al PM. Clava RGTI (exige $1,22B@8x o $400M@24,5x, "caro"). Solo display.
+  - **D2** `vara_externa` en el falsador → Verificador REVIEW si es autorreferencial/infalsable.
+  - **D3** `tasas_base.py` (tabla curada con fuente) + calibración: P(bull)>2x la tasa base → REVIEW.
+  - **D4** `clasificacion.py` sizing por clasificación en **MODO SOMBRA** (techo por hechos duros + bandas +
+    caps bucket/cluster; `sizing_modo: sombra` reporta, no gatea). Bandas del operador: espec ≤1,5% · sat ≤5%.
+  - **D5** Auditor **con web** + checklist "buscar para refutar" + materialidad (máx 3); Sonnet ≠ Analista Opus.
+  - **Persistencia Brier** + **ciclo de resolución** (`resolucion.py` + `ops.resolucion`): cierra el loop para
+    medir si el análisis calibra.
+- **Falta:** el **smoke en vivo** (validación real, necesita crédito API) · ruteo D5 Analista-responde (API) ·
+  calendario de eventos/diff de filings deterministas · activar el **cap duro de D4** tras correr la sombra en
+  vivo. (El método está completo; lo que resta es infra + la corrida real.)
 
 ## Dónde estamos
 **FASE 4 + P1 + EMBUDO completos y validados en vivo; el PM ya compró (OKLO 3%).** El comité corre

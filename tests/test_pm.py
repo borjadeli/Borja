@@ -8,6 +8,7 @@ from backend.agentes.schemas import (
     AgentMeta,
     Dossier,
     Escenario,
+    EscenarioValuacion,
     Falsador,
     VerificationReport,
 )
@@ -143,3 +144,38 @@ def test_pm_ve_la_ficha_de_invertibilidad():
     pm.decidir(dossiers=[(d, _verif())], cartera_actual={}, caja_actual=1.0, contexto=_ctx())
     msg = pm.ag._cliente.llamadas[0]["messages"][0]["content"]
     assert "INVERTIBILIDAD [satelite]" in msg and "test de atraso" in msg and "EV -30%" in msg
+
+
+# --------------------------------------------------------------------------- D1 puente económico en el render
+
+def _dossier_con_escenarios(ticker="RGTI"):
+    d = _dossier(ticker=ticker)
+    d.escenarios = [
+        EscenarioValuacion(nombre="bull", metrica_terminal=900e6, tipo_metrica="revenue", multiplo_salida=8, anios=8, prob=0.25),
+        EscenarioValuacion(nombre="base", metrica_terminal=400e6, tipo_metrica="revenue", multiplo_salida=8, anios=8, prob=0.45),
+        EscenarioValuacion(nombre="bear", metrica_terminal=40e6, tipo_metrica="revenue", multiplo_salida=5, anios=8, prob=0.30),
+    ]
+    return d
+
+
+def test_render_pm_incluye_puente_economico():
+    from backend.agentes.pm import _render_dossiers
+    ctx = {"RGTI": ContextoTicker(sector="quantum", cuello="qc", market_cap=3.2e9, adv_usd=10e6)}
+    txt = _render_dossiers([(_dossier_con_escenarios(), _verif("RGTI"))], ctx)
+    assert "PUENTE ECONÓMICO" in txt
+    assert "qué exige el precio" in txt and "MOIC" in txt         # inverso (reverse burden) + probabilidad implícita
+    assert "caro" in txt                                          # RGTI a 3.2B: ni con 100% bull alcanza 15%/a
+    assert "CAGR por escenario" in txt
+
+
+def test_render_pm_sin_escenarios_no_rompe_ni_inventa():
+    from backend.agentes.pm import _render_dossiers
+    txt = _render_dossiers([(_dossier("OKLO"), _verif("OKLO"))], _ctx())    # dossier legacy sin escenarios
+    assert "OKLO" in txt and "PUENTE ECONÓMICO" not in txt
+
+
+def test_render_pm_sin_market_cap_no_puentea():
+    from backend.agentes.pm import _render_dossiers
+    ctx = {"RGTI": ContextoTicker(sector="quantum", cuello="qc", market_cap=None, adv_usd=10e6)}
+    txt = _render_dossiers([(_dossier_con_escenarios(), _verif("RGTI"))], ctx)
+    assert "PUENTE ECONÓMICO" not in txt                           # sin valor_hoy no se fabrica

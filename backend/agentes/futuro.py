@@ -244,3 +244,32 @@ def probabilidad_implicita_bull(valor_hoy: float | None, bull: "Escenario | None
     else:
         nota = f"el precio exige P(bull) ≥ {p:.0%} para {tasa:.0%}/año en {anios}a (MOIC bull {m_bull:.2f} / resto {m_resto:.2f})"
     return ProbImplicita(round(p, 3), round(m_bull, 2), round(m_resto, 2), round(target, 2), "COMPUTED", nota)
+
+
+def puente_economico(valor_hoy: float | None, escenarios: list["Escenario"], *, tasa: float = 0.15,
+                     dilucion_pct: float = 0.0, caja_neta_terminal: float = 0.0) -> str:
+    """Render del PUENTE ECONÓMICO al precio para el PM (doc 74 D1): junta el INVERSO (qué exige el precio +
+    probabilidad implícita de bull) con el retorno por escenario. SOLO display — no decide. `valor_hoy` =
+    market cap (equity). Devuelve texto compacto; si faltan insumos, lo dice sin fabricar."""
+    vivos = [e for e in escenarios if e is not None]
+    if valor_hoy is None or valor_hoy <= 0 or not vivos:
+        return "PUENTE ECONÓMICO: sin puente (faltan escenarios o market cap) → tratar como opción (máx. especulativa)"
+    base = next((e for e in vivos if e.nombre == "base"), vivos[0])
+    bull = next((e for e in vivos if e.nombre == "bull"), None)
+    resto = [e for e in vivos if e is not bull]
+    lineas = [f"PUENTE ECONÓMICO (hurdle {tasa:.0%}/año, dilución {dilucion_pct:.0%}):"]
+    rb = metrica_requerida_por_precio(valor_hoy, base.multiplo_salida, base.anios, tasa=tasa,
+                                      dilucion_pct=dilucion_pct, caja_neta_terminal=caja_neta_terminal,
+                                      metrica_escenario=base.metrica_terminal)
+    lineas.append(f"  · qué exige el precio: {rb.detalle}")
+    if bull is not None and resto:
+        pi = probabilidad_implicita_bull(valor_hoy, bull, resto, tasa=tasa, anios=bull.anios,
+                                         dilucion_pct=dilucion_pct, caja_neta_terminal=caja_neta_terminal)
+        lineas.append(f"  · {pi.detalle}")
+    ret = retorno_por_escenario(valor_hoy, vivos, tasa=tasa, dilucion_pct=dilucion_pct)
+    if ret.estado == "COMPUTED":
+        tabla = " · ".join(f"{f['nombre']} {f['cagr_accionista']*100:+.0f}%/a (p{f['prob']*100:.0f})"
+                           if f["cagr_accionista"] is not None else f"{f['nombre']} n/a" for f in ret.filas)
+        lineas.append(f"  · CAGR por escenario: {tabla}")
+        lineas.append(f"  · VP esperado vs precio: ratio {ret.ratio_vp_precio} ({'atractivo' if ret.ratio_vp_precio >= 1 else 'se paga de más'})")
+    return "\n".join(lineas)

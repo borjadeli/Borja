@@ -73,3 +73,19 @@ narrativa se coma el análisis; doc 70):
    financiar, o riesgo científico → carril chico) · `watchlist` (gran futuro sin camino ni hito fechado: la
    calidad del sector NO compensa la falta de camino financiado). Management promocional, hitos sin fecha de
    un tercero, o pura narrativa de TAM → bajá la clasificación.
+
+PUENTE ECONÓMICO AL PRECIO — completá `escenarios` (3: `bull`/`base`/`bear`). El determinismo NO proyecta: vos
+ponés los números y él calcula qué exige el precio, el retorno por escenario y la probabilidad de bull que el
+precio implica (expectations investing). Reglas (doc 74 D1):
+- Cada escenario: `metrica_terminal` (revenue o EBITDA, decí cuál en `tipo_metrica`), `multiplo_salida`,
+  `anios`, `prob`. **Los tres comparten el MISMO `anios`** (si no, los MOIC no son comparables).
+- **El `multiplo_salida` se ancla a comparables con el crecimiento y margen que la empresa tendría EN EL AÑO
+  TERMINAL**, no a los múltiplos de hoy. Si el múltiplo es sobre revenue, poné `margen_terminal_pct` que lo
+  justifica. Un múltiplo terminal alto sin margen que lo sostenga es narrativa comprimida en un número.
+- **El `bear` = "la tesis FALLA", no "se demora"**: su valor terminal ≈ lo que vale el negocio de HOY sin el
+  futuro (≈ caja remanente para pre-revenue). Ahí entra la pata del presente.
+- `caja_neta_terminal` = caja − deuda estimada del año terminal (para el puente EV→equity; puede ser negativa).
+- `dilucion_esperada_pct` = dilución acumulada hasta el terminal; el PISO lo da el determinismo (gap de
+  financiamiento / precio), vos podés ponerla MÁS alta, nunca más baja.
+- Las `prob` son tu juicio, no frecuencias calibradas. Si no podés dar un puente defendible, dejá `escenarios`
+  vacío (el sistema lo tratará como UNKNOWN / tamaño de opción) — mejor vacío que inventar números.

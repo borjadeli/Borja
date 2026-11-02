@@ -15,6 +15,8 @@ from datetime import date
 from pathlib import Path
 
 from backend.agentes.base import Agente
+from backend.agentes.futuro import Escenario as EscenarioFut
+from backend.agentes.futuro import puente_economico
 from backend.agentes.ips import IPS, ContextoTicker
 from backend.agentes.schemas import AgentMeta, Dossier, PMDecision, VerificationReport
 
@@ -73,9 +75,22 @@ VALIDAR_IPS_TOOL = {
 }
 
 
-def _render_dossiers(dossiers: list[tuple[Dossier, VerificationReport]]) -> str:
+def _puente_txt(d: Dossier, ctx: ContextoTicker | None) -> str:
+    """Puente económico al precio (doc 74 D1): aritmética determinista del inverso + retorno por escenario,
+    a partir de los escenarios del analista y el market cap del contexto. SOLO display."""
+    if not d.escenarios or ctx is None or ctx.market_cap is None:
+        return ""
+    escs = [EscenarioFut(e.nombre, e.metrica_terminal, e.multiplo_salida, e.anios, e.prob) for e in d.escenarios]
+    bloque = puente_economico(ctx.market_cap, escs, dilucion_pct=(d.dilucion_esperada_pct or 0.0),
+                              caja_neta_terminal=(d.caja_neta_terminal or 0.0))
+    return "\n- " + bloque.replace("\n", "\n  ")
+
+
+def _render_dossiers(dossiers: list[tuple[Dossier, VerificationReport]],
+                     contexto: dict[str, ContextoTicker] | None = None) -> str:
     if not dossiers:
         return "(sin dossiers vigentes)"
+    ctxs = contexto or {}
     out = []
     for d, v in dossiers:
         inv = d.invertibilidad
@@ -86,7 +101,7 @@ def _render_dossiers(dossiers: list[tuple[Dossier, VerificationReport]]) -> str:
                 f"tracción {inv.traccion_0_4}/4\n"
                 f"  · inflexión de valor: {inv.next_value_inflection} (~{inv.months_to_inflection}m)\n"
                 f"  · funded: {inv.milestone_funding_coverage} | estrés: {inv.stress_funding_gap}\n"
-                f"  · qué exige el precio: {inv.price_implied_requirements}\n"
+                f"  · qué exige el precio (cualitativo): {inv.price_implied_requirements}\n"
                 f"  · test de atraso: {inv.test_de_atraso}")
         out.append(
             f"### {d.ticker}  [{v.veredicto.upper()}]  (convicción analista {d.conviccion_0_1:.2f})\n"
@@ -95,7 +110,7 @@ def _render_dossiers(dossiers: list[tuple[Dossier, VerificationReport]]) -> str:
             f"- Bull: {d.bull.tesis}\n- Bear: {d.bear.tesis}\n"
             f"- Falsador del analista: {d.falsador.afirmacion} (límite {d.falsador.fecha_limite})\n"
             f"- Red flags: {', '.join(f'{r.tipo}[{r.severidad}]' for r in d.red_flags) or 'ninguna'}"
-            f"{inv_txt}")
+            f"{inv_txt}{_puente_txt(d, ctxs.get(d.ticker))}")
     return "\n\n".join(out)
 
 
@@ -153,7 +168,7 @@ class PM:
             f"=== ALERTAS DE LA CORRIDA ANTERIOR (resolvé o tené en cuenta) ===\n{alertas_txt}\n\n"
             f"=== MEMO MACRO ===\n{memo_macro or '(sin memo)'}\n\n"
             f"=== TU TRACK RECORD (información, no instrucción) ===\n{hit_rate_resumen or '(sin histórico aún)'}\n\n"
-            f"=== DOSSIERS VIGENTES ===\n{_render_dossiers(dossiers)}\n\n"
+            f"=== DOSSIERS VIGENTES ===\n{_render_dossiers(dossiers, contexto)}\n\n"
             f"=== FLAGS DE SUPERVIVENCIA (respondé a cada uno) ===\n{flags_txt}\n"
             f"{extra}\n"
             f"Usá validar_ips para chequear tu propuesta y después llamá a emitir_decision."

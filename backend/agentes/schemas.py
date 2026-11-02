@@ -104,6 +104,20 @@ class Escenario(BaseModel):
     evidencia: list[Evidence] = Field(default_factory=list)
 
 
+class EscenarioValuacion(BaseModel):
+    """Escenario NUMÉRICO para el puente económico al precio (doc 74 D1). El Analista pone métrica terminal +
+    múltiplo + horizonte + probabilidad (juicio); el determinismo hace la aritmética (retorno, reverse burden,
+    probabilidad implícita). El `bear` debe ser 'la tesis FALLA' (≈ caja remanente), no 'se demora' — ahí entra
+    la pata del presente. Comparten horizonte para que los MOIC sean comparables."""
+    nombre: Literal["bull", "base", "bear"]
+    metrica_terminal: float                  # EBITDA o revenue terminal (USD), al nivel del múltiplo
+    tipo_metrica: Literal["revenue", "ebitda"]
+    multiplo_salida: float                   # ancla a comparables con el crecimiento/margen del AÑO TERMINAL
+    margen_terminal_pct: float | None = None  # si el múltiplo es sobre revenue: margen que lo justifica
+    anios: int = Field(ge=1)
+    prob: float = Field(ge=0, le=1)
+
+
 class Catalizador(BaseModel):
     descripcion: str
     fecha_esperada: str | None = None        # YYYY-MM-DD / YYYY-MM / null
@@ -166,6 +180,11 @@ class Dossier(BaseModel):
     red_flags: list[RedFlag] = Field(default_factory=list)
     falsador: Falsador
     invertibilidad: Invertibilidad | None = None   # ficha de futuro (doc 70 D2); None = dossier legacy
+    # Puente económico al precio (doc 74 D1): escenarios numéricos + insumos del equity bridge/dilución. Vacío
+    # = dossier legacy / sin puente (→ el inverso da UNKNOWN y D4 lo trata como máx. especulativa).
+    escenarios: list[EscenarioValuacion] = Field(default_factory=list)
+    caja_neta_terminal: float | None = None        # caja − deuda estimada del año terminal (equity = EV + esto)
+    dilucion_esperada_pct: float | None = None     # dilución acumulada al terminal (PISO determinista de Tier A)
     conviccion_0_1: float = Field(ge=0, le=1)
 
 

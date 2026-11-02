@@ -67,6 +67,17 @@ def _emitir_dossier_schema() -> dict:
         "critical_unverified_assumption": _S, "test_de_atraso": _S,
         "analyst_classification": {"type": "string", "enum": ["core", "satelite", "especulativa", "watchlist"]},
     })
+    # escenarios NUMÉRICOS del puente económico (doc 74 D1): el analista pone métrica/múltiplo/año/prob; el
+    # bear debe ser "la tesis FALLA" (≈ caja remanente). Comparten horizonte (MOIC comparable).
+    escenario_val = _obj({
+        "nombre": {"type": "string", "enum": ["bull", "base", "bear"]},
+        "metrica_terminal": {"type": "number"},
+        "tipo_metrica": {"type": "string", "enum": ["revenue", "ebitda"]},
+        "multiplo_salida": {"type": "number"},
+        "margen_terminal_pct": {"type": ["number", "null"]},
+        "anios": {"type": "integer"},
+        "prob": {"type": "number"},
+    })
     return _obj({
         "negocio_y_posicion_cuello": _S,
         "claims": {"type": "array", "items": claim},
@@ -77,6 +88,9 @@ def _emitir_dossier_schema() -> dict:
         "red_flags": {"type": "array", "items": red_flag},
         "falsador": falsador,
         "invertibilidad": invertibilidad,
+        "escenarios": {"type": "array", "items": escenario_val},
+        "caja_neta_terminal": {"type": ["number", "null"]},
+        "dilucion_esperada_pct": {"type": ["number", "null"]},
         "conviccion_0_1": {"type": "number"},
     })
 
@@ -137,6 +151,12 @@ class Analista:
         inv = payload.get("invertibilidad")
         if isinstance(inv, dict) and "traccion_0_4" in inv:     # acotar el entero (el schema no fija rango)
             inv["traccion_0_4"] = max(0, min(4, int(inv.get("traccion_0_4") or 0)))
+        for e in (payload.get("escenarios") or []):             # acotar prob/años de los escenarios (doc 74 D1)
+            if isinstance(e, dict):
+                if e.get("prob") is not None:
+                    e["prob"] = max(0.0, min(1.0, float(e["prob"])))
+                if e.get("anios") is not None:
+                    e["anios"] = max(1, int(e["anios"]))
         try:
             dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
         except Exception as e:  # noqa: BLE001 — dossier incompleto (p.ej. sin falsador) → sin_dossier, no crash

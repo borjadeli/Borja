@@ -54,3 +54,11 @@ def test_auditor_meta_se_computa_no_la_da_el_llm():
     aud = _auditor({"objeciones": [], "devuelve_al_pm": False})
     rep = aud.auditar(_decision(), cartera_actual={}, caja_actual=1.0)
     assert rep.meta.agent == "auditor" and rep.meta.prompt_version == "auditor_v1"
+
+
+def test_auditor_recibe_analisis_de_cartera():
+    aud = _auditor({"objeciones": [], "devuelve_al_pm": False})
+    aud.auditar(_decision([_accion()]), cartera_actual={"OKLO": 0.1}, caja_actual=0.9,
+                cartera_analisis="CONCENTRACIÓN POR FACTOR: cuello:SMR 40% (OKLO, SMR, NNE)")
+    msg = aud.ag._cliente.llamadas[0]["messages"][0]["content"]
+    assert "cuello:SMR 40%" in msg and "ANÁLISIS DE CARTERA" in msg

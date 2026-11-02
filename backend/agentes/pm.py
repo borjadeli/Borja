@@ -78,13 +78,24 @@ def _render_dossiers(dossiers: list[tuple[Dossier, VerificationReport]]) -> str:
         return "(sin dossiers vigentes)"
     out = []
     for d, v in dossiers:
+        inv = d.invertibilidad
+        inv_txt = ""
+        if inv is not None:
+            inv_txt = (
+                f"\n- INVERTIBILIDAD [{inv.analyst_classification}] · riesgo {inv.riesgo_remanente} · "
+                f"tracción {inv.traccion_0_4}/4\n"
+                f"  · inflexión de valor: {inv.next_value_inflection} (~{inv.months_to_inflection}m)\n"
+                f"  · funded: {inv.milestone_funding_coverage} | estrés: {inv.stress_funding_gap}\n"
+                f"  · qué exige el precio: {inv.price_implied_requirements}\n"
+                f"  · test de atraso: {inv.test_de_atraso}")
         out.append(
             f"### {d.ticker}  [{v.veredicto.upper()}]  (convicción analista {d.conviccion_0_1:.2f})\n"
             f"- Negocio/cuello: {d.negocio_y_posicion_cuello}\n"
             f"- Valuación que exige el precio: {d.valuacion_que_exige_el_precio}\n"
             f"- Bull: {d.bull.tesis}\n- Bear: {d.bear.tesis}\n"
             f"- Falsador del analista: {d.falsador.afirmacion} (límite {d.falsador.fecha_limite})\n"
-            f"- Red flags: {', '.join(f'{r.tipo}[{r.severidad}]' for r in d.red_flags) or 'ninguna'}")
+            f"- Red flags: {', '.join(f'{r.tipo}[{r.severidad}]' for r in d.red_flags) or 'ninguna'}"
+            f"{inv_txt}")
     return "\n\n".join(out)
 
 

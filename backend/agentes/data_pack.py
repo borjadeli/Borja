@@ -193,6 +193,15 @@ def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
         out.append(DataPoint.derivado(tk, "dilucion_12m_pct", None, unit="pct", formula_id="dilucion_12m:v1",
                                       insumos=[p for p in (sh, sh1y) if p], estado="MISSING",
                                       note="falta serie de acciones (actual o −1y)"))
+
+    # runway bajo ESTRÉS (doc 70 D4): la quema puede ser peor que la histórica → escenario de supervivencia.
+    if cash and cash.value is not None and burn and burn.value is not None and burn.value < 0:
+        from backend.agentes.futuro import meses_runway
+        r = meses_runway(cash.value, burn.value, estres=1.3)
+        if r.valor is not None:
+            out.append(DataPoint.derivado(tk, "cash_runway_months_stress", r.valor, unit="meses",
+                                          formula_id="runway_stress:v1", insumos=[cash, burn],
+                                          note="estrés 1.3x la quema histórica"))
     return out
 
 

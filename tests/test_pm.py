@@ -127,3 +127,19 @@ def test_r2_dryrun_usa_ops_del_ledger_no_del_input():
     pm = _pm([], ips=_ips(max_ops_semana=2))
     out = json.loads(pm._handler_validar(_ctx(), 2)({"pesos": {"OKLO": 0.1}, "ops_semana": 0}))
     assert any(v["regla"] == "max_ops_semana" for v in out["violaciones"])
+
+
+def test_pm_ve_la_ficha_de_invertibilidad():
+    import backend.agentes.schemas as sc
+    inv = sc.Invertibilidad(riesgo_remanente="comercial", next_value_inflection="PPA firme", months_to_inflection=12,
+                            fundamental_impact_if_successful="x", independent_evidence="y", traccion_0_4=3,
+                            milestone_funding_coverage="caja 18m", stress_funding_gap="gap 0",
+                            subsequent_capital_need="", dilution_exposure="", price_implied_requirements="2GW/2032",
+                            critical_unverified_assumption="", test_de_atraso="EV -30% si arranca 2 años tarde",
+                            analyst_classification="satelite")
+    d = _dossier(); d.invertibilidad = inv
+    resps = [resp_tool("emitir_decision", _decision_payload([_accion_payload()]), _U)]
+    pm = _pm(resps)
+    pm.decidir(dossiers=[(d, _verif())], cartera_actual={}, caja_actual=1.0, contexto=_ctx())
+    msg = pm.ag._cliente.llamadas[0]["messages"][0]["content"]
+    assert "INVERTIBILIDAD [satelite]" in msg and "test de atraso" in msg and "EV -30%" in msg

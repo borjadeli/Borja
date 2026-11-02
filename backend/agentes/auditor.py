@@ -51,7 +51,8 @@ class Auditor:
 
     def auditar(self, decision: PMDecision, *, cartera_actual: dict[str, float], caja_actual: float,
                 memo_macro: str = "", verif_por_ticker: dict[str, str] | None = None,
-                ips_violaciones: list[Violacion] | None = None, max_tokens: int = 1024) -> AuditReport:
+                ips_violaciones: list[Violacion] | None = None, cartera_analisis: str = "",
+                max_tokens: int = 1024) -> AuditReport:
         cartera_txt = ("\n".join(f"- {t}: {w:.1%}" for t, w in sorted(cartera_actual.items()))
                        or "(cartera vacía)")
         fails = [t for t, v in (verif_por_ticker or {}).items() if v == "fail"]
@@ -66,6 +67,8 @@ class Auditor:
             f"Timing: {decision.razon_timing}\n\n"
             f"=== NOMBRES CON VERIFICACIÓN FALLIDA (FAIL) ===\n{fails_txt}\n\n"
             f"=== VIOLACIONES DEL IPS DETECTADAS POR EL CÓDIGO ===\n{viol_txt}\n\n"
+            f"=== ANÁLISIS DE CARTERA (concentración por factor de tesis · tesis cambiadas) ===\n"
+            f"{cartera_analisis or '(sin señales de cartera)'}\n\n"
             f"Revisá y emití tus objeciones (o ninguna). Recordá: no vetás, objetás con predicciones falsables."
         )
         payload, meta = self.ag.estructurado(system=_PROMPT, user=user,

@@ -112,6 +112,7 @@ class OrquestadorDecision:
                  dossier_hash_por_ticker: dict[str, str] | None = None,
                  verif_por_ticker: dict[str, str] | None = None,
                  flags_por_ticker: dict[str, list[str]] | None = None,
+                 factores_por_ticker: dict[str, list[str]] | None = None,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
@@ -138,7 +139,7 @@ class OrquestadorDecision:
                 res, decision = res2, nueva
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                                  hashes, verifs, memo_macro)
+                                  hashes, verifs, memo_macro, factores=factores_por_ticker)
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
@@ -226,12 +227,20 @@ class OrquestadorDecision:
         return res
 
     def _auditar_y_registrar(self, res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                             hashes, verifs, memo_macro) -> None:
+                             hashes, verifs, memo_macro, factores=None) -> None:
         if self.auditor is not None:
             viol = list(res.holguras)
+            # análisis de cartera determinista para el Auditor (doc 70 D3): concentración por factor de tesis
+            # + tesis cambiada vs entrada (contra el ledger). Factores por ticker los provee el caller (mapa).
+            from backend.agentes.auditoria_cartera import (exposicion_por_factor, render_para_auditor,
+                                                           tesis_cambiada)
+            exp = exposicion_por_factor(res.pesos_finales, factores or {}) if factores else []
+            cambiadas = tesis_cambiada(self.ledger, set(res.pesos_finales))
+            cartera_analisis = render_para_auditor(exp, cambiadas)
             res.auditoria = self.auditor.auditar(
                 decision, cartera_actual=cartera, caja_actual=caja_actual,
-                memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol)
+                memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol,
+                cartera_analisis=cartera_analisis)
             if any(o.severidad == "alta" for o in res.auditoria.objeciones):
                 res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
         self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo)

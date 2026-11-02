@@ -118,10 +118,13 @@ Contexto real del IPS: **12 plazas**, sin piso por nombre, downside especulativa
 |---|---|---|---|---|---|---|
 | IA1 | 0% | ≤2% | ≤6% | IPS máx | — | — |
 | IA2 | 0% | ≤1,5% | ≤4% | 6–8% | 8–10% | 15–20% |
-| **Recomendado** (12 plazas) | 0% | **≤1,5%** | **≤5%** | IPS máx (20%) | **≤10%** | **≤20%** |
+| **ELEGIDA** ✅ (12 plazas) | 0% | **≤1,5%** | **≤5%** | IPS máx (20%) | **≤10%** | **≤20%** |
 
-Recomiendo ≤1,5% especulativa (bear −80% → −1,2% del NAV, cerca de la regla; 2% daría −1,6%) y ≤5% satélite
-(regla de IA2 para ≤15 plazas). **A confirmar por el operador** (es apetito de riesgo).
+**DECISIÓN DEL OPERADOR (2026-11-02): grilla equilibrada** — especulativa ≤1,5% · satélite ≤5% · core hasta
+IPS máx (20%) · bucket especulativo ≤10% · cluster temático ≤20%. Entradas típicas: especulativa 0,5–1% ·
+satélite 2–3% · core 4–6%. Cumple la regla de calibración (pérdida bear de una especulativa a −80% ≈ −1,2%
+del NAV) y hace imposible el patrón OKLO 2,8% ≈ MP 3%. Estos números van al `config/ips.yaml` cuando se
+implemente D4.
 
 ## 5. Orden de implementación (síntesis de ambos órdenes)
 

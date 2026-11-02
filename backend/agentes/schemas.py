@@ -130,11 +130,32 @@ class RedFlag(BaseModel):
     cita: Evidence
 
 
+TipoVara = Literal["hito_tercero", "economico", "competitivo"]
+
+
+class VaraExterna(BaseModel):
+    """D2 (doc 74): el falsador se apoya en una referencia EXTERNA o ECONÓMICA, no en el propio roadmap
+    (RGTI 99,5% = su propia meta no falsa nada). `comparador` = contra qué se mide (benchmark externo /
+    economía unitaria / criterio comercial); `metrica`+`umbral`+`fuente_medicion` la hacen falsable (sin fuente
+    de medición es tan infalsable como una narrativa). Si de verdad NO hay benchmark comparable → `no_aplica`
+    con `razon_no_aplica` (el Verificador la revisa; sin esa salida el LLM fabrica un comparable = teatral)."""
+    tipo: TipoVara
+    metrica: str
+    umbral: str
+    comparador: str
+    fuente_medicion: str
+    accion_si_dispara: str = ""               # consecuencia pre-comprometida (ej: baja un escalón de clasificación)
+    no_aplica: bool = False
+    razon_no_aplica: str = ""
+
+
 class Falsador(BaseModel):
-    """Lo que, de cumplirse, invalida la tesis. CON FECHA — alimenta el ledger de hit-rate."""
+    """Lo que, de cumplirse, invalida la tesis. CON FECHA — alimenta el ledger de hit-rate. La `vara_externa`
+    (D2) lo saca de lo autorreferencial; None = legacy → el Verificador lo baja a REVIEW."""
     afirmacion: str
     fecha_limite: str                        # YYYY-MM-DD
     que_lo_mataria: str
+    vara_externa: VaraExterna | None = None
 
 
 RiesgoRemanente = Literal["cientifico", "ingenieria", "comercial", "escala"]

@@ -37,7 +37,14 @@ REGLAS DURAS
   que esos tengan procedencia (SEC primaria, o contraste XBRL para los numéricos); si uno no la tiene, el
   dossier se rechaza.
 - `falsador`: UNA afirmación con FECHA límite que, de cumplirse, mata tu tesis (p.ej. "si al 2027-06-30 no
-  firmó un contrato comercial firme, la tesis de demanda cae").
+  firmó un contrato comercial firme, la tesis de demanda cae"). **Completá `vara_externa` (D2):** el falsador
+  NO puede ser autorreferencial (cumplir TU propio roadmap no prueba nada: RGTI llegando a 99,5% sigue detrás
+  de 99,8% de los líderes). La vara se apoya en una referencia **externa o económica**: `tipo`
+  (`competitivo` = contra el mejor comparable · `economico` = precio/costo/margen/demanda · `hito_tercero` =
+  regulador/cliente con contrato) + `metrica` + `umbral` + `comparador` (contra qué) + `fuente_medicion`
+  (quién lo reporta y cómo — sin fuente es tan infalsable como una narrativa) + `accion_si_dispara`. Preferí
+  hitos verificados por terceros a hitos propios. Si de verdad NO hay benchmark comparable, poné
+  `no_aplica=true` con `razon_no_aplica` (el Verificador la revisa). Sin vara externa válida → REVIEW.
 - Sé parco y concreto. No incluyas un campo de "razonamiento": poné una explicación corta donde corresponda.
 
 ANÁLISIS DEL FUTURO — completá la ficha `invertibilidad` siguiendo ESTE ORDEN (el orden evita que la

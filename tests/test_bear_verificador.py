@@ -8,7 +8,11 @@ from backend.agentes.verificador import flags_supervivencia, verificar
 
 _META = sc.AgentMeta(agent="analista", prompt_version="v1", model="claude-opus-5-5")
 _ESC = sc.Escenario(tesis="t", supuestos=["a"], contraste_con_calculadoras="vs T*")
-_FALS = sc.Falsador(afirmacion="no firma", fecha_limite="2027-06-30", que_lo_mataria="sin contrato")
+_VARA = sc.VaraExterna(tipo="competitivo", metrica="fidelidad 2Q", umbral="≥99.8%",
+                       comparador="mejor superconductor comparable", fuente_medicion="calibración pública Braket",
+                       accion_si_dispara="baja un escalón de clasificación")
+_FALS = sc.Falsador(afirmacion="no firma", fecha_limite="2027-06-30", que_lo_mataria="sin contrato",
+                    vara_externa=_VARA)
 
 
 def _claim(cid, url, *, tipo="hecho", verif="confirmed_by_filing", mat="central"):
@@ -228,3 +232,48 @@ def test_r4d3_traccion_alta_sin_primaria_es_review():
                    falsador=_FALS, invertibilidad=inv, conviccion_0_1=0.5)
     r = verificar(d, ["https://www.fool.com/x"])
     assert r.veredicto == "review" and any("MOU inflado" in m or "tracción" in m for m in r.motivos)
+
+
+# ---- D2: falsador con vara externa (doc 74) ----
+
+def _doss_fals(falsador):
+    return sc.Dossier(meta=_META, ticker="RGTI", negocio_y_posicion_cuello="QC",
+                      claims=[_claim("c1", "https://sec.gov/a")], tesis_claims_soporte=["c1"],
+                      valuacion_que_exige_el_precio="T*", bull=_ESC, bear=_ESC,
+                      falsador=falsador, conviccion_0_1=0.5)
+
+
+def test_d2_falsador_sin_vara_externa_es_review():
+    # autorreferencial (sin vara) → REVIEW, no FAIL
+    d = _doss_fals(sc.Falsador(afirmacion="llega a 99.5%", fecha_limite="2027-06-30", que_lo_mataria="x"))
+    r = verificar(d, FUENTES)
+    assert r.veredicto == "review" and any("vara externa" in m for m in r.motivos)
+
+
+def test_d2_vara_bien_formada_no_baja():
+    r = verificar(_doss_fals(_FALS), FUENTES)
+    assert r.veredicto == "pass"
+
+
+def test_d2_no_aplica_con_razon_se_permite():
+    v = sc.VaraExterna(tipo="competitivo", metrica="", umbral="", comparador="", fuente_medicion="",
+                       no_aplica=True, razon_no_aplica="no hay competidor con métrica homogénea en esta fase")
+    r = verificar(_doss_fals(sc.Falsador(afirmacion="a", fecha_limite="2027-06-30", que_lo_mataria="x",
+                                         vara_externa=v)), FUENTES)
+    assert r.veredicto == "pass"
+
+
+def test_d2_no_aplica_sin_razon_es_review():
+    v = sc.VaraExterna(tipo="competitivo", metrica="", umbral="", comparador="", fuente_medicion="",
+                       no_aplica=True, razon_no_aplica="")
+    r = verificar(_doss_fals(sc.Falsador(afirmacion="a", fecha_limite="2027-06-30", que_lo_mataria="x",
+                                         vara_externa=v)), FUENTES)
+    assert r.veredicto == "review" and any("teatral" in m for m in r.motivos)
+
+
+def test_d2_vara_incompleta_sin_fuente_es_review():
+    v = sc.VaraExterna(tipo="economico", metrica="margen", umbral="≥20%", comparador="peers",
+                       fuente_medicion="")      # sin fuente → infalsable
+    r = verificar(_doss_fals(sc.Falsador(afirmacion="a", fecha_limite="2027-06-30", que_lo_mataria="x",
+                                         vara_externa=v)), FUENTES)
+    assert r.veredicto == "review" and any("infalsable" in m for m in r.motivos)

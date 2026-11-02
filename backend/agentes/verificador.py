@@ -64,6 +64,20 @@ def clase_por_url(url: str | None) -> str:
         return "company_statement"
     return "media_o_busqueda"
 
+def evalua_vara_falsador(falsador) -> str | None:
+    """D2 (doc 74): motivo de REVIEW si el falsador es autorreferencial / infalsable; None si está bien. Una
+    excepción fundamentada (`no_aplica` + razón) se permite (IA1: no todo sector tiene benchmark limpio)."""
+    v = getattr(falsador, "vara_externa", None)
+    if v is None:
+        return "sin vara externa (autorreferencial: usa el propio roadmap, no un benchmark externo/económico)"
+    if v.no_aplica:
+        return None if (v.razon_no_aplica or "").strip() else "no_aplica sin razón (cumplimiento teatral)"
+    faltan = [k for k in ("metrica", "umbral", "fuente_medicion") if not (getattr(v, k, "") or "").strip()]
+    if faltan:
+        return f"vara externa incompleta ({'/'.join(faltan)}): infalsable sin fuente de medición/umbral"
+    return None
+
+
 PROMPT_VERSION = "verificador_v1"
 
 _PALABRAS_SUPERVIVENCIA = {
@@ -196,6 +210,14 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
             hay_review = True
             motivos.append(f"tracción declarada {inv.traccion_0_4}/4 (vinculante) sin claim central de fuente "
                            f"primaria que lo respalde — posible MOU inflado")
+
+    # D2 (doc 74): el falsador tiene que apoyarse en una vara EXTERNA/económica, no en el propio roadmap. Sin
+    # vara (o con una incompleta/ no_aplica sin razón) es autorreferencial → REVIEW (no FAIL: permite excepción
+    # fundamentada, IA1). El Bear endurece la vara aguas arriba; acá se controla que exista y sea falsable.
+    motivo_vara = evalua_vara_falsador(dossier.falsador)
+    if motivo_vara:
+        hay_review = True
+        motivos.append(f"falsador (D2): {motivo_vara}")
 
     flags = flags_supervivencia(dossier.red_flags)
     if falla_central:

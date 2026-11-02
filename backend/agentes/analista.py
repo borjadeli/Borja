@@ -55,7 +55,12 @@ def _emitir_dossier_schema() -> dict:
     catalizador = _obj({"descripcion": _S, "fecha_esperada": _S,
                         "tipo": {"type": "string", "enum": _CAT_TIPO}})
     red_flag = _obj({"tipo": _S, "severidad": {"type": "string", "enum": _SEV}, "cita": evidencia})
-    falsador = _obj({"afirmacion": _S, "fecha_limite": _S, "que_lo_mataria": _S})
+    vara_externa = _obj({
+        "tipo": {"type": "string", "enum": ["hito_tercero", "economico", "competitivo"]},
+        "metrica": _S, "umbral": _S, "comparador": _S, "fuente_medicion": _S,
+        "accion_si_dispara": _S, "no_aplica": {"type": "boolean"}, "razon_no_aplica": _S,
+    })
+    falsador = _obj({"afirmacion": _S, "fecha_limite": _S, "que_lo_mataria": _S, "vara_externa": vara_externa})
     # ficha de invertibilidad temporal (doc 70 D2) — el análisis de FUTURO
     invertibilidad = _obj({
         "riesgo_remanente": {"type": "string", "enum": ["cientifico", "ingenieria", "comercial", "escala"]},

@@ -1,8 +1,6 @@
-"""Tests del agente Auditor (v2 Fase 4, doc 55). Sin API — ScriptedLLM + salida estructurada."""
-import json
-
+"""Tests del agente Auditor (v2 Fase 4 + D5 doc 74). Sin API — ScriptedLLM agéntico (web + emisor tool)."""
 from backend.agentes.auditor import Auditor
-from backend.agentes.base import Agente, FakeUsage, ScriptedLLM
+from backend.agentes.base import Agente, FakeUsage, ScriptedLLM, resp_tool
 from backend.agentes.ips import Violacion
 from backend.agentes.schemas import AgentMeta, Falsador, PMAccion, PMDecision
 
@@ -22,8 +20,8 @@ def _accion(ticker="OKLO", peso=0.1, conv=0.7):
 
 
 def _auditor(payload):
-    cli = ScriptedLLM([(json.dumps(payload), _U)])
-    return Auditor(Agente("auditor", "auditor_v1", "claude-opus-5-5", cliente=cli))
+    cli = ScriptedLLM([resp_tool("emitir_auditoria", payload, _U)])
+    return Auditor(Agente("auditor", "auditor_v1", "claude-sonnet-5-5", cliente=cli))
 
 
 def test_auditor_emite_objecion_y_devuelve():
@@ -62,3 +60,29 @@ def test_auditor_recibe_analisis_de_cartera():
                 cartera_analisis="CONCENTRACIÓN POR FACTOR: cuello:SMR 40% (OKLO, SMR, NNE)")
     msg = aud.ag._cliente.llamadas[0]["messages"][0]["content"]
     assert "cuello:SMR 40%" in msg and "ANÁLISIS DE CARTERA" in msg
+
+
+# --------------------------------------------------------------------------- D5: web + checklist + materialidad
+
+def test_auditor_capa_a_tres_objeciones():
+    objs = [{"tipo": "omision_material", "detalle": f"hallazgo {i} (url, consecuencia)", "severidad": "media"}
+            for i in range(6)]
+    aud = _auditor({"objeciones": objs, "devuelve_al_pm": True})
+    rep = aud.auditar(_decision([_accion()]), cartera_actual={}, caja_actual=1.0)
+    assert len(rep.objeciones) == 3                      # materialidad: cap duro
+
+
+def test_auditor_acepta_tipos_de_hallazgo_web():
+    aud = _auditor({"objeciones": [
+        {"tipo": "evento_proximo", "detalle": "vencimiento chino 10/11 a 8 días (url)", "severidad": "alta"},
+        {"tipo": "clausula_filing", "detalle": "clawback 30% sobre $110/kg en el 10-K (url)", "severidad": "alta"}],
+        "devuelve_al_pm": True})
+    rep = aud.auditar(_decision([_accion()]), cartera_actual={}, caja_actual=1.0)
+    assert {o.tipo for o in rep.objeciones} == {"evento_proximo", "clausula_filing"}
+
+
+def test_auditor_user_trae_el_checklist_web():
+    aud = _auditor({"objeciones": [], "devuelve_al_pm": False})
+    aud.auditar(_decision([_accion()]), cartera_actual={}, caja_actual=1.0)
+    user_msg = aud.ag._cliente.llamadas[0]["messages"][0]["content"]
+    assert "REFUTAR" in user_msg and "checklist" in user_msg.lower()

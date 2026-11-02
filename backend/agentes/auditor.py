@@ -18,9 +18,15 @@ from backend.agentes.schemas import AuditReport, PMDecision
 PROMPT_VERSION = "auditor_v1"
 _PROMPT = (Path(__file__).resolve().parent.parent.parent / "prompts" / "auditor_v1.md").read_text()
 
-_TIPO = ["concentracion", "coherencia_memo_peso", "rotacion", "verificacion_fallida", "violacion_ips"]
+# D5 (doc 74): tipos de concentración/coherencia + los 4 hallazgos de la búsqueda web adversarial.
+_TIPO = ["concentracion", "coherencia_memo_peso", "rotacion", "verificacion_fallida", "violacion_ips",
+         "omision_material", "evento_proximo", "clausula_filing", "competidor"]
 _SEV = ["alta", "media", "baja"]
 _S = {"type": "string"}
+_MAX_OBJECIONES = 3                   # materialidad (IA2): máx 3/nombre, o el PM aprende a ignorarlas
+
+# web acotada (IA2): búsqueda PARA REFUTAR, no para entender → pocas, dirigidas por checklist.
+WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 5}
 
 
 def _obj(props: dict) -> dict:
@@ -35,6 +41,12 @@ _PAYLOAD_SCHEMA = _obj({
     })},
     "devuelve_al_pm": {"type": "boolean"},
 })
+
+EMITIR_AUDITORIA_TOOL = {
+    "name": "emitir_auditoria",
+    "description": "Emití tus objeciones (máx 3, materiales). Es tu única salida; llamala cuando terminaste.",
+    "input_schema": _PAYLOAD_SCHEMA,
+}
 
 
 def _render_decision(decision: PMDecision) -> str:
@@ -69,9 +81,15 @@ class Auditor:
             f"=== VIOLACIONES DEL IPS DETECTADAS POR EL CÓDIGO ===\n{viol_txt}\n\n"
             f"=== ANÁLISIS DE CARTERA (concentración por factor de tesis · tesis cambiadas) ===\n"
             f"{cartera_analisis or '(sin señales de cartera)'}\n\n"
-            f"Revisá y emití tus objeciones (o ninguna). Recordá: no vetás, objetás con predicciones falsables."
+            f"Buscá en la web PARA REFUTAR (checklist: eventos vinculantes ≤90d, cláusulas de filings, cambios "
+            f"de guidance/capex, acuerdos/competidor). Después llamá a emitir_auditoria. No vetás: objetás con "
+            f"predicciones falsables; máx {_MAX_OBJECIONES}, cada una material (cambia un número de D1, un "
+            f"falsador o una clasificación), con evidencia (url) y consecuencia."
         )
-        payload, meta = self.ag.estructurado(system=_PROMPT, user=user,
-                                              payload_schema=_PAYLOAD_SCHEMA, max_tokens=max_tokens)
-        payload.setdefault("devuelve_al_pm", False)   # robustez: payload vacío/truncado → sin objeciones
+        payload, _fuentes, meta = self.ag.agentico(
+            system=_PROMPT, user=user, tools=[WEB_SEARCH_TOOL, EMITIR_AUDITORIA_TOOL],
+            emisor="emitir_auditoria", max_tokens=max_tokens)
+        payload = payload or {}
+        payload["objeciones"] = (payload.get("objeciones") or [])[:_MAX_OBJECIONES]   # materialidad: cap duro
+        payload.setdefault("devuelve_al_pm", bool(payload["objeciones"]))  # robustez: vacío/truncado → sin objeciones
         return AuditReport.model_validate({"meta": meta.model_dump(), **payload})

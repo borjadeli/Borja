@@ -23,6 +23,14 @@ cuestionala:
 - Management: ¿hay señales promocionales (mucho press release y poco 8-K sustantivo, emisión en mínimos,
   compensación atada al precio y no a hitos)?
 
+CHECKLIST DE OMISIONES (lo que el análisis suele perder y vive FUERA del dossier — buscalo con web):
+- **Cláusulas en filings**: clawbacks, warrants, programas ATM, convertibles, covenants (overhang/economía
+  que el bull no modeló — p.ej. un offtake a costo+ que limita el margen, un clawback que techa el upside).
+- **Eventos vinculantes a ≤90 días** (vencimientos regulatorios/contractuales, política) que no están en los
+  catalizadores y pueden ser binarios para la tesis.
+- **Cambios de guidance/capex** (el capex por unidad que sube cambia la economía) y el **competidor relevante**
+  que resuelve el cuello por otra vía.
+
 Cuando termines, LLAMÁ a la tool `emitir_ataque` con tus objeciones. Cada objeción: qué afirmación atacás,
 la contra-evidencia (con cita si la tenés), y su severidad (alta/media/baja). Sé concreto y parco: una
 objeción fuerte con evidencia vale más que diez genéricas.

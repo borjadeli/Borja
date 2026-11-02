@@ -154,7 +154,9 @@ def main() -> int:
     bear = Bear(Agente("bear", m_bear.PROMPT_VERSION, M_SONNET))
     macro = Macro(Agente("macro", m_macro.PROMPT_VERSION, M_OPUS)) if args.con_macro else None
     pm = PM(Agente("pm", m_pm.PROMPT_VERSION, M_OPUS), ips)
-    auditor = Auditor(Agente("auditor", m_auditor.PROMPT_VERSION, M_OPUS))
+    # Auditor en modelo DISTINTO del Analista (Opus) → errores descorrelacionados (D5, IA2: así funcionó la
+    # triangulación de 3 IAs). Sonnet alcanza para la búsqueda adversarial dirigida por checklist.
+    auditor = Auditor(Agente("auditor", m_auditor.PROMPT_VERSION, M_SONNET))
 
     research = Orquestador(
         triage=triage, analista=analista, bear=bear, macro=macro,

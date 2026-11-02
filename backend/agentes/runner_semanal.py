@@ -160,6 +160,15 @@ class RunnerSemanal:
         hr = self._hit_rate_resumen()
         ops_previas = self.decision.ledger.sesiones_ops_en_semana(hoy)
         alertas_previas = self._cargar_alertas()
+        # ciclo de resolución (doc 74): surfacear predicciones vencidas sin resolver (falsadores + bull) para
+        # que el PM sepa que el track record está incompleto. NO se auto-resuelve acá (el Brier se puntúa con
+        # resoluciones deliberadas, por evidencia o por la regla de silencio — ver ops/resolucion).
+        from backend.agentes.resolucion import pendientes as _pendientes
+        _pend = _pendientes(self.decision.ledger, hoy)
+        if _pend:
+            alertas_previas = alertas_previas + [
+                f"{len(_pend)} predicciones vencidas SIN resolver (correr el ciclo de resolución): "
+                + ", ".join(f"{p.ticker}[{p.tipo}]" for p in _pend[:5])]
 
         # 3. PM decide (con las ops ya usadas en la semana para su dry-run y las alertas previas).
         def _pm(feedback: str = ""):

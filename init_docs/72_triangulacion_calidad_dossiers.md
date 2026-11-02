@@ -116,6 +116,22 @@ negativo. Si la tesis cambió, la pregunta correcta no es "¿mantengo?" sino "**
   captura + mercado (IBM/Google ya probaron que es físicamente posible). Gatillo de entrada = mismo umbral del
   falsador → **débil** (comprarías la noticia a peor precio por un hito que no cambia competitividad).
 
+## 7bis. ESTADO (2026-11-02)
+
+**Tier A — CERRADO** (reproducido con datos reales → fix → test de regresión → commit, 689 tests verdes):
+- **B2** ✅ liquidez (resolver de valores negociables por candidatos: reconstruye EXACTO $1.452,6M MP /
+  $3.006B OKLO / $541,3M RGTI) + runway capex-aware (quema FCF = operativo − capex). commit 59215d1.
+- **B4** ✅ `browse-edgar`/full-text-search ya NO es `primaria_regulatoria`. commit 59215d1.
+- **B1** ✅ señal `dilucion_overhang` (convertibles/warrants que XBRL no cuantifica) + ventana explícita del %
+  realizado. NO se fabrica el as-converted (es Fase 2). MP/RGTI disparan, OKLO no. commit 173f99d.
+- **B6/B5 → reclasificados a Tier B**: no son del pack determinista sino del LLM (escribe su runway en la
+  ficha / cita dato viejo). Se arreglan con disciplina de prompt + Verificador.
+
+**Limitación conocida (→ Tier B):** para nombres **pre-construcción** (OKLO) el capex HISTÓRICO es chico; la
+restricción real es el capex FUTURO de la flota ($525M/planta según Piper), que es forward-looking y lo modela
+el Analista con escenarios, NO el pack histórico. El determinismo ahora da el dato correcto; el futuro lo razona
+el LLM (es justo el límite determinismo↔juicio).
+
 ## 7. Plan ordenado
 
 **Tier A — bugs deterministas (reproducir → fix → test → commit).** No requieren triangulación, son defectos.

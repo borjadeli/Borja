@@ -67,6 +67,30 @@ la IA clasifica y sizea, el código capea. NO le saca la decisión al PM.
 - **DECISIÓN ABIERTA 3:** los números de las bandas (¿1,5%/4%? ¿otros?) — dependen del apetito de riesgo del
   operador y de cuántas plazas. Es la decisión más "del operador" de todo Tier B.
 
+## D5 — ¿El Auditor con web? (propuesta del operador)
+
+**Contexto:** hoy el PM y el Auditor NO tienen web (el research agéntico lo hacen Analista y Bear). La
+triangulación del doc 72 fue, en los hechos, **un auditor con web**: 3 IAs que leyeron filings encontraron
+omisiones MATERIALES que el comité no vio (clawback del 30% del DoD, capex revisado de OKLO, el **vencimiento
+chino del 10/11** a 8 días, el acuerdo con Meta, la vara competitiva de fidelidad). Un auditor solo-contexto
+NO puede cazar eso: solo chequea coherencia interna (concentración, memo-vs-peso, rotación).
+
+**Propuesta:** darle web **al Auditor** (no al PM). Se distingue limpio del PM:
+- El **PM sintetiza y decide** sobre evidencia ya verificada → sin web, para no re-investigar y mantener la
+  disciplina (doc 51).
+- El **Auditor es el adversario independiente**; su trabajo es encontrar **lo que el comité MISSED**, que
+  justamente suele vivir **fuera del dossier** (un competidor, una cláusula, un evento vinculante próximo).
+  Darle web institucionaliza lo que hicimos a mano con las 3 IAs.
+
+**Guardarraíles (para que audite, no re-escriba):** (a) sus hallazgos web entran como **objeciones falsables**
+(el mecanismo que ya existe: `devuelve_al_pm`), NO como un dossier nuevo; (b) no sizea ni elige nombres; (c)
+cap de `max_uses` de web y de costo (corre 1 vez/ciclo sobre pocos nombres → barato vs el Analista).
+
+**Recomendación:** **sí**, con esos guardarraíles. Es coherente con el paradigma ("los agentes de investigación
+usan web; el PM no") y es el mayor multiplicador de calidad a bajo costo que vimos.
+- **DECISIÓN ABIERTA 4:** ¿se acepta Auditor-con-web con esos límites? ¿algún riesgo de que el Auditor se
+  vuelva un segundo Analista en vez de un adversario?
+
 ## Qué NO cambia
 
 El PM sigue **sin web** y decide. El determinismo informa/limita. El futuro sigue siendo una pata. No se agrega

@@ -96,3 +96,8 @@ precio implica (expectations investing). Reglas (doc 74 D1):
   financiamiento / precio), vos podés ponerla MÁS alta, nunca más baja.
 - Las `prob` son tu juicio, no frecuencias calibradas. Si no podés dar un puente defendible, dejá `escenarios`
   vacío (el sistema lo tratará como UNKNOWN / tamaño de opción) — mejor vacío que inventar números.
+- **Anclá la P(bull) a una TASA BASE (D3):** en el escenario `bull`, poné `ancla_tasa_base` = la **id** de la
+  fila de la tabla de tasas base que mejor corresponde a lo que el bull exige (p.ej. sostener cierto CAGR, FOAK
+  en fecha, captura del líder). Si de verdad ninguna aplica, poné `"sin_muestra"` (es juicio explícito). **No
+  cites libros de memoria** — usá SOLO las ids de la tabla provista. La P(bull) no debería superar 2x la tasa
+  base de su ancla sin una razón de peso (el Verificador lo baja a REVIEW).

@@ -116,6 +116,7 @@ class EscenarioValuacion(BaseModel):
     margen_terminal_pct: float | None = None  # si el múltiplo es sobre revenue: margen que lo justifica
     anios: int = Field(ge=1)
     prob: float = Field(ge=0, le=1)
+    ancla_tasa_base: str | None = None        # D3: id de fila de tasas_base que ancla esta prob (o "sin_muestra")
 
 
 class Catalizador(BaseModel):

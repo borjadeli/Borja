@@ -15,6 +15,7 @@ from pathlib import Path
 from backend.agentes.base import Agente
 from backend.agentes.provenance import DataPack
 from backend.agentes.schemas import AgentMeta, Dossier
+from backend.agentes.tasas_base import render_tabla as _tabla_tasas_base
 
 _log = logging.getLogger("agentes.analista")
 PROMPT_VERSION = "analista_v1"
@@ -82,6 +83,7 @@ def _emitir_dossier_schema() -> dict:
         "margen_terminal_pct": {"type": ["number", "null"]},
         "anios": {"type": "integer"},
         "prob": {"type": "number"},
+        "ancla_tasa_base": {"type": ["string", "null"]},   # D3: id de fila de tasas base, o "sin_muestra"
     })
     return _obj({
         "negocio_y_posicion_cuello": _S,
@@ -144,6 +146,8 @@ class Analista:
             f"=== DATA PACK (números deterministas, con procedencia) ===\n{_render_pack(data_pack)}\n\n"
             f"=== CONTEXTO DEL CUELLO DE BOTELLA ===\n{contexto_cuello or '(sin contexto de mapa)'}\n\n"
             f"=== MEMO MACRO ===\n{memo_macro or '(sin memo macro)'}\n\n"
+            f"=== TASAS BASE DISPONIBLES (ancla de la P(bull); elegí UNA id o 'sin_muestra') ===\n"
+            f"{_tabla_tasas_base()}\n\n"
             f"Investigá con web_search y después llamá a emitir_dossier."
         )
         payload, fuentes, meta = self.ag.agentico(

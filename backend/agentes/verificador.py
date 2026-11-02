@@ -219,6 +219,18 @@ def verificar(dossier: Dossier, fuentes: list[str], *, hechos_store: list[str] |
         hay_review = True
         motivos.append(f"falsador (D2): {motivo_vara}")
 
+    # D3 (doc 74): calibración del puente. La P(bull) no debería superar 2x la tasa base de su ancla; si no
+    # declara ancla, la calibración no es auditable (NOTA, no REVIEW).
+    bull_esc = next((e for e in dossier.escenarios if e.nombre == "bull"), None)
+    if bull_esc is not None and bull_esc.prob is not None:
+        from backend.agentes.tasas_base import calibracion_bull
+        ok_cal, motivo_cal = calibracion_bull(bull_esc.prob, bull_esc.ancla_tasa_base)
+        if not ok_cal:
+            hay_review = True
+            motivos.append(f"calibración bull (D3): {motivo_cal}")
+        elif not bull_esc.ancla_tasa_base:
+            notas.append("bull sin ancla de tasa base (calibración no auditable)")
+
     flags = flags_supervivencia(dossier.red_flags)
     if falla_central:
         veredicto = "fail"

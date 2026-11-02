@@ -155,3 +155,92 @@ def retorno_por_escenario(valor_hoy: float | None, escenarios: list[Escenario], 
         filas, round(vp_esperado, 0), round(ratio_vp, 3), "COMPUTED",
         f"VP esperado {vp_esperado:,.0f} vs precio {valor_hoy:,.0f} → ratio {ratio_vp:.2f} "
         f"({veredicto}); tasa {tasa:.0%}, dilución {dilucion_pct:.0%}{aviso}")
+
+
+# --------------------------------------------------------------------------- D1 INVERSO: qué exige el precio
+
+@dataclass
+class ReverseBurden:
+    metrica_requerida: float | None          # métrica terminal (EBITDA/revenue) que el precio exige para la hurdle
+    equity_terminal_requerida: float | None  # valor de equity terminal necesario
+    multiplo_requerido: float | None         # si se fija la métrica del escenario: a qué múltiplo habría que salir
+    estado: str                              # COMPUTED | UNKNOWN
+    detalle: str
+
+
+def metrica_requerida_por_precio(valor_hoy: float | None, multiplo: float | None, anios: int | None, *,
+                                 tasa: float = 0.15, dilucion_pct: float = 0.0,
+                                 caja_neta_terminal: float = 0.0,
+                                 metrica_escenario: float | None = None) -> ReverseBurden:
+    """INVERSO de D1 (doc 74 §0 — reverse burden / expectations investing). Dado el PRECIO DE HOY (`valor_hoy`
+    = market cap / equity), ¿qué métrica terminal (EBITDA o revenue) exige el precio para que comprar hoy rinda
+    la hurdle?
+        equity_terminal_requerida = valor_hoy × (1+tasa)^anios × (1+dilución)
+        EV_terminal_requerido      = equity_terminal_requerida − caja_neta_terminal   (equity = EV + caja − deuda)
+        métrica_requerida          = EV_terminal_requerido / múltiplo
+    Si se pasa `metrica_escenario`, devuelve además a qué MÚLTIPLO habría que salir manteniéndola. Aritmética
+    pura; UNKNOWN si faltan insumos. `caja_neta_terminal` = caja − deuda del año terminal (puede ser negativa).
+    NO decide: informa qué exige el precio para que el PM lo confronte con la tesis (no con su propia historia)."""
+    if valor_hoy is None or valor_hoy <= 0 or multiplo is None or multiplo <= 0 or not anios or anios <= 0:
+        return ReverseBurden(None, None, None, "UNKNOWN", "faltan insumos (valor_hoy/múltiplo/años)")
+    factor_dil = 1.0 + max(0.0, dilucion_pct)
+    equity_req = valor_hoy * (1.0 + tasa) ** anios * factor_dil
+    ev_req = equity_req - caja_neta_terminal
+    metrica_req = ev_req / multiplo
+    mult_req = (ev_req / metrica_escenario) if (metrica_escenario and metrica_escenario > 0) else None
+    extra = f"; o manteniendo {metrica_escenario:,.0f} habría que salir a {mult_req:.1f}x" if mult_req else ""
+    return ReverseBurden(
+        round(metrica_req, 0), round(equity_req, 0), round(mult_req, 1) if mult_req else None, "COMPUTED",
+        f"a {tasa:.0%}/año por {anios}a: equity terminal {equity_req:,.0f} → métrica terminal exigida "
+        f"{metrica_req:,.0f} a {multiplo:g}x (dilución {dilucion_pct:.0%}){extra}")
+
+
+@dataclass
+class ProbImplicita:
+    p_bull: float | None         # probabilidad de bull que el PRECIO implica para alcanzar la hurdle
+    moic_bull: float | None
+    moic_resto: float | None     # MOIC ponderado del resto (base/bear), con sus probs relativas
+    target_moic: float | None    # (1+tasa)^anios: el MOIC que hay que batir
+    estado: str                  # COMPUTED | UNKNOWN
+    detalle: str
+
+
+def _moic(valor_hoy: float, e: "Escenario", caja_neta_terminal: float, dilucion_pct: float) -> float:
+    """MOIC por acción de un escenario: (equity terminal / equity hoy) / (1+dilución). equity = EV + caja neta."""
+    equity_terminal = e.metrica_terminal * e.multiplo_salida + caja_neta_terminal
+    return (equity_terminal / valor_hoy) / (1.0 + max(0.0, dilucion_pct))
+
+
+def probabilidad_implicita_bull(valor_hoy: float | None, bull: "Escenario | None",
+                                resto: list["Escenario"], *, tasa: float = 0.15, anios: int | None = None,
+                                dilucion_pct: float = 0.0, caja_neta_terminal: float = 0.0) -> ProbImplicita:
+    """¿Qué probabilidad de bull IMPLICA el precio de hoy para batir la hurdle? (doc 74 §0 — expectations
+    investing, Mauboussin/Rappaport). Con el bull y el resto (base/bear) de MOIC fijo, resuelve:
+        p_bull × MOIC_bull + (1−p_bull) × MOIC_resto = (1+tasa)^anios
+    El PM no juzga si el '25%' del analista es correcto, sino si el precio exige una probabilidad de bull
+    razonable. p_bull>1 → ni con 100% bull alcanza (caro); p_bull<0 → hasta el downside bate la hurdle (barato).
+    Todos los escenarios deben compartir horizonte (MOICs comparables); UNKNOWN si no, o si faltan insumos."""
+    if valor_hoy is None or valor_hoy <= 0 or bull is None or not resto:
+        return ProbImplicita(None, None, None, None, "UNKNOWN", "faltan insumos (valor_hoy/bull/resto)")
+    anios = anios if anios is not None else bull.anios
+    if not anios or anios <= 0:
+        return ProbImplicita(None, None, None, None, "UNKNOWN", "falta horizonte")
+    if any(e.anios != anios for e in [bull, *resto]):
+        return ProbImplicita(None, None, None, None, "UNKNOWN", "escenarios con horizontes distintos: MOIC no comparable")
+    target = (1.0 + tasa) ** anios
+    m_bull = _moic(valor_hoy, bull, caja_neta_terminal, dilucion_pct)
+    suma_p = sum(max(0.0, e.prob) for e in resto) or float(len(resto))
+    pesos = [(max(0.0, e.prob) or 1.0) / suma_p for e in resto] if sum(max(0.0, e.prob) for e in resto) > 0 \
+        else [1.0 / len(resto)] * len(resto)
+    m_resto = sum(w * _moic(valor_hoy, e, caja_neta_terminal, dilucion_pct) for w, e in zip(pesos, resto))
+    if abs(m_bull - m_resto) < 1e-9:
+        return ProbImplicita(None, round(m_bull, 2), round(m_resto, 2), round(target, 2), "UNKNOWN",
+                             "bull y resto con el mismo MOIC: la probabilidad no está determinada")
+    p = (target - m_resto) / (m_bull - m_resto)
+    if p > 1.0:
+        nota = f"ni con 100% bull alcanza {tasa:.0%}/año (precio exige MOIC {target:.2f}, bull da {m_bull:.2f}): caro"
+    elif p < 0.0:
+        nota = f"hasta el downside bate {tasa:.0%}/año (resto MOIC {m_resto:.2f} ≥ {target:.2f}): barato"
+    else:
+        nota = f"el precio exige P(bull) ≥ {p:.0%} para {tasa:.0%}/año en {anios}a (MOIC bull {m_bull:.2f} / resto {m_resto:.2f})"
+    return ProbImplicita(round(p, 3), round(m_bull, 2), round(m_resto, 2), round(target, 2), "COMPUTED", nota)

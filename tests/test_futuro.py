@@ -99,3 +99,70 @@ def test_retorno_unknown_sin_insumos():
     assert retorno_por_escenario(None, [Escenario("x", 1e6, 1.0, 1, 1.0)]).estado == "UNKNOWN"
     assert retorno_por_escenario(1e9, []).estado == "UNKNOWN"
     assert retorno_por_escenario(1e9, [Escenario("x", 1e6, 1.0, 0, 1.0)]).estado == "UNKNOWN"  # años=0
+
+
+# --------------------------------------------------------------------------- D1 inverso (doc 74 §0)
+
+def test_reverse_burden_rgti():
+    # IA (las 3): para justificar $3.2B EV hoy con 15%/8a hace falta ~$9.8B terminal = $1.2B rev @ 8x o $400M @ 24x
+    from backend.agentes.futuro import metrica_requerida_por_precio
+    rb = metrica_requerida_por_precio(3.2e9, 8.0, 8, tasa=0.15, metrica_escenario=400e6)
+    assert rb.estado == "COMPUTED"
+    assert abs(rb.equity_terminal_requerida - 3.2e9 * 1.15 ** 8) < 1e6     # ~$9.79B
+    assert abs(rb.metrica_requerida - 1.22e9) < 2e7                        # ~$1.22B revenue
+    assert abs(rb.multiplo_requerido - 24.5) < 0.6                         # o $400M a ~24.5x
+
+
+def test_reverse_burden_dilucion_y_caja_neta():
+    from backend.agentes.futuro import metrica_requerida_por_precio
+    base = metrica_requerida_por_precio(1.0e9, 10.0, 5, tasa=0.15)
+    dil = metrica_requerida_por_precio(1.0e9, 10.0, 5, tasa=0.15, dilucion_pct=0.3)
+    assert dil.metrica_requerida > base.metrica_requerida                  # diluir exige MÁS métrica terminal
+    caja = metrica_requerida_por_precio(1.0e9, 10.0, 5, tasa=0.15, caja_neta_terminal=500e6)
+    assert caja.metrica_requerida < base.metrica_requerida                 # caja neta terminal baja la exigencia
+
+
+def test_reverse_burden_unknown():
+    from backend.agentes.futuro import metrica_requerida_por_precio
+    assert metrica_requerida_por_precio(None, 8.0, 8).estado == "UNKNOWN"
+    assert metrica_requerida_por_precio(1e9, 0, 8).estado == "UNKNOWN"
+    assert metrica_requerida_por_precio(1e9, 8.0, 0).estado == "UNKNOWN"
+
+
+def test_probabilidad_implicita_bull():
+    from backend.agentes.futuro import probabilidad_implicita_bull
+    bull = Escenario("bull", 300e6, 10.0, 5, 0.0)      # MOIC 3.0
+    bear = Escenario("bear", 50e6, 6.0, 5, 1.0)        # MOIC 0.3
+    r = probabilidad_implicita_bull(1.0e9, bull, [bear], tasa=0.15, anios=5)
+    # target = 1.15^5 ≈ 2.011; p = (2.011-0.3)/(3.0-0.3) ≈ 0.634
+    assert r.estado == "COMPUTED" and abs(r.p_bull - 0.634) < 0.01
+    assert abs(r.moic_bull - 3.0) < 1e-6 and abs(r.moic_resto - 0.3) < 1e-6
+
+
+def test_probabilidad_implicita_con_base_y_bear():
+    from backend.agentes.futuro import probabilidad_implicita_bull
+    bull = Escenario("bull", 300e6, 10.0, 5, 0.0)      # MOIC 3.0
+    base = Escenario("base", 150e6, 8.0, 5, 0.5)       # MOIC 1.2
+    bear = Escenario("bear", 50e6, 6.0, 5, 0.5)        # MOIC 0.3
+    r = probabilidad_implicita_bull(1.0e9, bull, [base, bear], tasa=0.15, anios=5)
+    # m_resto = 0.5*1.2 + 0.5*0.3 = 0.75; p = (2.011-0.75)/(3.0-0.75) ≈ 0.56
+    assert abs(r.p_bull - 0.56) < 0.01
+
+
+def test_probabilidad_implicita_caro_y_barato():
+    from backend.agentes.futuro import probabilidad_implicita_bull
+    # caro: ni con 100% bull alcanza (bull MOIC < target)
+    caro = probabilidad_implicita_bull(1.0e9, Escenario("bull", 100e6, 10.0, 5, 0.0),
+                                       [Escenario("bear", 10e6, 5.0, 5, 1.0)], tasa=0.15, anios=5)
+    assert caro.p_bull > 1.0 and "caro" in caro.detalle
+    # barato: hasta el downside bate la hurdle (resto MOIC > target)
+    barato = probabilidad_implicita_bull(1.0e9, Escenario("bull", 500e6, 10.0, 5, 0.0),
+                                         [Escenario("bear", 400e6, 8.0, 5, 1.0)], tasa=0.15, anios=5)
+    assert barato.p_bull < 0.0 and "barato" in barato.detalle
+
+
+def test_probabilidad_implicita_horizontes_distintos_unknown():
+    from backend.agentes.futuro import probabilidad_implicita_bull
+    bull = Escenario("bull", 300e6, 10.0, 5, 0.0)
+    bear = Escenario("bear", 50e6, 6.0, 8, 1.0)        # horizonte distinto → MOIC no comparable
+    assert probabilidad_implicita_bull(1.0e9, bull, [bear], anios=5).estado == "UNKNOWN"

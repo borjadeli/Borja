@@ -84,7 +84,9 @@ def _emitir_dossier_schema() -> dict:
 EMITIR_DOSSIER_TOOL = {
     "name": "emitir_dossier",
     "description": "Emití el dossier final de la empresa. Es tu única salida; llamala cuando terminaste de investigar.",
-    "strict": True,
+    # NO strict: con la ficha de invertibilidad el schema supera el límite de grammar de la API strict
+    # ("compiled grammar too large", detectado en el smoke). La garantía de formato la da la validación
+    # pydantic post-hoc (Dossier.model_validate → sin_dossier si no cumple), más robusta y sin límite de tamaño.
     "input_schema": _emitir_dossier_schema(),
 }
 

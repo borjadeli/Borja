@@ -52,7 +52,7 @@ class Auditor:
     def auditar(self, decision: PMDecision, *, cartera_actual: dict[str, float], caja_actual: float,
                 memo_macro: str = "", verif_por_ticker: dict[str, str] | None = None,
                 ips_violaciones: list[Violacion] | None = None, cartera_analisis: str = "",
-                max_tokens: int = 1024) -> AuditReport:
+                max_tokens: int = 2048) -> AuditReport:
         cartera_txt = ("\n".join(f"- {t}: {w:.1%}" for t, w in sorted(cartera_actual.items()))
                        or "(cartera vacía)")
         fails = [t for t, v in (verif_por_ticker or {}).items() if v == "fail"]
@@ -73,4 +73,5 @@ class Auditor:
         )
         payload, meta = self.ag.estructurado(system=_PROMPT, user=user,
                                               payload_schema=_PAYLOAD_SCHEMA, max_tokens=max_tokens)
+        payload.setdefault("devuelve_al_pm", False)   # robustez: payload vacío/truncado → sin objeciones
         return AuditReport.model_validate({"meta": meta.model_dump(), **payload})

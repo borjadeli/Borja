@@ -125,9 +125,13 @@ class Agente:
             messages=[{"role": "user", "content": user}],
             output_config={"format": {"type": "json_schema", "schema": payload_schema}},
         )
-        payload = json.loads(_primer_texto(resp))
         meta = construir_meta(self.nombre, self.prompt_version, resp)
         self._log_costo(meta)
+        try:
+            payload = json.loads(_primer_texto(resp))
+        except json.JSONDecodeError as e:   # salida truncada (p.ej. max_tokens) → no tumbar el ciclo
+            _log.warning("%s: salida JSON inválida/truncada (%s) → payload vacío", self.nombre, e)
+            payload = {}
         return payload, meta
 
     def agentico(self, *, system: str, user: str, tools: list, emisor: str,

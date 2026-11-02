@@ -113,6 +113,7 @@ class OrquestadorDecision:
                  verif_por_ticker: dict[str, str] | None = None,
                  flags_por_ticker: dict[str, list[str]] | None = None,
                  factores_por_ticker: dict[str, list[str]] | None = None,
+                 clasif_por_ticker: dict | None = None,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
@@ -139,7 +140,8 @@ class OrquestadorDecision:
                 res, decision = res2, nueva
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                                  hashes, verifs, memo_macro, factores=factores_por_ticker)
+                                  hashes, verifs, memo_macro, factores=factores_por_ticker,
+                                  clasif=clasif_por_ticker)
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
@@ -227,7 +229,7 @@ class OrquestadorDecision:
         return res
 
     def _auditar_y_registrar(self, res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                             hashes, verifs, memo_macro, factores=None) -> None:
+                             hashes, verifs, memo_macro, factores=None, clasif=None) -> None:
         if self.auditor is not None:
             viol = list(res.holguras)
             # análisis de cartera determinista para el Auditor (doc 70 D3): concentración por factor de tesis
@@ -237,6 +239,7 @@ class OrquestadorDecision:
             exp = exposicion_por_factor(res.pesos_finales, factores or {}) if factores else []
             cambiadas = tesis_cambiada(self.ledger, set(res.pesos_finales))
             cartera_analisis = render_para_auditor(exp, cambiadas)
+            cartera_analisis += self._sizing_shadow(res.pesos_finales, clasif, factores)
             res.auditoria = self.auditor.auditar(
                 decision, cartera_actual=cartera, caja_actual=caja_actual,
                 memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol,
@@ -244,6 +247,21 @@ class OrquestadorDecision:
             if any(o.severidad == "alta" for o in res.auditoria.objeciones):
                 res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
         self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo)
+
+    def _sizing_shadow(self, pesos: dict, clasif: dict | None, factores: dict | None) -> str:
+        """D4 en modo SOMBRA (doc 74): señal de banda por clasificación + caps agregados para el Auditor. No
+        gatea hasta `sizing_modo: duro`. clusters = primer factor temático del mapa (si hay)."""
+        if not clasif:
+            return ""
+        from backend.agentes.clasificacion import analisis_sizing, render_sizing
+        g = self.ips.cfg.get
+        clusters = {t.upper(): (fs[0] if fs else None) for t, fs in (factores or {}).items()}
+        cap_b, cap_c = float(g("cap_bucket_especulativo", 1.0)), float(g("cap_cluster_tematico", 1.0))
+        an = analisis_sizing({t.upper(): w for t, w in pesos.items()},
+                             {t.upper(): c for t, c in clasif.items()}, clusters,
+                             bandas=g("bandas_clasificacion", {}), cap_bucket=cap_b, cap_cluster=cap_c,
+                             peso_max_nombre=float(g("peso_max_nombre", 1.0)))
+        return "\n\n" + render_sizing(an, g("sizing_modo", "sombra"), cap_bucket=cap_b, cap_cluster=cap_c)
 
     def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo) -> None:
         for i, a in enumerate(decision.acciones):

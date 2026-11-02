@@ -241,3 +241,25 @@ def test_r2_6_operar_ahora_false_no_llama_al_auditor(tmp_path):
         _decision([_accion("OKLO", 0.1, "comprar")], operar=False),
         cartera_actual={}, caja_actual=1.0, contexto=_ctx(), ciclo="c")
     assert res.auditoria is None and res.demoradas == []
+
+
+def test_d4_sizing_shadow_llega_al_auditor(tmp_path):
+    # D4 modo sombra (doc 74): OKLO a 10% clasificada satelite pero SIN revenue recurrente → techo especulativa
+    # → banda 1,5% → excede. La señal (no gatea) debe aparecer en el cartera_analisis que ve el Auditor.
+    from backend.agentes.clasificacion import ClasifTicker
+    from backend.agentes.schemas import AgentMeta, AuditReport
+    capt = {}
+
+    class _Spy:
+        def auditar(self, *a, **k):
+            capt.update(k)
+            return AuditReport(meta=AgentMeta(agent="auditor", prompt_version="auditor_v1",
+                                              model="claude-opus-5-5"), objeciones=[], devuelve_al_pm=False)
+
+    clasif = {"OKLO": ClasifTicker(analyst_clasif="satelite", revenue_recurrente=False, tiene_puente=True)}
+    _orq(tmp_path, auditor=_Spy()).procesar(
+        _decision([_accion("OKLO", 0.1)]), cartera_actual={}, caja_actual=1.0, contexto=_ctx(),
+        ciclo="c", clasif_por_ticker=clasif)
+    ca = capt.get("cartera_analisis", "")
+    assert "[SOMBRA]" in ca and "SIZING POR CLASIFICACIÓN" in ca
+    assert "OKLO" in ca and "banda especulativa" in ca and "INFLADA" in ca

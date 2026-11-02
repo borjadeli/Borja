@@ -113,6 +113,20 @@ class RunnerSemanal:
             if d.verif.veredicto in ("pass", "review"):          # FAIL no justifica compra/aumento
                 dossiers.append((d.dossier, d.verif))
 
+        # D4 (doc 74): clasificación por nombre para la señal de sizing (modo sombra). De la ficha: el techo de
+        # hechos usa revenue recurrente (tracción 4) y si hay puente económico (escenarios). fcf/runway → None
+        # por ahora (no se plumbea el pack acá; la regla de runway no corre hasta surfacear ese dato).
+        from backend.agentes.clasificacion import ClasifTicker
+        clasif_por_ticker: dict[str, ClasifTicker] = {}
+        for d, _v in dossiers:
+            inv = d.invertibilidad
+            if inv is None:
+                continue
+            clasif_por_ticker[d.ticker.upper()] = ClasifTicker(
+                analyst_clasif=inv.analyst_classification,
+                revenue_recurrente=(inv.traccion_0_4 == 4),
+                tiene_puente=bool(d.escenarios))
+
         # 2. Cartera actual (proyección del ledger fiel) + hit-rate + ops de la semana + alertas previas.
         pesos_actual, caja_pct, _equity = cartera_desde_ledger(session, precios)
         hr = self._hit_rate_resumen()
@@ -131,7 +145,7 @@ class RunnerSemanal:
         res_dec = self.decision.procesar(
             decision, cartera_actual=pesos_actual, caja_actual=caja_pct, contexto=contexto, ciclo=ciclo,
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
-            flags_por_ticker=flags, memo_macro=memo_txt,
+            flags_por_ticker=flags, clasif_por_ticker=clasif_por_ticker, memo_macro=memo_txt,
             repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
 
         # 5. Paper + persistir alertas para la corrida siguiente (item 5).

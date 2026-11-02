@@ -1,9 +1,11 @@
 """Tests de las calculadoras de futuro deterministas (v2 doc 70 D4). Puras, sin red."""
 from backend.agentes.futuro import (
+    Escenario,
     base_rate_cagr,
     dilucion_por_gap,
     funded_hasta_hito,
     meses_runway,
+    retorno_por_escenario,
 )
 
 
@@ -55,3 +57,45 @@ def test_base_rate_cagr_anti_especulacion():
 
 def test_base_rate_unknown():
     assert base_rate_cagr(None, 5).estado == "UNKNOWN"
+
+
+# --------------------------------------------------------------------------- D1: retorno por escenario (doc 73)
+
+def test_retorno_rgti_caso_limite_se_paga_de_mas():
+    # el caso que las 3 IAs marcaron: $400M revenue @ 8x en 8 años = $3.2B = el MISMO EV que hoy → el valor
+    # descontado hoy es muy inferior al precio (IA3: "$3.2B en 8a al 15% valen ~$1.05B hoy").
+    r = retorno_por_escenario(3.2e9, [Escenario("base", 400e6, 8.0, 8, 1.0)], tasa=0.15)
+    assert r.estado == "COMPUTED"
+    assert abs(r.filas[0]["cagr_accionista"]) < 1e-6          # EV terminal = EV hoy → CAGR 0
+    assert abs(r.filas[0]["vp"] - 3.2e9 / 1.15 ** 8) < 1e6    # ~$1.05B
+    assert r.ratio_vp_precio < 0.35                            # se paga de más
+    assert "se paga de más" in r.detalle
+
+
+def test_retorno_pondera_por_probabilidad():
+    # bull y bear simétricos pero prob distinta → el VP esperado se inclina al más probable
+    escs = [Escenario("bull", 300e6, 10.0, 5, 0.3), Escenario("bear", 50e6, 6.0, 5, 0.7)]
+    r = retorno_por_escenario(1.0e9, escs, tasa=0.15)
+    vp_bull = (300e6 * 10) / 1.15 ** 5
+    vp_bear = (50e6 * 6) / 1.15 ** 5
+    assert abs(r.vp_esperado - (0.3 * vp_bull + 0.7 * vp_bear)) < 1e6
+
+
+def test_retorno_dilucion_reduce_cagr_y_vp():
+    base = retorno_por_escenario(1.0e9, [Escenario("base", 200e6, 10.0, 5, 1.0)], tasa=0.15)
+    dil = retorno_por_escenario(1.0e9, [Escenario("base", 200e6, 10.0, 5, 1.0)], tasa=0.15, dilucion_pct=0.25)
+    assert dil.filas[0]["cagr_accionista"] < base.filas[0]["cagr_accionista"]   # +25% acciones → menos por acción
+    assert dil.vp_esperado < base.vp_esperado
+
+
+def test_retorno_normaliza_probs_y_avisa():
+    escs = [Escenario("a", 200e6, 10.0, 5, 2.0), Escenario("b", 100e6, 10.0, 5, 2.0)]   # suman 4, no 1
+    r = retorno_por_escenario(1.0e9, escs)
+    assert abs(sum(f["prob"] for f in r.filas) - 1.0) < 1e-6    # renormalizadas a 1
+    assert "renormalizadas" in r.detalle
+
+
+def test_retorno_unknown_sin_insumos():
+    assert retorno_por_escenario(None, [Escenario("x", 1e6, 1.0, 1, 1.0)]).estado == "UNKNOWN"
+    assert retorno_por_escenario(1e9, []).estado == "UNKNOWN"
+    assert retorno_por_escenario(1e9, [Escenario("x", 1e6, 1.0, 0, 1.0)]).estado == "UNKNOWN"  # años=0

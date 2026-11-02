@@ -96,3 +96,62 @@ def base_rate_cagr(cagr: float | None, anios: int | None) -> Resultado:
     nota = "extrapolado (CAGR > tabla)" if cagr > max(umbrales) else "aprox."
     return Resultado(round(frac * 100, 2), "COMPUTED",
                      f"~{frac*100:.1f}% sostuvo ≥{u:.0%} CAGR por {a}a ({nota}); exigido {cagr:.0%}/{anios}a")
+
+
+# --------------------------------------------------------------------------- D1: el puente económico al precio
+
+@dataclass
+class Escenario:
+    """Un escenario del ANALISTA (juicio): métrica terminal + múltiplo de salida + horizonte + probabilidad.
+    El determinismo NO los inventa — los pone el Analista; acá solo se hace la aritmética (doc 73 D1)."""
+    nombre: str                  # bull | base | bear (o lo que use el analista)
+    metrica_terminal: float      # p.ej. EBITDA o revenue terminal (USD), al nivel del múltiplo
+    multiplo_salida: float       # x (EV/EBITDA, EV/ventas, …)
+    anios: int                   # horizonte hasta el valor terminal
+    prob: float                  # probabilidad del escenario (0-1)
+
+
+@dataclass
+class RetornoEscenarios:
+    filas: list[dict]            # por escenario: nombre, valor_terminal, cagr_accionista, vp, prob
+    vp_esperado: float | None    # Σ prob × VP descontado (ajustado por dilución), en USD
+    ratio_vp_precio: float | None  # vp_esperado / valor_hoy: >1 atractivo · <1 se paga de más
+    estado: str                  # COMPUTED | UNKNOWN
+    detalle: str
+
+
+def retorno_por_escenario(valor_hoy: float | None, escenarios: list[Escenario], *,
+                          tasa: float = 0.15, dilucion_pct: float = 0.0) -> RetornoEscenarios:
+    """Lleva los escenarios del Analista al PRECIO DE HOY (doc 73 D1). `valor_hoy` = EV o market cap (al MISMO
+    nivel que el múltiplo). Por escenario: `valor_terminal = métrica × múltiplo`; CAGR del accionista (por
+    acción, ajustado por dilución) y VP descontado a `tasa`. Devuelve el VP ESPERADO ponderado por probabilidad
+    y su ratio contra el precio (>1 = el valor descontado esperado supera lo que se paga hoy; <1 = se paga de
+    más por el crecimiento). Aritmética PURA: si faltan insumos → UNKNOWN, no se fabrica. `dilucion_pct` =
+    dilución acumulada esperada hasta el terminal (0.20 = +20% de acciones → cada acción vale 1/1.2)."""
+    if valor_hoy is None or valor_hoy <= 0:
+        return RetornoEscenarios([], None, None, "UNKNOWN", "falta valor_hoy (EV o market cap) válido")
+    vivos = [e for e in escenarios if e is not None and e.metrica_terminal is not None
+             and e.multiplo_salida is not None and e.anios and e.anios > 0 and e.prob is not None]
+    if not vivos:
+        return RetornoEscenarios([], None, None, "UNKNOWN", "sin escenarios con métrica/múltiplo/años/prob")
+    factor_dil = 1.0 + max(0.0, dilucion_pct)                      # cada acción vale 1/(1+dilución)
+    suma_prob = sum(max(0.0, e.prob) for e in vivos) or 1.0        # normaliza si no suma ~1 (se avisa)
+    filas: list[dict] = []
+    vp_esperado = 0.0
+    for e in vivos:
+        valor_terminal = e.metrica_terminal * e.multiplo_salida
+        vp = (valor_terminal / factor_dil) / ((1.0 + tasa) ** e.anios)     # VP por-acción-equivalente (USD)
+        ratio = (valor_terminal / valor_hoy) / factor_dil                  # múltiplo de capital por acción
+        cagr = ratio ** (1.0 / e.anios) - 1.0 if ratio > 0 else None
+        p = max(0.0, e.prob) / suma_prob
+        vp_esperado += p * vp
+        filas.append({"nombre": e.nombre, "valor_terminal": round(valor_terminal, 0),
+                      "cagr_accionista": round(cagr, 4) if cagr is not None else None,
+                      "vp": round(vp, 0), "prob": round(p, 3)})
+    ratio_vp = vp_esperado / valor_hoy
+    aviso = "" if 0.98 <= sum(max(0.0, e.prob) for e in vivos) <= 1.02 else " (probs renormalizadas: no sumaban 1)"
+    veredicto = "atractivo al precio" if ratio_vp >= 1.0 else "se paga de más por el crecimiento"
+    return RetornoEscenarios(
+        filas, round(vp_esperado, 0), round(ratio_vp, 3), "COMPUTED",
+        f"VP esperado {vp_esperado:,.0f} vs precio {valor_hoy:,.0f} → ratio {ratio_vp:.2f} "
+        f"({veredicto}); tasa {tasa:.0%}, dilución {dilucion_pct:.0%}{aviso}")

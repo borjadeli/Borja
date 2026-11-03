@@ -88,13 +88,19 @@ class RunnerSemanal:
     def correr(self, candidatos, *, session, precios: dict[str, float],
                contexto: dict[str, ContextoTicker], memo_macro=None, hoy: date | None = None,
                ciclo: str | None = None, comision: float = 0.0,
-               cupo_cobertura: int = 0, bootstrap: bool = False) -> ResultadoRunner:
+               cupo_cobertura: int = 0, bootstrap: bool = False,
+               invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
+               cupo_gigantes: int = 0) -> ResultadoRunner:
         hoy = hoy or date.today()
         ciclo = ciclo or hoy.isoformat()
 
         # 1. Research bajo presupuesto → dossiers verificados por nombre (con cupo de cobertura/bootstrap).
+        # Los filtros del embudo (market cap pre-deep, carril forzado capeado, gigantes) se pasan iguales que
+        # en el dry-run → "dry-run = corrida real" (doc 76).
         research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy,
-                                               cupo_cobertura=cupo_cobertura, bootstrap=bootstrap)
+                                               cupo_cobertura=cupo_cobertura, bootstrap=bootstrap,
+                                               invertible_fn=invertible_fn, cupo_forzados=cupo_forzados,
+                                               gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes)
         memo_txt = research.memo.resumen if research.memo else ""
 
         dossiers: list[tuple[Dossier, VerificationReport]] = []

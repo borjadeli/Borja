@@ -163,7 +163,9 @@ class Orquestador:
     def correr_semana(self, candidatos: list[tuple[str, SenalesTriage, str]], *,
                       memo_macro: MacroMemo | None = None, hoy: date | None = None,
                       cupo_cobertura: int = 0, bootstrap: bool = False,
-                      pre_earnings_top_n: int = 3, dias_earnings: int = 10) -> ResultadoSemana:
+                      pre_earnings_top_n: int = 3, dias_earnings: int = 10,
+                      invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
+                      cupo_gigantes: int = 0) -> ResultadoSemana:
         """`cupo_cobertura`: cuántos nombres NUNCA analizados se promueven a research esta semana aunque el
         triage no los marque (ordenados por la prioridad de su cuello) — resuelve que un nombre nuevo
         prometedor nunca entre (auditoría P0.3). `bootstrap=True`: promueve TODOS los nuevos (primera pasada
@@ -185,8 +187,10 @@ class Orquestador:
         cands_sel = [(td.ticker, senales, resumen) for senales, resumen, td in triages]
         cupo = len([c for c in cands_sel if c[1].dias_desde_dossier is None]) if bootstrap else cupo_cobertura
         sel = seleccionar_para_deep(cands_sel, cupo=cupo, pre_earnings_top_n=pre_earnings_top_n,
-                                    dias_earnings=dias_earnings)
-        motivos_sel = {tk: m for grupo in ("forzados", "precio", "pre_earnings", "promovidos")
+                                    dias_earnings=dias_earnings, invertible_fn=invertible_fn,
+                                    cupo_forzados=cupo_forzados, gigante_barato_fn=gigante_barato_fn,
+                                    cupo_gigantes=cupo_gigantes)
+        motivos_sel = {tk: m for grupo in ("forzados", "precio", "pre_earnings", "promovidos", "gigantes_watch")
                        for tk, m in sel[grupo]}
         for _s, _r, td in triages:
             td.research_profundo = td.ticker in sel["deep"]      # el embudo manda, no el prioridad≥2 legacy

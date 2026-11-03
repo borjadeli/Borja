@@ -62,7 +62,8 @@ class _StubResearch:
     def __init__(self, resultado):
         self._r = resultado
 
-    def correr_semana(self, candidatos, *, memo_macro=None, hoy=None, cupo_cobertura=0, bootstrap=False):
+    def correr_semana(self, candidatos, *, memo_macro=None, hoy=None, cupo_cobertura=0, bootstrap=False,
+                      **kw):   # acepta los filtros del embudo (invertible_fn, cupo_forzados, gigante_barato_fn…)
         return self._r
 
 

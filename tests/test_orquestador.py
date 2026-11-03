@@ -298,3 +298,14 @@ def test_full_deep_cuando_es_nombre_nuevo():
     r = orq.correr_semana([("NVDA", _sen(), "hecho")], hoy=HOY)
     dec = next(d for d in r.decisiones if d.ticker == "NVDA")
     assert dec.accion == "analizado" and an.llamadas == 1 and an.deltas == 0
+
+
+def test_correr_semana_aplica_invertible_fn_camino_real():
+    # doc 76: la corrida REAL (no solo el dry-run) aplica el filtro de market cap → un gigante no se analiza
+    an = _Analista()
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an, cache=CacheDossiers())
+    r = orq.correr_semana([("GOOG", _sen(), "h"), ("OKLO", _sen(), "h")], hoy=HOY,
+                          invertible_fn=lambda tk: tk != "GOOG")
+    acc = {d.ticker: d.accion for d in r.decisiones}
+    assert acc["OKLO"] == "analizado" and acc["GOOG"] == "triage_descarta"   # GOOG filtrado, no se analizó
+    assert an.llamadas == 1                                                   # solo OKLO

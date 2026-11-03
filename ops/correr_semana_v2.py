@@ -75,13 +75,15 @@ def _prioridad_cuello_fn(session):
     return _fn
 
 
-def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
-    """Imprime qué se analizaría usando la MISMA función de selección del embudo que la corrida real
-    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c). Aplica el filtro de market cap/ADV del IPS
-    a las NO-posiciones (doc 76) y capea el carril forzado."""
-    from backend.agentes.embudo import gate_invertibilidad, seleccionar_para_deep
+def _filtros_embudo(candidatos, ips):
+    """Construye los filtros del embudo (doc 76) que usan TANTO el dry-run COMO la corrida real → garantiza
+    'dry-run = real'. Devuelve (invertible_fn, gigante_barato_fn, cupo_forzados, cupo_gigantes). Sin LLM:
+    market cap/ADV de los snapshots + el z de precio de cada SenalesTriage."""
+    from backend.agentes.embudo import gate_invertibilidad
     from backend.agentes.ips import ContextoTicker
-    snaps = recolectar_snapshots([t for t, _s, _r in candidatos])    # market cap/ADV por nombre (sin LLM)
+    snaps = recolectar_snapshots([t for t, _s, _r in candidatos])
+    cap_max = float(ips.cfg.get("market_cap_max_usd", 60e9))
+    z_por_tk = {tk.upper(): s.precio_vs_tesis_pct for tk, s, _r in candidatos}
 
     def _invertible(tk: str) -> bool:
         s = snaps.get(tk.upper())
@@ -89,24 +91,25 @@ def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
                              adv_usd=getattr(s, "volumen_diario_promedio_30d", None) if s else None)
         return gate_invertibilidad(ctx, ips.cfg)
 
-    # carril de gigantes (doc 76): un gigante (market cap > tope IPS) que CAYÓ fuerte (z ≤ −1,5) → se mira
-    # para ALERTA si el puente lo confirma barato. El z está en la SenalesTriage de cada candidato.
-    cap_max = float(ips.cfg.get("market_cap_max_usd", 60e9))
-    z_por_tk = {tk.upper(): s.precio_vs_tesis_pct for tk, s, _r in candidatos}
-
     def _gigante_barato(tk: str) -> bool:
         s = snaps.get(tk.upper())
         mc = getattr(s, "market_cap", None) if s else None
         z = z_por_tk.get(tk.upper())
-        return mc is not None and mc > cap_max and z is not None and z <= -1.5
+        return mc is not None and mc > cap_max and z is not None and z <= -1.5   # gigante que cayó fuerte
 
-    cupo_forzados = int(ips.cfg.get("cupo_forzados", 8))
+    return _invertible, _gigante_barato, int(ips.cfg.get("cupo_forzados", 8)), int(ips.cfg.get("cupo_gigantes", 2))
+
+
+def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
+    """Imprime qué se analizaría usando la MISMA función de selección + MISMOS filtros que la corrida real
+    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c)."""
+    from backend.agentes.embudo import seleccionar_para_deep
+    invertible_fn, gigante_barato_fn, cupo_forzados, cupo_gigantes = _filtros_embudo(candidatos, ips)
     sel = seleccionar_para_deep(candidatos, cupo=cupo,
                                 pre_earnings_top_n=int(ips.cfg.get("pre_earnings_top_n", 3)),
                                 dias_earnings=int(ips.cfg.get("dias_earnings_proximo", 10)),
-                                invertible_fn=_invertible, cupo_forzados=cupo_forzados,
-                                gigante_barato_fn=_gigante_barato,
-                                cupo_gigantes=int(ips.cfg.get("cupo_gigantes", 2)))
+                                invertible_fn=invertible_fn, cupo_forzados=cupo_forzados,
+                                gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes)
     n_deep = len(sel["deep"])
     print("\n=== DRY-RUN --universo (misma selección que la corrida real; sin gasto de Analista/Bear/PM) ===")
     print(f"candidatos: {len(candidatos)}")
@@ -229,10 +232,16 @@ def main() -> int:
     with session_scope() as s_nx:
         contexto = contexto_de(tickers, snaps, session=s_nx)
 
+    # Filtros del embudo (doc 76): los MISMOS que el dry-run → la corrida real no analiza gigantes ni se
+    # pasa del tope del carril forzado (si no, el real divergiría del dry-run y gastaría de más).
+    inv_fn, gig_fn, cupo_forz, cupo_gig = _filtros_embudo(candidatos, ips)
+
     paper = abrir_paper(capital_inicial=args.capital, fecha=date.today())
     try:
         res = runner.correr(candidatos, session=paper, precios=precios, contexto=contexto,
-                            hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap)
+                            hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap,
+                            invertible_fn=inv_fn, cupo_forzados=cupo_forz,
+                            gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig)
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:

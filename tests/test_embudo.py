@@ -223,3 +223,22 @@ def test_seleccion_capea_y_rankea_el_carril_forzado():
     assert {t for t, _ in sel["forzados"]} == {"A", "B"}          # top-2 por cuello
     assert "C" not in sel["deep"] and "D" not in sel["deep"]      # sobre el tope → arrastrados
     assert any("arrastrado" in m for t, m in sel["espera"] if t in ("C", "D"))
+
+
+def test_seleccion_gigante_caido_va_a_watch_el_resto_no_invertible():
+    # doc 76: un gigante (fuera de rango) que CAYÓ fuerte (z<=-1.5) → carril watch (deep → ¿barato? → alerta);
+    # un gigante que NO cayó → no_invertible. Capeado a cupo_gigantes.
+    cands = [_cand("GOOG", precio_vs_tesis_pct=-2.0),   # gigante caído fuerte
+             _cand("AAPL", precio_vs_tesis_pct=-1.8),   # gigante caído fuerte
+             _cand("IBM", precio_vs_tesis_pct=0.3)]     # gigante que NO cayó
+    invertible = lambda tk: False                        # los 3 son gigantes (fuera de rango)
+    gigante_barato = lambda tk: tk in ("GOOG", "AAPL", "IBM")
+    sel = seleccionar_para_deep(cands, cupo=0, invertible_fn=invertible,
+                                gigante_barato_fn=lambda tk: gigante_barato(tk) and
+                                {"GOOG": -2.0, "AAPL": -1.8, "IBM": 0.3}[tk] <= -1.5,
+                                cupo_gigantes=1)
+    watch = {t for t, _ in sel["gigantes_watch"]}
+    assert watch == {"GOOG"}                              # el más caído, capeado a 1
+    assert "GOOG" in sel["deep"]
+    assert "AAPL" in {t for t, _ in sel["no_invertible"]}   # caído pero sobre el cupo
+    assert "IBM" in {t for t, _ in sel["no_invertible"]}    # no cayó → no es candidato a barato

@@ -89,15 +89,29 @@ def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
                              adv_usd=getattr(s, "volumen_diario_promedio_30d", None) if s else None)
         return gate_invertibilidad(ctx, ips.cfg)
 
+    # carril de gigantes (doc 76): un gigante (market cap > tope IPS) que CAYÓ fuerte (z ≤ −1,5) → se mira
+    # para ALERTA si el puente lo confirma barato. El z está en la SenalesTriage de cada candidato.
+    cap_max = float(ips.cfg.get("market_cap_max_usd", 60e9))
+    z_por_tk = {tk.upper(): s.precio_vs_tesis_pct for tk, s, _r in candidatos}
+
+    def _gigante_barato(tk: str) -> bool:
+        s = snaps.get(tk.upper())
+        mc = getattr(s, "market_cap", None) if s else None
+        z = z_por_tk.get(tk.upper())
+        return mc is not None and mc > cap_max and z is not None and z <= -1.5
+
     cupo_forzados = int(ips.cfg.get("cupo_forzados", 8))
     sel = seleccionar_para_deep(candidatos, cupo=cupo,
                                 pre_earnings_top_n=int(ips.cfg.get("pre_earnings_top_n", 3)),
                                 dias_earnings=int(ips.cfg.get("dias_earnings_proximo", 10)),
-                                invertible_fn=_invertible, cupo_forzados=cupo_forzados)
+                                invertible_fn=_invertible, cupo_forzados=cupo_forzados,
+                                gigante_barato_fn=_gigante_barato,
+                                cupo_gigantes=int(ips.cfg.get("cupo_gigantes", 2)))
     n_deep = len(sel["deep"])
     print("\n=== DRY-RUN --universo (misma selección que la corrida real; sin gasto de Analista/Bear/PM) ===")
     print(f"candidatos: {len(candidatos)}")
-    print(f"NO INVERTIBLES (market cap/ADV fuera del IPS, excluidos antes del deep) ({len(sel['no_invertible'])}): "
+    print(f"GIGANTES caídos → ¿barato? → ALERTA ({len(sel['gigantes_watch'])}): {[t for t, _ in sel['gigantes_watch']]}")
+    print(f"NO INVERTIBLES (fuera del IPS por market cap, excluidos del deep) ({len(sel['no_invertible'])}): "
           f"{[t for t, _ in sel['no_invertible']]}")
     print(f"FORZADOS evento fuerte/posición ({len(sel['forzados'])}/tope {cupo_forzados}): {[t for t, _ in sel['forzados']]}")
     print(f"PRECIO fuerte ({len(sel['precio'])}): {[t for t, _ in sel['precio']]}")

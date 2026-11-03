@@ -178,7 +178,8 @@ def ordenar_cobertura(nuevos: list, *, ips_cfg: dict, ctx_fn, dias_a_evento_fn=N
 # --------------------------------------------------------------------------- selección de deep (una sola fuente)
 
 def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
-                          dias_earnings: int = 10, invertible_fn=None, cupo_forzados=None) -> dict:
+                          dias_earnings: int = 10, invertible_fn=None, cupo_forzados=None,
+                          gigante_barato_fn=None, cupo_gigantes: int = 0) -> dict:
     """ÚNICA fuente de verdad de 'qué va a análisis profundo' — la usan el dry-run Y el runner real (así lo
     que ves en --dry-run es lo que corre). Opera sobre las `SenalesTriage` de cada candidato
     `(ticker, señal, resumen)`. Reglas (doc 64 + doc 76):
@@ -195,10 +196,15 @@ def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
     forzados, precio_f, pre_earn, nuevos, espera, no_invertible = [], [], [], [], [], []
     earnings_pendientes = []   # earnings próximo, no forzado por otra vía → candidatos a pre-earnings top
     forz_rank = []             # (prioridad_cuello, ticker) de no-posiciones con evento, para rankear y capear
+    gig_rank = []              # (z_precio, ticker) de gigantes que cayeron fuerte → candidatos a alerta-si-barato
     for tk, s, _res in candidatos:
         # filtro de admisibilidad del IPS: SOLO a no-posiciones (una posición se monitorea a cualquier tamaño).
         if not s.es_posicion and invertible_fn is not None and not invertible_fn(tk):
-            no_invertible.append((tk, "fuera de rango IPS (market cap/ADV)"))
+            # gigante que cayó fuerte → carril chico de "¿barato?" (el puente confirma → ALERTA, no compra; doc 76).
+            if gigante_barato_fn is not None and gigante_barato_fn(tk):
+                gig_rank.append((s.precio_vs_tesis_pct if s.precio_vs_tesis_pct is not None else 0.0, tk))
+            else:
+                no_invertible.append((tk, "fuera de rango IPS (market cap)"))
             continue
         if s.es_posicion:
             forzados.append((tk, "posición"))
@@ -217,6 +223,10 @@ def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
     tope_f = len(forz_rank) if cupo_forzados is None else max(0, cupo_forzados)
     forzados += [(tk, "evento fuerte") for _p, tk in forz_rank[:tope_f]]
     espera += [(tk, "evento fuerte (sobre el tope, arrastrado)") for _p, tk in forz_rank[tope_f:]]
+    # carril gigantes (alerta-si-barato): los que más cayeron primero, capeado a cupo_gigantes; el resto → no_inv.
+    gig_rank.sort(key=lambda x: x[0])    # z más negativo (más caído) primero
+    gigantes_watch = [(tk, "gigante caído (deep → ¿barato? → ALERTA)") for _z, tk in gig_rank[:cupo_gigantes]]
+    no_invertible += [(tk, "gigante caído (sobre el cupo de gigantes)") for _z, tk in gig_rank[cupo_gigantes:]]
     # earnings próximo: los top-N por prioridad de cuello van pre-earnings; el resto espera el dato.
     earnings_pendientes.sort(key=lambda x: -x[1])
     for i, (tk, _p) in enumerate(earnings_pendientes):
@@ -225,9 +235,10 @@ def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
     nuevos.sort(key=lambda x: -x[1])
     promovidos = [(tk, "cupo") for tk, _ in nuevos[:cupo]]
     espera += [(tk, "nunca analizado en espera") for tk, _ in nuevos[cupo:]]
-    deep = {tk for tk, _ in forzados + precio_f + pre_earn + promovidos}
+    deep = {tk for tk, _ in forzados + precio_f + pre_earn + promovidos + gigantes_watch}
     return {"forzados": forzados, "precio": precio_f, "pre_earnings": pre_earn,
-            "promovidos": promovidos, "espera": espera, "no_invertible": no_invertible, "deep": deep}
+            "promovidos": promovidos, "gigantes_watch": gigantes_watch, "espera": espera,
+            "no_invertible": no_invertible, "deep": deep}
 
 
 # Orden de prioridad del candidato (doc 64 §A1; menor = más prioritario). No es un OR: es una cola ordenada.

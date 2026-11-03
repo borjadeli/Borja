@@ -202,3 +202,24 @@ def test_seleccion_cupo_promueve_nuevos_por_cuello():
              _cand("N2", dias_desde_dossier=None, prioridad_cuello=3)]
     sel = seleccionar_para_deep(cands, cupo=1)
     assert [t for t, _ in sel["promovidos"]] == ["N2"]           # el de mayor cuello
+
+
+def test_seleccion_filtra_no_invertibles_pero_no_a_posiciones():
+    # doc 76: una no-posición fuera de rango IPS (GOOG) se excluye ANTES del deep; una POSICIÓN grande se queda
+    cands = [_cand("GOOG", tiene_evento_fuerte=True), _cand("MP", es_posicion=True, tiene_evento_fuerte=True)]
+    invertible = lambda tk: tk != "GOOG"   # GOOG fuera de rango
+    sel = seleccionar_para_deep(cands, cupo=0, invertible_fn=invertible)
+    assert "GOOG" not in sel["deep"] and "GOOG" in {t for t, _ in sel["no_invertible"]}
+    assert "MP" in sel["deep"]             # la posición se monitorea a cualquier tamaño
+
+
+def test_seleccion_capea_y_rankea_el_carril_forzado():
+    # 4 no-posiciones con evento fuerte, prioridad 3/2/1/0; cupo_forzados=2 → los 2 de mayor cuello; resto arrastra
+    cands = [_cand("A", tiene_evento_fuerte=True, prioridad_cuello=3),
+             _cand("B", tiene_evento_fuerte=True, prioridad_cuello=2),
+             _cand("C", tiene_evento_fuerte=True, prioridad_cuello=1),
+             _cand("D", tiene_evento_fuerte=True, prioridad_cuello=0)]
+    sel = seleccionar_para_deep(cands, cupo=0, cupo_forzados=2)
+    assert {t for t, _ in sel["forzados"]} == {"A", "B"}          # top-2 por cuello
+    assert "C" not in sel["deep"] and "D" not in sel["deep"]      # sobre el tope → arrastrados
+    assert any("arrastrado" in m for t, m in sel["espera"] if t in ("C", "D"))

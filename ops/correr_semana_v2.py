@@ -77,19 +77,33 @@ def _prioridad_cuello_fn(session):
 
 def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
     """Imprime qué se analizaría usando la MISMA función de selección del embudo que la corrida real
-    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c)."""
-    from backend.agentes.embudo import seleccionar_para_deep
+    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c). Aplica el filtro de market cap/ADV del IPS
+    a las NO-posiciones (doc 76) y capea el carril forzado."""
+    from backend.agentes.embudo import gate_invertibilidad, seleccionar_para_deep
+    from backend.agentes.ips import ContextoTicker
+    snaps = recolectar_snapshots([t for t, _s, _r in candidatos])    # market cap/ADV por nombre (sin LLM)
+
+    def _invertible(tk: str) -> bool:
+        s = snaps.get(tk.upper())
+        ctx = ContextoTicker(market_cap=getattr(s, "market_cap", None) if s else None,
+                             adv_usd=getattr(s, "volumen_diario_promedio_30d", None) if s else None)
+        return gate_invertibilidad(ctx, ips.cfg)
+
+    cupo_forzados = int(ips.cfg.get("cupo_forzados", 8))
     sel = seleccionar_para_deep(candidatos, cupo=cupo,
                                 pre_earnings_top_n=int(ips.cfg.get("pre_earnings_top_n", 3)),
-                                dias_earnings=int(ips.cfg.get("dias_earnings_proximo", 10)))
+                                dias_earnings=int(ips.cfg.get("dias_earnings_proximo", 10)),
+                                invertible_fn=_invertible, cupo_forzados=cupo_forzados)
     n_deep = len(sel["deep"])
     print("\n=== DRY-RUN --universo (misma selección que la corrida real; sin gasto de Analista/Bear/PM) ===")
     print(f"candidatos: {len(candidatos)}")
-    print(f"FORZADOS evento fuerte/posición ({len(sel['forzados'])}): {[t for t, _ in sel['forzados']]}")
+    print(f"NO INVERTIBLES (market cap/ADV fuera del IPS, excluidos antes del deep) ({len(sel['no_invertible'])}): "
+          f"{[t for t, _ in sel['no_invertible']]}")
+    print(f"FORZADOS evento fuerte/posición ({len(sel['forzados'])}/tope {cupo_forzados}): {[t for t, _ in sel['forzados']]}")
     print(f"PRECIO fuerte ({len(sel['precio'])}): {[t for t, _ in sel['precio']]}")
     print(f"PRE-EARNINGS top ({len(sel['pre_earnings'])}): {[t for t, _ in sel['pre_earnings']]}")
     print(f"PROMOVIDOS por cupo ({len(sel['promovidos'])}/{cupo}): {[t for t, _ in sel['promovidos']]}")
-    print(f"en espera (post-earnings / cola / sin trigger): {len(sel['espera'])}")
+    print(f"en espera (post-earnings / cola / sin trigger / overflow forzado): {len(sel['espera'])}")
     print(f"→ análisis profundos estimados: {n_deep}  ·  costo estimado: ~${n_deep * 0.68:.2f}")
 
 

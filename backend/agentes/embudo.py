@@ -178,23 +178,32 @@ def ordenar_cobertura(nuevos: list, *, ips_cfg: dict, ctx_fn, dias_a_evento_fn=N
 # --------------------------------------------------------------------------- selección de deep (una sola fuente)
 
 def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
-                          dias_earnings: int = 10) -> dict:
+                          dias_earnings: int = 10, invertible_fn=None, cupo_forzados=None) -> dict:
     """ÚNICA fuente de verdad de 'qué va a análisis profundo' — la usan el dry-run Y el runner real (así lo
     que ves en --dry-run es lo que corre). Opera sobre las `SenalesTriage` de cada candidato
-    `(ticker, señal, resumen)`. Reglas (doc 64 + decisión del operador sobre earnings):
-    - posición en cartera → deep (monitoreo; incluye sus earnings próximos).
-    - evento fuerte (red flag/dilución/8-K material consumado) → deep.
+    `(ticker, señal, resumen)`. Reglas (doc 64 + doc 76):
+    - posición en cartera → deep SIEMPRE (monitoreo; NUNCA se la filtra por tamaño ni se la capea).
+    - `invertible_fn(ticker)->bool` (doc 76): para NO-posiciones, excluye las que el IPS no puede comprar
+      (market cap/ADV fuera de rango) ANTES del deep → bucket `no_invertible`. None = no filtra (tests).
+    - evento fuerte → carril forzado, RANKEADO por prioridad de cuello y CAPEADO a `cupo_forzados` (doc 76:
+      el carril por evento no es ilimitado; el overflow se arrastra y se ve). None = sin tope (compat).
     - precio fuerte (|z| ≥ umbral) → deep.
-    - EARNINGS PRÓXIMO (≤ `dias_earnings`, no consumado): deep SOLO para los `pre_earnings_top_n` MEJORES
-      candidatos (por prioridad de cuello); el resto ESPERA el dato (post-earnings).
+    - EARNINGS PRÓXIMO (≤ `dias_earnings`, no consumado): deep SOLO para los `pre_earnings_top_n` MEJORES.
     - nunca analizado sin trigger → CUPO (los `cupo` mejores por prioridad de cuello).
     - resto → espera.
     Devuelve dict con listas de (ticker, motivo) y el set `deep` de tickers a analizar."""
-    forzados, precio_f, pre_earn, nuevos, espera = [], [], [], [], []
+    forzados, precio_f, pre_earn, nuevos, espera, no_invertible = [], [], [], [], [], []
     earnings_pendientes = []   # earnings próximo, no forzado por otra vía → candidatos a pre-earnings top
+    forz_rank = []             # (prioridad_cuello, ticker) de no-posiciones con evento, para rankear y capear
     for tk, s, _res in candidatos:
-        if s.es_posicion or s.tiene_evento_fuerte:
-            forzados.append((tk, "posición" if s.es_posicion else "evento fuerte"))
+        # filtro de admisibilidad del IPS: SOLO a no-posiciones (una posición se monitorea a cualquier tamaño).
+        if not s.es_posicion and invertible_fn is not None and not invertible_fn(tk):
+            no_invertible.append((tk, "fuera de rango IPS (market cap/ADV)"))
+            continue
+        if s.es_posicion:
+            forzados.append((tk, "posición"))
+        elif s.tiene_evento_fuerte:
+            forz_rank.append((s.prioridad_cuello, tk))
         elif precio_dispara(s.precio_vs_tesis_pct, None, es_posicion=False):
             precio_f.append((tk, "precio"))
         elif s.dias_a_evento is not None and s.dias_a_evento <= dias_earnings:
@@ -203,6 +212,11 @@ def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
             nuevos.append((tk, s.prioridad_cuello))
         else:
             espera.append((tk, "sin trigger"))
+    # carril forzado por evento (no-posiciones): rankea por prioridad de cuello y capea; overflow → espera (visible).
+    forz_rank.sort(key=lambda x: -x[0])
+    tope_f = len(forz_rank) if cupo_forzados is None else max(0, cupo_forzados)
+    forzados += [(tk, "evento fuerte") for _p, tk in forz_rank[:tope_f]]
+    espera += [(tk, "evento fuerte (sobre el tope, arrastrado)") for _p, tk in forz_rank[tope_f:]]
     # earnings próximo: los top-N por prioridad de cuello van pre-earnings; el resto espera el dato.
     earnings_pendientes.sort(key=lambda x: -x[1])
     for i, (tk, _p) in enumerate(earnings_pendientes):
@@ -213,7 +227,7 @@ def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
     espera += [(tk, "nunca analizado en espera") for tk, _ in nuevos[cupo:]]
     deep = {tk for tk, _ in forzados + precio_f + pre_earn + promovidos}
     return {"forzados": forzados, "precio": precio_f, "pre_earnings": pre_earn,
-            "promovidos": promovidos, "espera": espera, "deep": deep}
+            "promovidos": promovidos, "espera": espera, "no_invertible": no_invertible, "deep": deep}
 
 
 # Orden de prioridad del candidato (doc 64 §A1; menor = más prioritario). No es un OR: es una cola ordenada.

@@ -166,3 +166,17 @@ def test_probabilidad_implicita_horizontes_distintos_unknown():
     bull = Escenario("bull", 300e6, 10.0, 5, 0.0)
     bear = Escenario("bear", 50e6, 6.0, 8, 1.0)        # horizonte distinto → MOIC no comparable
     assert probabilidad_implicita_bull(1.0e9, bull, [bear], anios=5).estado == "UNKNOWN"
+
+
+def test_dilucion_en_porcentaje_no_explota():
+    # smoke 2026-11-03: el LLM emite dilución como % (35.0 = 35%); el puente la usa como fracción.
+    from backend.agentes.futuro import _frac_dil, metrica_requerida_por_precio, probabilidad_implicita_bull
+    assert _frac_dil(35.0) == 0.35 and _frac_dil(0.35) == 0.35 and _frac_dil(None) == 0.0
+    # con dil=35 (mal) vs 0.35 (bien) el resultado es idéntico (se normaliza)
+    a = metrica_requerida_por_precio(1e9, 8.0, 5, dilucion_pct=35.0).metrica_requerida
+    b = metrica_requerida_por_precio(1e9, 8.0, 5, dilucion_pct=0.35).metrica_requerida
+    assert a == b
+    bull = Escenario("bull", 300e6, 10.0, 5, 0.0)
+    bear = Escenario("bear", 50e6, 6.0, 5, 1.0)
+    p = probabilidad_implicita_bull(1e9, bull, [bear], anios=5, dilucion_pct=35.0).p_bull
+    assert p is not None and -1.0 <= p <= 2.0     # sano, no 23 millones

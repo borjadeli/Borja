@@ -23,6 +23,14 @@ def _unknown(motivo: str) -> Resultado:
     return Resultado(None, "UNKNOWN", motivo)
 
 
+def _frac_dil(x: float | None) -> float:
+    """Normaliza la dilución a FRACCIÓN (smoke 2026-11-03: el LLM la emite como PORCENTAJE, p.ej. 35.0 = 35%).
+    >1 ⇒ venía en %; se divide por 100. 0.35 se queda. None/≤0 ⇒ 0. Idempotente."""
+    if x is None or x <= 0:
+        return 0.0
+    return x / 100.0 if x > 1.0 else x
+
+
 # --------------------------------------------------------------------------- funded critical path
 
 def meses_runway(cash: float | None, burn_anual: float | None, *, estres: float = 1.0) -> Resultado:
@@ -130,6 +138,7 @@ def retorno_por_escenario(valor_hoy: float | None, escenarios: list[Escenario], 
     dilución acumulada esperada hasta el terminal (0.20 = +20% de acciones → cada acción vale 1/1.2)."""
     if valor_hoy is None or valor_hoy <= 0:
         return RetornoEscenarios([], None, None, "UNKNOWN", "falta valor_hoy (EV o market cap) válido")
+    dilucion_pct = _frac_dil(dilucion_pct)
     vivos = [e for e in escenarios if e is not None and e.metrica_terminal is not None
              and e.multiplo_salida is not None and e.anios and e.anios > 0 and e.prob is not None]
     if not vivos:
@@ -183,6 +192,7 @@ def metrica_requerida_por_precio(valor_hoy: float | None, multiplo: float | None
     NO decide: informa qué exige el precio para que el PM lo confronte con la tesis (no con su propia historia)."""
     if valor_hoy is None or valor_hoy <= 0 or multiplo is None or multiplo <= 0 or not anios or anios <= 0:
         return ReverseBurden(None, None, None, "UNKNOWN", "faltan insumos (valor_hoy/múltiplo/años)")
+    dilucion_pct = _frac_dil(dilucion_pct)
     factor_dil = 1.0 + max(0.0, dilucion_pct)
     equity_req = valor_hoy * (1.0 + tasa) ** anios * factor_dil
     ev_req = equity_req - caja_neta_terminal
@@ -222,6 +232,7 @@ def probabilidad_implicita_bull(valor_hoy: float | None, bull: "Escenario | None
     Todos los escenarios deben compartir horizonte (MOICs comparables); UNKNOWN si no, o si faltan insumos."""
     if valor_hoy is None or valor_hoy <= 0 or bull is None or not resto:
         return ProbImplicita(None, None, None, None, "UNKNOWN", "faltan insumos (valor_hoy/bull/resto)")
+    dilucion_pct = _frac_dil(dilucion_pct)
     anios = anios if anios is not None else bull.anios
     if not anios or anios <= 0:
         return ProbImplicita(None, None, None, None, "UNKNOWN", "falta horizonte")
@@ -254,6 +265,7 @@ def puente_economico(valor_hoy: float | None, escenarios: list["Escenario"], *, 
     vivos = [e for e in escenarios if e is not None]
     if valor_hoy is None or valor_hoy <= 0 or not vivos:
         return "PUENTE ECONÓMICO: sin puente (faltan escenarios o market cap) → tratar como opción (máx. especulativa)"
+    dilucion_pct = _frac_dil(dilucion_pct)
     base = next((e for e in vivos if e.nombre == "base"), vivos[0])
     bull = next((e for e in vivos if e.nombre == "bull"), None)
     resto = [e for e in vivos if e is not bull]

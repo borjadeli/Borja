@@ -166,6 +166,10 @@ class Analista:
                     e["prob"] = max(0.0, min(1.0, float(e["prob"])))
                 if e.get("anios") is not None:
                     e["anios"] = max(1, int(e["anios"]))
+        # dilución a FRACCIÓN (smoke 2026-11-03: el LLM la emite como % — 35.0 = 35%). >1 ⇒ venía en %.
+        dsp = payload.get("dilucion_esperada_pct")
+        if dsp is not None:
+            payload["dilucion_esperada_pct"] = (float(dsp) / 100.0) if float(dsp) > 1.0 else float(dsp)
         try:
             dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
         except Exception as e:  # noqa: BLE001 — dossier incompleto (p.ej. sin falsador) → sin_dossier, no crash

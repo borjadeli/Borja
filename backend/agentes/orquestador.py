@@ -38,6 +38,18 @@ TTL_REUSO_DIAS = 35
 _METRICAS_VOLATILES = {"precio", "adv_30d_usd", "market_cap", "shares_outstanding"}
 
 
+def _pack_hechos(pack: DataPack) -> tuple[float | None, float | None, bool]:
+    """Hechos duros del pack para el techo de clasificación D4 (r5 item 2): (revenue_fy, runway_meses,
+    fcf_negativo). revenue_fy = revenue del último año fiscal (XBRL). runway solo COMPUTA si la quema FCF
+    (op−capex) es negativa → ese estado ES la señal de fcf_negativo."""
+    idx = {p.metric: p for p in pack.puntos}
+    rev = idx.get("revenue")
+    rw = idx.get("cash_runway_months")
+    revenue_fy = rev.value if (rev and rev.value is not None) else None
+    comp = rw is not None and getattr(rw, "estado", None) == "COMPUTED" and rw.value is not None
+    return revenue_fy, (rw.value if comp else None), bool(comp)
+
+
 def hash_pack(pack: DataPack) -> str:
     """Hash de los insumos MATERIALES ORIGINALES del data pack — clave de reutilización del Dossier.
     EXCLUYE: (a) métricas de mercado volátiles (precio/ADV/market cap/shares) y (b) DataPoints DERIVED
@@ -116,6 +128,10 @@ class DecisionOrq:
     verif: VerificationReport | None = None
     costo_usd: float = 0.0
     hash: str | None = None      # hash del data pack del dossier (clave para el ledger de decisiones)
+    # Hechos duros del pack para el techo de clasificación (D4, r5 item 2): reales del XBRL, NO del LLM.
+    revenue_fy: float | None = None      # revenue del último año fiscal (proxy de revenue recurrente)
+    runway_meses: float | None = None    # cash_runway_months (capex-aware) si quema caja
+    fcf_negativo: bool = False           # el runway computa solo si la quema FCF (op−capex) es negativa
 
 
 @dataclass
@@ -195,8 +211,10 @@ class Orquestador:
             #     y fuerza re-análisis (el dossier vigente pudo quedar viejo por el evento; auditoría r2 item 3).
             vig = None if senales.tiene_evento_fuerte else self.cache.vigente(td.ticker, h, hoy)
             if vig is not None:
+                rev_fy, rw_m, fcf_neg = _pack_hechos(pack)
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="reutilizado", triage=td,
-                                                  dossier=vig.dossier, verif=vig.verif, hash=h))
+                                                  dossier=vig.dossier, verif=vig.verif, hash=h,
+                                                  revenue_fy=rev_fy, runway_meses=rw_m, fcf_negativo=fcf_neg))
                 continue
             if modo == "solo_reuso" or (modo == "restringido" and not para_evento):
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="saltado_degradacion", triage=td))
@@ -243,9 +261,11 @@ class Orquestador:
 
             if verif.veredicto != "fail":      # un dossier fail no se cachea como usable
                 self.cache.guardar(td.ticker, h, r_an.dossier, verif, hoy)
+            rev_fy, rw_m, fcf_neg = _pack_hechos(pack)
             res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="analizado", triage=td,
                                               dossier=r_an.dossier, bear=atk, verif=verif,
-                                              costo_usd=round(costo, 6), hash=h))
+                                              costo_usd=round(costo, 6), hash=h,
+                                              revenue_fy=rev_fy, runway_meses=rw_m, fcf_negativo=fcf_neg))
 
         res.gastado_usd = round(self.ledger.gastado, 6)
         return res

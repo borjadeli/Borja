@@ -24,9 +24,19 @@ Se abrió un plan en 3 tiers; Tier A y el core de Tier B están **HECHOS y teste
   - **D5** Auditor **con web** + checklist "buscar para refutar" + materialidad (máx 3); Sonnet ≠ Analista Opus.
   - **Persistencia Brier** + **ciclo de resolución** (`resolucion.py` + `ops.resolucion`): cierra el loop para
     medir si el análisis calibra.
-- **Falta:** el **smoke en vivo** (validación real, necesita crédito API) · ruteo D5 Analista-responde (API) ·
-  calendario de eventos/diff de filings deterministas · activar el **cap duro de D4** tras correr la sombra en
-  vivo. (El método está completo; lo que resta es infra + la corrida real.)
+**Endurecimiento r5 (2026-11-03) — CONGELAMIENTO DE MÉTODO, cerrar punch-list antes de nada nuevo:**
+- **HECHO (API-free):** (1) D3 tasas base — `verificada`+`cita`, sacadas las filas "a computar", Flyvbjerg
+  corregido, y **no gatea hasta estar verificada contra la fuente** (hoy todas informan). (2) D4 techo por
+  **hechos DUROS del pack** (revenue FY ≥ umbral del IPS · fcf/runway capex-aware), ya NO desde `traccion_0_4`.
+  (3) **Set dorado** `ops.golden_snapshot` + `tests/test_golden.py` (network-gated): captura MP/OKLO/RGTI
+  (incluye `long_term_debt`); el pack los reproduce dentro de tolerancia (la red que habría atrapado el bug de
+  MP). (6) doc 53 limpio. 744 tests verdes.
+- **PENDIENTE del operador (server + crédito):** (4) **smoke Tier B** (MP/OKLO/RGTI vs doc 71: costo/agente,
+  tasa de dossiers malformados, export, sombra D4, objeciones del Auditor con web; el PM re-decide MP/OKLO con
+  datos corregidos y se registra que la compra original fue con datos malos). (5) **primera corrida real**
+  (`--universo --dry-run` → OK → `--bootstrap`) + cablear el **scheduler** semanal con digest por mail.
+- **Pendiente menor (no bloquea):** verificar las filas de tasas base contra la fuente; ruteo D5
+  Analista-responde (API); activar el **cap duro de D4** tras correr la sombra en vivo.
 
 ## Dónde estamos
 **FASE 4 + P1 + EMBUDO completos y validados en vivo; el PM ya compró (OKLO 3%).** El comité corre
@@ -35,10 +45,10 @@ epistémica por URL y protocolo de frescura → PM bajo IPS → Auditor → pape
 construido (doc 64): materialidad por ítem de 8-K, precio residual normalizado, earnings diferido, bootstrap
 acelerado, presupuesto mensual con arrastre, `candidatos_del_universo` cableado (`--universo`). **4 rondas de
 auditoría externa** trianguladas y cerradas (P0/r2 docs 57-59, embudo+verificador docs 61-64, frescura r3 doc
-65). ~660 tests verdes. Rama `destete-v2-fase3` (en GitHub). **Falta correr:** cablear al scheduler + el
-smoke #3 de validación de frescura. El cambio de dirección v2 está cerrado (doc 51), arquitectura/plan doc 52.
+65). Rama `destete-v2-fase3` (en GitHub). El cambio de dirección v2 está cerrado (doc 51), arquitectura/plan
+doc 52. **El estado y los pendientes vigentes están en la sección de arriba (Tier A + Tier B + r5).**
 
-**Hecho hasta ahora (todo commiteado, 609 tests verdes):**
+**Hecho hasta ahora (todo commiteado):**
 - Fase 1: gasto v3 cortado (crons off), paper congelado, huérfanos archivados, docs reescritos.
 - Fase 2: ETL + **ingest ejecutado** → `nx_*` poblado (142 nodos, 135 empresas, 184 vínculos). Resolvió el
   hallazgo #3 (mapa vacío). Fuente del SQ versionada en `backend/seed/sistema_quant/`.
@@ -120,7 +130,7 @@ smoke #3 de validación de frescura. El cambio de dirección v2 está cerrado (d
     contraste numérico cableado al verificador (un central numérico que matchea el XBRL del pack = hecho
     verificado aunque el Analista cite un agregador; contradice = FAIL). **SMOKE #2 (OKLO/RKLB/ACHR, $1.82):
     OKLO y ACHR → PASS, RKLB → REVIEW (tesis cualitativa), y el PM COMPRÓ OKLO 3% ($26.56) — primera compra
-    de v2.** 609 tests verdes.
+    de v2.**
   - **Próximo:** paso 4c opcional (persistir texto de EDGAR + entailment, para PASS cualitativo riguroso —
     autónomo, difierible en advisory) · P2 (reescribir CLAUDE.md, limpieza) · Fase 5 (carteras sombra).
 

@@ -255,3 +255,21 @@ def test_r3_hash_ignora_derivadas_volatiles():
             DataPoint(entity="OKLO", metric="dilucion_12m_pct", value=dil, unit="pct",
                       kind=DataKind.DERIVED, source=src, known_at=HOY)])
     assert hash_pack(_pk(19.0)) == hash_pack(_pk(19.3))
+
+
+def test_pack_hechos_extrae_revenue_runway_y_fcf_negativo():
+    # r5 item 2: los hechos duros para el techo D4 salen del PACK (XBRL), no del LLM
+    from backend.agentes.orquestador import _pack_hechos
+    from backend.agentes.provenance import DataPoint
+    runway = DataPoint.derivado("OKLO", "cash_runway_months", 53.1, unit="meses",
+                                formula_id="runway:v2", insumos=[], estado="COMPUTED")
+    pack = DataPack(ticker="OKLO", as_of=HOY, puntos=[_dp("revenue", 224e6, "2026-03-01"), runway])
+    rev_fy, rw, fcf_neg = _pack_hechos(pack)
+    assert rev_fy == 224e6 and rw == 53.1 and fcf_neg is True
+
+
+def test_pack_hechos_sin_runway_no_quema():
+    from backend.agentes.orquestador import _pack_hechos
+    pack = DataPack(ticker="X", as_of=HOY, puntos=[_dp("revenue", 10e6, "2026-03-01")])
+    rev_fy, rw, fcf_neg = _pack_hechos(pack)
+    assert rev_fy == 10e6 and rw is None and fcf_neg is False

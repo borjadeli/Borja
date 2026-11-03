@@ -74,3 +74,10 @@ def test_render_sombra_marca_que_no_gatea():
 def test_sin_clasificacion_no_inventa():
     an = analisis_sizing({"X": 0.1}, {}, bandas=_BANDAS, peso_max_nombre=0.20)   # sin clasif de X
     assert an.filas == []
+
+
+def test_r5_techo_usa_revenue_duro_no_traccion_declarada():
+    # r5 item 2: un pre-revenue (revenue_recurrente=False desde el pack) con el Analista pidiendo 'core'
+    # igual topa en especulativa — la traccion_0_4 que declara el Analista ya NO entra en el techo.
+    c = ClasifTicker(analyst_clasif="core", revenue_recurrente=False, tiene_puente=True)
+    assert techo_clasificacion(c) == "especulativa" and clasificacion_efectiva(c) == "especulativa"

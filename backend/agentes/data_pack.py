@@ -88,6 +88,8 @@ _MKT_SEC_CURRENT = ["DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurre
                     "MarketableSecuritiesCurrent"]
 _MKT_SEC_NONCURRENT = ["DebtSecuritiesAvailableForSaleExcludingAccruedInterestNoncurrent",
                        "MarketableSecuritiesNoncurrent", "LongTermInvestments"]
+# deuda de largo plazo (r5 item 3: parte del set dorado; también insumo futuro del equity bridge).
+_DEUDA_LP = ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations"]
 
 
 def _d(s: str | None) -> date | None:
@@ -183,6 +185,7 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
     emit_primero("cash_and_sti", _LIQ_COMBINADO)
     emit_primero("short_term_investments", _MKT_SEC_CURRENT)
     emit_primero("long_term_investments", _MKT_SEC_NONCURRENT)
+    emit_primero("long_term_debt", _DEUDA_LP)
     emit("warrants_outstanding",                        # conteo de warrants vigentes (cuando está tageado)
          _pit(_extract_concept(facts, "ClassOfWarrantOrRightOutstanding", unit="shares"), as_of, anual=False),
          "shares", "instant")

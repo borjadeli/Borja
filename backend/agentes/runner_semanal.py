@@ -113,19 +113,24 @@ class RunnerSemanal:
             if d.verif.veredicto in ("pass", "review"):          # FAIL no justifica compra/aumento
                 dossiers.append((d.dossier, d.verif))
 
-        # D4 (doc 74): clasificación por nombre para la señal de sizing (modo sombra). De la ficha: el techo de
-        # hechos usa revenue recurrente (tracción 4) y si hay puente económico (escenarios). fcf/runway → None
-        # por ahora (no se plumbea el pack acá; la regla de runway no corre hasta surfacear ese dato).
+        # D4 (doc 74 + r5 item 2): clasificación por nombre para la señal de sizing (sombra). El techo de hechos
+        # usa DATOS DUROS del pack (NO traccion_0_4, que la declara el Analista): revenue recurrente = revenue FY
+        # ≥ umbral del IPS; fcf_negativo/runway capex-aware del pack. tiene_puente = hay escenarios.
         from backend.agentes.clasificacion import ClasifTicker
+        umbral_rev = float(self.decision.ips.cfg.get("umbral_revenue_recurrente_usd", 50e6))
         clasif_por_ticker: dict[str, ClasifTicker] = {}
-        for d, _v in dossiers:
-            inv = d.invertibilidad
+        for d in research.decisiones:
+            if d.dossier is None or d.verif is None or d.verif.veredicto not in ("pass", "review"):
+                continue
+            inv = d.dossier.invertibilidad
             if inv is None:
                 continue
             clasif_por_ticker[d.ticker.upper()] = ClasifTicker(
                 analyst_clasif=inv.analyst_classification,
-                revenue_recurrente=(inv.traccion_0_4 == 4),
-                tiene_puente=bool(d.escenarios))
+                revenue_recurrente=(d.revenue_fy is not None and d.revenue_fy >= umbral_rev),
+                tiene_puente=bool(d.dossier.escenarios),
+                fcf_negativo=d.fcf_negativo,
+                runway_meses=d.runway_meses)
 
         # Persistencia Brier (doc 74 D1): snapshot del puente por nombre para puntuar ex-post la P(bull) del
         # analista (¿se materializó al horizonte?) + la implícita como contexto. Lo que mide si Tier B mejoró

@@ -41,6 +41,7 @@ bandas_clasificacion:
   # watchlist = 0 · core = peso_max_nombre (20%)
 cap_bucket_especulativo: 0.10         # suma de posiciones especulativas ≤ 10%
 cap_cluster_tematico: 0.20            # suma por cluster temático (cualquier clasificación) ≤ 20%
+umbral_revenue_recurrente_usd: 50000000   # revenue FY ≥ $50M = "revenue recurrente" (techo D4, r5 item 2)
 
 # --- Reglas de riesgo que ANTES eran "juicio del auditor" y ahora son números (doc 55 §4.4) ---
 turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) — CABLEADO: bloquea aumentos

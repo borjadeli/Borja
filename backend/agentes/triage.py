@@ -93,7 +93,10 @@ class Triage:
             payload, meta = self.ag.estructurado(
                 system=_PROMPT,
                 user=f"Empresa: {ticker}\nHechos nuevos desde el último análisis:\n{resumen_hechos_nuevos}",
-                payload_schema=_PAYLOAD_SCHEMA, max_tokens=300,
+                # 1024 (no 300): el smoke real (2026-11-03) mostró que Haiku escribe un `motivo` que no entra
+                # en 300 tokens → JSON truncado ("Unterminated string") en casi todas las llamadas. Haiku es
+                # barato ($0.10/$0.50/Mtok) → el tope más alto es insignificante y arregla el truncado.
+                payload_schema=_PAYLOAD_SCHEMA, max_tokens=1024,
             )
             materialidad = _clamp01(float(payload.get("materialidad_0_1", 0.0)))
             motivo_llm = str(payload.get("motivo", ""))

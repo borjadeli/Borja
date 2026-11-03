@@ -25,7 +25,9 @@ dias_earnings_proximo: 10      # "earnings próximo" = a <= N días del evento e
 # --- Admisibilidad del universo ---
 market_cap_min_usd: 150000000       # $150M
 market_cap_max_usd: 60000000000     # $60B
-adv_min_usd: 3000000                # liquidez mínima $3M/día
+adv_min_usd: 0                      # LIQUIDEZ NO ES FILTRO (decisión del operador: entra con poco capital).
+                                    #   El pct_adv_max de abajo igual evita tomar una posición mayor que lo
+                                    #   que el mercado soporta, así que no hace falta un piso de ADV.
 pct_adv_max: 0.10                   # una posición no supera el 10% del ADV
 
 # --- Regla condicional de supervivencia (doc 55 §4.5: el cap vive en el IPS, no por fuera) ---

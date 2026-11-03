@@ -113,6 +113,11 @@ class CacheDossiers:
             return e
         return None
 
+    def ultimo(self, ticker: str) -> _Entrada | None:
+        """El dossier PREVIO del nombre sin importar hash/TTL — base del delta-deep (doc 76): re-analizar
+        barato sobre la tesis previa + lo nuevo, en vez de un análisis full desde cero."""
+        return self._d.get(ticker.upper())
+
     def guardar(self, ticker: str, hash_: str, dossier: Dossier, verif: VerificationReport, fecha: date) -> None:
         self._d[ticker.upper()] = _Entrada(hash=hash_, dossier=dossier, verif=verif, fecha=fecha)
         self._persistir()
@@ -193,7 +198,7 @@ class Orquestador:
                      reverse=True)
 
         res = ResultadoSemana(memo=memo)
-        for senales, _resumen, td in triages:
+        for senales, resumen_ev, td in triages:
             if not td.research_profundo:
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="triage_descarta", triage=td))
                 continue
@@ -231,9 +236,19 @@ class Orquestador:
             # 2c. Analista → Bear → Verificador. Una falla en UN nombre (LLM flojo, red, validación) no debe
             #     tumbar el ciclo entero → se saltea y se sigue (resiliencia; auditoría del smoke #6).
             try:
-                r_an = self.analista.analizar(td.ticker, data_pack=pack,
-                                              contexto_cuello=self.contexto_fn(td.ticker), memo_macro=memo_txt,
-                                              max_tokens=ANALISTA_MAXTOK)
+                # DELTA-DEEP (doc 76): si hay dossier PREVIO → re-análisis barato (tesis previa + lo nuevo,
+                # web acotada); si es un nombre nuevo → análisis FULL. Baja el costo por nombre ya visto.
+                prev = self.cache.ultimo(td.ticker)
+                if prev is not None and prev.dossier is not None:
+                    r_an = self.analista.actualizar(td.ticker, prev.dossier, data_pack=pack,
+                                                    evento_resumen=resumen_ev, contexto_cuello=self.contexto_fn(td.ticker),
+                                                    memo_macro=memo_txt, max_tokens=ANALISTA_MAXTOK)
+                    accion_tipo = "actualizado"
+                else:
+                    r_an = self.analista.analizar(td.ticker, data_pack=pack,
+                                                  contexto_cuello=self.contexto_fn(td.ticker), memo_macro=memo_txt,
+                                                  max_tokens=ANALISTA_MAXTOK)
+                    accion_tipo = "analizado"
                 costo = r_an.meta.cost_usd
                 if r_an.dossier is None:
                     self.ledger.confirmar(peor, costo)
@@ -262,7 +277,7 @@ class Orquestador:
             if verif.veredicto != "fail":      # un dossier fail no se cachea como usable
                 self.cache.guardar(td.ticker, h, r_an.dossier, verif, hoy)
             rev_fy, rw_m, fcf_neg = _pack_hechos(pack)
-            res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="analizado", triage=td,
+            res.decisiones.append(DecisionOrq(ticker=td.ticker, accion=accion_tipo, triage=td,
                                               dossier=r_an.dossier, bear=atk, verif=verif,
                                               costo_usd=round(costo, 6), hash=h,
                                               revenue_fy=rev_fy, runway_meses=rw_m, fcf_negativo=fcf_neg))

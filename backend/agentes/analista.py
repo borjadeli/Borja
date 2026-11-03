@@ -22,6 +22,8 @@ PROMPT_VERSION = "analista_v1"
 _PROMPT = (Path(__file__).resolve().parent.parent.parent / "prompts" / "analista_v1.md").read_text()
 
 WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 6}
+# delta-deep (doc 76): re-análisis barato → menos búsquedas (solo valida lo nuevo, no re-investiga de cero).
+DELTA_WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 2}
 
 _TIPO_CLAIM = ["hecho", "declaracion_empresa", "estimacion", "inferencia"]
 _MATERIALITY = ["central", "soporte", "secundaria"]
@@ -134,6 +136,45 @@ def _render_pack(pack: DataPack) -> str:
     return "\n".join(lineas)
 
 
+def _finalizar(payload, fuentes, meta, ticker: str) -> ResultadoAnalista:
+    """Post-procesa el payload del Analista (clamps + normalización de escala + validación) → ResultadoAnalista.
+    Compartido por `analizar` (full) y `actualizar` (delta) para que el delta herede las mismas garantías."""
+    if payload is None:
+        return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
+    payload["conviccion_0_1"] = max(0.0, min(1.0, float(payload.get("conviccion_0_1", 0.0))))
+    inv = payload.get("invertibilidad")
+    if isinstance(inv, dict) and "traccion_0_4" in inv:
+        inv["traccion_0_4"] = max(0, min(4, int(inv.get("traccion_0_4") or 0)))
+    for e in (payload.get("escenarios") or []):
+        if isinstance(e, dict):
+            if e.get("prob") is not None:
+                e["prob"] = max(0.0, min(1.0, float(e["prob"])))
+            if e.get("anios") is not None:
+                e["anios"] = max(1, int(e["anios"]))
+    dsp = payload.get("dilucion_esperada_pct")                  # % → fracción (smoke 2026-11-03)
+    if dsp is not None:
+        payload["dilucion_esperada_pct"] = (float(dsp) / 100.0) if float(dsp) > 1.0 else float(dsp)
+    try:
+        dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
+    except Exception as e:  # noqa: BLE001 — dossier incompleto → sin_dossier, no crash
+        _log.warning("analista: dossier inválido para %s (%s) → sin_dossier", ticker, e)
+        return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
+    return ResultadoAnalista(dossier=dossier, fuentes=fuentes, meta=meta)
+
+
+def _render_previo(d: Dossier) -> str:
+    """Render COMPACTO del dossier previo para el delta-deep (no re-manda todo; lo esencial de la tesis)."""
+    inv = d.invertibilidad
+    esc = " · ".join(f"{e.nombre} {e.metrica_terminal:.2e}×{e.multiplo_salida}@{e.anios}a p={e.prob}"
+                     for e in d.escenarios) or "(sin escenarios)"
+    return (f"Negocio/cuello: {d.negocio_y_posicion_cuello}\n"
+            f"Qué exige el precio: {d.valuacion_que_exige_el_precio}\n"
+            f"Bull: {d.bull.tesis}\nBear: {d.bear.tesis}\n"
+            f"Falsador: {d.falsador.afirmacion} (límite {d.falsador.fecha_limite})\n"
+            f"Clasificación: {inv.analyst_classification if inv else '?'} · tracción "
+            f"{inv.traccion_0_4 if inv else '?'}/4\nEscenarios: {esc}\nConvicción previa: {d.conviccion_0_1}")
+
+
 class Analista:
     def __init__(self, agente: Agente):
         self.ag = agente
@@ -154,25 +195,29 @@ class Analista:
             system=_PROMPT, user=user, tools=[WEB_SEARCH_TOOL, EMITIR_DOSSIER_TOOL],
             emisor="emitir_dossier", max_tokens=max_tokens,
         )
-        if payload is None:
-            return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
-        payload["conviccion_0_1"] = max(0.0, min(1.0, float(payload.get("conviccion_0_1", 0.0))))
-        inv = payload.get("invertibilidad")
-        if isinstance(inv, dict) and "traccion_0_4" in inv:     # acotar el entero (el schema no fija rango)
-            inv["traccion_0_4"] = max(0, min(4, int(inv.get("traccion_0_4") or 0)))
-        for e in (payload.get("escenarios") or []):             # acotar prob/años de los escenarios (doc 74 D1)
-            if isinstance(e, dict):
-                if e.get("prob") is not None:
-                    e["prob"] = max(0.0, min(1.0, float(e["prob"])))
-                if e.get("anios") is not None:
-                    e["anios"] = max(1, int(e["anios"]))
-        # dilución a FRACCIÓN (smoke 2026-11-03: el LLM la emite como % — 35.0 = 35%). >1 ⇒ venía en %.
-        dsp = payload.get("dilucion_esperada_pct")
-        if dsp is not None:
-            payload["dilucion_esperada_pct"] = (float(dsp) / 100.0) if float(dsp) > 1.0 else float(dsp)
-        try:
-            dossier = Dossier.model_validate({"meta": meta.model_dump(), "ticker": ticker.upper(), **payload})
-        except Exception as e:  # noqa: BLE001 — dossier incompleto (p.ej. sin falsador) → sin_dossier, no crash
-            _log.warning("analista: dossier inválido para %s (%s) → sin_dossier", ticker, e)
-            return ResultadoAnalista(dossier=None, fuentes=fuentes, meta=meta)
-        return ResultadoAnalista(dossier=dossier, fuentes=fuentes, meta=meta)
+        return _finalizar(payload, fuentes, meta, ticker)
+
+    def actualizar(self, ticker: str, dossier_previo: Dossier, *, data_pack: DataPack,
+                   evento_resumen: str = "", contexto_cuello: str = "", memo_macro: str = "",
+                   max_tokens: int = 16384) -> ResultadoAnalista:
+        """DELTA-DEEP (doc 76): re-análisis BARATO sobre la tesis previa + lo nuevo. Menos web (2 vs 6): no
+        re-investiga desde cero, solo valida el evento/los números nuevos y ACTUALIZA lo que cambió. Emite el
+        dossier COMPLETO y actualizado (mismo schema → el Verificador/PM lo tratan igual)."""
+        user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n"
+            f"Empresa: {ticker} — ACTUALIZACIÓN (delta) de un dossier previo, NO análisis desde cero.\n\n"
+            f"=== TU DOSSIER PREVIO ===\n{_render_previo(dossier_previo)}\n\n"
+            f"=== QUÉ CAMBIÓ (evento/filings nuevos desde ese dossier) ===\n{evento_resumen or '(sin resumen)'}\n\n"
+            f"=== DATA PACK ACTUALIZADO (números deterministas) ===\n{_render_pack(data_pack)}\n\n"
+            f"=== CONTEXTO DEL CUELLO ===\n{contexto_cuello or '(sin contexto)'}\n\n"
+            f"=== MEMO MACRO ===\n{memo_macro or '(sin memo)'}\n\n"
+            f"=== TASAS BASE (ancla de la P(bull)) ===\n{_tabla_tasas_base()}\n\n"
+            f"Verificá SOLO lo nuevo con web_search (pocas búsquedas) y volvé a emitir el dossier COMPLETO "
+            f"con lo que cambió actualizado y lo que sigue válido conservado. Si el evento ROMPE la tesis, "
+            f"decílo en bull/bear/falsador. Llamá a emitir_dossier."
+        )
+        payload, fuentes, meta = self.ag.agentico(
+            system=_PROMPT, user=user, tools=[DELTA_WEB_SEARCH_TOOL, EMITIR_DOSSIER_TOOL],
+            emisor="emitir_dossier", max_tokens=max_tokens,
+        )
+        return _finalizar(payload, fuentes, meta, ticker)

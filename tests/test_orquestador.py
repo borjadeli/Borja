@@ -56,10 +56,14 @@ class _Triage:
 
 
 class _Analista:
-    def __init__(self, cost=0.5): self.cost, self.llamadas = cost, 0
+    def __init__(self, cost=0.5): self.cost, self.llamadas, self.deltas = cost, 0, 0
     def analizar(self, ticker, **kw):
         self.llamadas += 1
         m = _META.model_copy(update={"cost_usd": self.cost})
+        return ResultadoAnalista(dossier=_dossier(ticker), fuentes=["https://sec.gov/a"], meta=m)
+    def actualizar(self, ticker, dossier_previo, **kw):
+        self.deltas += 1
+        m = _META.model_copy(update={"cost_usd": self.cost * 0.4})      # delta más barato
         return ResultadoAnalista(dossier=_dossier(ticker), fuentes=["https://sec.gov/a"], meta=m)
 
 
@@ -221,9 +225,10 @@ def test_3_evento_fuerte_saltea_el_cache(tmp_path):
     cache = CacheDossiers()
     cache.guardar("OKLO", hash_pack(_pack("OKLO")), _dossier(), _verif()(_dossier(), []), HOY)
     orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an, cache=cache)
-    # con evento fuerte NO reutiliza: re-analiza (el dossier vigente pudo quedar viejo por el evento)
+    # con evento fuerte NO reutiliza: re-analiza. Como hay dossier previo, el re-análisis es DELTA (doc 76):
+    # barato (actualizar), no full. El punto del test se mantiene: NO reutilizó, re-miró por el evento.
     r = orq.correr_semana([("OKLO", _sen(tiene_evento_fuerte=True), "h")], hoy=HOY)
-    assert r.decisiones[0].accion == "analizado" and an.llamadas == 1
+    assert r.decisiones[0].accion == "actualizado" and an.deltas == 1 and an.llamadas == 0
 
 
 def test_falla_en_un_nombre_no_tumba_el_ciclo():
@@ -273,3 +278,23 @@ def test_pack_hechos_sin_runway_no_quema():
     pack = DataPack(ticker="X", as_of=HOY, puntos=[_dp("revenue", 10e6, "2026-03-01")])
     rev_fy, rw, fcf_neg = _pack_hechos(pack)
     assert rev_fy == 10e6 and rw is None and fcf_neg is False
+
+
+def test_delta_deep_cuando_hay_dossier_previo():
+    # doc 76: si hay dossier PREVIO en el cache, un re-análisis usa DELTA (actualizar), no el full (analizar)
+    an = _Analista()
+    cache = CacheDossiers()
+    cache.guardar("OKLO", "hash_viejo", _dossier("OKLO"), _verif()(_dossier("OKLO"), []), HOY)
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an, cache=cache)
+    r = orq.correr_semana([("OKLO", _sen(), "8-K nuevo material")], hoy=HOY)  # evento fuerte → saltea vigente
+    dec = next(d for d in r.decisiones if d.ticker == "OKLO")
+    assert dec.accion == "actualizado" and an.deltas == 1 and an.llamadas == 0
+
+
+def test_full_deep_cuando_es_nombre_nuevo():
+    # sin dossier previo → análisis FULL (analizar), no delta
+    an = _Analista()
+    orq = _orq(LedgerPresupuesto(sobre_semanal=10.0), analista=an, cache=CacheDossiers())
+    r = orq.correr_semana([("NVDA", _sen(), "hecho")], hoy=HOY)
+    dec = next(d for d in r.decisiones if d.ticker == "NVDA")
+    assert dec.accion == "analizado" and an.llamadas == 1 and an.deltas == 0

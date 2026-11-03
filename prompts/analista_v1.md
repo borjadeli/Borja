@@ -86,6 +86,9 @@ ponés los números y él calcula qué exige el precio, el retorno por escenario
 precio implica (expectations investing). Reglas (doc 74 D1):
 - Cada escenario: `metrica_terminal` (revenue o EBITDA, decí cuál en `tipo_metrica`), `multiplo_salida`,
   `anios`, `prob`. **Los tres comparten el MISMO `anios`** (si no, los MOIC no son comparables).
+- **ESCALA: en DÓLARES ABSOLUTOS, no en millones.** `metrica_terminal` de $1,5B se escribe `1500000000` (NO
+  `1500`); `caja_neta_terminal` de −$300M se escribe `-300000000`; `dilucion_esperada_pct` como fracción
+  (`0.35` = 35%). Un número mal escalado invalida todo el puente (se descarta a UNKNOWN).
 - **El `multiplo_salida` se ancla a comparables con el crecimiento y margen que la empresa tendría EN EL AÑO
   TERMINAL**, no a los múltiplos de hoy. Si el múltiplo es sobre revenue, poné `margen_terminal_pct` que lo
   justifica. Un múltiplo terminal alto sin margen que lo sostenga es narrativa comprimida en un número.

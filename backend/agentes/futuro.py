@@ -244,10 +244,18 @@ def probabilidad_implicita_bull(valor_hoy: float | None, bull: "Escenario | None
     pesos = [(max(0.0, e.prob) or 1.0) / suma_p for e in resto] if sum(max(0.0, e.prob) for e in resto) > 0 \
         else [1.0 / len(resto)] * len(resto)
     m_resto = sum(w * _moic(valor_hoy, e, caja_neta_terminal, dilucion_pct) for w, e in zip(pesos, resto))
-    if abs(m_bull - m_resto) < 1e-9:
-        return ProbImplicita(None, round(m_bull, 2), round(m_resto, 2), round(target, 2), "UNKNOWN",
-                             "bull y resto con el mismo MOIC: la probabilidad no está determinada")
+    # Guard degenerado / mal escalado (smoke 2026-11-03): si el bull NO supera meaningfully al resto, el
+    # precio no se justifica por ninguna P(bull) útil (y suele indicar métricas en escala distinta —p.ej. el
+    # LLM emitió metrica_terminal en millones—, que colapsa los MOIC). UNKNOWN en vez de un número basura.
+    escala = max(abs(m_bull), abs(m_resto), 1e-9)
+    if (m_bull - m_resto) <= 1e-4 * escala:
+        return ProbImplicita(None, round(m_bull, 3), round(m_resto, 3), round(target, 2), "UNKNOWN",
+                             "el bull no supera al resto (escenarios degenerados o mal escalados): "
+                             "la P(bull) no es informativa")
     p = (target - m_resto) / (m_bull - m_resto)
+    if not (-2.0 <= p <= 5.0):     # fuera de rango sano → inputs mal escalados, no una probabilidad real
+        return ProbImplicita(None, round(m_bull, 3), round(m_resto, 3), round(target, 2), "UNKNOWN",
+                             f"P(bull)={p:.0f} fuera de rango: escenarios probablemente mal escalados (revisar unidades)")
     if p > 1.0:
         nota = f"ni con 100% bull alcanza {tasa:.0%}/año (precio exige MOIC {target:.2f}, bull da {m_bull:.2f}): caro"
     elif p < 0.0:

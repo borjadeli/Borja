@@ -180,3 +180,14 @@ def test_dilucion_en_porcentaje_no_explota():
     bear = Escenario("bear", 50e6, 6.0, 5, 1.0)
     p = probabilidad_implicita_bull(1e9, bull, [bear], anios=5, dilucion_pct=35.0).p_bull
     assert p is not None and -1.0 <= p <= 2.0     # sano, no 23 millones
+
+
+def test_prob_implicita_mal_escalada_es_unknown():
+    # smoke 2026-11-03: el LLM emitió metrica en MILLONES (1500) vs market cap absoluto → MOIC colapsa →
+    # antes daba p_bull=1.288.994. Ahora el guard lo manda a UNKNOWN (no número basura).
+    from backend.agentes.futuro import probabilidad_implicita_bull
+    bull = Escenario("bull", 1500, 7.5, 6, 0.08)       # 1500 = $1.5B escrito en millones (mal)
+    base = Escenario("base", 300, 5.0, 6, 0.37)
+    bear = Escenario("bear", 40, 2.0, 6, 0.55)
+    r = probabilidad_implicita_bull(4.7e9, bull, [base, bear], anios=6, caja_neta_terminal=300.0)
+    assert r.estado == "UNKNOWN" and r.p_bull is None

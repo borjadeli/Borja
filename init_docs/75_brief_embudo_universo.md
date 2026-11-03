@@ -52,6 +52,27 @@ SÍ un tope de tamaño. **Pero** el universo curado incluye gigantes a propósit
   **screening/refresh sistemático** (reglas de inclusión, actualización periódica, de-listing de los que
   dejaron de ser cuello)?
 
+## 3.bis. El agente DISCOVERY / Map Curator — hoy NO existe (el operador lo quiere vivo)
+
+**Estado real:** no hay agente de discovery/curador en v2. `universo.py` solo LEE el `nx_empresa` estático y
+computa señales; no descubre ni actualiza. El `discovery.py` de v1 está archivado. **El universo es el seed
+estático de oct-2026 y nada lo refresca.** El operador quiere un agente "buceando todo el tiempo en el mapa,
+actualizándolo".
+
+**Lo que especifica el doc 52 (sin construir):** Map Curator + Discovery (Sonnet+web, quincenal, ~$1) →
+`nodos_actualizados` + `propuestas_empresa` (ticker, cuello, tesis, market cap, por qué ahora, fuentes) → a una
+**cola de aprobación (NO entran solas)**.
+
+**Preguntas a triangular:**
+- d. ¿Construir el Map Curator + Discovery ahora, o cerrar primero el punch-list r5 + la primera corrida real?
+- e. **¿Auto-actualiza o propone-y-aprueba?** El operador dice "actualizar todo"; el diseño dice "cola de
+  aprobación". En ADVISORY, ¿cuál es el balance correcto entre frescura del mapa y control humano (un auto-add
+  malo se analizaría/compraría)?
+- f. ¿Qué dispara el "buceo"? (firmas de hechos: nuevos cuellos, órdenes/partnerships con hyperscaler/soberano,
+  deltas de severidad) ¿y con qué frecuencia/presupuesto, dado que el research ya consume el grueso del $40/mes?
+- g. ¿El Discovery solo AGREGA, o también RETIRA (de-lista los que dejaron de ser cuello) para que el universo
+  no crezca indefinidamente?
+
 ## 4. Lo que proponemos (a validar antes de codear)
 
 - **Embudo (fix de disciplina, con tests):** (1) sacar el 8-K 2.02 (earnings rutinario) de "evento fuerte" →

@@ -7,6 +7,7 @@ nombre-por-nombre: los validadores + el pipeline (embudo→IPS→PM) filtran; el
 
 Uso:
   .venv/bin/python -m ops.cola_propuestas                         # lista observación + rechazadas recientes
+  .venv/bin/python -m ops.cola_propuestas --explorar ["foco"]     # corre el AGENTE discovery (Sonnet+web, GASTA API)
   .venv/bin/python -m ops.cola_propuestas --proponer TICKER CUELLO "tesis" "por_que_ahora" URL [MARKET_CAP]
   .venv/bin/python -m ops.cola_propuestas --aprobar TICKER        # promueve al universo (nx_empresa)
   .venv/bin/python -m ops.cola_propuestas --rechazar TICKER
@@ -19,6 +20,8 @@ from datetime import date
 
 from backend.agentes.descubrimiento import ColaPropuestas, PropuestaEmpresa
 from backend.agentes.ips import IPS
+
+_MODELO_DISCOVERY = "claude-sonnet-5-5"       # doc 76 §4: el agente de discovery corre en Sonnet + web
 
 
 def _universo_actual() -> set[str]:
@@ -39,6 +42,9 @@ def _alta(ticker: str, propuesta: dict) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Cola de propuestas de discovery (doc 76 §4)")
+    ap.add_argument("--explorar", nargs="?", const="", metavar="FOCO",
+                    help="corre el agente discovery (Sonnet+web, GASTA API) → encola lo que encuentre")
+    ap.add_argument("--max", type=int, default=6, help="tope de propuestas del agente (default 6)")
     ap.add_argument("--proponer", nargs="*", metavar="ARG",
                     help="TICKER CUELLO TESIS POR_QUE_AHORA URL [MARKET_CAP]")
     ap.add_argument("--aprobar", metavar="TICKER", help="promueve una propuesta en observación al universo")
@@ -48,6 +54,20 @@ def main() -> int:
 
     ips = IPS.cargar()
     cola = ColaPropuestas()
+
+    if args.explorar is not None:
+        from backend.agentes.base import Agente
+        from backend.agentes.descubrimiento import AgenteDiscovery, encolar_propuestas
+        universo = _universo_actual()
+        agente = AgenteDiscovery(Agente("discovery", "discovery_v1", _MODELO_DISCOVERY))
+        print(f"explorando (foco: {args.explorar or 'libre'}) — Sonnet+web, hasta {args.max} propuestas…")
+        props, meta = agente.explorar(universo_actual=universo, foco=args.explorar, max_propuestas=args.max)
+        res = encolar_propuestas(cola, props, ips_cfg=ips.cfg, universo_actual=universo)
+        print(f"costo ${meta.cost_usd:.4f} · {meta.web_searches} búsquedas · {len(props)} propuestas:")
+        for r in res:
+            print(f"  · {r['ticker']} → {r['estado']}" + (f"  ({r['motivos']})" if r["motivos"] else ""))
+        print("\n(--aprobar TICKER para promover las que estén en observación)")
+        return 0
 
     if args.proponer:
         a = args.proponer

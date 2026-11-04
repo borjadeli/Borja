@@ -163,3 +163,99 @@ class ColaPropuestas:
                 self.resolver(tk, "vencida", nota="sin promoción en la ventana de vigencia")
                 vencidos.append(tk)
         return vencidos
+
+
+# --------------------------------------------------------------------------- el AGENTE LLM (Sonnet + web)
+# El motor de alpha (doc 76 §4): explora cuellos NUEVOS y produce propuestas a la cola de arriba. Es "otro
+# productor" — no toca el universo ni decide nada; registrar→validar→observación→promover sigue igual.
+
+PROMPT_VERSION_DISCOVERY = "discovery_v1"
+_PROMPT_DISCOVERY = (Path(__file__).resolve().parent.parent.parent / "prompts" / "discovery_v1.md").read_text()
+
+# Acotado por presupuesto: discovery es el motor de alpha pero debe ser BARATO (Sonnet + pocas búsquedas).
+WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 5}
+
+_S = {"type": "string"}
+
+
+def _emitir_propuestas_schema() -> dict:
+    prop = {
+        "type": "object",
+        "properties": {
+            "ticker": _S, "cuello": _S, "tesis_corta": _S, "por_que_ahora": _S,
+            "fuentes": {"type": "array", "items": _S},
+            "market_cap": {"type": ["number", "null"]},
+        },
+        "required": ["ticker", "cuello", "tesis_corta", "por_que_ahora", "fuentes", "market_cap"],
+        "additionalProperties": False,
+    }
+    return {"type": "object", "properties": {"propuestas": {"type": "array", "items": prop}},
+            "required": ["propuestas"], "additionalProperties": False}
+
+
+EMITIR_PROPUESTAS_TOOL = {
+    "name": "emitir_propuestas",
+    "description": ("Emití las empresas candidatas que encontraste. Es tu única salida; llamala cuando "
+                    "terminaste de investigar. Pocas y bien fundadas."),
+    "input_schema": _emitir_propuestas_schema(),
+}
+
+
+class AgenteDiscovery:
+    """Sonnet+web explora cuellos nuevos y propone empresas FUERA del universo. Produce `PropuestaEmpresa`;
+    NO toca la cola ni el universo (eso lo hace el caller con `encolar_propuestas`: registrar→validar→
+    observación, y el humano promueve). Acotado por presupuesto (pocas búsquedas + tope de propuestas)."""
+
+    def __init__(self, agente):
+        self.ag = agente
+
+    def explorar(self, *, universo_actual, nodos_mapa=None, foco: str = "",
+                 max_propuestas: int = 6, max_tokens: int = 8192):
+        universo = sorted({t.upper() for t in universo_actual})
+        nodos = ", ".join(nodos_mapa or []) or "(sin mapa explícito: usá tu conocimiento de los cuellos del sector)"
+        user = (
+            f"Fecha de hoy: {date.today().isoformat()}\n"
+            f"Proponé HASTA {max_propuestas} empresas nuevas (no más; preferí pocas y buenas).\n\n"
+            f"=== YA EN EL UNIVERSO (NO las propongas) ===\n{', '.join(universo) or '(vacío)'}\n\n"
+            f"=== CUELLOS YA MAPEADOS (buscá adyacencias / nodos faltantes) ===\n{nodos}\n\n"
+            f"=== FOCO DE ESTA RONDA ===\n"
+            f"{foco or '(sin foco: explorá donde veas un cambio estructural reciente en los cuellos)'}\n\n"
+            f"Investigá con web_search (pocas búsquedas dirigidas) y llamá a emitir_propuestas."
+        )
+        payload, fuentes, meta = self.ag.agentico(
+            system=_PROMPT_DISCOVERY, user=user,
+            tools=[WEB_SEARCH_TOOL, EMITIR_PROPUESTAS_TOOL],
+            emisor="emitir_propuestas", max_tokens=max_tokens,
+        )
+        props: list[PropuestaEmpresa] = []
+        vistos: set[str] = set()
+        for raw in ((payload or {}).get("propuestas") or []):
+            if len(props) >= max_propuestas:
+                break
+            tk = str((raw or {}).get("ticker", "")).strip().upper()
+            if not tk or tk in vistos:
+                continue
+            srcs = [f for f in ((raw or {}).get("fuentes") or []) if (f or "").strip()]
+            try:
+                p = PropuestaEmpresa(
+                    ticker=tk, cuello=str(raw.get("cuello", "")).strip(),
+                    tesis_corta=str(raw.get("tesis_corta", "")).strip(),
+                    por_que_ahora=str(raw.get("por_que_ahora", "")).strip(),
+                    fuentes=srcs or list(fuentes)[:2],   # fallback: las URLs que trajo web_search (procedencia)
+                    market_cap=raw.get("market_cap"),
+                )
+            except Exception:  # noqa: BLE001 — propuesta malformada → se descarta, no tumba la ronda
+                continue
+            vistos.add(tk)
+            props.append(p)
+        return props, meta
+
+
+def encolar_propuestas(cola: ColaPropuestas, props, *, ips_cfg: dict, universo_actual: set[str]) -> list[dict]:
+    """Registra en la cola cada propuesta del agente (valida → observación|rechazada). Devuelve el resumen
+    por ticker. El agente propone; los validadores deterministas filtran; el humano promueve."""
+    out = []
+    for p in props:
+        estado, motivos = cola.registrar(p, ips_cfg=ips_cfg, universo_actual=universo_actual)
+        out.append({"ticker": p.ticker, "estado": estado, "motivos": motivos})
+    return out

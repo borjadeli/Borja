@@ -57,6 +57,10 @@ def validar_propuesta(p: PropuestaEmpresa, *, ips_cfg: dict, universo_actual: se
     mc_max = float(ips_cfg.get("market_cap_max_usd", 1e18))
     if p.market_cap is None:
         motivos.append("sin market cap (pendiente de verificación, no inelegible)")   # blando: a verificar
+    elif 0 < p.market_cap < 1e6:
+        # número sospechosamente chico ⇒ casi seguro MAL ESCALADO (5=$5B, 500=$500M), no un cap real <$1M.
+        # No se rechaza en duro por un error de escala del LLM (ya nos pasó en el puente): queda a verificar.
+        motivos.append(f"market cap sospechoso ({p.market_cap}) — ¿mal escalado? pendiente de verificación")
     elif not (mc_min <= p.market_cap <= mc_max):
         motivos.append(f"market cap {p.market_cap/1e9:.1f}B fuera del rango IPS "
                        f"[{mc_min/1e9:.2f}B, {mc_max/1e9:.0f}B]")
@@ -209,15 +213,19 @@ class AgenteDiscovery:
     def __init__(self, agente):
         self.ag = agente
 
-    def explorar(self, *, universo_actual, nodos_mapa=None, foco: str = "",
+    def explorar(self, *, universo_actual, en_observacion=None, nodos_mapa=None, foco: str = "",
                  max_propuestas: int = 6, max_tokens: int = 8192):
         universo = sorted({t.upper() for t in universo_actual})
-        nodos = ", ".join(nodos_mapa or []) or "(sin mapa explícito: usá tu conocimiento de los cuellos del sector)"
+        obs = sorted({t.upper() for t in (en_observacion or [])})
+        nodos = "\n".join(f"- {n}" for n in (nodos_mapa or [])) or \
+            "(sin mapa explícito: usá tu conocimiento de los cuellos del sector)"
         user = (
             f"Fecha de hoy: {date.today().isoformat()}\n"
             f"Proponé HASTA {max_propuestas} empresas nuevas (no más; preferí pocas y buenas).\n\n"
             f"=== YA EN EL UNIVERSO (NO las propongas) ===\n{', '.join(universo) or '(vacío)'}\n\n"
-            f"=== CUELLOS YA MAPEADOS (buscá adyacencias / nodos faltantes) ===\n{nodos}\n\n"
+            f"=== YA EN OBSERVACIÓN (NO las re-propongas) ===\n{', '.join(obs) or '(ninguna)'}\n\n"
+            f"=== CUELLOS DEL MAPA (buscá QUIÉN los ocupa y aún no está arriba; + adyacencias/nodos faltantes) ===\n"
+            f"{nodos}\n\n"
             f"=== FOCO DE ESTA RONDA ===\n"
             f"{foco or '(sin foco: explorá donde veas un cambio estructural reciente en los cuellos)'}\n\n"
             f"Investigá con web_search (pocas búsquedas dirigidas) y llamá a emitir_propuestas."
@@ -228,7 +236,7 @@ class AgenteDiscovery:
             emisor="emitir_propuestas", max_tokens=max_tokens,
         )
         props: list[PropuestaEmpresa] = []
-        vistos: set[str] = set()
+        vistos: set[str] = set(universo) | set(obs)   # descarta lo ya conocido aunque el modelo lo re-proponga
         for raw in ((payload or {}).get("propuestas") or []):
             if len(props) >= max_propuestas:
                 break

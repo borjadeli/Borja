@@ -31,6 +31,26 @@ def _universo_actual() -> set[str]:
         return {t.upper() for t in tickers_universo(s)}
 
 
+def _nodos_mapa() -> list[str]:
+    """Los cuellos reales de la brújula (activos + watchlist) → contexto del agente discovery. Así no 'inventa'
+    cuellos: trabaja el mapa curado buscando QUIÉN los ocupa y todavía no está en el universo. Incluye cluster,
+    factor macro, subnodos y nota (todo lo que el analista del mapa ya sabe)."""
+    from backend.mapa.brujula import BRUJULA_WATCHLIST, territorios_activos
+
+    def _fmt(t) -> str:
+        extra = []
+        if t.factor_macro:
+            extra.append(f"factor: {t.factor_macro}")
+        if t.subnodos:
+            extra.append("subnodos: " + "; ".join(t.subnodos))
+        if t.nota:
+            extra.append(t.nota)
+        sufijo = f" ({' · '.join(extra)})" if extra else ""
+        return f"[{t.cluster}] {t.nombre}{sufijo}"
+
+    return [_fmt(t) for t in territorios_activos()] + [_fmt(t) for t in BRUJULA_WATCHLIST]
+
+
 def _alta(ticker: str, propuesta: dict) -> None:
     """Inserta la propuesta aprobada en nx_empresa como Candidata (fuente discovery)."""
     from backend.database import session_scope
@@ -59,9 +79,12 @@ def main() -> int:
         from backend.agentes.base import Agente
         from backend.agentes.descubrimiento import AgenteDiscovery, encolar_propuestas
         universo = _universo_actual()
+        obs = {v["propuesta"]["ticker"].upper() for v in cola.en_observacion()}
         agente = AgenteDiscovery(Agente("discovery", "discovery_v1", _MODELO_DISCOVERY))
-        print(f"explorando (foco: {args.explorar or 'libre'}) — Sonnet+web, hasta {args.max} propuestas…")
-        props, meta = agente.explorar(universo_actual=universo, foco=args.explorar, max_propuestas=args.max)
+        print(f"explorando (foco: {args.explorar or 'libre'}) — Sonnet+web, {len(_nodos_mapa())} cuellos del "
+              f"mapa, hasta {args.max} propuestas…")
+        props, meta = agente.explorar(universo_actual=universo, en_observacion=obs,
+                                      nodos_mapa=_nodos_mapa(), foco=args.explorar, max_propuestas=args.max)
         res = encolar_propuestas(cola, props, ips_cfg=ips.cfg, universo_actual=universo)
         print(f"costo ${meta.cost_usd:.4f} · {meta.web_searches} búsquedas · {len(props)} propuestas:")
         for r in res:

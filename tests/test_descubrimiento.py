@@ -126,12 +126,27 @@ def test_agente_fallback_a_urls_de_busqueda_si_no_cita():
     assert props[0].fuentes == ["https://sec.gov/edgar/filing", "https://x"]
 
 
+def test_agente_descarta_universo_y_observacion():
+    # aunque el modelo re-proponga lo ya conocido, explorar lo filtra (no quema a los validadores aguas abajo)
+    ag = AgenteDiscovery(_agente_que_emite([_raw("MP"), _raw("NUVL"), _raw("OBS1")]))
+    props, _ = ag.explorar(universo_actual={"MP"}, en_observacion={"OBS1"})
+    assert [p.ticker for p in props] == ["NUVL"]
+
+
 def test_encolar_propuestas_valida_y_filtra(tmp_path):
     cola = ColaPropuestas(path=tmp_path / "cola.jsonl")
     ag = AgenteDiscovery(_agente_que_emite([_raw("NUVL", mc=5e9), _raw("BIGCO", mc=200e9), _raw("MP")]))
     props, _ = ag.explorar(universo_actual={"MP"})
-    # universo trae MP → el agente igual lo pudo proponer; el validador lo rechaza como duplicado
+    assert "MP" not in [p.ticker for p in props]              # explorar ya filtró el duplicado del universo
     res = encolar_propuestas(cola, props, ips_cfg=_IPS, universo_actual={"MP"})
     por_estado = {r["ticker"]: r["estado"] for r in res}
-    assert por_estado == {"NUVL": "observacion", "BIGCO": "rechazada", "MP": "rechazada"}
+    assert por_estado == {"NUVL": "observacion", "BIGCO": "rechazada"}   # BIGCO gigante → rechazada
     assert {v["propuesta"]["ticker"] for v in cola.en_observacion()} == {"NUVL"}
+
+
+def test_market_cap_mal_escalado_no_rechaza_en_duro():
+    # un cap sospechosamente chico (5 = probablemente $5B mal escalado) NO se rechaza en duro: a verificar
+    ok, m = validar_propuesta(_p(mc=5), ips_cfg=_IPS, universo_actual=set())
+    assert ok and any("mal escalado" in x for x in m)
+    ok2, m2 = validar_propuesta(_p(mc=500), ips_cfg=_IPS, universo_actual=set())   # 500 = ¿$500M?
+    assert ok2 and any("mal escalado" in x for x in m2)

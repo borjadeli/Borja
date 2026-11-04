@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Literal
@@ -347,6 +348,16 @@ def _norm_nodos(nodos_mapa) -> list[tuple[str, str]]:
     return [(nombre, disp) for nombre, disp in out if nombre]
 
 
+@dataclass
+class ResultadoExploracion:
+    """Lo que devuelve una corrida de discovery. `descartes` hace VISIBLE lo que el agente propuso y no pasó
+    (ya conocida / nodo_ref inválido / tope) — sin esto, un '0' parece una falla cuando suele ser 'ya cubierto'."""
+    empresas: list                       # list[PropuestaEmpresa]
+    cuellos_nuevos: list                 # list[PropuestaNodo]
+    descartes: list = field(default_factory=list)   # [{ticker, motivo}]
+    meta: object = None
+
+
 class AgenteDiscovery:
     """Sonnet+web: el motor de alpha. Propone EMPRESAS (que ocupan un cuello existente, por nodo_ref) y CUELLOS
     nuevos que el mapa no tiene. No decide: el caller valida/encola; el mapa y los validadores son el filtro."""
@@ -382,13 +393,21 @@ class AgenteDiscovery:
         )
         payload = payload or {}
         props: list[PropuestaEmpresa] = []
+        descartes: list[dict] = []                      # qué propuso el agente que NO pasó, y por qué (observabilidad)
         vistos: set[str] = set(universo) | set(obs)
         for raw in (payload.get("propuestas") or []):
-            if len(props) >= max_propuestas:
-                break
             tk = str((raw or {}).get("ticker", "")).strip().upper()
             cuello = id_map.get(str((raw or {}).get("nodo_ref", "")).strip())  # ID → nombre canónico del nodo
-            if not tk or tk in vistos or not cuello:                           # sin encaje a un nodo real → descartar
+            if not tk:
+                continue
+            if tk in vistos:
+                descartes.append({"ticker": tk, "motivo": "ya conocida (universo/observación)"})
+                continue
+            if not cuello:
+                descartes.append({"ticker": tk, "motivo": f"nodo_ref inválido: {raw.get('nodo_ref')!r}"})
+                continue
+            if len(props) >= max_propuestas:
+                descartes.append({"ticker": tk, "motivo": "por encima del tope del pedido"})
                 continue
             srcs = [f for f in ((raw or {}).get("fuentes") or []) if (f or "").strip()]
             try:
@@ -399,7 +418,8 @@ class AgenteDiscovery:
                     fuentes=srcs or list(fuentes)[:2],
                     market_cap=raw.get("market_cap"),
                 )
-            except Exception:  # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
+                descartes.append({"ticker": tk, "motivo": f"malformada: {e}"})
                 continue
             vistos.add(tk)
             props.append(p)
@@ -414,7 +434,7 @@ class AgenteDiscovery:
                     fuentes=[f for f in (raw.get("fuentes") or []) if (f or "").strip()] or list(fuentes)[:2]))
             except Exception:  # noqa: BLE001
                 continue
-        return props, nodos, meta
+        return ResultadoExploracion(empresas=props, cuellos_nuevos=nodos, descartes=descartes, meta=meta)
 
 
 class AgenteCurador:

@@ -134,31 +134,31 @@ def _rawn(nombre="Cuello nuevo X"):
 
 def test_agente_devuelve_empresas_canonizadas_y_cuellos_nuevos():
     ag = _emite([_rawp("NUVL", "C01"), _rawp("AEHR", "C02", mc=2e9)], [_rawn("Cuello nuevo X")])
-    props, nodos, meta = ag.explorar(universo_actual={"MP"}, nodos_mapa=_NODOS)
-    assert [p.ticker for p in props] == ["NUVL", "AEHR"]
-    assert props[0].cuello == "Fotónica / CPO" and props[1].cuello == "HBM"   # nodo_ref → nombre canónico
-    assert [n.nombre for n in nodos] == ["Cuello nuevo X"]
-    assert meta.agent == "discovery"
+    r = ag.explorar(universo_actual={"MP"}, nodos_mapa=_NODOS)
+    assert [p.ticker for p in r.empresas] == ["NUVL", "AEHR"]
+    assert r.empresas[0].cuello == "Fotónica / CPO" and r.empresas[1].cuello == "HBM"  # nodo_ref → canónico
+    assert [n.nombre for n in r.cuellos_nuevos] == ["Cuello nuevo X"]
+    assert r.meta.agent == "discovery"
 
 
-def test_agente_descarta_nodo_ref_invalido():
-    # una empresa con nodo_ref que no existe en el mapa → se descarta (no encaja en ningún cuello real)
-    props, _, _ = _emite([_rawp("NUVL", "C01"), _rawp("ZZZ", "C99")]).explorar(
-        universo_actual=set(), nodos_mapa=_NODOS)
-    assert [p.ticker for p in props] == ["NUVL"]
+def test_agente_descarta_nodo_ref_invalido_con_motivo():
+    # una empresa con nodo_ref que no existe → se descarta Y queda VISIBLE el motivo (observabilidad)
+    r = _emite([_rawp("NUVL", "C01"), _rawp("ZZZ", "C99")]).explorar(universo_actual=set(), nodos_mapa=_NODOS)
+    assert [p.ticker for p in r.empresas] == ["NUVL"]
+    assert any(d["ticker"] == "ZZZ" and "nodo_ref" in d["motivo"] for d in r.descartes)
 
 
 def test_agente_tope_y_dedup_y_universo():
     raws = [_rawp(t, "C01") for t in ("A", "B", "C")] + [_rawp("A", "C01")] + [_rawp("MP", "C02")]
-    props, _, _ = _emite(raws).explorar(universo_actual={"MP"}, nodos_mapa=_NODOS, max_propuestas=2)
-    assert [p.ticker for p in props] == ["A", "B"]           # cap=2, sin dup, sin universo
+    r = _emite(raws).explorar(universo_actual={"MP"}, nodos_mapa=_NODOS, max_propuestas=2)
+    assert [p.ticker for p in r.empresas] == ["A", "B"]           # cap=2, sin dup, sin universo
+    assert any(d["ticker"] == "MP" and "ya conocida" in d["motivo"] for d in r.descartes)  # universo visible
 
 
 def test_agente_fallback_fuentes_a_urls():
-    props, _, _ = _emite([_rawp("NUVL", "C01", fuentes=[])],
-                         urls=["https://sec.gov/f", "https://x"]).explorar(
-        universo_actual=set(), nodos_mapa=_NODOS)
-    assert props[0].fuentes == ["https://sec.gov/f", "https://x"]
+    r = _emite([_rawp("NUVL", "C01", fuentes=[])],
+               urls=["https://sec.gov/f", "https://x"]).explorar(universo_actual=set(), nodos_mapa=_NODOS)
+    assert r.empresas[0].fuentes == ["https://sec.gov/f", "https://x"]
 
 
 def test_encolar_propuestas_map_fit_entra_sola_al_universo(tmp_path):

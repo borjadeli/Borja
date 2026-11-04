@@ -85,8 +85,13 @@ def _explorar(foco: str, max_prop: int) -> int:
 
     print(f"explorando (foco: {foco or 'libre'}) — Sonnet+web, {len(nodos_mapa)} cuellos del mapa, "
           f"hasta {max_prop} propuestas…")
-    props, nodos_nuevos, meta = discovery.explorar(
-        universo_actual=universo, en_observacion=obs, nodos_mapa=nodos_mapa, foco=foco, max_propuestas=max_prop)
+    r = discovery.explorar(universo_actual=universo, en_observacion=obs, nodos_mapa=nodos_mapa,
+                           foco=foco, max_propuestas=max_prop)
+    props, nodos_nuevos, meta = r.empresas, r.cuellos_nuevos, r.meta
+    if r.descartes:
+        print(f"\ndescartadas por el agente ({len(r.descartes)}):")
+        for d in r.descartes:
+            print(f"  · {d['ticker']} — {d['motivo']}")
 
     # 1) cuellos nuevos → curador → overlay del mapa (el mapa crece antes de buscarle jugadores)
     costo_cur = 0.0

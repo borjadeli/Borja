@@ -166,6 +166,44 @@ def _barrer(n: int, max_prop: int, tope_usd: float) -> int:
     return 0
 
 
+def _universo_estado_discovery() -> dict:
+    """{ticker: estado} de las empresas de nx_empresa cuya fuente de ingreso es discovery (para el hit-rate)."""
+    from backend.database import session_scope
+    from backend.ledger.models import NxEmpresa
+    with session_scope() as s:
+        filas = s.query(NxEmpresa).filter(NxEmpresa.fuente_ingreso == "discovery").all()
+        return {e.ticker.upper(): e.estado for e in filas}
+
+
+def _hitrate() -> int:
+    from backend.agentes.discovery_hitrate import embudo_discovery, embudo_nodos
+    from backend.agentes.orquestador import _CACHE_PATH, CacheDossiers
+
+    cache = CacheDossiers(path=_CACHE_PATH)
+
+    def _dossier(tk):
+        e = cache.ultimo(tk)
+        return e.dossier if e else None
+
+    emp = embudo_discovery(propuestas=ColaPropuestas()._estado_actual(),
+                           universo_estado=_universo_estado_discovery(), dossier_fn=_dossier)
+    nod = embudo_nodos(ColaNodos()._estado_actual())
+    f = emp["funnel"]
+    print("EMBUDO DE DISCOVERY (empresas)")
+    print(f"  propuestas {f['propuestas']} → al universo {f['al_universo']} → analizadas {f['analizadas']} "
+          f"→ convicción≥0.6 {f['conviccion_alta']}  (rechazadas {f['rechazadas']})")
+    for fila in emp["filas"]:
+        conv = f"{fila.conviccion:.2f}" if fila.conviccion is not None else "—"
+        clas = fila.clasificacion or "—"
+        print(f"  · {fila.ticker:10} [{fila.cuello[:38]:38}] cola={fila.estado_cola:11} "
+              f"univ={fila.estado_universo or '—':10} conv={conv:4} {clas}")
+    print(f"\nEMBUDO DE CUELLOS (mapa): propuestos {nod['propuestos']} → al mapa {nod['al_mapa']} "
+          f"(rechazados {nod['rechazados']})")
+    for d in nod["detalle"]:
+        print(f"  · {d['nombre']} → {d['estado']}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Discovery (doc 76 §4) — motor de alpha + write-back al mapa")
     ap.add_argument("--explorar", nargs="?", const="", metavar="FOCO",
@@ -174,6 +212,7 @@ def main() -> int:
                     help="recorre N cuellos del mapa (el cursor avanza entre tandas; GASTA API, con tope)")
     ap.add_argument("--tope-usd", type=float, default=2.0, help="tope de gasto por tanda de --barrer (default 2)")
     ap.add_argument("--max", type=int, default=6, help="tope de empresas por corrida (default 6; en barrido, menos)")
+    ap.add_argument("--hitrate", action="store_true", help="embudo de discovery: propuesto→universo→analizado (sin API)")
     ap.add_argument("--rechazar", metavar="TICKER", help="override manual (el flujo es automático)")
     ap.add_argument("--vencer", action="store_true", help="marca vencidas las que pasaron su vigencia")
     args = ap.parse_args()
@@ -182,6 +221,8 @@ def main() -> int:
         return _barrer(args.barrer, args.max, args.tope_usd)
     if args.explorar is not None:
         return _explorar(args.explorar, args.max)
+    if args.hitrate:
+        return _hitrate()
 
     cola = ColaPropuestas()
     if args.rechazar:

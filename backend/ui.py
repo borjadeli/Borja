@@ -501,10 +501,18 @@ def costos_view(request: Request):
             for l in recientes
         ]
 
+    try:
+        from backend.agentes.ips import IPS
+        presupuesto_mes = float(IPS.cargar().cfg.get("presupuesto_usd_mes", 40.0))
+    except Exception:  # noqa: BLE001
+        presupuesto_mes = 40.0
+
     ctx = _common_context(request, active="costos")
     ctx.update({
         "total_30": round(total_30, 2),
         "mes_actual": round(mes_actual, 2),
+        "presupuesto_mes": presupuesto_mes,
+        "pct_presupuesto": round(100 * mes_actual / presupuesto_mes, 0) if presupuesto_mes else 0,
         "total_lifetime": round(total_lifetime, 2),
         "n_calls": n_calls,
         "por_agente": [

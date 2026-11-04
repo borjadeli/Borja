@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block heading %}Costos LLM · Opus 4.7{% endblock %}
+{% block heading %}Costos LLM · comité PM-IA{% endblock %}
 
 {% block content %}
 <div class="space-y-5">
@@ -8,8 +8,13 @@
   <div class="grid grid-cols-4 gap-4">
     <div class="bb-card px-5 py-4">
       <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Mes actual</div>
-      <div class="font-serif text-4xl font-bold text-navy-900 mt-2">${{ '%.2f' % mes_actual }}</div>
-      <div class="text-[11px] text-slate-500 mt-1">corriente del mes calendario</div>
+      <div class="font-serif text-4xl font-bold mt-2 {{ 'text-rose-700' if pct_presupuesto >= 90 else ('text-amber-600' if pct_presupuesto >= 75 else 'text-navy-900') }}">
+        ${{ '%.2f' % mes_actual }}<span class="text-lg text-slate-400 font-normal"> / ${{ '%.0f' % presupuesto_mes }}</span></div>
+      <div class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full {{ 'bg-rose-600' if pct_presupuesto >= 90 else ('bg-amber-500' if pct_presupuesto >= 75 else 'bg-emerald-600') }}"
+             style="width: {{ [pct_presupuesto, 100] | min }}%"></div>
+      </div>
+      <div class="text-[11px] text-slate-500 mt-1">{{ '%.0f' % pct_presupuesto }}% del tope mensual</div>
     </div>
     <div class="bb-card px-5 py-4">
       <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold">Últimos 30 días</div>
@@ -60,7 +65,7 @@
   <div class="bb-card">
     <div class="bb-card-header">
       <h3>Últimas 50 llamadas</h3>
-      <span class="text-xs text-slate-500">Opus 4.7 · $15/M in · $75/M out · $1.50/M cache-read</span>
+      <span class="text-xs text-slate-500">familia 5.5 · Opus $4/$20 · Sonnet $2/$10 · Haiku $0.10/$0.50 (in/out por M)</span>
     </div>
     {% if recientes %}
     <table class="bb-table">

@@ -246,17 +246,30 @@ def sizing_view(request: Request):
 
 @router.get("/pm", response_class=HTMLResponse)
 def pm_view(request: Request):
-    """Canal de juicio PM-LLM (Bloque 3): las decisiones del PM — etiqueta discreta + tamaño DENTRO del cap
-    determinista + memo auditable (bull/bear/falsador/fuentes). Lo produce el job paper_pm (semanal + evento)."""
-    import json
-    from pathlib import Path
+    """Decisiones del comité (v2) — los dossiers verificados que produjo el comité (Analista→Bear→Verificador),
+    con convicción, clasificación, veredicto del Verificador, tesis bull/bear y falsador. Lee el cache de
+    dossiers v2 (data/cache_dossiers_v2.json). Reemplaza el canal de juicio v3 (libro_pm.json)."""
+    from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH
     ctx = _common_context(request, active="pm")
-    path = Path(__file__).resolve().parent.parent / "data" / "nucleo_paper" / "libro_pm.json"
-    if path.exists():
-        ctx.update(json.loads(path.read_text()))
-    else:
-        ctx.update({"decisiones": [], "fecha": None, "prompt_version": None,
-                    "presupuesto": 0, "promos_usadas": 0, "n": 0})
+    decisiones = []
+    for tk, e in CacheDossiers(path=_CACHE_PATH).todos().items():
+        d, v = e.dossier, e.verif
+        inv = d.invertibilidad
+        decisiones.append({
+            "ticker": tk, "fecha": e.fecha, "conviccion": d.conviccion_0_1,
+            "clasificacion": inv.analyst_classification if inv else None,
+            "veredicto": getattr(v, "veredicto", None),
+            "negocio": d.negocio_y_posicion_cuello,
+            "valuacion": d.valuacion_que_exige_el_precio,
+            "bull": d.bull.tesis if d.bull else None,
+            "bear": d.bear.tesis if d.bear else None,
+            "falsador": d.falsador.afirmacion if d.falsador else None,
+            "falsador_fecha": d.falsador.fecha_limite if d.falsador else None,
+            "n_red_flags": len(d.red_flags or []),
+            "motivos": list(getattr(v, "motivos", []) or [])[:3],
+        })
+    decisiones.sort(key=lambda r: (r["conviccion"] is None, -(r["conviccion"] or 0.0)))
+    ctx.update({"decisiones": decisiones, "n": len(decisiones)})
     return templates.TemplateResponse("pm.html", ctx)
 
 

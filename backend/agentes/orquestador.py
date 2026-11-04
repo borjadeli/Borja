@@ -118,6 +118,10 @@ class CacheDossiers:
         barato sobre la tesis previa + lo nuevo, en vez de un análisis full desde cero."""
         return self._d.get(ticker.upper())
 
+    def todos(self) -> dict[str, "_Entrada"]:
+        """Todas las entradas cacheadas (ticker → Entrada). Para la vista 'Decisiones del comité'."""
+        return dict(self._d)
+
     def guardar(self, ticker: str, hash_: str, dossier: Dossier, verif: VerificationReport, fecha: date) -> None:
         self._d[ticker.upper()] = _Entrada(hash=hash_, dossier=dossier, verif=verif, fecha=fecha)
         self._persistir()

@@ -89,6 +89,55 @@ def home_nucleo(request: Request):
     return templates.TemplateResponse("home.html", ctx)
 
 
+@router.get("/cartera", response_class=HTMLResponse)
+def cartera_view(request: Request):
+    """Cartera del paper v2 — el ledger FIEL (SQLite nx_*), valuado a mercado. Es la cartera REAL del comité
+    PM-IA (donde el PM abre/cierra posiciones), NO el libro.json viejo que muestra el home."""
+    from backend.agentes.datos_reales import abrir_paper
+    from backend.ledger import core
+    from backend.ledger.models import NxFill
+    from backend.services.market_data import get_price_snapshot
+    ctx = _common_context(request, active="cartera")
+    s = abrir_paper()                                             # el ledger fiel del paper v2 (data/paper_v2.db)
+    try:
+        base = core.proyectar(s)                                  # shares (sin valuar) para saber qué pedir
+        precios: dict[str, float] = {}
+        for tk in base["posiciones"]:
+            try:
+                snap = get_price_snapshot(tk)
+                if snap and snap.precio_actual:
+                    precios[tk] = snap.precio_actual
+            except Exception:  # noqa: BLE001 — un ticker sin precio no debe tumbar la vista
+                pass
+        est = core.proyectar(s, precios)
+        equity = est["equity"]
+        posiciones = []
+        for tk, p in est["posiciones"].items():
+            if p.shares <= 0:
+                continue
+            precio = precios.get(tk)
+            avg = p.costo_promedio
+            mv = p.shares * precio if precio else 0.0
+            posiciones.append({
+                "ticker": tk, "shares": p.shares, "avg": avg, "precio": precio, "mv": mv,
+                "peso": (mv / equity) if equity else 0.0,
+                "upnl": (precio - avg) * p.shares if precio else None,
+                "upnl_pct": (precio / avg - 1) if (precio and avg) else None,
+            })
+        posiciones.sort(key=lambda r: -r["mv"])
+        fills = [{"fecha": f.fecha_fill, "ticker": f.ticker, "lado": f.lado, "shares": f.shares,
+                  "precio": f.precio, "nota": f.nota}
+                 for f in s.query(NxFill).order_by(NxFill.id.desc()).limit(15).all()]
+    finally:
+        s.close()
+    ctx.update({
+        "equity": equity, "caja": est["caja"], "valor_pos": est["valor_posiciones"],
+        "realized": est["realized_pnl"], "posiciones": posiciones, "fills": fills,
+        "n_pos": len(posiciones), "sin_precio": [r["ticker"] for r in posiciones if r["precio"] is None],
+    })
+    return templates.TemplateResponse("cartera.html", ctx)
+
+
 @router.get("/hoja", response_class=HTMLResponse)
 def hoja_evidencia_view(request: Request):
     """Hoja de evidencia rankeada del universo (precomputada por ops.generar_hoja)."""

@@ -61,6 +61,33 @@ def _posiciones_paper(paper) -> set[str]:
     return set(core.proyectar(paper, {})["posiciones"].keys())
 
 
+def _ultimo_precio_ledger(paper, tk: str) -> float | None:
+    """Último precio de fill del ticker en el ledger (ya en USD). Fallback si el feed no responde."""
+    from backend.ledger.models import NxFill
+    f = paper.query(NxFill).filter(NxFill.ticker == tk).order_by(NxFill.id.desc()).first()
+    return float(f.precio) if f else None
+
+
+def _asegurar_precios_tenencias(paper, precios: dict) -> None:
+    """r6 #2: una TENENCIA sin precio vale 0 → subestima el equity y descoloca los tamaños. Asegura que toda
+    tenencia tenga precio (en USD): feed primero; si no responde, último precio del ledger (marcado viejo).
+    Nunca la deja sin precio (así no se cae de pesos_actual ni se vende a 0)."""
+    from backend.ledger import core
+    pos = core.proyectar(paper, {})["posiciones"]
+    faltan = [tk for tk, p in pos.items() if p.shares > 0 and tk not in precios]
+    if not faltan:
+        return
+    extra = precios_de(recolectar_snapshots(faltan))          # feed → USD
+    for tk in faltan:
+        if tk in extra:
+            precios[tk] = extra[tk]
+        else:
+            ult = _ultimo_precio_ledger(paper, tk)
+            if ult is not None:
+                precios[tk] = ult
+                print(f"⚠️  {tk}: tenencia sin precio de feed → último del ledger ${ult:.2f} (viejo)")
+
+
 def _prioridad_cuello_fn(session):
     """prioridad del cuello (0-2) desde nx_*: confirmado=2 · vigilancia=1 · promesa/otro=0. Determinista."""
     from sqlalchemy import select
@@ -238,6 +265,7 @@ def main() -> int:
 
     paper = abrir_paper(capital_inicial=args.capital, fecha=date.today())
     try:
+        _asegurar_precios_tenencias(paper, precios)   # r6 #2: tenencias siempre con precio (equity/sizing OK)
         res = runner.correr(candidatos, session=paper, precios=precios, contexto=contexto,
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap,
                             invertible_fn=inv_fn, cupo_forzados=cupo_forz,

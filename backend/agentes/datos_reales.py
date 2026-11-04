@@ -36,10 +36,17 @@ def recolectar_snapshots(tickers, *, snapshot_fn=None) -> dict:
     return out
 
 
-def precios_de(snapshots: dict) -> dict[str, float]:
-    """ticker → precio actual (solo los que tienen precio)."""
-    return {tk: float(s.precio_actual) for tk, s in snapshots.items()
-            if getattr(s, "precio_actual", None)}
+def precios_de(snapshots: dict, *, fx_fn=None) -> dict[str, float]:
+    """ticker → precio actual EN USD (solo los que se pueden valuar). Soporte extranjero (r6 #1): el feed da el
+    precio en moneda de cotización; acá —el borde del paper y de las carteras sombra— se pasa a USD, porque el
+    libro razona en USD (equity, sizing). Un extranjero sin FX disponible queda fuera (igual que sin precio)."""
+    from backend.services.market_data import precio_a_usd
+    out: dict[str, float] = {}
+    for tk, s in snapshots.items():
+        usd = precio_a_usd(getattr(s, "precio_actual", None), getattr(s, "currency", "USD"), fx_fn=fx_fn)
+        if usd is not None:
+            out[tk] = usd
+    return out
 
 
 def _sector(session: Session, tk: str) -> str | None:

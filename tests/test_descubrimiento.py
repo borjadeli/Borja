@@ -16,6 +16,23 @@ def test_validador_acepta_una_buena():
     assert ok and motivos == []
 
 
+def test_validador_exige_fuente_primaria_r6_3():
+    # r6 #3: X/Reddit/blogs no cuentan como fuente — se necesita regulador/filing/IR
+    ok, m = validar_propuesta(_p(fuentes=["https://reddit.com/r/stocks/x"]), ips_cfg=_IPS, universo_actual=set())
+    assert not ok and any("fuente PRIMARIA" in x for x in m)
+    ok2, _ = validar_propuesta(_p(fuentes=["https://www.sec.gov/Archives/edgar/data/1/x.htm"]),
+                               ips_cfg=_IPS, universo_actual=set())
+    assert ok2                                       # un filing SEC sí cuenta
+
+
+def test_cap_requerido_rechaza_sin_market_cap_r6_3():
+    # auto-entrada (sin humano): un market cap sin resolver NO entra; manual (cap_requerido=False) sí (blando)
+    ok_auto, m = validar_propuesta(_p(mc=None), ips_cfg=_IPS, universo_actual=set(), cap_requerido=True)
+    assert not ok_auto and any("no entra" in x for x in m)
+    ok_manual, _ = validar_propuesta(_p(mc=None), ips_cfg=_IPS, universo_actual=set(), cap_requerido=False)
+    assert ok_manual                                 # manual: queda a verificar (blando)
+
+
 def test_validador_rechaza_fuera_de_rango_y_duplicado_y_sin_fuente():
     ok, m = validar_propuesta(_p(mc=200e9), ips_cfg=_IPS, universo_actual=set())      # gigante
     assert not ok and any("fuera del rango" in x for x in m)
@@ -164,9 +181,9 @@ def test_agente_fallback_fuentes_a_urls():
 def test_encolar_propuestas_map_fit_entra_sola_al_universo(tmp_path):
     cola = ColaPropuestas(path=tmp_path / "cola.jsonl")
     p_ok = PropuestaEmpresa(ticker="NUVL", cuello="HBM", tesis_corta="t", por_que_ahora="x",
-                            fuentes=["u"], market_cap=5e9)
+                            fuentes=["https://sec.gov/x"], market_cap=5e9)
     p_sinmapa = PropuestaEmpresa(ticker="ZZZ", cuello="cosa inventada", tesis_corta="t", por_que_ahora="x",
-                                 fuentes=["u"], market_cap=5e9)
+                                 fuentes=["https://sec.gov/x"], market_cap=5e9)
     altas = []
     res = encolar_propuestas(cola, [p_ok, p_sinmapa], ips_cfg=_IPS, universo_actual=set(),
                              nodos_conocidos={"HBM"}, alta_fn=lambda tk, p: altas.append(tk))

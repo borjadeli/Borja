@@ -46,11 +46,20 @@ def _ticker_valido(tk: str) -> bool:
     return 1 <= len(base) <= 6 and base.isalnum()
 
 
+def _tiene_fuente_primaria(fuentes: list[str]) -> bool:
+    """≥1 fuente de clase primaria (regulador/filing) o comunicado de la empresa (IR/press). X/Reddit/blogs/
+    research pago → media_o_busqueda, NO cuentan (r6 #3: sin humano, la fuente es el filtro)."""
+    from backend.agentes.verificador import clase_por_url
+    return any(clase_por_url(f) in ("primaria_regulatoria", "company_statement")
+               for f in fuentes if (f or "").strip())
+
+
 def validar_propuesta(p: PropuestaEmpresa, *, ips_cfg: dict, universo_actual: set[str],
-                      nodos_conocidos: set[str] | None = None,
+                      nodos_conocidos: set[str] | None = None, cap_requerido: bool = False,
                       hoy: date | None = None) -> tuple[bool, list[str]]:
-    """Validadores DUROS deterministas (doc 76). Liquidez NO se valida. Si se pasa `nodos_conocidos`, se exige
-    ENCAJE EN EL MAPA (el cuello debe ser un nodo real de la brújula) — el mapa es el que valida, no el humano."""
+    """Validadores DUROS deterministas (doc 76 + r6 #3). Liquidez NO se valida. `nodos_conocidos` → exige
+    ENCAJE EN EL MAPA (el mapa valida, no el humano). `cap_requerido` (auto-entrada sin humano) → un market cap
+    sin resolver NO entra (en vez de quedar 'a verificar')."""
     motivos: list[str] = []
     if not _ticker_valido(p.ticker):
         motivos.append(f"ticker inválido: '{p.ticker}'")
@@ -61,21 +70,25 @@ def validar_propuesta(p: PropuestaEmpresa, *, ips_cfg: dict, universo_actual: se
     mc_min = float(ips_cfg.get("market_cap_min_usd", 0))
     mc_max = float(ips_cfg.get("market_cap_max_usd", 1e18))
     if p.market_cap is None:
-        motivos.append("sin market cap (pendiente de verificación, no inelegible)")   # blando: a verificar
+        # blando por default (propuesta manual); DURO si cap_requerido (auto-entrada: debe resolver por el feed)
+        motivos.append("sin market cap — no entra (auto)" if cap_requerido
+                       else "sin market cap (pendiente de verificación, no inelegible)")
     elif 0 < p.market_cap < 1e6:
         # número sospechosamente chico ⇒ casi seguro MAL ESCALADO (5=$5B, 500=$500M), no un cap real <$1M.
-        # No se rechaza en duro por un error de escala del LLM (ya nos pasó en el puente): queda a verificar.
-        motivos.append(f"market cap sospechoso ({p.market_cap}) — ¿mal escalado? pendiente de verificación")
+        motivos.append(f"market cap sospechoso ({p.market_cap}) — ¿mal escalado?"
+                       + ("" if cap_requerido else " pendiente de verificación"))
     elif not (mc_min <= p.market_cap <= mc_max):
         motivos.append(f"market cap {p.market_cap/1e9:.1f}B fuera del rango IPS "
                        f"[{mc_min/1e9:.2f}B, {mc_max/1e9:.0f}B]")
     if not (p.por_que_ahora or "").strip():
         motivos.append("sin 'por qué ahora'")
     if not [f for f in p.fuentes if (f or '').strip()]:
-        motivos.append("sin fuente primaria para el 'por qué ahora'")
+        motivos.append("sin fuente para el 'por qué ahora'")
+    elif not _tiene_fuente_primaria(p.fuentes):
+        motivos.append("sin fuente PRIMARIA (regulador/filing/IR) — X/Reddit/blogs no cuentan")
     if not (p.cuello or "").strip():
         motivos.append("sin cuello/nodo del mapa (la tesis estructural)")
-    # "sin market cap" es BLANDO (no inelegible definitivo): si es el único motivo, pasa a observación igual.
+    # "sin market cap" / "mal escalado" son BLANDOS salvo cap_requerido: si son el único motivo, pasa a observación.
     duros = [m for m in motivos if "pendiente de verificación" not in m]
     return (len(duros) == 0), motivos
 
@@ -116,11 +129,11 @@ class ColaPropuestas:
         return [json.loads(l) for l in self.path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
     def registrar(self, p: PropuestaEmpresa, *, ips_cfg: dict, universo_actual: set[str],
-                  nodos_conocidos: set[str] | None = None,
+                  nodos_conocidos: set[str] | None = None, cap_requerido: bool = False,
                   hoy: date | None = None) -> tuple[str, list[str]]:
         """Valida y registra. Devuelve (estado, motivos). Pasa → 'observacion'; falla → 'rechazada'."""
         ok, motivos = validar_propuesta(p, ips_cfg=ips_cfg, universo_actual=universo_actual,
-                                        nodos_conocidos=nodos_conocidos, hoy=hoy)
+                                        nodos_conocidos=nodos_conocidos, cap_requerido=cap_requerido, hoy=hoy)
         estado: EstadoPropuesta = "observacion" if ok else "rechazada"
         reg = _RegistroPropuesta(propuesta=p, estado=estado, motivos=motivos)
         self._append(reg)
@@ -464,12 +477,13 @@ class AgenteCurador:
 
 def encolar_propuestas(cola: ColaPropuestas, props, *, ips_cfg: dict, universo_actual: set[str],
                        nodos_conocidos: set[str] | None = None, alta_fn=None) -> list[dict]:
-    """Registra cada empresa (valida facts + ENCAJE EN EL MAPA). Si pasa y hay `alta_fn`, ENTRA SOLA al
-    universo (el mapa valida, no el humano). Sin alta_fn, queda en observación. Devuelve el resumen por ticker."""
+    """Registra cada empresa (valida facts + ENCAJE EN EL MAPA + fuente primaria). Si pasa y hay `alta_fn`,
+    ENTRA SOLA al universo (el mapa valida, no el humano) — y ahí el market cap es REQUERIDO (r6 #3: sin cap
+    resuelto no entra). Sin alta_fn, queda en observación con cap blando. Devuelve el resumen por ticker."""
     out = []
     for p in props:
         estado, motivos = cola.registrar(p, ips_cfg=ips_cfg, universo_actual=universo_actual,
-                                         nodos_conocidos=nodos_conocidos)
+                                         nodos_conocidos=nodos_conocidos, cap_requerido=alta_fn is not None)
         if estado == "observacion" and alta_fn is not None:
             alta_fn(p.ticker, p)
             cola.resolver(p.ticker, "aprobada", nota="auto: validada + encaje en el mapa")

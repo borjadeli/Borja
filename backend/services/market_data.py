@@ -212,6 +212,31 @@ def fx_a_usd(currency: str) -> float | None:
     return None
 
 
+# Monedas cotizadas en UNIDAD MENOR (el precio viene en 1/100 de la moneda mayor). Se chequean case-sensitive
+# (GBp ≠ GBP): Yahoo usa "GBp" para peniques de Londres. r6 lo marcó como caso a cubrir.
+_UNIDAD_MENOR: dict[str, tuple[str, float]] = {
+    "GBp": ("GBP", 100.0), "GBX": ("GBP", 100.0), "ZAc": ("ZAR", 100.0), "ILA": ("ILS", 100.0),
+}
+
+
+def precio_a_usd(precio: float | None, currency: str | None, *, fx_fn=None) -> float | None:
+    """Convierte un precio POR ACCIÓN a USD. Maneja monedas en unidad menor (GBp/GBX = peniques). None si no
+    hay FX. Este es el borde donde el paper y las sombras pasan a USD (todo el libro razona en USD)."""
+    if precio is None:
+        return None
+    if fx_fn is None:
+        fx_fn = fx_a_usd
+    cur = currency or "USD"
+    if cur in _UNIDAD_MENOR:                                  # peniques, etc. → moneda mayor / 100 → USD
+        mayor, div = _UNIDAD_MENOR[cur]
+        fx = fx_fn(mayor)
+        return (float(precio) / div) * fx if fx else None
+    if cur.upper() == "USD":
+        return float(precio)
+    fx = fx_fn(cur.upper())
+    return float(precio) * fx if fx else None
+
+
 def market_cap_usd(ticker: str) -> float | None:
     """Market cap del ticker en USD (convierte desde la moneda de cotización). None si no hay dato/FX.
     Determinista — base del gate de banda para extranjeros (y verificación del null que manda el LLM)."""

@@ -69,10 +69,10 @@ def test_fuente_mercado_usd_no_toca_nada():
 def test_gate_de_banda_con_cap_convertido():
     # con el cap ya en USD (como lo deja _verificar_caps), el validador de discovery gatea bien
     p_ok = PropuestaEmpresa(ticker="042700.KS", cuello="HBM", tesis_corta="t", por_que_ahora="x",
-                            fuentes=["u"], market_cap=12.7e9)
+                            fuentes=["https://sec.gov/x"], market_cap=12.7e9)
     ok, _ = validar_propuesta(p_ok, ips_cfg=_IPS, universo_actual=set(), nodos_conocidos={"HBM"})
     assert ok
     p_gigante = PropuestaEmpresa(ticker="BIG", cuello="HBM", tesis_corta="t", por_que_ahora="x",
-                                 fuentes=["u"], market_cap=200e9)
+                                 fuentes=["https://sec.gov/x"], market_cap=200e9)
     ok2, m2 = validar_propuesta(p_gigante, ips_cfg=_IPS, universo_actual=set(), nodos_conocidos={"HBM"})
     assert not ok2 and any("fuera del rango" in x for x in m2)

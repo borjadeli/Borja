@@ -118,7 +118,19 @@ BRUJULA_ARCHIVADO: list[Territorio] = [
 
 
 def territorios_activos() -> list[Territorio]:
-    return [t for t in BRUJULA if t.estado == EstadoTerritorio.ACTIVO]
+    """Semilla curada (BRUJULA) + cuellos DESCUBIERTOS por el sistema (overlay, doc 76 write-back)."""
+    from backend.mapa.overlay import cargar_overlay            # import lazy: evita circularidad
+    return [t for t in BRUJULA if t.estado == EstadoTerritorio.ACTIVO] + cargar_overlay()
+
+
+def nodos_conocidos() -> set[str]:
+    """Todos los nombres de cuello que el mapa conoce (todos los estados + watchlist + archivado + overlay).
+    Es el universo contra el que se valida el 'encaje en el mapa' de una propuesta y el dedup de nodos nuevos."""
+    from backend.mapa.overlay import nombres_overlay          # import lazy: evita circularidad
+    nombres = {t.nombre for t in BRUJULA}
+    nombres |= {t.nombre for t in BRUJULA_WATCHLIST}
+    nombres |= {t.nombre for t in BRUJULA_ARCHIVADO}
+    return nombres | nombres_overlay()
 
 
 def concentracion_factor_macro() -> dict[str, int]:

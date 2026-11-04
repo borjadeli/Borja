@@ -85,68 +85,129 @@ def test_promover_falla_si_no_esta_en_observacion(tmp_path):
         cola.promover("INEXISTENTE", alta_fn=lambda tk, prop: None)
 
 
-# --------------------------------------------------------------------------- el AGENTE LLM (ScriptedLLM)
-
-from backend.agentes.base import Agente, FakeUsage, ScriptedLLM, resp_tool   # noqa: E402
-from backend.agentes.descubrimiento import AgenteDiscovery, encolar_propuestas  # noqa: E402
-
-
-def _agente_que_emite(propuestas, *, urls=None):
-    cli = ScriptedLLM([resp_tool("emitir_propuestas", {"propuestas": propuestas},
-                                 FakeUsage(input_tokens=500, output_tokens=200), urls=urls)])
-    return Agente("discovery", "discovery_v1", "claude-sonnet-5-5", cliente=cli)
-
-
-def _raw(ticker="NUVL", mc=5e9, cuello="fotónica co-packaged", fuentes=None):
-    return {"ticker": ticker, "cuello": cuello, "tesis_corta": "captura el valor del cuello",
-            "por_que_ahora": "8-K 2026-10: contrato con hyperscaler", "market_cap": mc,
-            "fuentes": fuentes if fuentes is not None else ["https://sec.gov/x"]}
-
-
-def test_agente_explora_y_devuelve_propuestas():
-    ag = AgenteDiscovery(_agente_que_emite([_raw("NUVL"), _raw("AEHR", mc=2e9)]))
-    props, meta = ag.explorar(universo_actual={"MP", "OKLO"}, foco="fotónica")
-    assert [p.ticker for p in props] == ["NUVL", "AEHR"]
-    assert props[0].cuello and props[0].por_que_ahora and props[0].fuentes
-    assert meta.agent == "discovery"
-
-
-def test_agente_respeta_tope_y_deduplica():
-    raws = [_raw(t) for t in ("A", "B", "C", "D")] + [_raw("A")]      # D y un duplicado de A
-    ag = AgenteDiscovery(_agente_que_emite(raws))
-    props, _ = ag.explorar(universo_actual=set(), max_propuestas=2)
-    assert [p.ticker for p in props] == ["A", "B"]                     # cap=2, sin duplicar
-
-
-def test_agente_fallback_a_urls_de_busqueda_si_no_cita():
-    # el modelo no puso fuentes en la propuesta → se usan las URLs que trajo web_search (procedencia)
-    ag = AgenteDiscovery(_agente_que_emite([_raw("NUVL", fuentes=[])],
-                                           urls=["https://sec.gov/edgar/filing", "https://x"]))
-    props, _ = ag.explorar(universo_actual=set())
-    assert props[0].fuentes == ["https://sec.gov/edgar/filing", "https://x"]
-
-
-def test_agente_descarta_universo_y_observacion():
-    # aunque el modelo re-proponga lo ya conocido, explorar lo filtra (no quema a los validadores aguas abajo)
-    ag = AgenteDiscovery(_agente_que_emite([_raw("MP"), _raw("NUVL"), _raw("OBS1")]))
-    props, _ = ag.explorar(universo_actual={"MP"}, en_observacion={"OBS1"})
-    assert [p.ticker for p in props] == ["NUVL"]
-
-
-def test_encolar_propuestas_valida_y_filtra(tmp_path):
-    cola = ColaPropuestas(path=tmp_path / "cola.jsonl")
-    ag = AgenteDiscovery(_agente_que_emite([_raw("NUVL", mc=5e9), _raw("BIGCO", mc=200e9), _raw("MP")]))
-    props, _ = ag.explorar(universo_actual={"MP"})
-    assert "MP" not in [p.ticker for p in props]              # explorar ya filtró el duplicado del universo
-    res = encolar_propuestas(cola, props, ips_cfg=_IPS, universo_actual={"MP"})
-    por_estado = {r["ticker"]: r["estado"] for r in res}
-    assert por_estado == {"NUVL": "observacion", "BIGCO": "rechazada"}   # BIGCO gigante → rechazada
-    assert {v["propuesta"]["ticker"] for v in cola.en_observacion()} == {"NUVL"}
-
-
 def test_market_cap_mal_escalado_no_rechaza_en_duro():
     # un cap sospechosamente chico (5 = probablemente $5B mal escalado) NO se rechaza en duro: a verificar
     ok, m = validar_propuesta(_p(mc=5), ips_cfg=_IPS, universo_actual=set())
     assert ok and any("mal escalado" in x for x in m)
     ok2, m2 = validar_propuesta(_p(mc=500), ips_cfg=_IPS, universo_actual=set())   # 500 = ¿$500M?
     assert ok2 and any("mal escalado" in x for x in m2)
+
+
+def test_validar_propuesta_exige_encaje_en_el_mapa():
+    # con nodos_conocidos, el cuello DEBE ser un nodo real (el mapa valida, no el humano)
+    ok, m = validar_propuesta(_p(cuello="HBM"), ips_cfg=_IPS, universo_actual=set(), nodos_conocidos={"HBM"})
+    assert ok and not m
+    ok2, m2 = validar_propuesta(_p(cuello="tema de moda sin cuello"), ips_cfg=_IPS, universo_actual=set(),
+                                nodos_conocidos={"HBM"})
+    assert not ok2 and any("sin encaje en el mapa" in x for x in m2)
+
+
+# --------------------------------------------------------------------------- los AGENTES (ScriptedLLM)
+
+from backend.agentes.base import Agente, FakeUsage, ScriptedLLM, resp_tool          # noqa: E402
+from backend.agentes.descubrimiento import (AgenteCurador, AgenteDiscovery, ColaNodos,  # noqa: E402
+                                            PropuestaEmpresa, PropuestaNodo, encolar_nodos,
+                                            encolar_propuestas, validar_nodo)
+
+# nodos del mapa que le damos al agente: C01 → "Fotónica / CPO", C02 → "HBM"
+_NODOS = [{"nombre": "Fotónica / CPO", "info": "[fotonica] Fotónica / CPO"},
+          {"nombre": "HBM", "info": "[datacenter] HBM"}]
+
+
+def _emite(propuestas=None, cuellos_nuevos=None, *, urls=None):
+    payload = {"propuestas": propuestas or [], "cuellos_nuevos": cuellos_nuevos or []}
+    cli = ScriptedLLM([resp_tool("emitir_propuestas", payload, FakeUsage(500, 200), urls=urls)])
+    return AgenteDiscovery(Agente("discovery", "discovery_v1", "claude-sonnet-5-5", cliente=cli))
+
+
+def _rawp(ticker="NUVL", nodo_ref="C01", mc=5e9, fuentes=None):
+    return {"ticker": ticker, "nodo_ref": nodo_ref, "tesis_corta": "captura el valor del cuello",
+            "por_que_ahora": "8-K 2026-10: contrato con hyperscaler", "market_cap": mc,
+            "fuentes": fuentes if fuentes is not None else ["https://sec.gov/x"]}
+
+
+def _rawn(nombre="Cuello nuevo X"):
+    return {"nombre": nombre, "cluster": "semis", "factor_macro": None, "subnodos": [],
+            "tesis_cuello": "oferta concentrada, pricing power", "por_que_ahora": "export control 2026",
+            "fuentes": ["https://sec.gov/y"]}
+
+
+def test_agente_devuelve_empresas_canonizadas_y_cuellos_nuevos():
+    ag = _emite([_rawp("NUVL", "C01"), _rawp("AEHR", "C02", mc=2e9)], [_rawn("Cuello nuevo X")])
+    props, nodos, meta = ag.explorar(universo_actual={"MP"}, nodos_mapa=_NODOS)
+    assert [p.ticker for p in props] == ["NUVL", "AEHR"]
+    assert props[0].cuello == "Fotónica / CPO" and props[1].cuello == "HBM"   # nodo_ref → nombre canónico
+    assert [n.nombre for n in nodos] == ["Cuello nuevo X"]
+    assert meta.agent == "discovery"
+
+
+def test_agente_descarta_nodo_ref_invalido():
+    # una empresa con nodo_ref que no existe en el mapa → se descarta (no encaja en ningún cuello real)
+    props, _, _ = _emite([_rawp("NUVL", "C01"), _rawp("ZZZ", "C99")]).explorar(
+        universo_actual=set(), nodos_mapa=_NODOS)
+    assert [p.ticker for p in props] == ["NUVL"]
+
+
+def test_agente_tope_y_dedup_y_universo():
+    raws = [_rawp(t, "C01") for t in ("A", "B", "C")] + [_rawp("A", "C01")] + [_rawp("MP", "C02")]
+    props, _, _ = _emite(raws).explorar(universo_actual={"MP"}, nodos_mapa=_NODOS, max_propuestas=2)
+    assert [p.ticker for p in props] == ["A", "B"]           # cap=2, sin dup, sin universo
+
+
+def test_agente_fallback_fuentes_a_urls():
+    props, _, _ = _emite([_rawp("NUVL", "C01", fuentes=[])],
+                         urls=["https://sec.gov/f", "https://x"]).explorar(
+        universo_actual=set(), nodos_mapa=_NODOS)
+    assert props[0].fuentes == ["https://sec.gov/f", "https://x"]
+
+
+def test_encolar_propuestas_map_fit_entra_sola_al_universo(tmp_path):
+    cola = ColaPropuestas(path=tmp_path / "cola.jsonl")
+    p_ok = PropuestaEmpresa(ticker="NUVL", cuello="HBM", tesis_corta="t", por_que_ahora="x",
+                            fuentes=["u"], market_cap=5e9)
+    p_sinmapa = PropuestaEmpresa(ticker="ZZZ", cuello="cosa inventada", tesis_corta="t", por_que_ahora="x",
+                                 fuentes=["u"], market_cap=5e9)
+    altas = []
+    res = encolar_propuestas(cola, [p_ok, p_sinmapa], ips_cfg=_IPS, universo_actual=set(),
+                             nodos_conocidos={"HBM"}, alta_fn=lambda tk, p: altas.append(tk))
+    est = {r["ticker"]: r["estado"] for r in res}
+    assert est == {"NUVL": "aprobada", "ZZZ": "rechazada"}   # encaja → universo solo; sin encaje → rechazada
+    assert altas == ["NUVL"]                                 # entró sola, sin humano
+
+
+def test_validar_nodo_dedup():
+    ok, _ = validar_nodo(PropuestaNodo(nombre="X", tesis_cuello="t", por_que_ahora="y", fuentes=["u"]),
+                         nodos_conocidos=set())
+    assert ok
+    ok2, m2 = validar_nodo(PropuestaNodo(nombre="HBM", tesis_cuello="t", por_que_ahora="y", fuentes=["u"]),
+                           nodos_conocidos={"HBM"})
+    assert not ok2 and any("duplicado" in x for x in m2)
+
+
+def test_encolar_nodos_curador_aprueba_y_rechaza(tmp_path):
+    cola = ColaNodos(path=tmp_path / "nodos.jsonl")
+    nodos = [PropuestaNodo(nombre="Cuello bueno", tesis_cuello="oferta concentrada", por_que_ahora="x", fuentes=["u"]),
+             PropuestaNodo(nombre="Cuello narrativa", tesis_cuello="tema de moda", por_que_ahora="y", fuentes=["u"])]
+    cli = ScriptedLLM([
+        resp_tool("emitir_veredicto", {"aprobar": True, "motivo": "oferta concentrada real"}, FakeUsage(100, 50)),
+        resp_tool("emitir_veredicto", {"aprobar": False, "motivo": "es narrativa sin cuello"}, FakeUsage(100, 50)),
+    ])
+    curador = AgenteCurador(Agente("curador", "curador_mapa_v1", "claude-sonnet-5-5", cliente=cli))
+    agregados = []
+    res, costo = encolar_nodos(cola, nodos, curador, nodos_conocidos=set(),
+                               alta_fn=lambda prop: agregados.append(prop["nombre"]))
+    est = {r["nombre"]: r["estado"] for r in res}
+    assert est == {"Cuello bueno": "aprobada", "Cuello narrativa": "rechazada"}
+    assert agregados == ["Cuello bueno"]                     # solo el aprobado entra al mapa
+    assert costo > 0
+
+
+def test_overlay_round_trip_crece_el_mapa(tmp_path, monkeypatch):
+    from backend.mapa import overlay
+    from backend.mapa.brujula import nodos_conocidos, territorios_activos
+    monkeypatch.setattr(overlay, "_OVERLAY_PATH", tmp_path / "ov.jsonl")
+    antes = len(territorios_activos())
+    overlay.agregar_overlay(nombre="Cuello nuevo Z", cluster="semis", nota="oferta concentrada")
+    assert "Cuello nuevo Z" in overlay.nombres_overlay()
+    assert "Cuello nuevo Z" in nodos_conocidos()              # ya es un nodo conocido para el encaje
+    assert len(territorios_activos()) == antes + 1           # el mapa creció solo

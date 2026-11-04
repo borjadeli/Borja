@@ -138,6 +138,33 @@ def cartera_view(request: Request):
     return templates.TemplateResponse("cartera.html", ctx)
 
 
+@router.get("/descubrimiento", response_class=HTMLResponse)
+def descubrimiento_view(request: Request):
+    """Discovery (doc 76) — el motor de alpha: el embudo propuesta→universo→analizada, las empresas que el
+    agente surfaceó (con convicción/clasificación del comité) y los cuellos nuevos que el curador validó al
+    mapa. Todo determinista (join de las colas + nx_empresa + cache de dossiers); no gasta API."""
+    from backend.agentes.descubrimiento import ColaNodos, ColaPropuestas
+    from backend.agentes.discovery_hitrate import embudo_discovery, embudo_nodos
+    from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH
+    from backend.ledger.models import NxEmpresa
+    from backend.mapa.brujula import BRUJULA_WATCHLIST, territorios_activos
+    ctx = _common_context(request, active="descubrimiento")
+    with session_scope() as s:
+        uni = {e.ticker.upper(): e.estado
+               for e in s.query(NxEmpresa).filter(NxEmpresa.fuente_ingreso == "discovery").all()}
+    cache = CacheDossiers(path=_CACHE_PATH)
+
+    def _dossier(tk):
+        e = cache.ultimo(tk)
+        return e.dossier if e else None
+
+    emp = embudo_discovery(propuestas=ColaPropuestas()._estado_actual(), universo_estado=uni, dossier_fn=_dossier)
+    nod = embudo_nodos(ColaNodos()._estado_actual())
+    ctx.update({"funnel": emp["funnel"], "filas": emp["filas"], "nodos": nod,
+                "n_cuellos": len(list(territorios_activos())) + len(BRUJULA_WATCHLIST)})
+    return templates.TemplateResponse("descubrimiento.html", ctx)
+
+
 @router.get("/hoja", response_class=HTMLResponse)
 def hoja_evidencia_view(request: Request):
     """Hoja de evidencia rankeada del universo (precomputada por ops.generar_hoja)."""

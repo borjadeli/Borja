@@ -66,26 +66,74 @@ def _common_context(request: Request, active: str = "") -> dict:
 
 @router.get("/", response_class=HTMLResponse)
 def home_nucleo(request: Request):
-    """Home — núcleo nuevo (cartera paper autónoma + P&L + equity). Reemplaza al
-    dashboard viejo, que pasa a /legacy."""
-    import json as _json
-    libro_path = Path(__file__).resolve().parent.parent / "data" / "nucleo_paper" / "libro.json"
-    mtm, snapshots, journal, actualizado = None, [], [], None
-    if libro_path.exists():
-        try:
-            lp = _json.loads(libro_path.read_text(encoding="utf-8"))
-            mtm = lp.get("last_mtm")
-            snapshots = lp.get("snapshots") or []
-            journal = list(reversed(lp.get("journal") or []))[:12]
-            actualizado = lp.get("actualizado")
-        except Exception:
-            pass
-    from backend.seleccion.paper_pnl import curva_vs_spy
-    curva = curva_vs_spy(snapshots)
-    alpha_actual = next((a for a in reversed(curva["alpha_pct"]) if a is not None), None)
+    """Inicio — overview del sistema ACTUAL (comité PM-IA v2): cartera + discovery + presupuesto + universo,
+    en una pantalla, con enlaces a cada sección. Cada bloque es best-effort (nunca tumba el home)."""
     ctx = _common_context(request, active="home")
-    ctx.update({"mtm": mtm, "snapshots": snapshots, "journal": journal,
-                "actualizado": actualizado, "curva": curva, "alpha_actual": alpha_actual})
+    equity = caja = 0.0
+    n_pos = 0
+    pos_top: list[dict] = []
+    try:
+        from backend.agentes.datos_reales import abrir_paper
+        from backend.ledger import core
+        from backend.services.market_data import get_price_snapshot
+        s = abrir_paper()
+        try:
+            base = core.proyectar(s)
+            precios: dict[str, float] = {}
+            for tk in base["posiciones"]:
+                try:
+                    snap = get_price_snapshot(tk)
+                    if snap and snap.precio_actual:
+                        precios[tk] = snap.precio_actual
+                except Exception:  # noqa: BLE001
+                    pass
+            est = core.proyectar(s, precios)
+            equity, caja = est["equity"], est["caja"]
+            pos = [{"ticker": tk, "mv": p.shares * precios.get(tk, 0.0)}
+                   for tk, p in est["posiciones"].items() if p.shares > 0]
+            pos.sort(key=lambda r: -r["mv"])
+            n_pos, pos_top = len(pos), pos[:5]
+        finally:
+            s.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+    disc = {"propuestas": 0, "al_universo": 0, "analizadas": 0, "conviccion_alta": 0}
+    try:
+        from backend.agentes.descubrimiento import ColaPropuestas
+        from backend.agentes.discovery_hitrate import embudo_discovery
+        from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH
+        from backend.ledger.models import NxEmpresa
+        with session_scope() as s2:
+            uni = {e.ticker.upper(): e.estado
+                   for e in s2.query(NxEmpresa).filter(NxEmpresa.fuente_ingreso == "discovery").all()}
+        cache = CacheDossiers(path=_CACHE_PATH)
+        disc = embudo_discovery(propuestas=ColaPropuestas()._estado_actual(), universo_estado=uni,
+                                dossier_fn=lambda tk: (cache.ultimo(tk).dossier if cache.ultimo(tk) else None))["funnel"]
+    except Exception:  # noqa: BLE001
+        pass
+
+    mes_actual, tope, n_universo = 0.0, 40.0, 0
+    try:
+        from sqlalchemy import func
+        from backend.agentes.ips import IPS
+        from backend.agentes.universo import tickers_universo
+        from backend.models import LLMCall
+        now = utcnow()
+        inicio_mes = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        with session_scope() as s3:
+            mes_actual = s3.query(func.coalesce(func.sum(LLMCall.cost_usd), 0.0)).filter(
+                LLMCall.timestamp >= inicio_mes).scalar() or 0.0
+            n_universo = len(tickers_universo(s3))
+        tope = float(IPS.cargar().cfg.get("presupuesto_usd_mes", 40.0))
+    except Exception:  # noqa: BLE001
+        pass
+
+    ctx.update({
+        "equity": equity, "caja": caja, "n_pos": n_pos, "pos_top": pos_top,
+        "disc": disc, "mes_actual": round(mes_actual, 2), "tope": tope,
+        "pct_presupuesto": round(100 * mes_actual / tope, 0) if tope else 0, "n_universo": n_universo,
+    })
     return templates.TemplateResponse("home.html", ctx)
 
 

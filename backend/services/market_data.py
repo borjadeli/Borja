@@ -199,6 +199,29 @@ def check_liquidity(ticker: str, umbral_usd: float = 1_000_000) -> dict[str, Any
     }
 
 
+def fx_a_usd(currency: str) -> float | None:
+    """USD por 1 unidad de `currency` (para pasar un monto en moneda local → USD). None si no se pudo.
+    Soporte extranjero (doc 76): el market cap de Yahoo viene en moneda de cotización; sin esto, 17.652B KRW
+    leído como USD parece un gigante de $17 billones y el gate del IPS se rompe."""
+    cur = (currency or "USD").upper()
+    if cur == "USD":
+        return 1.0
+    snap = get_price_snapshot(f"USD{cur}=X")        # precio del par = unidades de `cur` por 1 USD
+    if snap and snap.precio_actual:
+        return 1.0 / snap.precio_actual
+    return None
+
+
+def market_cap_usd(ticker: str) -> float | None:
+    """Market cap del ticker en USD (convierte desde la moneda de cotización). None si no hay dato/FX.
+    Determinista — base del gate de banda para extranjeros (y verificación del null que manda el LLM)."""
+    snap = get_price_snapshot(ticker)
+    if not snap or snap.market_cap is None:
+        return None
+    rate = fx_a_usd(snap.currency)
+    return round(snap.market_cap * rate, 2) if rate else None
+
+
 def ping() -> bool:
     snap = get_price_snapshot("SPY")
     return snap is not None and snap.precio_actual is not None

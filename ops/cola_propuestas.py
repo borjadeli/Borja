@@ -96,6 +96,17 @@ def _ctx() -> dict:
     }
 
 
+def _verificar_caps(props) -> None:
+    """Reemplaza el market_cap del LLM por el DETERMINISTA en USD (yfinance + FX). Cierra el gap del null,
+    corrige mal-escalados y hace que el gate de banda funcione con extranjeros. Fail-safe: si no hay dato, deja
+    lo que vino (queda 'a verificar')."""
+    from backend.services.market_data import market_cap_usd
+    for p in props:
+        mc = market_cap_usd(p.ticker)
+        if mc is not None:
+            p.market_cap = mc
+
+
 def _una_corrida(ctx: dict, foco: str, max_prop: int) -> dict:
     """Una exploración (empresas→universo por encaje, cuellos→mapa por curador). NO imprime; devuelve el resumen.
     El filtro es el mapa + validadores + curador — el humano no decide."""
@@ -106,6 +117,7 @@ def _una_corrida(ctx: dict, foco: str, max_prop: int) -> dict:
     obs = {v["propuesta"]["ticker"].upper() for v in cola_emp.en_observacion()}
     r = ctx["discovery"].explorar(universo_actual=ctx["universo"], en_observacion=obs,
                                   nodos_mapa=ctx["nodos_mapa"], foco=foco, max_propuestas=max_prop)
+    _verificar_caps(r.empresas)         # market cap determinista en USD antes del gate de banda
     costo_cur, res_n = 0.0, []
     if r.cuellos_nuevos:   # cuellos nuevos → curador → overlay (el mapa crece antes de buscarle jugadores)
         res_n, costo_cur = encolar_nodos(ctx["cola_nodos"], r.cuellos_nuevos, ctx["curador"],

@@ -136,6 +136,16 @@ class ColaPropuestas:
         """Propuestas que validaron y esperan la decisión del humano (no aprobadas/rechazadas/vencidas)."""
         return [v for v in self._estado_actual().values() if v["estado"] == "observacion"]
 
+    def promover(self, ticker: str, *, alta_fn, nota: str | None = None) -> None:
+        """El humano PROMUEVE una propuesta en observación al universo investible: `alta_fn(ticker, propuesta)`
+        la inserta en nx_empresa (inyectable → testeable) y se marca 'aprobada' en la cola. Falla si no está
+        en observación (no se promueve algo rechazado/vencido)."""
+        act = self._estado_actual().get(ticker.upper())
+        if not act or act["estado"] != "observacion":
+            raise ValueError(f"{ticker}: no está en observación (estado={act.get('estado') if act else 'inexistente'})")
+        alta_fn(ticker.upper(), act["propuesta"])
+        self.resolver(ticker, "aprobada", nota=nota)
+
     def vencer_pendientes(self, hoy: date | None = None) -> list[str]:
         """Marca 'vencida' las que pasaron su `dias_vigencia` sin aprobarse (NUNCA se aceptan por silencio).
         Devuelve los tickers vencidos."""

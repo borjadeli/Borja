@@ -64,3 +64,22 @@ def test_cola_vence_sin_aprobacion_nunca_por_silencio(tmp_path):
     from datetime import timedelta
     vencidos = cola.vencer_pendientes(date.today() + timedelta(days=40))
     assert vencidos == ["NUVL"] and cola.en_observacion() == []
+
+
+def test_promover_inserta_al_universo_y_marca_aprobada(tmp_path):
+    cola = ColaPropuestas(path=tmp_path / "cola.jsonl")
+    cola.registrar(_p("NUVL"), ips_cfg=_IPS, universo_actual=set())
+    altas = []
+    cola.promover("NUVL", alta_fn=lambda tk, prop: altas.append((tk, prop["cuello"])))
+    assert altas == [("NUVL", "qc")]                 # llamó al alta (insert a nx_empresa)
+    assert cola.en_observacion() == []               # salió de observación (aprobada)
+
+
+def test_promover_falla_si_no_esta_en_observacion(tmp_path):
+    cola = ColaPropuestas(path=tmp_path / "cola.jsonl")
+    cola.registrar(_p("BIGCO", mc=200e9), ips_cfg=_IPS, universo_actual=set())   # rechazada
+    import pytest
+    with pytest.raises(ValueError):
+        cola.promover("BIGCO", alta_fn=lambda tk, prop: None)
+    with pytest.raises(ValueError):
+        cola.promover("INEXISTENTE", alta_fn=lambda tk, prop: None)

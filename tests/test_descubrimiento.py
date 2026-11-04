@@ -192,19 +192,26 @@ def test_encolar_propuestas_map_fit_entra_sola_al_universo(tmp_path):
     assert altas == ["NUVL"]                                 # entró sola, sin humano
 
 
-def test_validar_nodo_dedup():
-    ok, _ = validar_nodo(PropuestaNodo(nombre="X", tesis_cuello="t", por_que_ahora="y", fuentes=["u"]),
+_2PRIM = ["https://www.sec.gov/Archives/edgar/data/1/a.htm", "https://www.sec.gov/Archives/edgar/data/2/b.htm"]
+
+
+def test_validar_nodo_dedup_y_dos_fuentes_primarias():
+    ok, _ = validar_nodo(PropuestaNodo(nombre="X", tesis_cuello="t", por_que_ahora="y", fuentes=_2PRIM),
                          nodos_conocidos=set())
-    assert ok
-    ok2, m2 = validar_nodo(PropuestaNodo(nombre="HBM", tesis_cuello="t", por_que_ahora="y", fuentes=["u"]),
+    assert ok                                                    # 2 primarias → pasa
+    ok1, m1 = validar_nodo(PropuestaNodo(nombre="Y", tesis_cuello="t", por_que_ahora="y",
+                                         fuentes=["https://sec.gov/a", "https://reddit.com/x"]),
+                           nodos_conocidos=set())
+    assert not ok1 and any("≥2 fuentes primarias" in x for x in m1)   # solo 1 primaria → rechaza
+    ok2, m2 = validar_nodo(PropuestaNodo(nombre="HBM", tesis_cuello="t", por_que_ahora="y", fuentes=_2PRIM),
                            nodos_conocidos={"HBM"})
     assert not ok2 and any("duplicado" in x for x in m2)
 
 
 def test_encolar_nodos_curador_aprueba_y_rechaza(tmp_path):
     cola = ColaNodos(path=tmp_path / "nodos.jsonl")
-    nodos = [PropuestaNodo(nombre="Cuello bueno", tesis_cuello="oferta concentrada", por_que_ahora="x", fuentes=["u"]),
-             PropuestaNodo(nombre="Cuello narrativa", tesis_cuello="tema de moda", por_que_ahora="y", fuentes=["u"])]
+    nodos = [PropuestaNodo(nombre="Cuello bueno", tesis_cuello="oferta concentrada", por_que_ahora="x", fuentes=_2PRIM),
+             PropuestaNodo(nombre="Cuello narrativa", tesis_cuello="tema de moda", por_que_ahora="y", fuentes=_2PRIM)]
     cli = ScriptedLLM([
         resp_tool("emitir_veredicto", {"aprobar": True, "motivo": "oferta concentrada real"}, FakeUsage(100, 50)),
         resp_tool("emitir_veredicto", {"aprobar": False, "motivo": "es narrativa sin cuello"}, FakeUsage(100, 50)),

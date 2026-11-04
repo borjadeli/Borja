@@ -206,7 +206,10 @@ class PropuestaNodo(BaseModel):
 
 
 def validar_nodo(p: PropuestaNodo, *, nodos_conocidos: set[str]) -> tuple[bool, list[str]]:
-    """Validadores duros de un cuello nuevo (previos al curador). Dedup contra el mapa conocido."""
+    """Validadores duros de un cuello nuevo (previos al curador). Dedup contra el mapa conocido. r6 #3: un NODO
+    del mapa es estructural y de largo plazo → necesita ≥2 fuentes PRIMARIAS (regulador/filing/IR), vara más
+    alta que una empresa (que pide 1); así no se ensucia el mapa con narrativa."""
+    from backend.agentes.verificador import clase_por_url
     motivos: list[str] = []
     if not (p.nombre or "").strip():
         motivos.append("sin nombre de cuello")
@@ -216,8 +219,10 @@ def validar_nodo(p: PropuestaNodo, *, nodos_conocidos: set[str]) -> tuple[bool, 
         motivos.append("sin tesis (por qué es un cuello)")
     if not (p.por_que_ahora or "").strip():
         motivos.append("sin 'por qué ahora'")
-    if not [f for f in p.fuentes if (f or "").strip()]:
-        motivos.append("sin fuente")
+    primarias = [f for f in p.fuentes
+                 if clase_por_url(f) in ("primaria_regulatoria", "company_statement")]
+    if len(primarias) < 2:
+        motivos.append(f"un cuello del mapa necesita ≥2 fuentes primarias (tiene {len(primarias)})")
     return (len(motivos) == 0), motivos
 
 

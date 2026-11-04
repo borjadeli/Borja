@@ -18,8 +18,9 @@ mercado aún no precia. Sos el motor que permite posicionarse ANTES del consenso
 - **Empresa para un cuello EXISTENTE**: va en `propuestas`, con `nodo_ref` = el ID (Cxx) del cuello del mapa
   que ocupa. Si una empresa no encaja en ningún cuello del mapa, NO la propongas como empresa.
 - **Cuello NUEVO que el mapa no tiene**: va en `cuellos_nuevos` (nombre, cluster, tesis de por qué ES un cuello,
-  por qué ahora, fuentes). **No propongas empresas para él todavía**: sus jugadores se mapean en una ronda
-  futura, una vez que el curador validó el cuello.
+  por qué ahora, fuentes). Un nodo del mapa es estructural y de largo plazo → necesita **≥2 fuentes PRIMARIAS**
+  (regulador/filing/IR; no blogs ni research pago). **No propongas empresas para él todavía**: sus jugadores se
+  mapean en una ronda futura, una vez que el curador validó el cuello.
 
 ## De dónde sacás las pistas (sensores)
 Más allá de filings y comunicados, rastreá señales tempranas en **X/Twitter y Reddit** (subreddits de

@@ -43,6 +43,17 @@ def test_nombre_que_sale_del_libro_se_vende_entero(sesion):
     assert core.proyectar(sesion, {"OKLO": 50.0})["posiciones"] == {}
 
 
+def test_tenencia_sin_precio_no_se_vende_a_cero(sesion):
+    # regresión (smoke extranjero BESI.AS): el paper tenía OKLO y la corrida solo trajo precio de BESI.AS →
+    # OKLO sin precio generaba una VENTA a precio 0 → fill inválido. Sin precio: no se toca (ni vende ni compra).
+    core.registrar_fill(sesion, ticker="OKLO", lado="buy", shares=100, precio=50, fecha_fill=F)
+    r = ejecutar(sesion, _res({"BESI.AS": 0.1}), precios={"BESI.AS": 150.0}, fecha_fill=F)  # sin precio de OKLO
+    assert "OKLO" in r.sin_precio                                  # reportada, no vendida
+    assert all(f["ticker"] != "OKLO" for f in r.fills)             # no se generó orden de OKLO
+    assert any(f["ticker"] == "BESI.AS" and f["lado"] == "buy" for f in r.fills)  # el nuevo sí entra
+    assert core.proyectar(sesion, {"OKLO": 50.0})["posiciones"]["OKLO"].shares == 100  # OKLO intacta
+
+
 def test_ventas_antes_de_compras_y_tope_de_caja(sesion):
     core.registrar_fill(sesion, ticker="A", lado="buy", shares=1000, precio=10, fecha_fill=F)
     r = ejecutar(sesion, _res({"B": 0.9}), precios={"A": 10.0, "B": 100.0}, fecha_fill=F)

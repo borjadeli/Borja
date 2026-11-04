@@ -66,9 +66,12 @@ def ejecutar(session: Session, resultado: ResultadoDecision, *, precios: dict[st
     for tk in sorted(nombres):
         peso = objetivo.get(tk, 0.0)                      # no mencionado → objetivo 0 (venta)
         actual = shares_actuales.get(tk, 0)
-        if peso > 0 and tk not in precios:
+        if tk not in precios:
+            # sin precio NO se toca — ni comprar (no se dimensiona) ni vender (una tenencia que no se puede
+            # valuar no se liquida a 0; se deja y se rebalancea cuando haya precio). Antes solo cubría la
+            # compra (peso>0) → una posición tenida sin precio generaba una venta a precio 0 → fill inválido.
             res.sin_precio.append(tk)
-            continue                                       # sin precio no se puede dimensionar → no se toca
+            continue
         precio = precios.get(tk, 0.0)
         objetivo_shares = int(math.floor(peso * equity / precio)) if peso > 0 and precio > 0 else 0
 

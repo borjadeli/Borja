@@ -37,6 +37,35 @@ def test_market_cap_usd_none_si_no_hay_dato(monkeypatch):
     assert md.market_cap_usd("ZZZ.XX") is None
 
 
+def test_fuente_mercado_convierte_cap_y_adv_a_usd():
+    from datetime import date
+
+    from backend.agentes.data_pack import fuente_mercado
+    snap = _snap(17_652.1e9, currency="KRW", precio=186100.0)
+    snap.volumen_diario_promedio_30d = 1_390e6       # 1.39B KRW → $1M USD a 1390 KRW/USD
+    snap.shares_outstanding = 94e6
+    pts = fuente_mercado("042700.KS", date(2026, 11, 4),
+                         snapshot_fn=lambda tk: snap, fx_fn=lambda c: 1 / 1390)
+    by = {p.metric: p for p in pts}
+    assert by["market_cap"].currency == "USD" and 12e9 < by["market_cap"].value < 13e9   # convertido
+    assert abs(by["adv_30d_usd"].value - 1e6) < 1000                                      # ADV también a USD
+    assert by["precio"].currency == "KRW"             # el per-share queda nativo
+    assert "KRW" in (by["market_cap"].note or "")     # rastro de la conversión
+
+
+def test_fuente_mercado_usd_no_toca_nada():
+    from datetime import date
+
+    from backend.agentes.data_pack import fuente_mercado
+    snap = _snap(2e9, currency="USD", precio=10.0)
+    snap.volumen_diario_promedio_30d = 5e6
+    snap.shares_outstanding = 2e8
+    pts = fuente_mercado("ABC", date(2026, 11, 4), snapshot_fn=lambda tk: snap, fx_fn=lambda c: 1.0)
+    by = {p.metric: p for p in pts}
+    assert by["market_cap"].value == 2e9 and by["market_cap"].currency == "USD"
+    assert by["market_cap"].note is None              # USD → sin nota de conversión
+
+
 def test_gate_de_banda_con_cap_convertido():
     # con el cap ya en USD (como lo deja _verificar_caps), el validador de discovery gatea bien
     p_ok = PropuestaEmpresa(ticker="042700.KS", cuello="HBM", tesis_corta="t", por_que_ahora="x",

@@ -22,35 +22,50 @@ log = logging.getLogger("agentes.data_pack")
 Fuente = Callable[[str, date], list[DataPoint]]
 
 
-def fuente_mercado(ticker: str, as_of: date, *, snapshot_fn: Callable | None = None) -> list[DataPoint]:
+def fuente_mercado(ticker: str, as_of: date, *, snapshot_fn: Callable | None = None,
+                   fx_fn: Callable | None = None) -> list[DataPoint]:
     """Precio, market cap, ADV y shares del feed de mercado (ORIGINAL). Deriva market_cap = precio×shares
-    si el feed no lo trae (DERIVED, con sus insumos)."""
+    si el feed no lo trae (DERIVED, con sus insumos).
+
+    Soporte extranjero (doc 76): el feed da los AGREGADOS en moneda de cotización. market_cap y ADV se
+    CONVIERTEN a USD (todo el sistema razona en USD: banda del IPS, sizing). El precio por acción queda en
+    moneda local con su etiqueta `currency` (es un quote nativo, no un agregado USD)."""
     if snapshot_fn is None:
         from backend.services.market_data import get_price_snapshot
         snapshot_fn = get_price_snapshot
+    if fx_fn is None:
+        from backend.services.market_data import fx_a_usd
+        fx_fn = fx_a_usd
     snap = snapshot_fn(ticker)
     if snap is None:
         return []
     tk = ticker.upper()
     src = Source(name="Yahoo Finance", document_type="api")
-    cur = getattr(snap, "currency", "USD")
+    cur = getattr(snap, "currency", "USD") or "USD"
+    fx = fx_fn(cur) if cur != "USD" else 1.0        # USD por 1 unidad de la moneda local
+    nota_fx = None if (cur == "USD" or not fx) else f"convertido de {cur} a USD (fx={fx:.6g})"
     out: list[DataPoint] = []
 
-    def add(metric: str, value, unit: str, kind: DataKind = DataKind.ORIGINAL, inputs=None) -> None:
+    def add(metric: str, value, unit: str, *, currency: str = "USD", kind: DataKind = DataKind.ORIGINAL,
+            inputs=None, note: str | None = None) -> None:
         if value is None:
             return
-        out.append(DataPoint(entity=tk, metric=metric, value=float(value), unit=unit, currency=cur,
-                             kind=kind, source=src, known_at=as_of, inputs=inputs or []))
+        out.append(DataPoint(entity=tk, metric=metric, value=float(value), unit=unit, currency=currency,
+                             kind=kind, source=src, known_at=as_of, inputs=inputs or [], note=note))
 
-    add("precio", snap.precio_actual, "USD")
-    add("adv_30d_usd", snap.volumen_diario_promedio_30d, "USD")
+    add("precio", snap.precio_actual, cur, currency=cur)        # per-share: queda en moneda nativa
+    # agregados → USD (si no hay FX, se deja en moneda local CLARAMENTE etiquetada para no leerlo como USD)
+    adv = snap.volumen_diario_promedio_30d
+    add("adv_30d_usd", adv * fx if (adv is not None and fx) else adv, "USD",
+        currency="USD" if fx else cur, note=nota_fx)
     add("shares_outstanding", snap.shares_outstanding, "shares")
     if snap.market_cap is not None:
-        add("market_cap", snap.market_cap, "USD")
+        add("market_cap", snap.market_cap * fx if fx else snap.market_cap, "USD",
+            currency="USD" if fx else cur, note=nota_fx)
     elif snap.precio_actual and snap.shares_outstanding:
-        # fallback DERIVED: deja rastro de que es cálculo, no dato del feed.
-        add("market_cap", snap.precio_actual * snap.shares_outstanding, "USD",
-            kind=DataKind.DERIVED, inputs=["precio", "shares_outstanding"])
+        mc_local = snap.precio_actual * snap.shares_outstanding
+        add("market_cap", mc_local * fx if fx else mc_local, "USD", currency="USD" if fx else cur,
+            kind=DataKind.DERIVED, inputs=["precio", "shares_outstanding"], note=nota_fx)
     return out
 
 

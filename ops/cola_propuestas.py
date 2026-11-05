@@ -91,9 +91,34 @@ def _reemplazo_directo_si_lleno(s, nuevo: str) -> str | None:
         posiciones = {t for t, p in core.proyectar(paper, {})["posiciones"].items() if p.shares > 0}
     finally:
         paper.close()
-    fechas = {tk: e.fecha for tk, e in _cache_dossiers().todos().items()}
-    universo = [{"ticker": t, "cuello_prio": _prioridad_cuello(s, t), "dossier_fecha": fechas.get(t)}
-                for t in actuales]
+    dossiers = _cache_dossiers().todos()
+    fechas = {tk: e.fecha for tk, e in dossiers.items()}
+    # descartado = dossier FAIL o el PM lo mandó a caja/vender; tiene_valor = proxy desde el dossier
+    # (satélite/core o convicción ≥0.6); alta_nueva = alta de discovery todavía sin analizar (r7a #2).
+    from backend.agentes.ledger_decisiones import LedgerDecisiones
+    from backend.ledger.models import NxEmpresa
+    ult_dec: dict[str, str] = {}
+    for reg in LedgerDecisiones().decisiones():
+        ult_dec[reg.ticker.upper()] = reg.accion
+    fuente = {e.ticker.upper(): (e.fuente_ingreso or "") for e in s.query(NxEmpresa).all()}
+
+    def _fail(e) -> bool:
+        return str(getattr(getattr(e, "verif", None), "veredicto", "") or "").lower() == "fail"
+
+    def _tiene_valor(e) -> bool:
+        inv = getattr(e.dossier, "invertibilidad", None)
+        clasif = (getattr(inv, "analyst_classification", "") or "").lower()
+        return clasif in ("satelite", "core") or (getattr(e.dossier, "conviccion_0_1", 0) or 0) >= 0.6
+
+    universo = []
+    for t in actuales:
+        tu = t.upper()
+        e = dossiers.get(tu)
+        descartado = (e is not None and _fail(e)) or ult_dec.get(tu) in ("caja", "vender")
+        universo.append({"ticker": t, "cuello_prio": _prioridad_cuello(s, t), "dossier_fecha": fechas.get(t),
+                         "analizado": e is not None, "descartado": descartado,
+                         "tiene_valor": bool(e is not None and _tiene_valor(e)),
+                         "alta_nueva": fuente.get(tu) == "discovery" and tu not in fechas})
     peor = elegir_a_archivar(universo, posiciones=posiciones)
     if peor:
         transicionar(s, ticker=peor, estado_nuevo=Estado.ARCHIVADA, disparado_por="discovery:reemplazo_directo",

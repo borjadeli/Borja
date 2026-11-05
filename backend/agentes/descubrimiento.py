@@ -480,16 +480,38 @@ class AgenteCurador:
 
 # --------------------------------------------------------------------------- encolado (auto, sin humano)
 
-def elegir_a_archivar(universo: list[dict], *, posiciones: set[str]) -> str | None:
-    """Uno-entra-uno-sale (r6 #2): con el universo lleno, ¿a quién se archiva para que entre uno nuevo? El PEOR
-    no-posición. `universo`: [{ticker, cuello_prio (0-2), dossier_fecha (date|None)}]. Prioridad para QUEDARSE:
-    cuello alto > analizado reciente > el que más tiempo lleva sin aportar. Una POSICIÓN nunca se archiva.
-    Devuelve el ticker a archivar o None (si todo son posiciones). El reemplazo es DIRECTO: nada espera afuera."""
-    cand = [u for u in universo if u["ticker"].upper() not in {p.upper() for p in posiciones}]
+def elegir_a_archivar(universo: list[dict], *, posiciones: set[str], hoy: date | None = None) -> str | None:
+    """Uno-entra-uno-sale (r6 #2 + r7a #2): con el universo lleno, ¿a quién se archiva para que entre uno nuevo?
+    `universo`: [{ticker, cuello_prio (0-2), dossier_fecha (date|None), descartado (bool), tiene_valor (bool),
+    alta_nueva (bool)}]. ORDEN DE ARCHIVO (r7a #2 — primero el peor):
+      (a) analizado y DESCARTADO por el PM o con dossier FAIL;
+      (b) analizado hace >180 días SIN señal de valor;
+      (c) recién al final, nunca analizado.
+    Una POSICIÓN nunca se archiva, y una ALTA NUEVA no es archivable hasta su primer análisis (ya está adentro,
+    no esperando afuera). Devuelve el ticker a archivar o None. Reemplazo DIRECTO: nada espera afuera."""
+    hoy = hoy or date.today()
+    pos = {p.upper() for p in posiciones}
+
+    def _rank(u: dict) -> int:
+        dfecha = u.get("dossier_fecha")
+        analizado = u.get("analizado", dfecha is not None)
+        if analizado and u.get("descartado", False):
+            return 0                                                   # (a) descartado / FAIL → primero
+        if analizado and dfecha is not None and (hoy - dfecha).days > 180 and not u.get("tiene_valor", False):
+            return 1                                                   # (b) analizado viejo sin señal de valor
+        if not analizado:
+            return 2                                                   # (c) nunca analizado → recién después
+        return 3                                                       # analizado y vigente/con valor → el más protegido
+
+    # Candidatos archivables: ni posiciones ni altas nuevas sin su primer análisis.
+    cand = [u for u in universo
+            if u["ticker"].upper() not in pos
+            and not (u.get("alta_nueva", False) and u.get("dossier_fecha") is None)]
     if not cand:
         return None
-    cand.sort(key=lambda u: (u.get("cuello_prio", 0), u.get("dossier_fecha") or date.min))
-    return cand[0]["ticker"]       # menor prioridad de cuello y, a igualdad, el más frío/viejo → se archiva
+    # peor primero: rank asc; a igualdad, menor prioridad de cuello y el más frío/viejo.
+    cand.sort(key=lambda u: (_rank(u), u.get("cuello_prio", 0), u.get("dossier_fecha") or date.min))
+    return cand[0]["ticker"]
 
 
 def encolar_propuestas(cola: ColaPropuestas, props, *, ips_cfg: dict, universo_actual: set[str],

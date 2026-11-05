@@ -32,6 +32,34 @@ def test_elegir_a_archivar_reemplazo_directo():
     assert elegir_a_archivar([{"ticker": "A", "cuello_prio": 0, "dossier_fecha": None}], posiciones={"A"}) is None
 
 
+def test_elegir_a_archivar_orden_r7a():
+    from datetime import date, timedelta
+
+    from backend.agentes.descubrimiento import elegir_a_archivar
+    hoy = date(2026, 11, 5)
+    # (a) descartado, (b) analizado viejo sin valor, (c) nunca analizado, + alta nueva (protegida) + bueno
+    universo = [
+        {"ticker": "DESC", "cuello_prio": 2, "dossier_fecha": hoy, "analizado": True, "descartado": True},
+        {"ticker": "VIEJO", "cuello_prio": 2, "dossier_fecha": hoy - timedelta(days=300),
+         "analizado": True, "tiene_valor": False},
+        {"ticker": "SEMILLA", "cuello_prio": 0, "dossier_fecha": None, "analizado": False},
+        {"ticker": "ALTA", "cuello_prio": 0, "dossier_fecha": None, "analizado": False, "alta_nueva": True},
+        {"ticker": "BUENO", "cuello_prio": 0, "dossier_fecha": hoy, "analizado": True, "tiene_valor": True},
+    ]
+    # con un descartado presente, se archiva el descartado (el test del r7a)
+    assert elegir_a_archivar(universo, posiciones=set(), hoy=hoy) == "DESC"
+    # sin descartado: el viejo-sin-valor antes que la semilla sin analizar y que el bueno
+    assert elegir_a_archivar([u for u in universo if u["ticker"] != "DESC"], posiciones=set(), hoy=hoy) == "VIEJO"
+    # solo alta nueva (sin analizar) + un bueno → la alta nueva está protegida, no se archiva el bueno tampoco
+    # salvo que sea lo único archivable: acá el bueno es rank 3, la alta está excluida → se archiva el bueno
+    solo = [{"ticker": "ALTA", "dossier_fecha": None, "analizado": False, "alta_nueva": True},
+            {"ticker": "BUENO", "dossier_fecha": hoy, "analizado": True, "tiene_valor": True}]
+    assert elegir_a_archivar(solo, posiciones=set(), hoy=hoy) == "BUENO"
+    # universo de una sola alta nueva → nada archivable
+    assert elegir_a_archivar([{"ticker": "ALTA", "dossier_fecha": None, "analizado": False,
+                               "alta_nueva": True}], posiciones=set(), hoy=hoy) is None
+
+
 def test_validador_exige_fuente_primaria_r6_3():
     # r6 #3: X/Reddit/blogs no cuentan como fuente — se necesita regulador/filing/IR
     ok, m = validar_propuesta(_p(fuentes=["https://reddit.com/r/stocks/x"]), ips_cfg=_IPS, universo_actual=set())

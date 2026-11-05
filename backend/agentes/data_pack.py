@@ -79,6 +79,11 @@ _XBRL_INSTANT = [
     ("goodwill", "Goodwill", "USD"),
     ("intangibles_ex_goodwill", "IntangibleAssetsNetExcludingGoodwill", "USD"),
     ("shares_outstanding", "EntityCommonStockSharesOutstanding", "shares"),
+    # r7 §1 (doc 78): lente de valuación por BACKLOG CONTRATADO. RPO = ingresos de performance obligations
+    # pendientes (backlog contratado, ASC 606); contract_liability = anticipos cobrados de clientes. Son
+    # ORIGINAL (hecho de filing, no volátil) → entran al hash. Cobertura real a medir (Gate A, doc 78).
+    ("rpo", "RevenueRemainingPerformanceObligation", "USD"),
+    ("contract_liability", "ContractWithCustomerLiability", "USD"),
 ]
 _XBRL_ANUAL = [
     ("operating_income_loss", "OperatingIncomeLoss", "USD"),
@@ -183,8 +188,16 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
         emit(f"{metric}_q", _pit(ents, as_of, anual=False, dur_dias=_Q), unit, "Q")
     if rev_fn is not None:                            # revenue concatena tags (ASC 606); solo en modo real
         rev = rev_fn(facts)
-        emit("revenue", _pit(rev, as_of, anual=True), "USD", "FY")
+        cur_fy = _pit(rev, as_of, anual=True)
+        emit("revenue", cur_fy, "USD", "FY")
         emit("revenue_q", _pit(rev, as_of, anual=False, dur_dias=_Q), "USD", "Q")
+        # revenue del FY ANTERIOR → crecimiento YoY en la lente de valuación (r7 §1). Entre las anuales, la
+        # que termina más cerca de (cierre actual − 1 año). Si no hay dos FY, simplemente no se emite.
+        if cur_fy and _d(cur_fy.get("end")):
+            from datetime import timedelta as _td
+            anuales = [e for e in rev if _d(e.get("start")) and _d(e.get("end"))
+                       and 350 <= (_d(e["end"]) - _d(e["start"])).days <= 380]
+            emit("revenue_fy_prev", _pit_cercano(anuales, as_of, _d(cur_fy["end"]) - _td(days=365)), "USD", "FY")
     # Acciones de hace ~1 año (insumo de dilución); separado para no colisionar con el latest.
     sh = _extract_concept(facts, "EntityCommonStockSharesOutstanding", unit="shares")
     from datetime import timedelta
@@ -294,6 +307,105 @@ def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
     return out
 
 
+def fuente_valuacion(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[DataPoint]:
+    """Lente de valuación (r7 §1, doc 78): la valuación PRIORIZA, no solo frena. EV + múltiplos + FCF yield +
+    crecimiento + cobertura de backlog contratado, como DERIVED sobre los puntos del pack (no re-pega). TODO
+    depende de precio/market_cap → DERIVED, queda FUERA del hash de reutilización (hash_pack ya lo excluye).
+    Cada métrica emite COMPUTED / MISSING / NOT_APPLICABLE para que el Analista no invente. Los PERCENTILES
+    por cuello NO van acá (necesitan la sección transversal del universo → embudo, r7 §3)."""
+    tk = ticker.upper()
+    idx = {p.metric: p for p in puntos}
+    out: list[DataPoint] = []
+
+    def val(m):
+        p = idx.get(m)
+        return p.value if (p and p.value is not None) else None
+
+    def emit(metric, value, unit, fid, insumos, *, estado="COMPUTED", note=None):
+        out.append(DataPoint.derivado(tk, metric, value, unit=unit, formula_id=fid,
+                                      insumos=[p for p in insumos if p], estado=estado, note=note))
+
+    mc, liq, debt = idx.get("market_cap"), idx.get("liquidez"), idx.get("long_term_debt")
+    mc_v, liq_v, debt_v = val("market_cap"), val("liquidez"), (val("long_term_debt") or 0.0)
+
+    # EV = market cap + deuda LP − liquidez (caja + valores negociables). Falta deuda CORRIENTE en el pack →
+    # se nota. Si la caja supera deuda, el EV puede ser < market cap (correcto: valen la caja neta).
+    ev = None
+    if mc_v is not None and liq_v is not None:
+        ev = mc_v + debt_v - liq_v
+        nota_debt = "" if (debt and debt.value is not None) else "  ⚠ sin deuda LP en XBRL: EV usa deuda=0"
+        emit("enterprise_value", round(ev, 0), "USD", "ev:v1", [mc, debt, liq],
+             note=f"market_cap {mc_v:,.0f} + deuda {debt_v:,.0f} − liquidez {liq_v:,.0f}{nota_debt}")
+    else:
+        emit("enterprise_value", None, "USD", "ev:v1", [mc, debt, liq], estado="MISSING",
+             note=f"falta insumo: {'market_cap' if mc_v is None else 'liquidez'}")
+
+    rev, rev_v = idx.get("revenue"), val("revenue")
+    gross, gross_v = idx.get("gross_profit"), val("gross_profit")
+
+    # EV/revenue y EV/gross: NOT_APPLICABLE si no hay denominador positivo (pre-revenue → mandan backlog
+    # contratado y caja, no el múltiplo de ventas). MISSING si falta el EV.
+    def multiplo(metric, denom_p, denom_v, label, fid):
+        if ev is None:
+            emit(metric, None, "x", fid, [mc, debt, liq, denom_p], estado="MISSING", note="falta EV")
+        elif denom_v is None:
+            emit(metric, None, "x", fid, [denom_p], estado="MISSING", note=f"falta {label}")
+        elif denom_v <= 0:
+            emit(metric, None, "x", fid, [denom_p], estado="NOT_APPLICABLE",
+                 note=f"{label} ≤ 0 (pre-revenue / sin margen): el múltiplo de ventas no aplica")
+        else:
+            emit(metric, round(ev / denom_v, 2), "x", fid, [mc, debt, liq, denom_p],
+                 note=f"EV {ev:,.0f} / {label} {denom_v:,.0f}")
+    multiplo("ev_revenue", rev, rev_v, "revenue FY", "ev_revenue:v1")
+    multiplo("ev_gross_profit", gross, gross_v, "gross profit FY", "ev_gross:v1")
+
+    # FCF yield = FCF / market cap, FCF = flujo operativo − capex (mismo FCF que usa el runway). NOT_APPLICABLE
+    # si FCF ≤ 0 (quema): no hay yield; ahí manda el runway, no la valuación por caja.
+    op, op_v = idx.get("cash_used_ops"), val("cash_used_ops")
+    capex, capex_v = idx.get("capex"), (val("capex") or 0.0)
+    if op_v is None or mc_v is None or mc_v <= 0:
+        emit("fcf_yield", None, "pct", "fcf_yield:v1", [op, capex, mc], estado="MISSING",
+             note="falta flujo operativo o market cap")
+    else:
+        fcf = op_v - capex_v
+        if fcf <= 0:
+            emit("fcf_yield", None, "pct", "fcf_yield:v1", [op, capex, mc], estado="NOT_APPLICABLE",
+                 note=f"FCF {fcf:,.0f} ≤ 0 (quema caja): sin yield positivo")
+        else:
+            emit("fcf_yield", round(fcf / mc_v * 100, 2), "pct", "fcf_yield:v1", [op, capex, mc],
+                 note=f"FCF {fcf:,.0f} (op {op_v:,.0f} − capex {capex_v:,.0f}) / market cap {mc_v:,.0f}")
+
+    # crecimiento de revenue YoY (FY vs FY previo). Proxy determinista; el 4Q-vs-4Q necesita serie (diferido).
+    rev_prev, rev_prev_v = idx.get("revenue_fy_prev"), val("revenue_fy_prev")
+    if rev_v is not None and rev_prev_v and rev_prev_v > 0:
+        emit("revenue_growth_yoy", round((rev_v / rev_prev_v - 1) * 100, 1), "pct", "rev_growth_yoy:v1",
+             [rev, rev_prev], note=f"revenue FY {rev_v:,.0f} vs FY previo {rev_prev_v:,.0f}")
+    else:
+        emit("revenue_growth_yoy", None, "pct", "rev_growth_yoy:v1", [rev, rev_prev], estado="MISSING",
+             note="falta revenue de dos años fiscales")
+
+    # backlog contratado (RPO): EV/RPO, cobertura (RPO/revenue) y valor contratado ajustado por margen bruto
+    # (insumo del margen de seguridad, §4). RPO ausente = MISSING explícito (el modo de falla a medir, Gate A).
+    rpo, rpo_v = idx.get("rpo"), val("rpo")
+    if ev is not None and rpo_v and rpo_v > 0:
+        emit("ev_rpo", round(ev / rpo_v, 2), "x", "ev_rpo:v1", [mc, debt, liq, rpo],
+             note=f"EV {ev:,.0f} / RPO {rpo_v:,.0f}")
+    elif rpo_v is None:
+        emit("ev_rpo", None, "x", "ev_rpo:v1", [rpo], estado="MISSING", note="sin RPO en XBRL (backlog no tageado)")
+    if rpo_v and rev_v and rev_v > 0:
+        emit("backlog_coverage", round(rpo_v / rev_v, 2), "x", "backlog_cov:v1", [rpo, rev],
+             note=f"RPO {rpo_v:,.0f} / revenue FY {rev_v:,.0f} = años de revenue contratados")
+    if rpo_v and rev_v and rev_v > 0 and gross_v is not None:
+        margen = gross_v / rev_v
+        emit("valor_contratado_ajustado", round(rpo_v * margen, 0), "USD", "valor_contratado:v1",
+             [rpo, gross, rev], note=f"RPO {rpo_v:,.0f} × margen bruto {margen:.0%}")
+    elif rpo_v:
+        emit("valor_contratado_ajustado", None, "USD", "valor_contratado:v1", [rpo, gross, rev],
+             estado="MISSING", note="RPO presente pero sin margen bruto (gross/revenue) para ajustar")
+
+    return out
+
+
 def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[DataPoint]:
     """Chequeos de consistencia AUTOMÁTICOS sobre cada pack (r6 #4 'verificar siempre'): sin leer el filing,
     cruza las fuentes que tenemos y marca banderas CONFLICTED que el Analista/Verificador ven. Barato,
@@ -337,8 +449,9 @@ FuenteDerivada = Callable[[str, date, list[DataPoint]], list[DataPoint]]
 # Fuentes ORIGINAL (traen datos crudos) y DERIVADAS (calculadoras sobre esos datos). Dos fases: las
 # derivadas reciben los puntos ya reunidos (consumen DataPoints del pack, no re-pegan a la fuente; doc 59).
 FUENTES_DEFAULT: list[Fuente] = [fuente_mercado, fuente_xbrl]
-# fuente_consistencia va AL FINAL (consume los puntos de todas las demás, incl. las calculadoras).
-FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_calculadoras, fuente_consistencia]
+# Orden: calculadoras (liquidez/runway) → valuación (usa liquidez para el EV) → consistencia AL FINAL
+# (consume los puntos de todas las demás).
+FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_calculadoras, fuente_valuacion, fuente_consistencia]
 
 
 def ensamblar(ticker: str, *, as_of: date | None = None, fuentes: list[Fuente] | None = None,

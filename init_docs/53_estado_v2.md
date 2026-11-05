@@ -2,7 +2,29 @@
 
 > **Fuente viva del estado.** Reemplaza al doc 32 (que describe el estado v1). Si algo acá contradice a un
 > doc más viejo sobre *qué está hecho / qué sigue*, gana este. Directiva: doc 51 · arquitectura/plan: doc 52.
-> Última actualización: **2026-11-05** (ronda r6 + dudas del operador sobre deployment/discovery/vistas).
+> Última actualización: **2026-11-05** (r6 + r7 Bloque 1/§3 + r7a #1/#2/#4).
+
+## Actualización 2026-11-05 (r7a) — revisión externa r7a: deployment coherente + archivo + menores
+
+Punch list externo (rama hasta 675038b). Prioridad en orden. **831 tests verdes.**
+- **#1 Estacionamiento en ETFs temáticos (HECHO a nivel módulo + config + IPS + prompts):** el residual que NO
+  encuentra nombres con margen de seguridad se aparca en ETFs temáticos (`SMH/URA/ITA/COPX` + `SPY` default),
+  ponderados por los clusters del mapa — NUNCA en nombres caros para llegar al 90%. `backend/agentes/
+  estacionamiento.py` (`aplicar_estacionamiento`: residual = 1−nombres−caja_macro; desarme-primero implícito).
+  `max_posiciones` 12→20; los ETFs de parking NO cuentan como posición (IPS los excluye) ni como op. Prompt PM:
+  el residual lo maneja el determinismo, NUNCA subir un escalón de clasificación por deployment. Auditor: objeción
+  ALTA (`coherencia`) si un escalón se justifica por deployment y no por evidencia. **Falta la PUESTA EN VIVO:**
+  el runner debe aplicar el overlay al target final + el paper ejecutar los ETFs + excluir el rebalanceo de
+  parking de la rotación/ops (se dejó fuera del gate a propósito, para no tocar el camino del dinero sin cuidado).
+- **#2 Orden de archivo (HECHO):** `elegir_a_archivar` ahora archiva (a) analizado+descartado/FAIL → (b) analizado
+  >180d sin señal de valor → (c) nunca analizado, y protege la ALTA NUEVA hasta su primer análisis. Caller en
+  `ops.cola_propuestas` enriquecido (descartado/tiene_valor/alta_nueva).
+- **#3 interim (HECHO):** prompt PM — un contrato sin RPO en el pack es NO VERIFICADO (no suma al margen de
+  seguridad) hasta el Bloque 2. **Bloque 2 sigue PENDIENTE (gateado por Gate B: gold set de contratos).**
+- **#4 menores:** doc 53 línea vieja de bandas corregida (HECHO); **auditabilidad del fill (HECHO):** NxFill
+  ganó `moneda`/`precio_nativo`/`fx_usado` (+ migración idempotente SQLite) y `paper_pm`/`registrar_fill` los
+  pueblan vía `precios_meta_de` (falta threading en el runner real). **Doc 77 PENDIENTE** (necesita corridas en
+  vivo: smoke Tier B, primera corrida del universo, decisiones del PM, discovery, cartera vs sombras).
 
 ## Actualización 2026-11-02 — calidad del análisis: Tier A + Tier B (docs 72/73/74)
 
@@ -20,7 +42,8 @@ Se abrió un plan en 3 tiers; Tier A y el core de Tier B están **HECHOS y teste
   - **D2** `vara_externa` en el falsador → Verificador REVIEW si es autorreferencial/infalsable.
   - **D3** `tasas_base.py` (tabla curada con fuente) + calibración: P(bull)>2x la tasa base → REVIEW.
   - **D4** `clasificacion.py` sizing por clasificación en **MODO SOMBRA** (techo por hechos duros + bandas +
-    caps bucket/cluster; `sizing_modo: sombra` reporta, no gatea). Bandas del operador: espec ≤1,5% · sat ≤5%.
+    caps bucket/cluster; `sizing_modo: sombra` reporta, no gatea). [Bandas ampliadas el 2026-11-05 — ver
+    la sección de esa fecha; los valores viejos quedaron obsoletos.]
   - **D5** Auditor **con web** + checklist "buscar para refutar" + materialidad (máx 3); Sonnet ≠ Analista Opus.
   - **Persistencia Brier** + **ciclo de resolución** (`resolucion.py` + `ops.resolucion`): cierra el loop para
     medir si el análisis calibra.

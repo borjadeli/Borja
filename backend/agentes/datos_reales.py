@@ -49,6 +49,22 @@ def precios_de(snapshots: dict, *, fx_fn=None) -> dict[str, float]:
     return out
 
 
+def precios_meta_de(snapshots: dict, *, fx_fn=None) -> dict[str, dict]:
+    """Metadata de conversión por ticker para el rastro del fill (r7a #4): {moneda, precio_nativo, fx_usado}.
+    fx_usado = USD por 1 unidad de la moneda (None si es USD o no se pudo). Solo los que se pueden valuar."""
+    from backend.services.market_data import fx_a_usd, precio_a_usd
+    out: dict[str, dict] = {}
+    for tk, s in snapshots.items():
+        nativo = getattr(s, "precio_actual", None)
+        cur = (getattr(s, "currency", "USD") or "USD").upper()
+        usd = precio_a_usd(nativo, cur, fx_fn=fx_fn)
+        if usd is None:
+            continue
+        fx = None if cur == "USD" else ((fx_fn or fx_a_usd)(cur))
+        out[tk] = {"moneda": cur, "precio_nativo": nativo, "fx_usado": fx}
+    return out
+
+
 def _sector(session: Session, tk: str) -> str | None:
     row = session.execute(select(NxEmpresa.sector).where(NxEmpresa.ticker == tk)).first()
     return row[0] if row else None

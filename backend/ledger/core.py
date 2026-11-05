@@ -49,7 +49,8 @@ def registrar_fill(session: Session, *, ticker: str, lado: str, shares: float,
                    precio: float, comision: float = 0.0, slippage_bps: float = 0.0,
                    fecha_fill: date, fecha_decision: datetime | None = None,
                    fecha_dato: datetime | None = None, input_hash: str | None = None,
-                   nota: str | None = None) -> NxFill:
+                   nota: str | None = None, moneda: str | None = None,
+                   precio_nativo: float | None = None, fx_usado: float | None = None) -> NxFill:
     ticker = ticker.upper()
     if lado not in ("buy", "sell"):
         raise ValueError(f"lado inválido: {lado!r}")
@@ -71,7 +72,8 @@ def registrar_fill(session: Session, *, ticker: str, lado: str, shares: float,
     fill = NxFill(ticker=ticker, lado=lado, shares=shares, precio=precio,
                   comision=comision, slippage_bps=slippage_bps, cash_delta=cash_delta,
                   fecha_fill=fecha_fill, fecha_decision=fecha_decision,
-                  fecha_dato=fecha_dato, input_hash=input_hash, nota=nota)
+                  fecha_dato=fecha_dato, input_hash=input_hash, nota=nota,
+                  moneda=moneda, precio_nativo=precio_nativo, fx_usado=fx_usado)
     session.add(fill)
     session.flush()
     return fill

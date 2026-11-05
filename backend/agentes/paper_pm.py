@@ -45,7 +45,8 @@ class ResultadoPaper:
 
 def ejecutar(session: Session, resultado: ResultadoDecision, *, precios: dict[str, float],
              fecha_fill: date | None = None, comision: float = 0.0,
-             input_hash: str | None = None) -> ResultadoPaper:
+             input_hash: str | None = None,
+             precios_meta: dict[str, dict] | None = None) -> ResultadoPaper:
     fecha_fill = fecha_fill or date.today()
     precios = {t.upper(): float(p) for t, p in precios.items() if p and math.isfinite(p) and p > 0}
     demoradas = {t.upper() for t in resultado.demoradas}
@@ -101,8 +102,10 @@ def ejecutar(session: Session, resultado: ResultadoDecision, *, precios: dict[st
                 o.shares = asequibles
                 costo = o.shares * o.precio + comision
             caja -= costo
+        m = (precios_meta or {}).get(o.ticker, {})           # auditabilidad del fill (r7a #4): moneda/nativo/FX
         core.registrar_fill(session, ticker=o.ticker, lado=o.lado, shares=o.shares, precio=o.precio,
                              comision=comision, fecha_fill=fecha_fill, input_hash=input_hash,
-                             nota="paper_pm")
+                             nota="paper_pm", moneda=m.get("moneda"), precio_nativo=m.get("precio_nativo"),
+                             fx_usado=m.get("fx_usado"))
         res.fills.append({"ticker": o.ticker, "lado": o.lado, "shares": o.shares, "precio": o.precio})
     return res

@@ -52,6 +52,11 @@ class NxFill(LedgerBase):
     fecha_dato: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     input_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     nota: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Auditabilidad del fill (r7a #4): moneda nativa + precio nativo + FX usado. `precio` queda SIEMPRE en USD
+    # (el libro razona en USD, r6 #1); esto deja el rastro para reconstruir la conversión de un extranjero.
+    moneda: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    precio_nativo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fx_usado: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class NxCorporateAction(LedgerBase):
@@ -244,5 +249,19 @@ class NxFact(LedgerBase):
 
 
 def crear_tablas(engine) -> None:
-    """Crea solo las tablas nx_* (no toca las del sistema viejo)."""
+    """Crea solo las tablas nx_* (no toca las del sistema viejo) + migra columnas nuevas en DBs existentes."""
     LedgerBase.metadata.create_all(bind=engine)
+    _migrar_columnas(engine)
+
+
+def _migrar_columnas(engine) -> None:
+    """Migración idempotente para SQLite: agrega columnas nuevas a tablas ya creadas (create_all no las ALTERa).
+    r7a #4: moneda/precio_nativo/fx_usado en nx_fill. Seguro de correr siempre (chequea PRAGMA antes del ALTER)."""
+    from sqlalchemy import text
+    nuevas = {"nx_fill": [("moneda", "VARCHAR(8)"), ("precio_nativo", "FLOAT"), ("fx_usado", "FLOAT")]}
+    with engine.begin() as con:
+        for tabla, cols in nuevas.items():
+            existentes = {r[1] for r in con.execute(text(f"PRAGMA table_info({tabla})"))}
+            for nombre, tipo in cols:
+                if nombre not in existentes:
+                    con.execute(text(f"ALTER TABLE {tabla} ADD COLUMN {nombre} {tipo}"))

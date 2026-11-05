@@ -250,11 +250,18 @@ def pm_view(request: Request):
     con convicción, clasificación, veredicto del Verificador, tesis bull/bear y falsador. Lee el cache de
     dossiers v2 (data/cache_dossiers_v2.json). Reemplaza el canal de juicio v3 (libro_pm.json)."""
     from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH
+    from backend.agentes.ledger_decisiones import LedgerDecisiones
     ctx = _common_context(request, active="pm")
+    # última decisión REAL del PM por ticker (acción + peso), del ledger de decisiones — para que la vista
+    # muestre qué DECIDIÓ el comité, no sólo el dossier que analizó.
+    ultima_dec: dict[str, object] = {}
+    for reg in LedgerDecisiones().decisiones():          # orden de append (viejo→nuevo): el último pisa
+        ultima_dec[reg.ticker.upper()] = reg
     decisiones = []
     for tk, e in CacheDossiers(path=_CACHE_PATH).todos().items():
         d, v = e.dossier, e.verif
         inv = d.invertibilidad
+        dec = ultima_dec.get(tk.upper())
         decisiones.append({
             "ticker": tk, "fecha": e.fecha, "conviccion": d.conviccion_0_1,
             "clasificacion": inv.analyst_classification if inv else None,
@@ -266,7 +273,12 @@ def pm_view(request: Request):
             "falsador": d.falsador.afirmacion if d.falsador else None,
             "falsador_fecha": d.falsador.fecha_limite if d.falsador else None,
             "n_red_flags": len(d.red_flags or []),
-            "motivos": list(getattr(v, "motivos", []) or [])[:3],
+            "motivos": list(getattr(v, "motivos", []) or []),
+            # decisión real del PM (si ya hubo un ciclo que la emitió)
+            "pm_accion": getattr(dec, "accion", None),
+            "pm_peso": getattr(dec, "peso_resultante", None),
+            "pm_ciclo": (dec.ciclo if dec else None),
+            "pm_tesis": getattr(dec, "tesis", None),
         })
     decisiones.sort(key=lambda r: (r["conviccion"] is None, -(r["conviccion"] or 0.0)))
     ctx.update({"decisiones": decisiones, "n": len(decisiones)})

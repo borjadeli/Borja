@@ -23,6 +23,10 @@ class FilaHitrate:
     analizada: bool                  # ¿hay dossier?
     conviccion: float | None
     clasificacion: str | None        # core | satelite | especulativa | watchlist
+    tesis_corta: str = ""            # por qué la propuso el agente (contexto, no sólo el ticker)
+    por_que_ahora: str = ""          # el catalizador / razón de timing
+    fuentes: list[str] | None = None # links primarios que citó la propuesta
+    market_cap: float | None = None  # cap en USD si quedó resuelto (None en extranjeros sin resolver)
 
 
 def embudo_discovery(*, propuestas: dict, universo_estado: dict[str, str],
@@ -33,13 +37,18 @@ def embudo_discovery(*, propuestas: dict, universo_estado: dict[str, str],
     for tk, v in propuestas.items():
         d = dossier_fn(tk)
         inv = getattr(d, "invertibilidad", None) if d is not None else None
+        p = v.get("propuesta") or {}
         filas.append(FilaHitrate(
-            ticker=tk, cuello=(v.get("propuesta") or {}).get("cuello", ""),
+            ticker=tk, cuello=p.get("cuello", ""),
             estado_cola=v.get("estado", "?"),
             en_universo=tk in universo_estado, estado_universo=universo_estado.get(tk),
             analizada=d is not None,
             conviccion=(getattr(d, "conviccion_0_1", None) if d is not None else None),
             clasificacion=(getattr(inv, "analyst_classification", None) if inv is not None else None),
+            tesis_corta=p.get("tesis_corta", "") or "",
+            por_que_ahora=p.get("por_que_ahora", "") or "",
+            fuentes=list(p.get("fuentes") or []),
+            market_cap=p.get("market_cap"),
         ))
     filas.sort(key=lambda f: (f.conviccion is None, -(f.conviccion or 0.0)))   # mayor convicción primero
     funnel = {

@@ -14,8 +14,15 @@
   {% if decisiones %}
   {% for d in decisiones %}
   <div class="bb-card">
-    <div class="bb-card-header flex items-center gap-3">
+    <div class="bb-card-header flex items-center gap-3 flex-wrap">
       <h3 class="flex-1">{{ d.ticker }}</h3>
+      {% if d.pm_accion %}
+        {% set ac = d.pm_accion | lower %}
+        {% set es_compra = ac in ('comprar', 'aumentar', 'mantener') %}
+        <span class="text-[11px] uppercase tracking-wide font-bold rounded px-2 py-0.5
+          {{ 'bg-emerald-600 text-white' if ac in ('comprar','aumentar') else ('bg-navy-100 text-navy-800' if ac == 'mantener' else 'bg-slate-200 text-slate-700') }}">
+          {{ d.pm_accion }}{% if d.pm_peso %} · {{ '%.1f%%' % (d.pm_peso * 100) }}{% endif %}</span>
+      {% endif %}
       {% if d.clasificacion %}<span class="text-[10px] uppercase tracking-wide font-semibold bg-slate-100 text-navy-800 rounded px-2 py-0.5">{{ d.clasificacion }}</span>{% endif %}
       {% if d.veredicto %}
         {% set vd = d.veredicto | lower %}
@@ -27,16 +34,19 @@
       {% endif %}
     </div>
     <div class="px-5 py-4 space-y-3 text-sm">
-      {% if d.negocio %}<p class="text-slate-700">{{ d.negocio[:320] }}</p>{% endif %}
+      {% if d.pm_tesis %}<div class="bg-slate-50 border-l-2 border-navy-300 px-3 py-2 rounded-r">
+        <div class="text-[11px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Decisión del PM{% if d.pm_ciclo %} · ciclo {{ d.pm_ciclo }}{% endif %}</div>
+        <p class="text-slate-700 text-xs leading-relaxed">{{ d.pm_tesis }}</p></div>{% endif %}
+      {% if d.negocio %}<p class="text-slate-700">{{ d.negocio }}</p>{% endif %}
       <div class="grid grid-cols-2 gap-4">
         <div><div class="text-[11px] uppercase tracking-widest text-emerald-700 font-semibold mb-1">Bull</div>
-          <p class="text-slate-600 text-xs leading-relaxed">{{ (d.bull or '—')[:260] }}</p></div>
+          <p class="text-slate-600 text-xs leading-relaxed">{{ d.bull or '—' }}</p></div>
         <div><div class="text-[11px] uppercase tracking-widest text-rose-700 font-semibold mb-1">Bear</div>
-          <p class="text-slate-600 text-xs leading-relaxed">{{ (d.bear or '—')[:260] }}</p></div>
+          <p class="text-slate-600 text-xs leading-relaxed">{{ d.bear or '—' }}</p></div>
       </div>
       {% if d.valuacion %}<div><div class="text-[11px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Qué exige el precio</div>
-        <p class="text-slate-600 text-xs">{{ d.valuacion[:260] }}</p></div>{% endif %}
-      {% if d.falsador %}<div class="text-xs text-slate-600"><b>Falsador:</b> {{ d.falsador[:200] }}
+        <p class="text-slate-600 text-xs">{{ d.valuacion }}</p></div>{% endif %}
+      {% if d.falsador %}<div class="text-xs text-slate-600"><b>Falsador:</b> {{ d.falsador }}
         {% if d.falsador_fecha %}<span class="text-slate-400">(límite {{ d.falsador_fecha }})</span>{% endif %}</div>{% endif %}
       <div class="flex gap-4 text-[11px] text-slate-500 pt-1 border-t border-slate-100">
         <span>{{ d.n_red_flags }} red flag{{ 's' if d.n_red_flags != 1 else '' }}</span>

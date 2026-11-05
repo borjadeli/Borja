@@ -294,12 +294,51 @@ def fuente_calculadoras(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
     return out
 
 
+def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[DataPoint]:
+    """Chequeos de consistencia AUTOMÁTICOS sobre cada pack (r6 #4 'verificar siempre'): sin leer el filing,
+    cruza las fuentes que tenemos y marca banderas CONFLICTED que el Analista/Verificador ven. Barato,
+    determinista, para TODOS los nombres. NO reemplaza al set dorado (métricas solo-XBRL sin contraparte)."""
+    tk = ticker.upper()
+    src = Source(name="consistencia:v1", document_type="calculadora")
+    out: list[DataPoint] = []
+
+    def flag(nombre: str, nota: str) -> None:
+        out.append(DataPoint(entity=tk, metric=f"flag_{nombre}", value=1.0, unit="flag",
+                             kind=DataKind.DERIVED, estado="CONFLICTED", source=src, known_at=as_of, note=nota))
+
+    def _es_xbrl(p):
+        return "xbrl" in (p.source.name or "").lower()
+
+    # 1) ACCIONES: feed (Yahoo) vs XBRL. Divergencia alta → dilución no capturada o error de extracción.
+    shares = [p for p in puntos if p.metric == "shares_outstanding" and p.value]
+    feed_sh = next((p.value for p in shares if not _es_xbrl(p)), None)
+    xbrl_sh = next((p.value for p in shares if _es_xbrl(p)), None)
+    if feed_sh and xbrl_sh:
+        div = abs(feed_sh - xbrl_sh) / max(feed_sh, xbrl_sh)
+        if div > 0.25:
+            flag("shares_divergentes", f"acciones feed={feed_sh:,.0f} vs XBRL={xbrl_sh:,.0f} "
+                 f"(dif {div:.0%}) → posible dilución no capturada o error de extracción")
+
+    # 2) ESCALA: un market cap sospechosamente chico ⇒ error de escala (el mismo que mordió en el puente).
+    mc = next((p.value for p in puntos if p.metric == "market_cap" and p.value is not None), None)
+    if mc is not None and 0 < mc < 1e6:
+        flag("market_cap_escala", f"market cap ${mc:,.0f} sospechosamente chico → ¿error de escala/moneda?")
+
+    # 3) FRESCURA: el último filing XBRL es viejo → los fundamentales pueden estar vencidos.
+    knowns = [p.known_at for p in puntos if p.known_at and _es_xbrl(p)]
+    if knowns and (as_of - max(knowns)).days > 400:
+        flag("datos_viejos", f"último filing XBRL {max(knowns)} (> 400 días) → fundamentales posiblemente vencidos")
+
+    return out
+
+
 FuenteDerivada = Callable[[str, date, list[DataPoint]], list[DataPoint]]
 
 # Fuentes ORIGINAL (traen datos crudos) y DERIVADAS (calculadoras sobre esos datos). Dos fases: las
 # derivadas reciben los puntos ya reunidos (consumen DataPoints del pack, no re-pegan a la fuente; doc 59).
 FUENTES_DEFAULT: list[Fuente] = [fuente_mercado, fuente_xbrl]
-FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_calculadoras]
+# fuente_consistencia va AL FINAL (consume los puntos de todas las demás, incl. las calculadoras).
+FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_calculadoras, fuente_consistencia]
 
 
 def ensamblar(ticker: str, *, as_of: date | None = None, fuentes: list[Fuente] | None = None,

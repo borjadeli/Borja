@@ -2,7 +2,7 @@
 
 > **Fuente viva del estado.** Reemplaza al doc 32 (que describe el estado v1). Si algo acá contradice a un
 > doc más viejo sobre *qué está hecho / qué sigue*, gana este. Directiva: doc 51 · arquitectura/plan: doc 52.
-> Última actualización: **2026-11-02**.
+> Última actualización: **2026-11-05** (ronda r6 + dudas del operador sobre deployment/discovery/vistas).
 
 ## Actualización 2026-11-02 — calidad del análisis: Tier A + Tier B (docs 72/73/74)
 
@@ -37,6 +37,73 @@ Se abrió un plan en 3 tiers; Tier A y el core de Tier B están **HECHOS y teste
   (`--universo --dry-run` → OK → `--bootstrap`) + cablear el **scheduler** semanal con digest por mail.
 - **Pendiente menor (no bloquea):** verificar las filas de tasas base contra la fuente; ruteo D5
   Analista-responde (API); activar el **cap duro de D4** tras correr la sombra en vivo.
+
+## Actualización 2026-11-05 — ronda r6 (embudo/universo/discovery + gigantes + consistencia)
+
+Revisión externa r6, foco en el frente **extranjero + discovery-sin-humano** y las decisiones del operador
+de docs 75/76. Todo commiteado en `destete-v2-fase3`. **800 tests verdes.**
+- **#1 FX en el paper (P0):** `market_data.precio_a_usd` (maneja GBp/GBX) y `precios_de` convierte en el
+  BORDE → paper + sombras valúan en USD (antes 042700.KS sizeaba a 0 acciones; 6315.T, 1 'acción' a $4200).
+  Sin FX, el nombre queda fuera.
+- **#2 Tenencias SIEMPRE con precio:** una tenencia sin precio valía 0 (equity subestimado, sizing mal);
+  `_asegurar_precios_tenencias` usa feed→USD o el último precio del ledger (marcado viejo).
+- **#3 Validadores duros de discovery (auto-entrada sin humano):** fuente PRIMARIA obligatoria (clase_por_url
+  ∈ regulador/filing/IR; X/Reddit/blogs NO cuentan) + market cap requerido en la auto-entrada; **nodos nuevos
+  del curador exigen ≥2 fuentes primarias** (un cuello es estructural → vara más alta que una empresa).
+- **#2 bis — tope de universo (160) + reemplazo DIRECTO:** con el universo lleno, una alta de discovery
+  **archiva al peor no-posición** y entra la nueva (`elegir_a_archivar`, pura). Una posición del paper NUNCA
+  se archiva. Decisión del operador: nada espera afuera.
+- **#6 — carril de gigantes COMPRABLE (decisión del operador "los grandes, si están baratos, van"):** un
+  nombre > `market_cap_max` ya no es rechazo automático; si `gigantes_comprables`, es ADMISIBLE pero sizea
+  bajo `peso_max_gigante` (10%) en vez de 20%. El piso de $150M (micro) sigue firme. El embudo ya ruteaba los
+  gigantes CAÍDOS (z≤-1.5) a deep.
+- **#4 — consistencia en CADA pack ("verificar siempre", el operador tenía razón):** `fuente_consistencia`
+  (derivada, sin API, para TODOS los nombres) marca banderas CONFLICTED que ve el Analista/Verificador:
+  (1) acciones feed vs XBRL >25%, (2) market cap sospechosamente chico (escala/moneda), (3) último XBRL >400d.
+  Complementa (no reemplaza) al set dorado.
+- **Diferido r6:** reporte doc 77 (#4 pendiente de redacción), período de observación N semanas antes de
+  habilitar nombre nuevo, scheduler + digest por mail (#7), auditabilidad del fill (moneda/precio nativo+FX).
+
+> **Observación del operador (2026-11-05), abierta — NO es bug, es mandato:** el paper (depósito inicial
+> $100k, 2026-10-27) está **~1,5% invertido** (sólo MP ~$1.450; OKLO entró 3% y salió). El operador quiere
+> estar **casi totalmente invertido salvo justificación macro para liquidez**, lo cual choca con dos cosas
+> baked-in hoy: (a) el mandato "disciplina sobre actividad / preferir slots vacíos" del prompt del PM +
+> CLAUDE/CONTEXT, que lo lleva a CAJA por default; y (b) las bandas de sizing por clasificación (D4: espec
+> ≤1,5% · satélite ≤5%) — como casi todo el universo clasifica "especulativa", el techo agregado es chico por
+> construcción. **Requiere decisión de método del operador** (relajar bandas / cambiar el mandato del PM vs.
+> mantener la disciplina power-law). Ver dudas respondidas 2026-11-05.
+
+## Actualización 2026-11-05 (tarde) — vistas + caps/PM + r7 Bloque 1 (valuación como motor)
+
+Sesión con el operador. Tres frentes:
+- **Vistas corregidas:** (1) `/descubrimiento` mostraba las propuestas SIN tesis/por-qué-ahora/market-cap/
+  fuentes (el embudo tiraba esos campos) → ahora las rinde completas. (2) `/pm` ("Decisiones del comité")
+  truncaba todos los textos con slices fijos Y mostraba sólo el dossier, no la DECISIÓN del PM → sin truncado +
+  badge con acción/peso/ciclo real del ledger de decisiones.
+- **Caps + mandato del PM (deployment):** el paper estaba ~1,5% invertido. Causa: no eran los caps (D4 está en
+  SOMBRA, no gatea) sino el PROMPT del PM ("disciplina sobre actividad / caja por default"). Cambios: prompt del
+  PM → **capital desplegado por default (~90-100% salvo macro)**; bandas D4 ampliadas (espec 1,5→5% · sat 5→10%
+  · bucket 10→30% · cluster 20→40%); CONTEXT.md actualizado. D4 sigue en sombra.
+- **r7 — valuación como motor + contratos como hecho duro (doc 78, directiva del operador).** Adoptado; sin
+  conflicto con los caps nuevos (palancas ortogonales — ver doc 78). **Bloque 1 HECHO (determinista, 808 tests
+  verdes):** tags XBRL `rpo` (RevenueRemainingPerformanceObligation) + `contract_liability` + `revenue_fy_prev`;
+  **`fuente_valuacion`** (DERIVED, fuera del hash): EV, EV/revenue, EV/gross, FCF yield, crecimiento YoY, EV/RPO,
+  cobertura de backlog, valor contratado ajustado por margen — con COMPUTED/MISSING/NOT_APPLICABLE; prompt del PM
+  §6 (valuación prioriza, no solo frena; preferir valor contratado firme/caja por $ de EV; nunca EV/revenue
+  solo). **Gate A CORRIDO** (`ops.medir_cobertura_valuacion`, 45 nombres): lente general con buena cobertura
+  (EV 89% · EV/revenue 84% · FCF yield 64% · crecimiento 84%) pero **RPO solo 38%** (contract_liability 47%) →
+  la lente de valor sirve casi en todo el universo; el "contrato duro vía RPO" en ~4/10 → refuerza la necesidad
+  del parser 8-K/USAspending (§2), que es el ítem riesgoso (Gate B).
+  **Embudo §3 HECHO (determinista, 817 verdes):** señal de valor en `embudo.py` (`ratio_valor` = EV/(contratado
+  +revenue); `percentiles_valor_por_cuello`; `top_por_valor` para el dry-run) + `SenalesTriage.valor_percentil_
+  cuello` + boost en `triage.prioridad` (barato en su cuello → +1, sube en la fila) + plumbing en
+  `candidatos_del_universo`. **Última milla CABLEADA:** `universo.valor_del_universo` (assembla la lente por
+  nombre, best-effort) + `cuello_primario`; el ops `correr_semana_v2 --universo` computa el overlay (flag
+  `--sin-valor` para saltearlo) y el dry-run imprime el **top-15 por valor** (§8). Verificado en vivo (OKLO
+  pre-revenue → sin señal; CRDO<ALAB en conectividad). 819 tests verdes.
+  **Bloque 2 PENDIENTE (gateado por Gate B):** parser 8-K 1.01 + USAspending (firme/condicional/no-cuenta) +
+  sección "¿qué compro por este precio?" del Analista + reglas del Verificador + frontera D4 con contratos —
+  detrás de un gold set de contratos etiquetados + precisión medida (un falso FIRME sizea de más).
 
 ## Dónde estamos
 **FASE 4 + P1 + EMBUDO completos y validados en vivo; el PM ya compró (OKLO 3%).** El comité corre

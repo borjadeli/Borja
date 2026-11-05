@@ -23,7 +23,10 @@ Sistema quant para analizar/operar **small & mid caps de "industrias del futuro"
 nuclear, defensa, commodities/minerales, espacio, robótica, healthcare/biotech, fotónica, semis). Sector de
 mayor riesgo, elegido a propósito: donde un sistema disciplinado genera más diferencial (tesis **power-law**).
 **Modo de uso: ADVISORY** (asesora; el humano ejecuta). Hay **paper trading** autónomo que valida el método
-con capital simulado. Filosofía: **disciplina sobre actividad** — se prefieren slots vacíos a forzar entradas.
+con capital simulado. Filosofía (actualizada 2026-11-05): **capital desplegado por default** — el objetivo es
+estar casi totalmente invertido (~90-100%); la caja alta exige tesis macro explícita o ausencia real de nombres
+con respaldo. La disciplina se conserva en el *cómo* (no forzar entradas sin dossier, no rotar sin tesis), no en
+preferir slots vacíos.
 
 ## 2. El cambio de dirección v2 (quién decide)
 > **El determinismo informa y limita; la IA decide.** Datos, cálculos, detección de eventos, presupuesto y

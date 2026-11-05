@@ -42,15 +42,18 @@ pct_adv_max: 0.10                   # una posición no supera el 10% del ADV
 cap_flag_supervivencia: 0.04
 
 # --- D4: sizing por clasificación (doc 74) — la clasificación de invertibilidad limita el TAMAÑO ---
-# MODO SOMBRA (reporta al Auditor, NO gatea) hasta confiar en la clasificación — doc 74 §5. Decisión del
-# operador 2026-11-02: grilla equilibrada (12 plazas, downside especulativa −80% ≈ −1,2% del NAV).
+# MODO SOMBRA (reporta al Auditor, NO gatea) hasta confiar en la clasificación — doc 74 §5.
+# Decisión del operador 2026-11-05: subir los caps hacia 'casi totalmente invertido salvo macro'. Las bandas
+# viejas (espec 1,5% / sat 5% / bucket 10%) hacían imposible el despliegue en un universo mayormente
+# especulativo. OJO: en modo sombra esto NO gatea; el freno real de hoy es el prompt del PM (disciplina/caja).
 sizing_modo: "sombra"                 # sombra | duro
 bandas_clasificacion:
-  especulativa: 0.015                 # ≤1,5% por nombre (tamaño de opción)
-  satelite: 0.05                      # ≤5% por nombre
+  especulativa: 0.05                  # ≤5% por nombre (antes 1,5%)
+  satelite: 0.10                      # ≤10% por nombre (antes 5%)
   # watchlist = 0 · core = peso_max_nombre (20%)
-cap_bucket_especulativo: 0.10         # suma de posiciones especulativas ≤ 10%
-cap_cluster_tematico: 0.20            # suma por cluster temático (cualquier clasificación) ≤ 20%
+cap_bucket_especulativo: 0.30         # suma de posiciones especulativas ≤ 30% (antes 10%) — el tope real del
+                                      #   despliegue si casi todo es especulativo; subirlo acepta más riesgo binario
+cap_cluster_tematico: 0.40            # suma por cluster temático (cualquier clasificación) ≤ 40% (antes 20%)
 umbral_revenue_recurrente_usd: 50000000   # revenue FY ≥ $50M = "revenue recurrente" (techo D4, r5 item 2)
 
 # --- Reglas de riesgo que ANTES eran "juicio del auditor" y ahora son números (doc 55 §4.4) ---

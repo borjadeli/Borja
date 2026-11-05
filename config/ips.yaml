@@ -5,8 +5,8 @@
 version: "1.0"
 fecha: "2026-10-26"
 
-# --- Límites de cartera (decisiones del operador 2026-10-26) ---
-max_posiciones: 12
+# --- Límites de cartera (decisiones del operador 2026-10-26; max_posiciones 12→20 en r7a #1) ---
+max_posiciones: 20             # r7a #1: 12→20. NO cuenta los ETFs de estacionamiento (ver abajo)
 peso_max_nombre: 0.20          # 20% por nombre
 max_por_sector: 0.30
 max_por_cuello: 0.35           # requiere mapa poblado (nx_nodo) — ya está
@@ -65,6 +65,29 @@ turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) �
 # --- Presupuesto LLM (el ledger de presupuesto lo hace cumplir; acá queda el número) ---
 presupuesto_usd_mes: 40.0
 presupuesto_bootstrap_usd: 25.0     # tope PROPIO de la primera pasada del universo (separado del mensual)
+
+# --- Estacionamiento en ETFs temáticos (r7a #1) ---
+# El residual que NO encuentra nombres con margen de seguridad se aparca acá (ponderado por los clusters del
+# mapa), NUNCA en nombres caros para llegar al 90%. La caja alta sigue exigiendo tesis macro. Los ETFs de esta
+# lista NO cuentan como posición (max_posiciones) ni como operación (max_ops_semana) y se desarman primero.
+estacionamiento:
+  activo: true
+  etf_default: SPY                      # clusters sin ETF temático → índice amplio
+  etfs_por_cluster:                     # cluster del mapa (nx_nodo) → ETF temático de la cartera sombra
+    semis: SMH
+    semiconductores: SMH
+    fotonica: SMH
+    fotónica: SMH
+    nuclear: URA
+    uranio: URA
+    energia: URA
+    energía: URA
+    defensa: ITA
+    espacio: ITA
+    aeroespacial: ITA
+    commodities: COPX
+    minerales: COPX
+    cobre: COPX
 
 # --- Duro e innegociable ---
 ordenes_reales: false          # PROHIBIDO enviar órdenes reales / conectar bróker con escritura

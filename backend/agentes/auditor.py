@@ -19,8 +19,8 @@ PROMPT_VERSION = "auditor_v1"
 _PROMPT = (Path(__file__).resolve().parent.parent.parent / "prompts" / "auditor_v1.md").read_text()
 
 # D5 (doc 74): tipos de concentración/coherencia + los 4 hallazgos de la búsqueda web adversarial.
-_TIPO = ["concentracion", "coherencia_memo_peso", "rotacion", "verificacion_fallida", "violacion_ips",
-         "omision_material", "evento_proximo", "clausula_filing", "competidor"]
+_TIPO = ["concentracion", "coherencia_memo_peso", "coherencia", "rotacion", "verificacion_fallida",
+         "violacion_ips", "omision_material", "evento_proximo", "clausula_filing", "competidor"]
 _SEV = ["alta", "media", "baja"]
 _S = {"type": "string"}
 _MAX_OBJECIONES = 3                   # materialidad (IA2): máx 3/nombre, o el PM aprende a ignorarlas

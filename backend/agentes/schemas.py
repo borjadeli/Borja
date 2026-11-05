@@ -287,8 +287,8 @@ class PMDecision(BaseModel):
 
 class AuditObjecion(BaseModel):
     # los 4 últimos (doc 74 D5) son hallazgos de la búsqueda web adversarial del Auditor (lo que el comité no vio)
-    tipo: Literal["concentracion", "coherencia_memo_peso", "rotacion", "verificacion_fallida", "violacion_ips",
-                  "omision_material", "evento_proximo", "clausula_filing", "competidor"]
+    tipo: Literal["concentracion", "coherencia_memo_peso", "coherencia", "rotacion", "verificacion_fallida",
+                  "violacion_ips", "omision_material", "evento_proximo", "clausula_filing", "competidor"]
     detalle: str                                 # D5: hallazgo + evidencia (url) + consecuencia (qué número cambia)
     severidad: Literal["alta", "media", "baja"]
 

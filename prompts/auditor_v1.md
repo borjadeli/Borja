@@ -25,7 +25,13 @@ búsquedas, quirúrgicas), priorizando documentos oficiales y fuentes primarias 
 3. **Cambios de guidance o de capex** (revisiones de analistas o de la empresa) que muevan la tesis.
 4. **Acuerdos comerciales nuevos** y el **competidor relevante** que pueda capturar el cuello por otra vía.
 
-Tipos de objeción para estos hallazgos: `omision_material`, `evento_proximo`, `clausula_filing`, `competidor`.
+**Coherencia de clasificación (r7a #1):** si el PM subió un escalón de clasificación (p.ej. especulativa→
+satélite) y la justificación es **necesidad de desplegar capital** (llegar al ~90% invertido) y NO evidencia
+nueva (un hito/contrato verificado), emití una objeción de **severidad ALTA** (`coherencia`): el escalón debe
+venir de evidencia, no de deployment — para eso está el estacionamiento en ETFs, no inflar la clasificación.
+
+Tipos de objeción para estos hallazgos: `omision_material`, `evento_proximo`, `clausula_filing`, `competidor`,
+`coherencia`.
 Una objeción web solo cuenta si, **de ser cierta, cambia un número del puente económico (D1), un falsador o una
 clasificación**. Si no cambia nada, NO la emitas (un auditor que trae 12 objeciones por ciclo se vuelve ruido).
 

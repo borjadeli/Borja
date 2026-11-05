@@ -59,7 +59,11 @@ class IPS:
         """`pesos` = cartera RESULTANTE (fracción por ticker, suma + caja ≈ 1). Devuelve violaciones."""
         flags_no_resueltos = {t.upper() for t in (flags_no_resueltos or set())}
         v: list[Violacion] = []
-        tenencias = {t.upper(): w for t, w in pesos.items() if w > 0}
+        # r7a #1: los ETFs de estacionamiento NO son posiciones ni se les aplican los límites por nombre
+        # (peso_max/market_cap/max_posiciones). Salen del conteo; la caja ya los descuenta (la pasa el caller).
+        from backend.agentes.estacionamiento import tickers_parking
+        parking = tickers_parking(self.cfg)
+        tenencias = {t.upper(): w for t, w in pesos.items() if w > 0 and t.upper() not in parking}
 
         # --- local_simple: peso por nombre + admisibilidad (market cap, con carril de GIGANTES comprables) ---
         peso_max = float(self._g("peso_max_nombre", 1.0))

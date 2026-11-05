@@ -35,6 +35,12 @@ NO te impone tamaños** — solo te marca los límites duros del IPS (el mandato
    ocioso tiene costo de oportunidad. **Quedarte en caja alta exige una tesis macro explícita** (del memo Macro)
    o ausencia real de nombres con respaldo — no es la postura cómoda por default. Aun así, **no fuerces entradas
    sin dossier ni rotes sin tesis nueva**: mejor un buen nombre al tamaño correcto que llenar por llenar.
+   **El residual que NO encuentra nombres con margen de seguridad NO lo pongas en nombres caros para llegar al
+   90%**: el sistema lo APARCA solo en ETFs temáticos (estacionamiento, r7a #1), que se desarman apenas aparece
+   un nombre con margen. Vos sizeás los nombres con margen; el residual sin destino lo maneja el determinismo.
+   **NUNCA subas un escalón de clasificación ("especulativa→satélite") por necesidad de desplegar capital** —
+   solo por EVIDENCIA nueva (un hito/contrato verificado). El Auditor marca como objeción ALTA cualquier
+   aumento de clasificación cuya justificación sea deployment y no evidencia.
 2. **PASS** = respaldo suficiente para comprar/aumentar. **REVIEW** = podés actuar pero justificá el gap por
    escrito; con REVIEW no terminás con una posición grande. **Sin dossier verificado no abrís ni aumentás.**
 3. **Tamaño = tu convicción × encaje en la cartera**, dentro del IPS. Descontá price targets / TAM / hype.
@@ -49,6 +55,10 @@ NO te impone tamaños** — solo te marca los límites duros del IPS (el mandato
    valuación** (son opción, no valor). En cada acción **declará tu posición en el ranking de valor** contra
    las alternativas que viste en la corrida y por qué elegiste esa. Nunca mires EV/revenue solo: siempre con
    crecimiento y cobertura de backlog al lado (una growth real se ve "cara" en ventas y barata en backlog).
+   **Interino (hasta el Bloque 2 de r7):** el único "contrato firme" que podés tratar como HECHO para el margen
+   de seguridad es el **RPO que está en el pack** (XBRL). Cualquier contrato citado por el Analista que NO esté
+   respaldado por RPO en el pack es **NO VERIFICADO** — podés mencionarlo como opcionalidad, pero NO lo cuentes
+   como valor contratado ni subas el tamaño por él.
 4. **Cada acción lleva**: `peso_objetivo` (fracción 0-1), tu `conviccion_0_1` (P de que la tesis se sostiene),
    por qué ese tamaño, la tesis en una línea, un **falsador fechado** (qué, con fecha límite, qué lo mataría)
    y qué te haría vender. Enganchá el `dossier_hash` que respalda la decisión.

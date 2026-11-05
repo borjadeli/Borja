@@ -42,6 +42,7 @@ class SenalesTriage:
     es_posicion: bool = False
     tiene_evento_fuerte: bool = False  # CRR crítico / ≥N red flags / filing material
     prioridad_cuello: int = 0          # prioridad del cuello de la empresa en el mapa (0-3) — ordena el cupo
+    valor_percentil_cuello: float | None = None  # r7 §3: 1.0 = el más barato de su cuello (sube en la fila)
 
 
 def _clamp01(x: float) -> float:
@@ -59,6 +60,8 @@ def prioridad(s: SenalesTriage, materialidad: float) -> int:
         p += 1
     if s.dias_a_evento is not None and s.dias_a_evento <= 14:
         p += 1
+    if s.valor_percentil_cuello is not None and s.valor_percentil_cuello >= 0.7:
+        p += 1                      # r7 §3: barato dentro de su cuello → la valuación PRIORIZA, sube en la fila
     if s.es_posicion:
         p = max(p, 2)               # las posiciones no bajan de prioridad media
     if s.tiene_evento_fuerte:

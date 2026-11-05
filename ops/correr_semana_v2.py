@@ -127,9 +127,10 @@ def _filtros_embudo(candidatos, ips):
     return _invertible, _gigante_barato, int(ips.cfg.get("cupo_forzados", 8)), int(ips.cfg.get("cupo_gigantes", 2))
 
 
-def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
+def _dry_run_universo(candidatos, *, ips, cupo: int, valor=None) -> None:
     """Imprime qué se analizaría usando la MISMA función de selección + MISMOS filtros que la corrida real
-    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c)."""
+    (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c). `valor` = (ratios, metricas, cuellos) de
+    la señal de valor (r7 §3/§8) → imprime el top-15 más barato por cuello."""
     from backend.agentes.embudo import seleccionar_para_deep
     invertible_fn, gigante_barato_fn, cupo_forzados, cupo_gigantes = _filtros_embudo(candidatos, ips)
     sel = seleccionar_para_deep(candidatos, cupo=cupo,
@@ -149,6 +150,16 @@ def _dry_run_universo(candidatos, *, ips, cupo: int) -> None:
     print(f"PROMOVIDOS por cupo ({len(sel['promovidos'])}/{cupo}): {[t for t, _ in sel['promovidos']]}")
     print(f"en espera (post-earnings / cola / sin trigger / overflow forzado): {len(sel['espera'])}")
     print(f"→ análisis profundos estimados: {n_deep}  ·  costo estimado: ~${n_deep * 0.68:.2f}")
+    if valor:
+        from backend.agentes.embudo import top_por_valor
+        ratios, met, cuellos = valor
+        top = top_por_valor(ratios, cuellos, met, n=15)
+        print("\n=== SEÑAL DE VALOR — top 15 más baratos por cuello (r7 §3; EV/(contratado+revenue)) ===")
+        for f in top:
+            ev = f["ev"]; rev = f["revenue"]; vc = f["valor_contratado"]
+            print(f"  {f['ticker']:8} pct={f['percentil_valor']:.2f}  ratio={f['ratio_valor']}  "
+                  f"EV={ev/1e6:,.0f}M  rev={rev/1e6 if rev else 0:,.0f}M  "
+                  f"contratado={vc/1e6 if vc else 0:,.0f}M  [{f['cuello']}]")
 
 
 def _contexto_mapa_fn(ticker: str) -> str:
@@ -197,6 +208,9 @@ def main() -> int:
                          "SIN gastar en Analista/Bear/PM")
     ap.add_argument("--sin-opus-solo", action="store_true",
                     help="no correr el baseline 'Opus+web solo' de Fase 5 (ahorra ~$0.5-1)")
+    ap.add_argument("--sin-valor", action="store_true",
+                    help="con --universo: saltear la señal de valor (r7 §3) para una corrida rápida sin "
+                         "assemblar la lente de valuación de todo el universo")
     args = ap.parse_args()
     tickers = [t.upper() for t in (args.tickers or ["OKLO"])]
 
@@ -236,7 +250,9 @@ def main() -> int:
     # posiciones del paper + prioridad del cuello del mapa. El Triage/embudo filtra qué va a deep.
     from backend.database import session_scope
     if args.universo:
-        from backend.agentes.universo import candidatos_del_universo
+        from backend.agentes import data_pack as dp
+        from backend.agentes.universo import (candidatos_del_universo, cuello_primario,
+                                              tickers_universo, valor_del_universo)
         cache = CacheDossiers(_CACHE_PATH)
         _paper_tmp = abrir_paper(capital_inicial=args.capital, fecha=date.today())
         try:
@@ -244,13 +260,24 @@ def main() -> int:
         finally:
             _paper_tmp.close()
         with session_scope() as s_nx:
+            # Señal de valor (r7 §3): assembla la lente de valuación por nombre (hits de red) → percentil por
+            # cuello, que entra a la prioridad del embudo. Se puede saltear con --sin-valor (corrida rápida).
+            valor_pct, valor_met, valor_ratios, valor_cuellos = {}, {}, {}, {}
+            if not args.sin_valor:
+                tks = tickers_universo(s_nx)
+                print(f"calculando señal de valor sobre {len(tks)} nombres (lente de valuación; hits de red)…")
+                valor_pct, valor_met, valor_ratios, valor_cuellos = valor_del_universo(
+                    tks, pack_fn=lambda tk: dp.ensamblar(tk, as_of=date.today()),
+                    cuello_fn=lambda tk: cuello_primario(s_nx, tk))
             candidatos = candidatos_del_universo(
                 s_nx, hoy=date.today(), fechas_dossier=_fechas_dossier(cache),
-                posiciones=posiciones, prioridad_fn=_prioridad_cuello_fn(s_nx))
+                posiciones=posiciones, prioridad_fn=_prioridad_cuello_fn(s_nx),
+                valor_percentiles=valor_pct)
         tickers = [c[0] for c in candidatos]
         print(f"universo: {len(candidatos)} candidatos triageados (posiciones={sorted(posiciones)})")
         if args.dry_run:
-            _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6)
+            _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6,
+                              valor=(valor_ratios, valor_met, valor_cuellos) if valor_ratios else None)
             return 0
         snaps = recolectar_snapshots(tickers)
         precios = precios_de(snaps)

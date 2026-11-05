@@ -62,7 +62,8 @@ VENTANA_MONITOREO_INICIAL_DIAS = 30
 
 def señales_ticker(ticker: str, *, hoy: date, fecha_dossier: date | None, filings: list,
                    precio_hist: list[float] | None, es_posicion: bool,
-                   prioridad_cuello: int = 0, mercado_hist: list[float] | None = None) -> tuple[SenalesTriage, str]:
+                   prioridad_cuello: int = 0, mercado_hist: list[float] | None = None,
+                   valor_percentil: float | None = None) -> tuple[SenalesTriage, str]:
     """Señales DETERMINISTAS + resumen de eventos materiales nuevos. `filings` = RecentFiling (.tipo/.fecha/
     .items); `precio_hist` = serie de cierres. Usa la whitelist de materialidad del embudo (no todo filing)."""
     dias_dossier = (hoy - fecha_dossier).days if fecha_dossier else None
@@ -89,7 +90,7 @@ def señales_ticker(ticker: str, *, hoy: date, fecha_dossier: date | None, filin
     s = SenalesTriage(dias_desde_dossier=dias_dossier, hechos_nuevos=len(nuevos),
                       dias_a_evento=dias_a_evento, precio_vs_tesis_pct=precio_vs,
                       es_posicion=es_posicion, tiene_evento_fuerte=tiene_evento,
-                      prioridad_cuello=prioridad_cuello)
+                      prioridad_cuello=prioridad_cuello, valor_percentil_cuello=valor_percentil)
     partes = [f"{f.tipo}{'/' + f.items if getattr(f, 'items', '') else ''} {f.fecha.date()}"
               for f in nuevos[:6]]
     if precio_vs is not None and pct_abs is not None:
@@ -97,16 +98,54 @@ def señales_ticker(ticker: str, *, hoy: date, fecha_dossier: date | None, filin
     return s, " · ".join(partes)
 
 
+def cuello_primario(session: Session, ticker: str) -> str | None:
+    """Nombre del cuello (nodo) PRIMARIO de la empresa en nx_* — la unidad de comparación de la señal de
+    valor (r7 §3). None si el nombre no está mapeado."""
+    from backend.ledger.models import NxEmpresaNodo, NxNodo
+    fila = session.execute(
+        select(NxNodo.nombre).join(NxEmpresaNodo, NxEmpresaNodo.nodo_id == NxNodo.id)
+        .where(NxEmpresaNodo.ticker == ticker.upper())
+        .order_by(NxEmpresaNodo.es_primario.desc(), NxNodo.id)).first()
+    return fila[0] if fila else None
+
+
+def valor_del_universo(tickers: list[str], *, pack_fn, cuello_fn,
+                       hoy: date | None = None) -> tuple[dict, dict, dict, dict]:
+    """Señal de valor del universo (r7 §3): assembla la lente de valuación por nombre y computa el percentil
+    de valor DENTRO de su cuello (lo barato sube en la fila). `pack_fn(tk)->DataPack` (hits de red en real,
+    inyectable), `cuello_fn(tk)->str|None`. Best-effort: un nombre que falla queda sin señal. Devuelve
+    (percentiles, metricas_por_tk, ratios, cuellos)."""
+    from backend.agentes.embudo import percentiles_valor_por_cuello, ratio_valor
+    metricas_por_tk: dict[str, dict] = {}
+    ratios: dict[str, float | None] = {}
+    cuellos: dict[str, str | None] = {}
+    for tk in tickers:
+        tk = tk.upper()
+        cuellos[tk] = cuello_fn(tk)
+        try:
+            pack = pack_fn(tk)
+            m = {p.metric: p.value for p in pack.puntos if p.value is not None}
+        except Exception:  # noqa: BLE001 — un nombre sin pack queda sin señal, no tumba la corrida
+            m = {}
+        metricas_por_tk[tk] = m
+        ratios[tk] = ratio_valor(m)
+    return percentiles_valor_por_cuello(ratios, cuellos), metricas_por_tk, ratios, cuellos
+
+
 def candidatos_del_universo(session: Session, *, hoy: date | None = None,
                             fechas_dossier: dict[str, date] | None = None,
                             posiciones: set[str] | None = None,
                             filings_fn=None, precio_hist_fn=None,
-                            prioridad_fn=None) -> list[tuple[str, SenalesTriage, str]]:
+                            prioridad_fn=None,
+                            valor_percentiles: dict[str, float | None] | None = None,
+                            ) -> list[tuple[str, SenalesTriage, str]]:
     """Arma los `candidatos` (ticker, SenalesTriage, resumen) para `orquestador.correr_semana` desde todo el
-    universo. Fuentes reales por default (EDGAR + market_data), inyectables para tests."""
+    universo. Fuentes reales por default (EDGAR + market_data), inyectables para tests. `valor_percentiles`
+    (r7 §3): percentil de valor por cuello precomputado (lo barato sube en la fila); None = sin señal."""
     hoy = hoy or date.today()
     fechas_dossier = fechas_dossier or {}
     posiciones = {t.upper() for t in (posiciones or set())}
+    valor_percentiles = {k.upper(): v for k, v in (valor_percentiles or {}).items()}
     if filings_fn is None:
         from backend.services.edgar import get_recent_filings
         # Se traen TODOS los tipos candidatos a material; la whitelist fina por ÍTEM la aplica el embudo.
@@ -134,7 +173,8 @@ def candidatos_del_universo(session: Session, *, hoy: date | None = None,
             s, resumen = señales_ticker(
                 tk, hoy=hoy, fecha_dossier=fechas_dossier.get(tk.upper()),
                 filings=filings_fn(tk), precio_hist=ph, mercado_hist=merc,
-                es_posicion=tk.upper() in posiciones, prioridad_cuello=prioridad_fn(tk))
+                es_posicion=tk.upper() in posiciones, prioridad_cuello=prioridad_fn(tk),
+                valor_percentil=valor_percentiles.get(tk.upper()))
             out.append((tk.upper(), s, resumen))
         except Exception:  # noqa: BLE001 — un nombre que falla al traer señales no tumba el screening
             continue

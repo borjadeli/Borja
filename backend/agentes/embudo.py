@@ -282,3 +282,55 @@ def clasificar_candidato(*, es_posicion: bool, eventos_materiales: list, z_preci
     if precio_fuerte:
         return "precio", PRIORIDAD["precio"]
     return "sin_trigger", PRIORIDAD["sin_trigger"]
+
+
+# --------------------------------------------------------------------------- señal de valor (r7 §3, doc 78)
+# La valuación PRIORIZA: lo barato respecto de lo contratado+facturado, DENTRO de su cuello, sube en la fila.
+# Determinista, API-free: consume las métricas de la lente (fuente_valuacion) ya calculadas por nombre.
+
+def ratio_valor(metricas: dict) -> float | None:
+    """EV / (valor contratado ajustado + revenue). MENOR = más barato. `metricas` = {metric: value|None} del
+    pack (enterprise_value, valor_contratado_ajustado, revenue). None si no hay EV o el denominador es ≤ 0
+    (pre-revenue SIN backlog contratado = opción pura → NO se le exige valuación, r7 §6)."""
+    ev = metricas.get("enterprise_value")
+    if ev is None:
+        return None
+    denom = (metricas.get("valor_contratado_ajustado") or 0.0) + (metricas.get("revenue") or 0.0)
+    if denom <= 0:
+        return None
+    return round(ev / denom, 4)
+
+
+def percentiles_valor_por_cuello(ratios: dict[str, float | None],
+                                 cuellos: dict[str, str | None]) -> dict[str, float | None]:
+    """Percentil de valor de cada nombre DENTRO de su cuello: 1.0 = el más barato del cuello, 0.0 = el más
+    caro. None si el nombre no tiene ratio o su cuello tiene <2 nombres comparables (no hay con qué rankear)."""
+    from collections import defaultdict
+    grupos: dict[str, list[tuple[str, float]]] = defaultdict(list)
+    for tk, r in ratios.items():
+        c = cuellos.get(tk)
+        if r is not None and c:
+            grupos[c].append((tk, r))
+    out: dict[str, float | None] = {tk: None for tk in ratios}
+    for items in grupos.values():
+        if len(items) < 2:
+            continue
+        ordenado = sorted(items, key=lambda x: x[1])      # ascendente: más barato primero
+        n = len(ordenado)
+        for i, (tk, _r) in enumerate(ordenado):
+            out[tk] = round(1 - i / (n - 1), 3)            # i=0 (más barato) → 1.0
+    return out
+
+
+def top_por_valor(ratios: dict[str, float | None], cuellos: dict[str, str | None],
+                  metricas_por_tk: dict[str, dict], n: int = 15) -> list[dict]:
+    """Top-N más baratos por valor dentro de su cuello (para el reporte del dry-run, r7 §8). Ordena por
+    percentil desc (más barato primero), con el ratio y las métricas crudas para leer el porqué."""
+    pct = percentiles_valor_por_cuello(ratios, cuellos)
+    filas = [{"ticker": tk, "cuello": cuellos.get(tk), "percentil_valor": pct.get(tk),
+              "ratio_valor": ratios.get(tk), "ev": metricas_por_tk.get(tk, {}).get("enterprise_value"),
+              "revenue": metricas_por_tk.get(tk, {}).get("revenue"),
+              "valor_contratado": metricas_por_tk.get(tk, {}).get("valor_contratado_ajustado")}
+             for tk in ratios if pct.get(tk) is not None]
+    filas.sort(key=lambda f: -(f["percentil_valor"] or 0.0))
+    return filas[:n]

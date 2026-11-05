@@ -13,9 +13,11 @@ Punch list externo (rama hasta 675038b). Prioridad en orden. **831 tests verdes.
   estacionamiento.py` (`aplicar_estacionamiento`: residual = 1−nombres−caja_macro; desarme-primero implícito).
   `max_posiciones` 12→20; los ETFs de parking NO cuentan como posición (IPS los excluye) ni como op. Prompt PM:
   el residual lo maneja el determinismo, NUNCA subir un escalón de clasificación por deployment. Auditor: objeción
-  ALTA (`coherencia`) si un escalón se justifica por deployment y no por evidencia. **Falta la PUESTA EN VIVO:**
-  el runner debe aplicar el overlay al target final + el paper ejecutar los ETFs + excluir el rebalanceo de
-  parking de la rotación/ops (se dejó fuera del gate a propósito, para no tocar el camino del dinero sin cuidado).
+  ALTA (`coherencia`) si un escalón se justifica por deployment y no por evidencia. **PUESTA EN VIVO HECHA
+  (2026-11-05):** `RunnerSemanal._estacionar` aplica el overlay al target final (solo si `operar_ahora`; si el
+  PM no opera = caja macro, se respeta), ponderado por el sector de los nombres con convicción (fallback: el
+  mapa del universo); `_rotacion` excluye los ETFs de parking; el ops `correr_semana_v2` trae los precios de
+  los ETFs + el meta de conversión para el fill. 833 tests verdes.
 - **#2 Orden de archivo (HECHO):** `elegir_a_archivar` ahora archiva (a) analizado+descartado/FAIL → (b) analizado
   >180d sin señal de valor → (c) nunca analizado, y protege la ALTA NUEVA hasta su primer análisis. Caller en
   `ops.cola_propuestas` enriquecido (descartado/tiene_valor/alta_nueva).

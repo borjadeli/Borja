@@ -59,3 +59,38 @@ def test_ips_excluye_etfs_de_max_posiciones():
     # 4 nombres + ETF → sí viola (4 > 3), el ETF sigue sin contar
     pesos2 = {"A": 0.2, "B": 0.2, "C": 0.2, "D": 0.1, "URA": 0.3}
     assert any(v.regla == "max_posiciones" for v in ips.validar(pesos2, ctx, caja=0.0))
+
+
+def test_runner_estaciona_residual_en_etfs():
+    # el runner aparca el residual que el PM no desplegó, ponderado por el sector de los nombres con convicción
+    from backend.agentes.ips import ContextoTicker, IPS
+    from backend.agentes.orquestador_decision import ResultadoDecision
+    from backend.agentes.runner_semanal import RunnerSemanal
+
+    class _Dec:
+        ips = IPS(cfg={"estacionamiento": {"activo": True, "etf_default": "SPY",
+                                           "etfs_por_cluster": {"nuclear": "URA", "semis": "SMH"}}})
+    r = RunnerSemanal.__new__(RunnerSemanal)       # evita __init__ (solo usamos _estacionar)
+    r.decision = _Dec()
+    res = ResultadoDecision(pesos_objetivo={}, pesos_finales={"OKLO": 0.3}, caja_final=0.7,
+                            clip="none", no_action=False)
+    r._estacionar(res, {"OKLO": ContextoTicker(sector="nuclear")})
+    assert res.pesos_finales["OKLO"] == 0.3
+    assert abs(res.pesos_finales["URA"] - 0.7) < 1e-6      # residual → URA (sector nuclear del único nombre)
+    assert abs(res.caja_final) < 1e-6
+
+
+def test_runner_sin_nombres_diversifica_por_universo():
+    from backend.agentes.ips import ContextoTicker, IPS
+    from backend.agentes.orquestador_decision import ResultadoDecision
+    from backend.agentes.runner_semanal import RunnerSemanal
+
+    class _Dec:
+        ips = IPS(cfg={"estacionamiento": {"activo": True, "etf_default": "SPY",
+                                           "etfs_por_cluster": {"nuclear": "URA", "semis": "SMH"}}})
+    r = RunnerSemanal.__new__(RunnerSemanal)
+    r.decision = _Dec()
+    res = ResultadoDecision(pesos_objetivo={}, pesos_finales={}, caja_final=1.0, clip="none", no_action=False)
+    ctx = {"A": ContextoTicker(sector="nuclear"), "B": ContextoTicker(sector="semis")}
+    r._estacionar(res, ctx)
+    assert abs(res.pesos_finales["URA"] - 0.5) < 1e-6 and abs(res.pesos_finales["SMH"] - 0.5) < 1e-6

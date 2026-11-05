@@ -30,12 +30,20 @@ def pesos_estacionamiento(residual: float, clusters_peso: dict[str, float], *,
     if residual <= 1e-9 or not clusters_peso:
         return {}
     por = {k.lower(): v for k, v in etfs_por_cluster.items()}
+
+    def _etf_de(cluster: str) -> str:
+        c = (cluster or "").lower()
+        for key, etf in por.items():                  # match tolerante: "nuclear/energía" → key "nuclear"
+            if key and (key in c or c in key):
+                return etf.upper()
+        return etf_default.upper()
+
     total = sum(w for w in clusters_peso.values() if w > 0) or 1.0
     out: dict[str, float] = {}
     for cluster, w in clusters_peso.items():
         if w <= 0:
             continue
-        etf = (por.get((cluster or "").lower()) or etf_default).upper()
+        etf = _etf_de(cluster)
         out[etf] = out.get(etf, 0.0) + residual * (w / total)
     return {k: round(v, 6) for k, v in out.items() if v > 1e-9}
 

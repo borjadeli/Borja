@@ -56,10 +56,12 @@ def _inadmisible(ctx: ContextoTicker | None, ips: IPS) -> bool:
     return ctx.adv_usd is not None and ctx.adv_usd < adv_min
 
 
-def _rotacion(cartera: dict[str, float], finales: dict[str, float]) -> float:
+def _rotacion(cartera: dict[str, float], finales: dict[str, float], *, excluir: set[str] | None = None) -> float:
     """Rotación = compras financiadas con ventas = min(Σaumentos, Σreducciones). El despliegue neto desde
-    caja (aumentos sin ventas que los financien) NO cuenta como rotación (auditoría r2 1b)."""
-    tk = set(cartera) | set(finales)
+    caja (aumentos sin ventas que los financien) NO cuenta como rotación (auditoría r2 1b). `excluir` saca los
+    ETFs de estacionamiento (r7a #1): su rebalanceo no es rotación de tesis."""
+    excluir = {t.upper() for t in (excluir or set())}
+    tk = (set(cartera) | set(finales)) - excluir
     incr = sum(max(0.0, finales.get(t, 0.0) - cartera.get(t, 0.0)) for t in tk)
     decr = sum(max(0.0, cartera.get(t, 0.0) - finales.get(t, 0.0)) for t in tk)
     return round(min(incr, decr), 6)
@@ -207,7 +209,8 @@ class OrquestadorDecision:
         # 5. Agregado GLOBAL (caja/ops-sesión/turnover-rotación/max_pos): bloquea TODOS los aumentos restantes.
         caja_cand = round(1.0 - sum(cand.values()), 6)
         ops_sesiones = self.ledger.sesiones_ops_en_semana(hoy) + (1 if (hay_reduccion or ok) else 0)
-        rot = _rotacion(cartera, cand)
+        from backend.agentes.estacionamiento import tickers_parking
+        rot = _rotacion(cartera, cand, excluir=tickers_parking(self.ips.cfg))
         glob = [v for v in self.ips.validar(cand, contexto, caja=caja_cand, ops_semana=ops_sesiones,
                                             turnover=rot)
                 if v.tipo == "agregada" and v.regla not in _GRUPO_REGLAS]

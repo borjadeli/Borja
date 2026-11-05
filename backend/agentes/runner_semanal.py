@@ -77,6 +77,31 @@ class RunnerSemanal:
         self.alertas_path.parent.mkdir(parents=True, exist_ok=True)
         self.alertas_path.write_text(json.dumps(alertas, ensure_ascii=False), encoding="utf-8")
 
+    def _estacionar(self, res_dec: ResultadoDecision, contexto: dict[str, ContextoTicker]) -> None:
+        """r7a #1: aparca el residual de `res_dec.pesos_finales` en ETFs temáticos ponderados por los clusters
+        del mapa (sector del nombre). Weighting: por los sectores donde el PM TIENE convicción (nombres con
+        peso); si no hay nombres, por la distribución de sectores del universo (contexto). Mutá res_dec."""
+        from collections import Counter
+
+        from backend.agentes.estacionamiento import aplicar_estacionamiento, tickers_parking
+        cfg = self.decision.ips.cfg
+        if not (cfg.get("estacionamiento") or {}).get("activo"):
+            return
+        park = tickers_parking(cfg)
+        nombres = {t: w for t, w in res_dec.pesos_finales.items() if t.upper() not in park and w > 0}
+        clusters: Counter = Counter()
+        for t, w in nombres.items():                              # donde el PM tiene convicción
+            ctx = contexto.get(t.upper())
+            if ctx and ctx.sector:
+                clusters[ctx.sector] += w
+        if not clusters:                                          # sin nombres → diversifica por el mapa
+            clusters = Counter(c.sector for c in contexto.values() if c and c.sector)
+        if not clusters:
+            return
+        finales, caja = aplicar_estacionamiento(nombres, dict(clusters), cfg)
+        res_dec.pesos_finales = finales
+        res_dec.caja_final = caja
+
     def _hit_rate_resumen(self) -> str:
         m = self.decision.ledger.metricas()
         if m.n_resueltos < MIN_N_HIT_RATE:
@@ -90,7 +115,7 @@ class RunnerSemanal:
                ciclo: str | None = None, comision: float = 0.0,
                cupo_cobertura: int = 0, bootstrap: bool = False,
                invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
-               cupo_gigantes: int = 0) -> ResultadoRunner:
+               cupo_gigantes: int = 0, precios_meta: dict[str, dict] | None = None) -> ResultadoRunner:
         hoy = hoy or date.today()
         ciclo = ciclo or hoy.isoformat()
 
@@ -196,8 +221,15 @@ class RunnerSemanal:
             flags_por_ticker=flags, clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
             memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
 
+        # 4bis. Estacionamiento (r7a #1): el residual que el PM NO desplegó en nombres con margen de seguridad
+        # se aparca en ETFs temáticos (ponderados por los clusters del mapa), NUNCA en nombres caros. Solo si
+        # el PM opera (operar_ahora): si eligió NO operar, es caja macro-justificada y se respeta.
+        if decision.operar_ahora:
+            self._estacionar(res_dec, contexto)
+
         # 5. Paper + persistir alertas para la corrida siguiente (item 5).
-        paper = ejecutar_paper(session, res_dec, precios=precios, fecha_fill=hoy, comision=comision)
+        paper = ejecutar_paper(session, res_dec, precios=precios, fecha_fill=hoy, comision=comision,
+                               precios_meta=precios_meta)
         self._guardar_alertas(res_dec.alertas)
 
         return ResultadoRunner(research=research, decision=decision, resultado_decision=res_dec,

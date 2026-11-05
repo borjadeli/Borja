@@ -290,13 +290,21 @@ def main() -> int:
     # pasa del tope del carril forzado (si no, el real divergiría del dry-run y gastaría de más).
     inv_fn, gig_fn, cupo_forz, cupo_gig = _filtros_embudo(candidatos, ips)
 
+    # Estacionamiento (r7a #1): sumar precios de los ETFs de parking al feed + meta de conversión (moneda/FX)
+    # para el rastro del fill (r7a #4). Sin esto el paper no podría ejecutar los ETFs del residual.
+    from backend.agentes.datos_reales import precios_meta_de
+    from backend.agentes.estacionamiento import tickers_parking
+    _snaps_etf = recolectar_snapshots(sorted(tickers_parking(ips.cfg)))
+    precios.update(precios_de(_snaps_etf))
+    precios_meta = precios_meta_de({**snaps, **_snaps_etf})
+
     paper = abrir_paper(capital_inicial=args.capital, fecha=date.today())
     try:
         _asegurar_precios_tenencias(paper, precios)   # r6 #2: tenencias siempre con precio (equity/sizing OK)
         res = runner.correr(candidatos, session=paper, precios=precios, contexto=contexto,
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap,
                             invertible_fn=inv_fn, cupo_forzados=cupo_forz,
-                            gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig)
+                            gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig, precios_meta=precios_meta)
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:

@@ -25,6 +25,8 @@ pre_earnings_top_n: 3          # earnings próximo → deep solo para posiciones
 dias_earnings_proximo: 10      # "earnings próximo" = a <= N días del evento estimado
 
 # --- Admisibilidad del universo ---
+universo_max: 160                   # tope de nombres en el universo (r6 #2). Al llenarse, una alta de discovery
+                                    #   ARCHIVA directo al peor no-posición (reemplazo directo; nada espera afuera)
 market_cap_min_usd: 150000000       # $150M
 market_cap_max_usd: 60000000000     # $60B
 adv_min_usd: 0                      # LIQUIDEZ NO ES FILTRO (decisión del operador: entra con poco capital).

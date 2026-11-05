@@ -65,12 +65,57 @@ def _nodos_mapa() -> list[dict]:
     return [{"nombre": t.nombre, "info": _info(t)} for t in terrs]
 
 
+def _prioridad_cuello(s, tk: str) -> int:
+    """0-2 del cuello primario del ticker en nx (confirmado=2 · vigilancia=1 · promesa/otro=0)."""
+    from sqlalchemy import select
+    from backend.ledger.models import NxEmpresaNodo, NxNodo
+    row = s.execute(select(NxNodo.estado_confirmacion).join(NxEmpresaNodo, NxEmpresaNodo.nodo_id == NxNodo.id)
+                    .where(NxEmpresaNodo.ticker == tk)).first()
+    return {"confirmado": 2, "vigilancia": 1}.get(row[0], 0) if row else 0
+
+
+def _reemplazo_directo_si_lleno(s, nuevo: str) -> str | None:
+    """r6 #2: si el universo está en el tope, ARCHIVA directo al peor no-posición para que entre `nuevo` (nada
+    espera afuera). Devuelve el ticker archivado (o None). Posiciones del paper nunca se archivan."""
+    from backend.agentes.descubrimiento import elegir_a_archivar
+    from backend.agentes.universo import tickers_universo
+    from backend.ledger.entidades import Estado, transicionar
+
+    cap = int(IPS.cargar().cfg.get("universo_max", 160))
+    actuales = [t.upper() for t in tickers_universo(s)]
+    if nuevo.upper() in actuales or len(actuales) < cap:
+        return None
+    from backend.ledger import core
+    paper = abrir_paper()
+    try:
+        posiciones = {t for t, p in core.proyectar(paper, {})["posiciones"].items() if p.shares > 0}
+    finally:
+        paper.close()
+    fechas = {tk: e.fecha for tk, e in _cache_dossiers().todos().items()}
+    universo = [{"ticker": t, "cuello_prio": _prioridad_cuello(s, t), "dossier_fecha": fechas.get(t)}
+                for t in actuales]
+    peor = elegir_a_archivar(universo, posiciones=posiciones)
+    if peor:
+        transicionar(s, ticker=peor, estado_nuevo=Estado.ARCHIVADA, disparado_por="discovery:reemplazo_directo",
+                     fecha=date.today(), motivo=f"archivada para dar lugar a {nuevo.upper()} (universo en tope {cap})")
+    return peor
+
+
+def _cache_dossiers():
+    from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH
+    return CacheDossiers(path=_CACHE_PATH)
+
+
 def _alta_empresa(ticker: str, propuesta) -> None:
-    """Inserta la empresa validada en nx_empresa como Candidata (fuente discovery). `propuesta` es PropuestaEmpresa."""
+    """Inserta la empresa validada en nx_empresa como Candidata (fuente discovery). Si el universo está lleno,
+    archiva directo al peor no-posición (reemplazo directo, r6 #2). `propuesta` es PropuestaEmpresa."""
     from backend.database import session_scope
     from backend.ledger.entidades import crear_candidata
     cuello = propuesta.cuello if hasattr(propuesta, "cuello") else (propuesta or {}).get("cuello", "")
     with session_scope() as s:
+        archivado = _reemplazo_directo_si_lleno(s, ticker)
+        if archivado:
+            print(f"  (universo en tope → archivada {archivado} para dar lugar a {ticker.upper()})")
         crear_candidata(s, ticker=ticker, fecha=date.today(), fuente_ingreso="discovery",
                         motivo=f"discovery: {cuello}".strip())
 

@@ -16,6 +16,22 @@ def test_validador_acepta_una_buena():
     assert ok and motivos == []
 
 
+def test_elegir_a_archivar_reemplazo_directo():
+    from datetime import date
+
+    from backend.agentes.descubrimiento import elegir_a_archivar
+    hoy = date(2026, 11, 5)
+    universo = [
+        {"ticker": "CORE", "cuello_prio": 2, "dossier_fecha": hoy},        # cuello alto + analizado → queda
+        {"ticker": "POS", "cuello_prio": 0, "dossier_fecha": None},        # peor por métrica PERO es posición
+        {"ticker": "FRIO", "cuello_prio": 0, "dossier_fecha": None},       # cuello bajo + nunca analizado → se va
+        {"ticker": "TIBIO", "cuello_prio": 1, "dossier_fecha": None},
+    ]
+    assert elegir_a_archivar(universo, posiciones={"POS"}) == "FRIO"       # el peor NO-posición
+    # si todo son posiciones, no archiva a nadie
+    assert elegir_a_archivar([{"ticker": "A", "cuello_prio": 0, "dossier_fecha": None}], posiciones={"A"}) is None
+
+
 def test_validador_exige_fuente_primaria_r6_3():
     # r6 #3: X/Reddit/blogs no cuentan como fuente — se necesita regulador/filing/IR
     ok, m = validar_propuesta(_p(fuentes=["https://reddit.com/r/stocks/x"]), ips_cfg=_IPS, universo_actual=set())

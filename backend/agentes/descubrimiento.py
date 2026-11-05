@@ -480,6 +480,18 @@ class AgenteCurador:
 
 # --------------------------------------------------------------------------- encolado (auto, sin humano)
 
+def elegir_a_archivar(universo: list[dict], *, posiciones: set[str]) -> str | None:
+    """Uno-entra-uno-sale (r6 #2): con el universo lleno, ¿a quién se archiva para que entre uno nuevo? El PEOR
+    no-posición. `universo`: [{ticker, cuello_prio (0-2), dossier_fecha (date|None)}]. Prioridad para QUEDARSE:
+    cuello alto > analizado reciente > el que más tiempo lleva sin aportar. Una POSICIÓN nunca se archiva.
+    Devuelve el ticker a archivar o None (si todo son posiciones). El reemplazo es DIRECTO: nada espera afuera."""
+    cand = [u for u in universo if u["ticker"].upper() not in {p.upper() for p in posiciones}]
+    if not cand:
+        return None
+    cand.sort(key=lambda u: (u.get("cuello_prio", 0), u.get("dossier_fecha") or date.min))
+    return cand[0]["ticker"]       # menor prioridad de cuello y, a igualdad, el más frío/viejo → se archiva
+
+
 def encolar_propuestas(cola: ColaPropuestas, props, *, ips_cfg: dict, universo_actual: set[str],
                        nodos_conocidos: set[str] | None = None, alta_fn=None) -> list[dict]:
     """Registra cada empresa (valida facts + ENCAJE EN EL MAPA + fuente primaria). Si pasa y hay `alta_fn`,

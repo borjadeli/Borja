@@ -61,26 +61,38 @@ class IPS:
         v: list[Violacion] = []
         tenencias = {t.upper(): w for t, w in pesos.items() if w > 0}
 
-        # --- local_simple: peso por nombre (cap base, o cap de flag de supervivencia) ---
+        # --- local_simple: peso por nombre + admisibilidad (market cap, con carril de GIGANTES comprables) ---
         peso_max = float(self._g("peso_max_nombre", 1.0))
         cap_flag = float(self._g("cap_flag_supervivencia", peso_max))
+        mc_min, mc_max = float(self._g("market_cap_min_usd", 0)), float(self._g("market_cap_max_usd", 1e18))
+        adv_min = float(self._g("adv_min_usd", 0))
+        # carril de gigantes (decisión del operador, r6 #6): >market_cap_max COMPRABLE con cap propio (peso_max_gigante).
+        gig_comprables = bool(self._g("gigantes_comprables", False))
+        peso_max_gig = float(self._g("peso_max_gigante", peso_max))
+
         for tk, w in tenencias.items():
-            tope = min(peso_max, cap_flag) if tk in flags_no_resueltos else peso_max
+            ctx = contexto.get(tk)
+            mc = ctx.market_cap if ctx else None
+            es_gig = gig_comprables and mc is not None and mc > mc_max
+            base = peso_max_gig if es_gig else peso_max          # un gigante comprable sizea bajo SU cap
+            tope = min(base, cap_flag) if tk in flags_no_resueltos else base
             if w > tope + 1e-9:
                 v.append(Violacion("peso_max_nombre", f"{tk}: {w:.1%} > {tope:.1%}"
+                                   + (" (gigante)" if es_gig else "")
                                    + (" (flag supervivencia)" if tk in flags_no_resueltos else ""),
                                    holgura=round(tope - w, 6), tipo="local_simple"))
 
-        # --- local_simple: admisibilidad por nombre (market cap, liquidez) ---
-        mc_min, mc_max = float(self._g("market_cap_min_usd", 0)), float(self._g("market_cap_max_usd", 1e18))
-        adv_min = float(self._g("adv_min_usd", 0))
         for tk in tenencias:
             ctx = contexto.get(tk)
             if ctx is None:
                 continue
-            if ctx.market_cap is not None and not (mc_min <= ctx.market_cap <= mc_max):
-                v.append(Violacion("market_cap_rango", f"{tk}: ${ctx.market_cap/1e9:.2f}B fuera de rango",
-                                   holgura=0.0, tipo="local_simple"))
+            mc = ctx.market_cap
+            if mc is not None:
+                # abajo del piso siempre viola; arriba del techo viola SOLO si el carril de gigantes está apagado
+                fuera = mc < mc_min or (mc > mc_max and not gig_comprables)
+                if fuera:
+                    v.append(Violacion("market_cap_rango", f"{tk}: ${mc/1e9:.2f}B fuera de rango",
+                                       holgura=0.0, tipo="local_simple"))
             if ctx.adv_usd is not None and ctx.adv_usd < adv_min:
                 v.append(Violacion("adv_min", f"{tk}: ADV ${ctx.adv_usd/1e6:.1f}M < ${adv_min/1e6:.0f}M",
                                    holgura=round(ctx.adv_usd - adv_min, 2), tipo="local_simple"))

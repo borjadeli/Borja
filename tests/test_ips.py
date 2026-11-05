@@ -50,6 +50,26 @@ def test_market_cap_y_adv_local_simple():
     assert reglas == {"market_cap_rango", "adv_min"} and all(x.tipo == "local_simple" for x in v)
 
 
+def test_gigante_comprable_con_cap_propio_r6_6():
+    ips = _ips(gigantes_comprables=True, peso_max_gigante=0.10)
+    big = {"BIG": _ctx(market_cap=80e9, adv_usd=50e6)}            # gigante
+    assert ips.validar({"BIG": 0.10}, big, caja=0.90) == []       # 10% → admisible (sin market_cap_rango)
+    v = ips.validar({"BIG": 0.15}, big, caja=0.85)                # 15% > cap de gigante 10%
+    assert [x.regla for x in v] == ["peso_max_nombre"] and "gigante" in v[0].detalle
+
+
+def test_gigante_rechazado_si_carril_apagado():
+    ips = _ips(gigantes_comprables=False)
+    v = ips.validar({"BIG": 0.08}, {"BIG": _ctx(market_cap=80e9, adv_usd=50e6)}, caja=0.92)
+    assert any(x.regla == "market_cap_rango" for x in v)          # carril off → gigante no entra
+
+
+def test_microcap_siempre_viola_aunque_carril_on():
+    ips = _ips(gigantes_comprables=True)
+    v = ips.validar({"TINY": 0.05}, {"TINY": _ctx(market_cap=100e6, adv_usd=50e6)}, caja=0.95)  # <$150M
+    assert any(x.regla == "market_cap_rango" for x in v)          # el piso de $150M no se toca
+
+
 def test_concentracion_sector_es_agregada():
     ips = _ips()
     pesos = {"A": 0.18, "B": 0.18}                  # mismo sector = 36% > 30%

@@ -1,28 +1,28 @@
 {
-  "capturado": "2026-11-03",
+  "capturado": "2026-11-12",
   "tolerancia_rel": 0.001,
   "nombres": {
     "MP": {
-      "as_of": "2026-11-03",
+      "as_of": "2026-11-12",
       "metricas": {
         "cash": {
-          "valor": 429075000.0,
+          "valor": 260336000.0,
           "verificado": false
         },
         "cash_and_sti": {
-          "valor": 1452639000.0,
+          "valor": 1337911000.0,
           "verificado": false
         },
         "short_term_investments": {
-          "valor": 1023564000.0,
+          "valor": 1077575000.0,
           "verificado": false
         },
         "liquidez": {
-          "valor": 1452639000.0,
+          "valor": 1337911000.0,
           "verificado": false
         },
         "shares_outstanding": {
-          "valor": 178101588.0,
+          "valor": 178267976.0,
           "verificado": false
         },
         "shares_outstanding_1y": {
@@ -30,7 +30,7 @@
           "verificado": false
         },
         "dilucion_12m_pct": {
-          "valor": 0.49,
+          "valor": 0.59,
           "verificado": false
         },
         "revenue": {
@@ -38,7 +38,7 @@
           "verificado": false
         },
         "revenue_q": {
-          "valor": 108490000.0,
+          "valor": 147655000.0,
           "verificado": false
         },
         "cash_used_ops": {
@@ -50,36 +50,36 @@
           "verificado": false
         },
         "cash_runway_months": {
-          "valor": 53.1,
+          "valor": 48.9,
           "verificado": false
         },
         "long_term_debt": {
-          "valor": 934583000.0,
+          "valor": 936253000.0,
           "verificado": false
         }
       }
     },
     "OKLO": {
-      "as_of": "2026-11-03",
+      "as_of": "2026-11-12",
       "metricas": {
         "cash": {
-          "valor": 1644704000.0,
+          "valor": 1550061000.0,
           "verificado": false
         },
         "short_term_investments": {
-          "valor": 820454000.0,
+          "valor": 951768000.0,
           "verificado": false
         },
         "long_term_investments": {
-          "valor": 541131000.0,
+          "valor": 628956000.0,
           "verificado": false
         },
         "liquidez": {
-          "valor": 3006289000.0,
+          "valor": 3130785000.0,
           "verificado": false
         },
         "shares_outstanding": {
-          "valor": 186017650.0,
+          "valor": 195289593.0,
           "verificado": false
         },
         "shares_outstanding_1y": {
@@ -87,11 +87,11 @@
           "verificado": false
         },
         "dilucion_12m_pct": {
-          "valor": 19.05,
+          "valor": 24.99,
           "verificado": false
         },
         "revenue_q": {
-          "valor": 1210000.0,
+          "valor": 1861000.0,
           "verificado": false
         },
         "cash_used_ops": {
@@ -103,7 +103,7 @@
           "verificado": false
         },
         "cash_runway_months": {
-          "valor": 312.7,
+          "valor": 325.6,
           "verificado": false
         },
         "long_term_debt": {
@@ -113,26 +113,26 @@
       }
     },
     "RGTI": {
-      "as_of": "2026-11-03",
+      "as_of": "2026-11-12",
       "metricas": {
         "cash": {
-          "valor": 27763000.0,
+          "valor": 45799000.0,
           "verificado": false
         },
         "short_term_investments": {
-          "valor": 365946000.0,
+          "valor": 337514000.0,
           "verificado": false
         },
         "long_term_investments": {
-          "valor": 147586000.0,
+          "valor": 113830000.0,
           "verificado": false
         },
         "liquidez": {
-          "valor": 541295000.0,
+          "valor": 497143000.0,
           "verificado": false
         },
         "shares_outstanding": {
-          "valor": 333768747.0,
+          "valor": 342783018.0,
           "verificado": false
         },
         "shares_outstanding_1y": {
@@ -140,7 +140,7 @@
           "verificado": false
         },
         "dilucion_12m_pct": {
-          "valor": 1.13,
+          "valor": 3.87,
           "verificado": false
         },
         "revenue": {
@@ -148,7 +148,7 @@
           "verificado": false
         },
         "revenue_q": {
-          "valor": 5138000.0,
+          "valor": 1411000.0,
           "verificado": false
         },
         "cash_used_ops": {
@@ -160,7 +160,7 @@
           "verificado": false
         },
         "cash_runway_months": {
-          "valor": 84.1,
+          "valor": 77.3,
           "verificado": false
         },
         "long_term_debt": {

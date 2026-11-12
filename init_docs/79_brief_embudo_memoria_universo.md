@@ -6,6 +6,56 @@
 > estado real verificado + los huecos + las preguntas de diseño por área. Convergé en un DISEÑO, no en código.
 > Secuela de los docs 76 (embudo), 74 (Tier B/valuación), 72 (calidad). Fecha: 2026-11-12.
 
+## Contexto para quien no conoce BORJA (leer primero — el resto del brief lo asume)
+
+**Qué es.** Sistema quant **ADVISORY** (asesora; un humano ejecuta) para **small/mid caps de "industrias del
+futuro"** (AI infra, nuclear/energía, defensa, commodities/minerales, espacio, robótica, biotech, fotónica,
+semis). Apuesta **power-law** (pocas posiciones que pueden multiplicar). Hay un **paper trading** autónomo que
+valida el método con capital simulado.
+
+**El paradigma (quién decide).** El **determinismo (código) INFORMA y LIMITA**: datos con procedencia (XBRL
+point-in-time de EDGAR + calculadoras citadas), detección de eventos, presupuesto, y los límites de política
+(el IPS). **La IA DECIDE**: qué comprar/vender, cuánto y cuándo lo deciden agentes LLM, con un **PM-LLM** como
+decisor final y un **Auditor** que lo cuestiona. *El determinismo NO elige nombres ni tamaños.*
+
+**Los agentes (el comité).**
+- **Macro** (Opus+web): marco macro del ciclo (capex IA, energía, commodities, tasas) + prioridad de cuellos. 1 memo/ciclo.
+- **Discovery + Map Curator** (Sonnet+web): Discovery busca nombres/cuellos nuevos; el Curator valida los cuellos nuevos del mapa (≥2 fuentes primarias).
+- **Triage** (Haiku, barato): decide qué nombres del universo merecen deep research esta semana, sobre señales deterministas.
+- **Analista** (Opus+web): arma el **dossier** profundo de un nombre.
+- **Bear / red-team** (Sonnet+web): ataca la tesis.
+- **Verificador** (determinista, sin web): exige que los claims centrales sean hechos verificados (contraste numérico vs XBRL, clase epistémica por URL) → **PASS / REVIEW / FAIL**.
+- **PM** (Opus, **SIN web**): ve los dossiers verificados + cartera + macro + IPS, y **DECIDE** la cartera (nombres + tamaños).
+- **Auditor** (Opus/Sonnet): cuestiona la decisión del PM como predicciones falsables; no vetea.
+
+**El flujo semanal.** Macro → Triage (filtra todo el universo) → por los seleccionados: Analista → Bear →
+Verificador → **PM** (sizea bajo IPS) → **gate duro del IPS** → Auditor → **paper** ejecuta contra el ledger.
+
+**Las 5 capas.** A: datos + calculadoras (determinista). B: **IPS** (`config/ips.yaml`, límites del operador).
+C: agentes. D: monitoreo por eventos (filings/precio/red flags abren revisiones). E: ledger + evaluación
+(carteras sombra, Brier, hit-rate).
+
+**Glosario mínimo.**
+- **Cuello** (bottleneck / "picks-and-shovels"): el nodo estructural de una cadena de valor donde se captura el
+  valor (ej. "transceptores ópticos 800G", "turbinas de gas large-frame"). El **mapa** (`nx_nodo`) agrupa
+  empresas por cuello; cada cuello tiene estado promesa/vigilancia/confirmado.
+- **Dossier**: output de un deep research (tesis bull/bear independientes, escenarios bull/base/bear, falsador,
+  red flags, clasificación, "qué exige el precio").
+- **Data pack**: paquete de datos con **procedencia** (fuente + `known_at` + tipo ORIGINAL/DERIVED) que reciben
+  los agentes. `known_at` = fecha en que el dato fue público (point-in-time, anti look-ahead).
+- **IPS**: límites duros del operador en código (máx posiciones, peso máx/nombre, caps sector/cuello, rango
+  market cap, liquidez, caja, ops/semana, presupuesto).
+- **Falsador**: predicción FECHADA que, si se cumple (o vence en silencio), FALSA la tesis (no "se demora"). Se
+  puntúa ex-post (Brier).
+- **Clasificación de invertibilidad (D4)**: core / satélite / especulativa / watchlist — limita el TAMAÑO
+  (bandas). Hoy en modo "sombra" (reporta, no gatea).
+- **Estacionamiento**: el capital residual sin margen de seguridad se aparca en ETFs temáticos, no en nombres caros.
+- **Valuación como motor / puente económico (Tier B)**: la valuación atada al precio y al retorno (reverse
+  underwriting / expectations investing: leer qué descuenta el precio, no proyectar la propia historia).
+- **Carteras sombra**: benchmarks en paralelo (equal-weight de los PASS, ETFs temáticos, "Opus+web solo") para
+  medir si el comité agrega valor.
+- **RPO**: Remaining Performance Obligation (backlog contratado, tag de XBRL).
+
 ## 0. Marco que NO cambia
 - BORJA = PM de IA: agentes investigan/verifican/auditan, el **PM-LLM decide** nombres y tamaños; el
   determinismo informa (datos, cálculos, señales) y limita (IPS, presupuesto). **El PM no tiene web.**

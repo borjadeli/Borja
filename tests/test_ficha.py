@@ -1,121 +1,106 @@
-"""Tests de la ficha versionada (Etapa 4a): persistencia + enchufe del núcleo.
+"""Ficha viva (r9, doc 80 §F): puente, zonas/gatillos y el caso del operador (cara → cae → COMPRA sin re-deep)."""
+from dataclasses import dataclass
 
-Incluye un test de INTEGRACIÓN que corre el núcleo REAL (evaluar_empresa) sobre una
-EntradaEmpresa que pasa el gate. SQLite in-memory — no toca borja.db.
-"""
-from datetime import date
-from types import SimpleNamespace
+from backend.agentes.ficha import (EscenarioF, backfill_desde_dossier, calcular_puente, recalcular,
+                                    valor_accion)
 
-import pytest
-from sqlalchemy import create_engine, func, select
-from sqlalchemy.orm import Session
-
-from backend.ledger import entidades as e
-from backend.ledger import ficha
-from backend.ledger.entidades import Estado
-from backend.ledger.models import NxFichaVersion, NxHecho, crear_tablas
+# escenarios de una empresa con equity bridge limpio (sin deuda neta, 100M acciones, sin dilución)
+_ESC = [
+    EscenarioF("bear", metrica_terminal=200e6, multiplo_salida=5, anios=4, prob=0.25),   # EV 1.0B → $10/acc
+    EscenarioF("base", metrica_terminal=500e6, multiplo_salida=8, anios=4, prob=0.50),   # EV 4.0B → $40/acc
+    EscenarioF("bull", metrica_terminal=900e6, multiplo_salida=12, anios=4, prob=0.25),  # EV 10.8B → $108/acc
+]
+_POL = dict(deuda_neta=0.0, acciones=100e6, dilucion_total=0.0)
 
 
-@pytest.fixture
-def sesion():
-    engine = create_engine("sqlite:///:memory:", future=True)
-    crear_tablas(engine)
-    with Session(engine, future=True) as s:
-        yield s
+def test_valor_accion_equity_bridge():
+    # bear: (200M×5 − 0) / (100M×1) = $10/acc
+    assert valor_accion(_ESC[0], **_POL) == 10.0
+    # con deuda neta 500M: (1.0B − 500M)/100M = $5
+    assert valor_accion(_ESC[0], deuda_neta=500e6, acciones=100e6, dilucion_total=0.0) == 5.0
+    # con 50% de dilución: 1.0B / (100M×1.5) = $6.67
+    assert abs(valor_accion(_ESC[0], deuda_neta=0, acciones=100e6, dilucion_total=0.5) - 6.6667) < 1e-3
 
 
-def _en_deep(sesion, ticker="ACME"):
-    nodo = e.crear_nodo(sesion, nombre="HBM", cluster="datacenter")
-    e.crear_candidata(sesion, ticker=ticker, fecha=date(2026, 1, 1), nodo_id=nodo.id)
-    e.transicionar(sesion, ticker=ticker, estado_nuevo=Estado.EN_DEEP_RESEARCH,
-                   disparado_por="regla", fecha=date(2026, 1, 2))
+def test_puente_ordena_zonas():
+    # satélite (hurdle 20%, piso 50%). E[V] = .25×10 + .5×40 + .25×108 = 49.5
+    p = calcular_puente(_ESC, precio=40.0, clase="satelite", **_POL)
+    assert p is not None
+    puente, gat, lat = p
+    assert puente.e_v == 49.5 and puente.horizonte == 4
+    # compra = min(E[V]/(1.2)^4 , V_bear/(1−.5)) = min(49.5/2.0736, 10/0.5=20) = min(23.87, 20) = 20 (piso manda)
+    assert abs(gat.compra - 20.0) < 1e-2
+    # recorte = 49.5/(1.08)^4 = 36.39 ; salida = 108/(1.08)^4 = 79.4
+    assert abs(gat.recorte - 36.39) < 0.1 and abs(gat.salida - 79.4) < 0.2
+    assert gat.compra < gat.recorte < gat.salida          # ordenamiento del espectro de precios
 
 
-RES_CANDIDATA = {"decision": "candidata", "arquetipo": {"arquetipo": "Madura"},
-                 "quality": {"tier": 3}, "fragility": {"score": 0}, "asimetria": 2.0,
-                 "merito": 6.0, "cap_celda": 0.40, "hard_cap": 0.40}
-RES_WATCHLIST = {"decision": "watchlist", "motivo": "gate todavia_no",
-                 "arquetipo": {"arquetipo": "Tracción"}}
-RES_RECHAZO = {"decision": "rechazo", "motivo": "gate no_pasa",
-               "arquetipo": {"arquetipo": "Growth"}}
+def test_zonas_segun_precio():
+    def zona(precio):
+        return calcular_puente(_ESC, precio=precio, clase="satelite", **_POL)[2].zona
+    assert zona(18) == "COMPRA"      # ≤ 20
+    assert zona(30) == "MANTENER"    # entre compra (20) y recorte (36.4)
+    assert zona(50) == "RECORTE"     # entre recorte (36.4) y salida (79.4)
+    assert zona(90) == "SALIDA"      # > 79.4 (ni el bull paga el mínimo)
 
 
-def test_persistir_ficha_campos_y_hechos(sesion):
-    _en_deep(sesion)
-    fv = ficha.persistir_ficha(sesion, ticker="ACME", resultado=RES_CANDIDATA, precio=10,
-                               bull=20, bear=5, fecha=date(2026, 1, 3),
-                               hechos={"margen_bruto": 0.55, "arquetipo": "Madura"})
-    assert fv.version == 1
-    assert fv.arquetipo == "Madura"
-    assert fv.quality_tier == 3
-    assert fv.asimetria == 2.0
-    assert fv.hard_cap == 0.40
-    n = sesion.execute(select(func.count()).select_from(NxHecho)
-                       .where(NxHecho.ficha_version_id == fv.id)).scalar_one()
-    assert n == 2
+def test_piso_bear_limita_la_compra():
+    # aislado: MISMO hurdle, con piso vs sin piso → el piso solo puede EXIGIR comprar más abajo (o igual)
+    h = {"x": 0.20}
+    sin_piso = calcular_puente(_ESC, precio=40, clase="x", hurdles=h, pisos={"x": None}, **_POL)[1].compra
+    con_piso = calcular_puente(_ESC, precio=40, clase="x", hurdles=h, pisos={"x": 0.50}, **_POL)[1].compra
+    assert con_piso <= sin_piso
+    # hurdle-only = 49.5/1.2^4 = 23.87; con piso = min(23.87, V_bear/0.5=20) = 20 (el piso manda)
+    assert abs(sin_piso - 23.87) < 0.1 and abs(con_piso - 20.0) < 1e-2
 
 
-def test_version_incrementa(sesion):
-    _en_deep(sesion)
-    ficha.persistir_ficha(sesion, ticker="ACME", resultado=RES_CANDIDATA, precio=10,
-                          bull=20, bear=5, fecha=date(2026, 1, 3))
-    fv2 = ficha.persistir_ficha(sesion, ticker="ACME", resultado=RES_CANDIDATA, precio=11,
-                                bull=22, bear=6, fecha=date(2026, 2, 3))
-    assert fv2.version == 2
+@dataclass
+class _Inv:
+    analyst_classification: str
 
 
-def test_rechazo_temprano_sin_campos_de_analisis(sesion):
-    _en_deep(sesion)
-    fv = ficha.persistir_ficha(sesion, ticker="ACME",
-                               resultado={"decision": "rechazo", "motivo": "CRR-crítico"},
-                               precio=10, bull=20, bear=5, fecha=date(2026, 1, 3))
-    assert fv.decision == "rechazo"
-    assert fv.arquetipo is None and fv.quality_tier is None   # nullable, no rompe
+@dataclass
+class _Esc:
+    nombre: str
+    metrica_terminal: float
+    multiplo_salida: float
+    anios: int
+    prob: float
 
 
-@pytest.mark.parametrize("res,estado", [
-    (RES_CANDIDATA, Estado.ELEGIBLE),
-    (RES_WATCHLIST, Estado.ESPERANDO_EVIDENCIA),
-    (RES_RECHAZO, Estado.DESCARTADA),
-])
-def test_deep_research_transiciona(sesion, monkeypatch, res, estado):
-    _en_deep(sesion)
-    monkeypatch.setattr(ficha, "evaluar_empresa", lambda entrada: res)
-    entrada = SimpleNamespace(precio=10.0, bull=20.0, bear=5.0)
-    r = ficha.correr_deep_research(sesion, ticker="ACME", entrada=entrada, fecha=date(2026, 1, 3))
-    assert r["estado"] == estado.value
-    assert e.estado_desde_log(sesion, "ACME") == estado.value
-    assert sesion.get(NxFichaVersion, r["ficha_version_id"]) is not None
+@dataclass
+class _Fals:
+    afirmacion: str
+    fecha_limite: str
 
 
-def test_integracion_nucleo_real(sesion):
-    """Corre el núcleo REAL: una Madura que pasa el gate → Elegible + ficha persistida."""
-    from backend.nucleo.arquetipo import HechosArquetipo
-    from backend.nucleo.flujo import EntradaEmpresa
-    from backend.nucleo.fragility import HechosFragility
-    from backend.nucleo.gate import HechosGate, Trigger
-    from backend.nucleo.quality import HechosQuality
+@dataclass
+class _Dossier:
+    invertibilidad: _Inv
+    escenarios: list
+    falsador: _Fals
+    dilucion_esperada_pct: float
+    negocio_y_posicion_cuello: str = "Proveedor líder del cuello X."
 
-    _en_deep(sesion)
-    entrada = EntradaEmpresa(
-        ticker="ACME",
-        hechos_arquetipo=HechosArquetipo(revenue_elegible=100e6,
-                                         crecimiento_elegible_yoy=0.10, fcf_ttm=5e6),
-        hechos_gate=HechosGate(arquetipo="", madura_hecho_vigente=True, triggers=[
-            Trigger(hecho="deuda sube 2x", umbral=">2x", fecha="2026-01-01", fuente="A",
-                    es_estructura_capital=True),
-            Trigger(hecho="cliente ancla se va", umbral="<10%", fecha="2026-01-01",
-                    fuente="A", atado_a_hecho_de_entrada=True),
-        ]),
-        hechos_quality=HechosQuality(margen_bruto=0.55, revenue_recurrente=True),
-        hechos_fragility=HechosFragility(financiacion_completa_cerrada=True,
-                                         redundancia_comercial_real=True),
-        precio=10.0, bull=20.0, bear=5.0,
-    )
-    r = ficha.correr_deep_research(sesion, ticker="ACME", entrada=entrada, fecha=date(2026, 1, 3))
-    assert r["decision"] == "candidata"
-    assert e.estado_desde_log(sesion, "ACME") == Estado.ELEGIBLE.value
-    fv = sesion.get(NxFichaVersion, r["ficha_version_id"])
-    assert fv.arquetipo == "Madura"
-    assert fv.hard_cap == pytest.approx(0.40)
-    assert fv.asimetria == pytest.approx(2.0)      # (20-10)/(10-5)
+
+def test_caso_del_operador_cara_cae_compra_sin_redeep():
+    """El corazón del doc 80: deep sobre una buenísima pero CARA → ficha en BANCA (MANTENER). Dos meses después
+    cae a zona → el código la marca COMPRA recalculando SOLO el reloj rápido, sin re-correr el comité."""
+    dossier = _Dossier(
+        invertibilidad=_Inv("satelite"),
+        escenarios=[_Esc("bear", 200e6, 5, 4, 0.25), _Esc("base", 500e6, 8, 4, 0.50),
+                    _Esc("bull", 900e6, 12, 4, 0.25)],
+        falsador=_Fals("no logra el contrato", "2027-06-30"), dilucion_esperada_pct=0.0)
+    # analizada CARA a $52 → ficha viva, zona MANTENER/RECORTE, sin señal de compra
+    ficha = backfill_desde_dossier("XYZ", dossier, deuda_neta=0.0, acciones=100e6, precio=52.0)
+    assert ficha.estado == "VIGENTE" and ficha.clase_d4 == "satelite"
+    assert ficha.latido.zona in ("MANTENER", "RECORTE")
+    escen_antes = [e.metrica_terminal for e in ficha.escenarios]
+
+    # dos meses después cae a $18 — SOLO se recalcula el reloj rápido (cero LLM, cero comité)
+    recalcular(ficha, precio=18.0)
+    assert ficha.latido.zona == "COMPRA"                   # ahora SÍ es compra
+    assert ficha.puente.precio == 18.0
+    # la TESIS no se tocó (reloj lento intacto): mismos escenarios, mismo dossier
+    assert [e.metrica_terminal for e in ficha.escenarios] == escen_antes
+    assert ficha.estado == "VIGENTE"

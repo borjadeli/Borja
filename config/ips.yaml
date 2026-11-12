@@ -89,6 +89,22 @@ estacionamiento:
     minerales: COPX
     cobre: COPX
 
+# --- Ficha viva: hurdles y pisos por clase (r9, doc 80 §3 — aprobado por el operador 2026-11-12) ---
+# El rendimiento anual MÍNIMO que un nombre debe prometer a su precio de hoy para ser "compra" (hurdle) y la
+# pérdida máxima aceptable en el bear como gate (piso; null = sin piso, especulativa la limita el tamaño). De
+# acá salen las zonas/gatillos de la ficha; ningún agente escribe un precio. Son PRIORS: las sombras los ajustan.
+ficha_hurdles:
+  core: 0.15
+  satelite: 0.20
+  especulativa: 0.30
+  watchlist: 0.30
+ficha_pisos:
+  core: 0.35
+  satelite: 0.50
+  especulativa: null
+  watchlist: null
+ficha_hurdle_min: 0.08
+
 # --- Duro e innegociable ---
 ordenes_reales: false          # PROHIBIDO enviar órdenes reales / conectar bróker con escritura
 

@@ -126,9 +126,13 @@ Sesión con el operador. Tres frentes:
   nombre, best-effort) + `cuello_primario`; el ops `correr_semana_v2 --universo` computa el overlay (flag
   `--sin-valor` para saltearlo) y el dry-run imprime el **top-15 por valor** (§8). Verificado en vivo (OKLO
   pre-revenue → sin señal; CRDO<ALAB en conectividad). 819 tests verdes.
-  **Bloque 2 PENDIENTE (gateado por Gate B):** parser 8-K 1.01 + USAspending (firme/condicional/no-cuenta) +
-  sección "¿qué compro por este precio?" del Analista + reglas del Verificador + frontera D4 con contratos —
-  detrás de un gold set de contratos etiquetados + precisión medida (un falso FIRME sizea de más).
+  **Bloque 2 EN MARCHA (gateado por Gate B):** **gold set de contratos ARMADO** — `ops.gold_contratos` baja los
+  8-K ítem 1.01 de EDGAR y deja el excerpt + campos vacíos a etiquetar (firme/condicional/no_cuenta) en
+  `tests/gold_contratos/gold_contratos.json`; **corrido: 35 filings 1.01 en 8 nombres** (BWXT/LEU/RKLB/OKLO/
+  KTOS/MP/LUNR/UUUU), todos SIN etiquetar. `tests/test_gold_contratos.py` valida el scaffold + las labels.
+  **PENDIENTE del operador: ETIQUETAR los 35.** Después: parser 8-K 1.01 + USAspending medido contra el set +
+  sección "¿qué compro por este precio?" del Analista + reglas del Verificador + frontera D4 con contratos.
+  Hallazgo del dry-run cerrado: 4º check `revenue_sospechoso` (revenue > 5× market cap → CONFLICTED; captura GLXY).
 
 ## Dónde estamos
 **FASE 4 + P1 + EMBUDO completos y validados en vivo; el PM ya compró (OKLO 3%).** El comité corre

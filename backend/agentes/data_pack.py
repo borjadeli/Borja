@@ -441,6 +441,16 @@ def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
     if knowns and (as_of - max(knowns)).days > 400:
         flag("datos_viejos", f"último filing XBRL {max(knowns)} (> 400 días) → fundamentales posiblemente vencidos")
 
+    # 4) REVENUE SOSPECHOSO (r7a, hallazgo del dry-run con GLXY): revenue FY desproporcionado vs market cap.
+    # GLXY mostraba $60B de "revenue" (ventas crypto grossed-up / notional, no ventas económicas) con market
+    # cap $9B → EV/revenue de ganga falsa que el PM podría leer mal. Umbral 5×: un revenue > 5 veces el market
+    # cap es muy raro legítimamente (un distribuidor de bajo margen llega a ~3-4×). NO gatea; bandera CONFLICTED
+    # advisory para que el Analista/Verificador lo miren (un falso positivo cuesta 2 segundos de revisión).
+    rev = next((p.value for p in puntos if p.metric == "revenue" and p.value is not None), None)
+    if rev is not None and mc is not None and mc > 0 and rev > 5 * mc:
+        flag("revenue_sospechoso", f"revenue FY ${rev:,.0f} > 5× market cap ${mc:,.0f} ({rev/mc:.0f}×) → "
+             f"¿revenue grossed-up/notional, no ventas económicas? (EV/revenue sería una ganga falsa)")
+
     return out
 
 

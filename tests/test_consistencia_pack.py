@@ -46,3 +46,16 @@ def test_pack_sano_sin_flags():
               _p("market_cap", 5e9, source=_FEED, unit="USD"),
               _p("cash", 1e9, source=_XBRL, unit="USD")]
     assert _flags(puntos) == {}
+
+
+def test_revenue_sospechoso_marca_conflicted():
+    # el caso GLXY: revenue $60B con market cap $5B → 12× → bandera (¿volumen mal tageado?)
+    puntos = [_p("market_cap", 5e9, source=_FEED, unit="USD"), _p("revenue", 60e9, source=_XBRL, unit="USD")]
+    f = _flags(puntos)
+    assert "flag_revenue_sospechoso" in f and f["flag_revenue_sospechoso"].estado == "CONFLICTED"
+
+
+def test_revenue_normal_no_marca():
+    # distribuidor de bajo margen: revenue 2× market cap → normal, sin bandera
+    puntos = [_p("market_cap", 20e9, source=_FEED, unit="USD"), _p("revenue", 40e9, source=_XBRL, unit="USD")]
+    assert "flag_revenue_sospechoso" not in _flags(puntos)

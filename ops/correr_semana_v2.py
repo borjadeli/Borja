@@ -144,7 +144,10 @@ def _dry_run_universo(candidatos, *, ips, cupo: int, valor=None) -> None:
     print(f"GIGANTES caídos → ¿barato? → ALERTA ({len(sel['gigantes_watch'])}): {[t for t, _ in sel['gigantes_watch']]}")
     print(f"NO INVERTIBLES (fuera del IPS por market cap, excluidos del deep) ({len(sel['no_invertible'])}): "
           f"{[t for t, _ in sel['no_invertible']]}")
-    print(f"FORZADOS evento fuerte/posición ({len(sel['forzados'])}/tope {cupo_forzados}): {[t for t, _ in sel['forzados']]}")
+    _pos_f = [t for t, m in sel['forzados'] if m == "posición"]
+    _ev_f = [t for t, m in sel['forzados'] if m != "posición"]
+    print(f"FORZADOS ({len(sel['forzados'])}): {len(_pos_f)} posición (reserva, fuera del tope) {_pos_f}"
+          f"  +  {len(_ev_f)} evento fuerte (tope {cupo_forzados}) {_ev_f}")
     print(f"PRECIO fuerte ({len(sel['precio'])}): {[t for t, _ in sel['precio']]}")
     print(f"PRE-EARNINGS top ({len(sel['pre_earnings'])}): {[t for t, _ in sel['pre_earnings']]}")
     print(f"PROMOVIDOS por cupo ({len(sel['promovidos'])}/{cupo}): {[t for t, _ in sel['promovidos']]}")

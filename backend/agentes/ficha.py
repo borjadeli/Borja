@@ -83,6 +83,7 @@ class Ficha:
     deuda_neta: float                   # deuda − caja (puede ser negativa = caja neta)
     acciones: float
     falsadores: list[dict] = field(default_factory=list)
+    conocido_hasta: str | None = None   # known_at del hecho más nuevo que vio la tesis (vigencia por evento)
     # reloj RÁPIDO (del código) — None hasta recalcular
     puente: Puente | None = None
     gatillos: Gatillos | None = None
@@ -91,6 +92,29 @@ class Ficha:
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Ficha":
+        d = dict(d)
+        d["escenarios"] = [EscenarioF(**e) for e in d.get("escenarios", [])]
+        d["puente"] = Puente(**d["puente"]) if d.get("puente") else None
+        d["gatillos"] = Gatillos(**d["gatillos"]) if d.get("gatillos") else None
+        d["latido"] = Latido(**d["latido"]) if d.get("latido") else None
+        return cls(**d)
+
+
+def evaluar_vigencia(ficha: Ficha, *, ultimo_filing: str | None = None, hoy: date | None = None) -> str:
+    """Vigencia por EVENTO (doc 80 §F), no TTL. Devuelve el estado nuevo (no lo fuerza): VENCIDA si pasó el tope
+    duro; EN_REVISION si apareció un 10-Q/10-K POSTERIOR a lo que vio la tesis (comprar exige revisión posterior
+    al último filing). Si no, conserva el estado. `ultimo_filing`/`conocido_hasta` = fechas ISO (YYYY-MM-DD)."""
+    hoy = (hoy or date.today()).isoformat()
+    if ficha.estado in ("ROTA",):
+        return ficha.estado
+    if ficha.tope_duro and hoy > ficha.tope_duro:
+        return "VENCIDA"
+    if ultimo_filing and ficha.conocido_hasta and ultimo_filing > ficha.conocido_hasta:
+        return "EN_REVISION"
+    return ficha.estado
 
 
 # --------------------------------------------------------------------------- puente + zonas (puro)
@@ -171,8 +195,8 @@ def calcular_puente(escenarios: list[EscenarioF], *, precio: float, deuda_neta: 
 
 def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones: float, precio: float | None,
                            cuello: str | None = None, nivel: str = "BANCA", cobertura: str = "FULL",
-                           visto_hasta: str | None = None, dossier_id: str | None = None,
-                           hoy: date | None = None, **pol) -> Ficha:
+                           visto_hasta: str | None = None, conocido_hasta: str | None = None,
+                           dossier_id: str | None = None, hoy: date | None = None, **pol) -> Ficha:
     """Construye la ficha desde un Dossier ya cacheado ($0). Reloj lento = escenarios/clase/falsador del dossier;
     reloj rápido = calculado con el precio actual. `dossier` = schemas.Dossier (o stub con los mismos campos)."""
     hoy = hoy or date.today()
@@ -190,6 +214,7 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         tesis_resumen=(getattr(dossier, "negocio_y_posicion_cuello", "") or "")[:600],
         dossier_id=dossier_id, visto_hasta=visto_hasta, estado="VIGENTE", tope_duro=None,
         escenarios=escen, dilucion_total=dil, deuda_neta=deuda_neta, acciones=acciones, falsadores=falsadores,
+        conocido_hasta=conocido_hasta,
         historial=[{"fecha": hoy.isoformat(), "evento": "backfill", "motivo_codigo": "DESDE_DOSSIER"}])
     if precio is not None:
         recalcular(ficha, precio=precio, deuda_neta=deuda_neta, acciones=acciones, **pol)

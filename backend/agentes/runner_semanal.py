@@ -102,6 +102,27 @@ class RunnerSemanal:
         res_dec.pesos_finales = finales
         res_dec.caja_final = caja
 
+    def _packet_txt(self, pesos: dict, caja_pct: float, equity: float, memo: str, hoy) -> str:
+        """Arma + renderiza el PM Decision Packet (r9 P2) desde el store de fichas + el ledger de decisiones.
+        Best-effort: si no hay fichas todavía, devuelve "" (el PM sigue con dossiers + cartera como antes)."""
+        try:
+            from backend.agentes.estacionamiento import tickers_parking
+            from backend.agentes.ficha_store import StoreFichas
+            from backend.agentes.packet_pm import construir_packet, render_packet
+            fichas = StoreFichas().todos()
+            if not fichas:
+                return ""
+            ult_dec: dict[str, dict] = {}
+            for reg in self.decision.ledger.decisiones():
+                ult_dec[reg.ticker.upper()] = {"ticker": reg.ticker.upper(), "accion": reg.accion,
+                                               "tesis": reg.tesis}
+            pack = construir_packet(fichas=fichas, posiciones=pesos, caja_pct=caja_pct, equity=equity,
+                                    memo_macro=memo, decisiones_previas=list(ult_dec.values()),
+                                    tickers_etf=tickers_parking(self.decision.ips.cfg), as_of=hoy)
+            return render_packet(pack)
+        except Exception:  # noqa: BLE001 — el packet es contexto; si falla, el PM decide igual
+            return ""
+
     def _hit_rate_resumen(self) -> str:
         m = self.decision.ledger.metricas()
         if m.n_resueltos < MIN_N_HIT_RATE:
@@ -206,12 +227,16 @@ class RunnerSemanal:
                 f"{len(_pend)} predicciones vencidas SIN resolver (correr el ciclo de resolución): "
                 + ", ".join(f"{p.ticker}[{p.tipo}]" for p in _pend[:5])]
 
+        # 2bis. PM Decision Packet (r9 P2, doc 80 §G): la memoria viva (fichas/zonas/banca/alertas/decisiones
+        # previas) que el PM recibe junto a los dossiers frescos. Best-effort: sin store de fichas, se saltea.
+        packet_txt = self._packet_txt(pesos_actual, caja_pct, _equity, memo_txt, hoy)
+
         # 3. PM decide (con las ops ya usadas en la semana para su dry-run y las alertas previas).
         def _pm(feedback: str = ""):
             return self.pm.decidir(dossiers=dossiers, cartera_actual=pesos_actual, caja_actual=caja_pct,
                                    contexto=contexto, memo_macro=memo_txt, hit_rate_resumen=hr,
                                    ops_semana_previas=ops_previas, alertas_previas=alertas_previas,
-                                   feedback=feedback)
+                                   packet_txt=packet_txt, feedback=feedback)
         decision = _pm()
 
         # 4. Gate duro del IPS + Auditor + ledger; re-propuesta UNA vez si el gate rechaza aumentos (1d).

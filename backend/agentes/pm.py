@@ -152,7 +152,7 @@ class PM:
                 contexto: dict[str, ContextoTicker], memo_macro: str = "",
                 hit_rate_resumen: str = "", ops_semana_previas: int = 0,
                 alertas_previas: list[str] | None = None, feedback: str = "",
-                max_tokens: int = 4096) -> PMDecision:
+                packet_txt: str = "", max_tokens: int = 4096) -> PMDecision:
         flags_txt, _flags = _render_flags(dossiers)
         cartera_txt = ("\n".join(f"- {t}: {w:.1%}" for t, w in sorted(cartera_actual.items()))
                        or "(cartera vacía)")
@@ -162,8 +162,11 @@ class PM:
         if feedback:
             extra += (f"\n=== EL GATE DEL IPS RECHAZÓ TU PROPUESTA ANTERIOR (re-proponé UNA vez) ===\n"
                       f"{feedback}\n")
+        packet_bloque = (f"=== PAQUETE DE DECISIÓN (memoria viva: fichas, zonas, banca, oportunidades, alertas; "
+                         f"doc 80 §G) ===\n{packet_txt}\n\n") if packet_txt else ""
         user = (
             f"Fecha de hoy: {date.today().isoformat()}\n\n"
+            f"{packet_bloque}"
             f"=== CARTERA ACTUAL (caja {caja_actual:.1%}) ===\n{cartera_txt}\n\n"
             f"=== ALERTAS DE LA CORRIDA ANTERIOR (resolvé o tené en cuenta) ===\n{alertas_txt}\n\n"
             f"=== MEMO MACRO ===\n{memo_macro or '(sin memo)'}\n\n"

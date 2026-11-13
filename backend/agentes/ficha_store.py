@@ -58,7 +58,8 @@ def backfill_fichas(cache_entries: dict, *, datos_fn: Callable[[str], dict | Non
         f = backfill_desde_dossier(
             tk, dossier, deuda_neta=float(datos.get("deuda_neta") or 0.0), acciones=float(datos["acciones"]),
             precio=datos.get("precio"), cuello=datos.get("cuello"), cobertura=datos.get("cobertura", "FULL"),
-            conocido_hasta=datos.get("conocido_hasta"), dossier_id=getattr(e, "hash", None), hoy=hoy, **pol)
+            conocido_hasta=datos.get("conocido_hasta"), datos_conflicted=bool(datos.get("datos_conflicted")),
+            dossier_id=getattr(e, "hash", None), hoy=hoy, **pol)
         if store is not None:
             store.set(f)
         fichas.append(f)
@@ -88,8 +89,9 @@ def recalcular_todas(store: StoreFichas, *, precios_fn: Callable[[str], float | 
         zona = f.latido.zona if f.latido else None
         if zona in ("COMPRA", "RECORTE", "SALIDA") and zona != zona_antes:
             alertas.append({"ticker": tk, "zona": zona, "precio": round(precio, 4), "zona_antes": zona_antes,
-                            "estado": f.estado,
-                            "comprable": zona == "COMPRA" and f.estado == "VIGENTE"})  # doc 80: solo compra con tesis VIGENTE
+                            "estado": f.estado, "datos_conflicted": f.datos_conflicted,
+                            # doc 80: solo compra con tesis VIGENTE y datos CONFIABLES (no acciones feed≠XBRL)
+                            "comprable": zona == "COMPRA" and f.estado == "VIGENTE" and not f.datos_conflicted})
         store.set(f)
     store.guardar()
     return alertas

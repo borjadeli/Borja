@@ -97,3 +97,14 @@ def test_job_marca_vencida_y_no_comprable(tmp_path):
                                hoy=date(2026, 11, 10))
     assert alertas and alertas[0]["zona"] == "COMPRA" and alertas[0]["comprable"] is False
     assert s.get("XYZ").estado == "EN_REVISION"
+
+
+def test_datos_conflicted_no_es_comprable(tmp_path):
+    # una ficha en zona COMPRA pero con datos_conflicted (acciones feed≠XBRL, p.ej. split) NO es comprable
+    cache = {"XYZ": _Entry(_dossier())}
+    s = StoreFichas(path=tmp_path / "f.json")
+    backfill_fichas(cache, store=s, datos_fn=lambda tk: {"acciones": 100e6, "deuda_neta": 0.0,
+                                                         "precio": 52.0, "datos_conflicted": True})
+    alertas = recalcular_todas(s, precios_fn=lambda tk: 18.0)
+    assert alertas and alertas[0]["zona"] == "COMPRA"
+    assert alertas[0]["comprable"] is False and alertas[0]["datos_conflicted"] is True

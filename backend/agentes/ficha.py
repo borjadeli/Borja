@@ -84,6 +84,7 @@ class Ficha:
     acciones: float
     falsadores: list[dict] = field(default_factory=list)
     conocido_hasta: str | None = None   # known_at del hecho más nuevo que vio la tesis (vigencia por evento)
+    datos_conflicted: bool = False      # r9: banderas CONFLICTED (acciones feed≠XBRL, etc.) → NO comprable sin re-verificar
     # reloj RÁPIDO (del código) — None hasta recalcular
     puente: Puente | None = None
     gatillos: Gatillos | None = None
@@ -196,6 +197,7 @@ def calcular_puente(escenarios: list[EscenarioF], *, precio: float, deuda_neta: 
 def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones: float, precio: float | None,
                            cuello: str | None = None, nivel: str = "BANCA", cobertura: str = "FULL",
                            visto_hasta: str | None = None, conocido_hasta: str | None = None,
+                           datos_conflicted: bool = False,
                            dossier_id: str | None = None, hoy: date | None = None, **pol) -> Ficha:
     """Construye la ficha desde un Dossier ya cacheado ($0). Reloj lento = escenarios/clase/falsador del dossier;
     reloj rápido = calculado con el precio actual. `dossier` = schemas.Dossier (o stub con los mismos campos)."""
@@ -214,7 +216,7 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         tesis_resumen=(getattr(dossier, "negocio_y_posicion_cuello", "") or "")[:600],
         dossier_id=dossier_id, visto_hasta=visto_hasta, estado="VIGENTE", tope_duro=None,
         escenarios=escen, dilucion_total=dil, deuda_neta=deuda_neta, acciones=acciones, falsadores=falsadores,
-        conocido_hasta=conocido_hasta,
+        conocido_hasta=conocido_hasta, datos_conflicted=datos_conflicted,
         historial=[{"fecha": hoy.isoformat(), "evento": "backfill", "motivo_codigo": "DESDE_DOSSIER"}])
     if precio is not None:
         recalcular(ficha, precio=precio, deuda_neta=deuda_neta, acciones=acciones, **pol)

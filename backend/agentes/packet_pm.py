@@ -104,8 +104,13 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
         if tku in pos_u or f.estado != "VIGENTE":
             continue
         if f.latido and f.latido.zona == "COMPRA":
-            pack.banca_en_zona.append(_resumen_de_ficha(f, peso=0.0))
-            pack.alertas.append({"ticker": tku, "tipo": "entrada", "detalle": f"{tku} ficha en zona COMPRA"})
+            if getattr(f, "datos_conflicted", False):    # doc 80: datos no confiables → re-verificar, NO entrada
+                pack.alertas.append({"ticker": tku, "tipo": "datos",
+                                     "detalle": f"{tku} en zona COMPRA pero DATOS CONFLICTED (acciones feed≠XBRL) "
+                                                f"— re-verificar antes de entrar"})
+            else:
+                pack.banca_en_zona.append(_resumen_de_ficha(f, peso=0.0))
+                pack.alertas.append({"ticker": tku, "tipo": "entrada", "detalle": f"{tku} ficha en zona COMPRA"})
 
     # Oportunidades NUEVAS (ficha-less) — top del score de P1.
     con_ficha = {t.upper() for t in fichas}

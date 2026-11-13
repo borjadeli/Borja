@@ -25,14 +25,17 @@ def _datos_de_pack(ticker: str, *, as_of: date, cuello_fn=None) -> dict | None:
         return None
     puntos = pack.puntos
 
-    def _xbrl_first(metric):
-        xs = [p for p in puntos if p.metric == metric and p.value is not None]
-        return next((p.value for p in xs if "xbrl" in (p.source.name or "").lower()), (xs[0].value if xs else None))
-
     def _val(metric):
         return next((p.value for p in puntos if p.metric == metric and p.value is not None), None)
 
-    acciones = _xbrl_first("shares_outstanding")
+    # ACCIONES: normalmente XBRL (verificado), PERO si el feed diverge >25% (split no reflejado / dilución), se
+    # usa el FEED (actual, post-split) y se marca datos_conflicted → la ficha NO es comprable sin re-verificar.
+    # (El caso IESC: XBRL 19,9M pre-split vs feed 42,4M → la ficha daba falso COMPRA al duplicar el valor/acción.)
+    shares = [p for p in puntos if p.metric == "shares_outstanding" and p.value]
+    feed_sh = next((p.value for p in shares if "xbrl" not in (p.source.name or "").lower()), None)
+    xbrl_sh = next((p.value for p in shares if "xbrl" in (p.source.name or "").lower()), None)
+    conflicted = bool(feed_sh and xbrl_sh and abs(feed_sh - xbrl_sh) / max(feed_sh, xbrl_sh) > 0.25)
+    acciones = feed_sh if conflicted else (xbrl_sh or feed_sh)
     if not acciones:
         return None
     liquidez = _val("liquidez")
@@ -41,7 +44,7 @@ def _datos_de_pack(ticker: str, *, as_of: date, cuello_fn=None) -> dict | None:
     precio = _val("precio")
     knowns = [p.known_at for p in puntos if p.known_at and "xbrl" in (p.source.name or "").lower()]
     conocido = max(knowns).isoformat() if knowns else None
-    return {"acciones": acciones, "deuda_neta": deuda_neta, "precio": precio,
+    return {"acciones": acciones, "deuda_neta": deuda_neta, "precio": precio, "datos_conflicted": conflicted,
             "cuello": (cuello_fn(ticker) if cuello_fn else None), "conocido_hasta": conocido,
             "cobertura": "PARCIAL" if "." in ticker else "FULL"}
 

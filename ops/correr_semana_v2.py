@@ -127,18 +127,17 @@ def _filtros_embudo(candidatos, ips):
     return _invertible, _gigante_barato, int(ips.cfg.get("cupo_forzados", 8)), int(ips.cfg.get("cupo_gigantes", 2))
 
 
-def _dry_run_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips) -> None:
-    """r9 P1: muestra la priorización por OPORTUNIDAD (score ficha-less + carriles del doc 80 §D) junto a las
-    fichas vivas (banca en zona de compra). Lee el store de fichas; determinista, $0."""
+def _seleccion_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips):
+    """r9 P1 (doc 80 §D): rankea las ficha-less por score de oportunidad + asigna carriles (banca/oportunidad),
+    leyendo el store de fichas + el estado del cuello (nx). Determinista, $0. La USAN el dry-run Y el run real
+    ('dry-run = real'). Devuelve (sel, scores, n_fichas)."""
     from backend.agentes.ficha_store import StoreFichas
     from backend.agentes.oportunidad import asignar_carriles, candidato_desde_metricas, rankear_oportunidades
-    store = StoreFichas()
-    fichas = store.todos()
+    fichas = StoreFichas().todos()
     fichas_zona = {tk: f.latido.zona for tk, f in fichas.items() if f.latido}
     fichas_estado = {tk: f.estado for tk, f in fichas.items()}
     con_ficha = {tk.upper() for tk in fichas}
     hurdle = float(ips.cfg.get("ficha_hurdles", {}).get("satelite", 0.20))
-    # estado del cuello por ticker (confirmado/vigilancia/promesa) → diferencia la pata C del score
     estados = {}
     try:
         from sqlalchemy import select
@@ -161,8 +160,13 @@ def _dry_run_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips) -> N
     scores = rankear_oportunidades(cand)
     sel = asignar_carriles(posiciones=posiciones, fichas_zona=fichas_zona, fichas_estado=fichas_estado,
                            scores=scores, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)))
+    return sel, scores, len(fichas)
+
+
+def _dry_run_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips) -> None:
+    sel, scores, n_fichas = _seleccion_oportunidad(met=met, cuellos=cuellos, posiciones=posiciones, ips=ips)
     print("\n=== PRIORIZACIÓN POR OPORTUNIDAD (r9 P1, doc 80 §D) ===")
-    print(f"fichas vivas: {len(fichas)} · BANCA en zona de compra: {sel.banca}")
+    print(f"fichas vivas: {n_fichas} · BANCA en zona de compra: {sel.banca}")
     print(f"CARRIL OPORTUNIDAD (cupo {int(ips.cfg.get('cupo_oportunidad', 4))}): {sel.oportunidad}")
     print("top score (ficha-less, V=brecha de expectativas · M=momentum · C=cuello · A=supervivencia):")
     for f in [x for x in scores if x.score is not None][:10]:
@@ -322,6 +326,22 @@ def main() -> int:
                 valor_percentiles=valor_pct)
         tickers = [c[0] for c in candidatos]
         print(f"universo: {len(candidatos)} candidatos triageados (posiciones={sorted(posiciones)})")
+        # r9 P1 (doc 80 §D): el carril de OPORTUNIDAD manda deep, no solo los eventos. Fuerza los top-N por score
+        # ficha-less + la banca en zona de compra a deep (antes del check de dry-run → dry-run = real). El cupo +
+        # el ledger de presupuesto (fail-closed) acotan el gasto. Se saltea con --sin-valor (no hay métricas).
+        if valor_met:
+            sel_op, _sc, _nf = _seleccion_oportunidad(met=valor_met, cuellos=valor_cuellos,
+                                                      posiciones=posiciones, ips=ips)
+            forzar = {t.upper() for t in (sel_op.oportunidad + sel_op.banca)}
+            por_tk = {c[0].upper(): c[1] for c in candidatos}
+            forzados_op = []
+            for tk in forzar:
+                s = por_tk.get(tk)
+                if s is not None and not s.tiene_evento_fuerte:
+                    s.tiene_evento_fuerte = True           # entra al carril forzado del embudo
+                    forzados_op.append(tk)
+            if forzados_op:
+                print(f"OPORTUNIDAD → deep forzado ({len(forzados_op)}): {sorted(forzados_op)}")
         if args.dry_run:
             _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6, posiciones=posiciones,
                               valor=(valor_ratios, valor_met, valor_cuellos) if valor_ratios else None)

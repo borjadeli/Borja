@@ -74,6 +74,40 @@ def score_ficha_less(*, v: float | None, m: float | None, c: float, a: float, bo
     return round(base * a + bonus, 4)
 
 
+# --------------------------------------------------------------------------- brecha de expectativas (v1)
+
+def g_exigido(*, ev: float | None, revenue: float | None, mult_ref: float = 4.0, anios: int = 4,
+              hurdle: float = 0.20) -> float | None:
+    """CAGR de ventas que el EV de HOY descuenta: para rendir `hurdle` saliendo a `mult_ref` (EV/ventas) en
+    `anios`, las ventas tienen que crecer a esta tasa. g = (EV·(1+hurdle)^anios / (mult_ref·ventas))^(1/anios) − 1.
+    v1 con `mult_ref` de referencia (a afinar con la mediana del cuello). None si faltan insumos o ventas ≤ 0."""
+    if not ev or ev <= 0 or not revenue or revenue <= 0 or mult_ref <= 0:
+        return None
+    rev_terminal_req = ev * ((1.0 + hurdle) ** anios) / mult_ref
+    ratio = rev_terminal_req / revenue
+    return round(ratio ** (1.0 / anios) - 1.0, 4) if ratio > 0 else None
+
+
+def candidato_desde_metricas(ticker: str, *, cluster: str | None, metricas: dict,
+                             cuello_estado: str | None = None, cuello_rol: str | None = None,
+                             prioridad_macro: float = 0.75, runway_meses: float | None = None,
+                             dilucion_overhang: bool = False, mult_ref: float = 4.0,
+                             anios: int = 4, hurdle: float = 0.20) -> CandidatoOportunidad:
+    """Arma un CandidatoOportunidad desde la lente de valuación (fuente_valuacion). brecha = g_entregado −
+    g_exigido; momentum v1 = crecimiento YoY + señal de backlog (proxy; la aceleración real necesita 2 YoY)."""
+    g_ent = metricas.get("revenue_growth_yoy")
+    g_ent = (g_ent / 100.0) if g_ent is not None else None                  # viene en % → fracción
+    g_exig = g_exigido(ev=metricas.get("enterprise_value"), revenue=metricas.get("revenue"),
+                       mult_ref=mult_ref, anios=anios, hurdle=hurdle)
+    brecha = (g_ent - g_exig) if (g_ent is not None and g_exig is not None) else None
+    cov = metricas.get("backlog_coverage")
+    momentum = None if g_ent is None else round(g_ent + (0.1 if (cov and cov >= 1.0) else 0.0), 4)
+    return CandidatoOportunidad(
+        ticker=ticker.upper(), cluster=cluster, brecha_raw=brecha, momentum_raw=momentum,
+        cuello_estado=cuello_estado, cuello_rol=cuello_rol, prioridad_macro=prioridad_macro,
+        runway_meses=runway_meses, dilucion_overhang=dilucion_overhang)
+
+
 # --------------------------------------------------------------------------- ranking de ficha-less
 
 @dataclass

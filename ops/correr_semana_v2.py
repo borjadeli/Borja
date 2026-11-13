@@ -127,7 +127,34 @@ def _filtros_embudo(candidatos, ips):
     return _invertible, _gigante_barato, int(ips.cfg.get("cupo_forzados", 8)), int(ips.cfg.get("cupo_gigantes", 2))
 
 
-def _dry_run_universo(candidatos, *, ips, cupo: int, valor=None) -> None:
+def _dry_run_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips) -> None:
+    """r9 P1: muestra la priorización por OPORTUNIDAD (score ficha-less + carriles del doc 80 §D) junto a las
+    fichas vivas (banca en zona de compra). Lee el store de fichas; determinista, $0."""
+    from backend.agentes.ficha_store import StoreFichas
+    from backend.agentes.oportunidad import asignar_carriles, candidato_desde_metricas, rankear_oportunidades
+    store = StoreFichas()
+    fichas = store.todos()
+    fichas_zona = {tk: f.latido.zona for tk, f in fichas.items() if f.latido}
+    fichas_estado = {tk: f.estado for tk, f in fichas.items()}
+    con_ficha = {tk.upper() for tk in fichas}
+    hurdle = float(ips.cfg.get("ficha_hurdles", {}).get("satelite", 0.20))
+    cand = [candidato_desde_metricas(tk, cluster=cuellos.get(tk), metricas=m,
+                                     runway_meses=m.get("cash_runway_months"),
+                                     dilucion_overhang=bool(m.get("dilucion_overhang")), hurdle=hurdle)
+            for tk, m in met.items() if tk.upper() not in con_ficha and tk.upper() not in posiciones]
+    scores = rankear_oportunidades(cand)
+    sel = asignar_carriles(posiciones=posiciones, fichas_zona=fichas_zona, fichas_estado=fichas_estado,
+                           scores=scores, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)))
+    print("\n=== PRIORIZACIÓN POR OPORTUNIDAD (r9 P1, doc 80 §D) ===")
+    print(f"fichas vivas: {len(fichas)} · BANCA en zona de compra: {sel.banca}")
+    print(f"CARRIL OPORTUNIDAD (cupo {int(ips.cfg.get('cupo_oportunidad', 4))}): {sel.oportunidad}")
+    print("top score (ficha-less, V=brecha de expectativas · M=momentum · C=cuello · A=supervivencia):")
+    for f in [x for x in scores if x.score is not None][:10]:
+        print(f"  {f.ticker:8} score={f.score:.3f}  V={f.v if f.v is not None else '—'} "
+              f"M={f.m if f.m is not None else '—'} C={f.c:.2f} A={f.a}  [{f.cluster}]")
+
+
+def _dry_run_universo(candidatos, *, ips, cupo: int, valor=None, posiciones: set | None = None) -> None:
     """Imprime qué se analizaría usando la MISMA función de selección + MISMOS filtros que la corrida real
     (seleccionar_para_deep), SIN llamar a Analista/Bear/PM (r4 #1c). `valor` = (ratios, metricas, cuellos) de
     la señal de valor (r7 §3/§8) → imprime el top-15 más barato por cuello."""
@@ -163,6 +190,7 @@ def _dry_run_universo(candidatos, *, ips, cupo: int, valor=None) -> None:
             print(f"  {f['ticker']:8} pct={f['percentil_valor']:.2f}  ratio={f['ratio_valor']}  "
                   f"EV={ev/1e6:,.0f}M  rev={rev/1e6 if rev else 0:,.0f}M  "
                   f"contratado={vc/1e6 if vc else 0:,.0f}M  [{f['cuello']}]")
+        _dry_run_oportunidad(met=met, cuellos=cuellos, posiciones=posiciones or set(), ips=ips)
 
 
 def _contexto_mapa_fn(ticker: str) -> str:
@@ -279,7 +307,7 @@ def main() -> int:
         tickers = [c[0] for c in candidatos]
         print(f"universo: {len(candidatos)} candidatos triageados (posiciones={sorted(posiciones)})")
         if args.dry_run:
-            _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6,
+            _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6, posiciones=posiciones,
                               valor=(valor_ratios, valor_met, valor_cuellos) if valor_ratios else None)
             return 0
         snaps = recolectar_snapshots(tickers)

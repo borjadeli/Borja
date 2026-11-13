@@ -1,7 +1,19 @@
 """Motor de oportunidad (r9, doc 80 §D · P1): score ficha-less + compuerta de supervivencia + carriles."""
-from backend.agentes.oportunidad import (CandidatoOportunidad, asignar_carriles, compuerta_supervivencia,
-                                         cuello_score, percentiles_cluster, rankear_oportunidades,
-                                         score_ficha_less)
+from backend.agentes.oportunidad import (CandidatoOportunidad, asignar_carriles, candidato_desde_metricas,
+                                         compuerta_supervivencia, cuello_score, g_exigido, percentiles_cluster,
+                                         rankear_oportunidades, score_ficha_less)
+
+
+def test_g_exigido_y_brecha():
+    # EV 4B, ventas 1B, mult_ref 4x, 4a, hurdle 20%: rev_term_req = 4B×1.2^4/4 = 2.0736B → g = 2.0736^.25−1 ≈ 20%
+    g = g_exigido(ev=4e9, revenue=1e9, mult_ref=4.0, anios=4, hurdle=0.20)
+    assert abs(g - 0.2011) < 0.01
+    # una growth real (40% YoY) que el precio solo exige ~20% → brecha POSITIVA (barata vs lo que entrega)
+    cand = candidato_desde_metricas("A", cluster="x",
+                                    metricas={"enterprise_value": 4e9, "revenue": 1e9, "revenue_growth_yoy": 40.0})
+    assert cand.brecha_raw is not None and cand.brecha_raw > 0.15
+    # sin ventas → brecha None (compite solo por exploración)
+    assert candidato_desde_metricas("B", cluster="x", metricas={"enterprise_value": 2e9}).brecha_raw is None
 
 
 def test_cuello_score():

@@ -111,9 +111,18 @@ blackout solo re-análisis, tramos opcionales, estacionamiento con gate de sobre
   JSON + backfill desde el cache de dossiers + **job diario** `recalcular_todas` que emite alertas de cambio de
   zona + vigencia por evento) + `ops.backfill_fichas`. **Validado en vivo:** MP compra $17,83 / OKLO compra
   $3,84 (ambas RECORTE hoy). Caso de aceptación cumplido en test (cara→cae→COMPRA sin re-deep). 841 tests.
-- **Próximo: P1** (motor de oportunidad + Triage nuevo: score para ficha-less, distancia-a-zona para fichas,
-  carriles con cupo, blackout, productos de research delta/refresh/completo). Después P2 (packet del PM) · P3
-  (archivo+mapa vivo+discovery) · P4 (evaluación+D4 duro). **No codear fuera del doc 80.**
+- **P1 (motor de oportunidad) HECHO (2026-11-13):** `backend/agentes/oportunidad.py` — score ficha-less
+  (V=brecha de expectativas · M · C=cuello · A=supervivencia; media geométrica, un cero mata) + carriles
+  (tenencias/banca/oportunidad/exploración, blackout) + wiring al dry-run. Calibrado tras el hallazgo en vivo
+  (score saturaba): estado real del cuello + percentil global en cuellos finos. (Diferido: momentum por
+  aceleración — necesita revenue FY-2.)
+- **P2 (packet del PM) núcleo HECHO:** `backend/agentes/packet_pm.py` — arma, con corte CONGELADO, el contexto
+  del PM sin web (cartera + 1 página/tenencia desde la ficha + banca en zona + oportunidades + alertas +
+  decisiones previas). Falta cablearlo a `pm.decidir`.
+- **P3 (archivo inteligente) núcleo HECHO:** `backend/agentes/archivo.py` — lápida + reingreso por motivo
+  (PRECIO/FUNDAMENTAL/SCORE/NUNCA). Falta: mapa vivo (briefs de cuello) + cablear el pre-filtro a discovery.
+- **Próximo:** cerrar el wiring vivo (packet→PM, selección real por carriles, pre-filtro de discovery) + mapa
+  vivo + P4 (oportunidad perdida, sombras nuevas, D4 duro). 859 tests. **No codear fuera del doc 80.**
 
 ## Actualización 2026-11-05 (tarde) — vistas + caps/PM + r7 Bloque 1 (valuación como motor)
 

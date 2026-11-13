@@ -138,7 +138,23 @@ def _dry_run_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips) -> N
     fichas_estado = {tk: f.estado for tk, f in fichas.items()}
     con_ficha = {tk.upper() for tk in fichas}
     hurdle = float(ips.cfg.get("ficha_hurdles", {}).get("satelite", 0.20))
-    cand = [candidato_desde_metricas(tk, cluster=cuellos.get(tk), metricas=m,
+    # estado del cuello por ticker (confirmado/vigilancia/promesa) → diferencia la pata C del score
+    estados = {}
+    try:
+        from sqlalchemy import select
+        from backend.database import session_scope
+        from backend.ledger.models import NxEmpresaNodo, NxNodo
+        with session_scope() as s:
+            for tk in met:
+                fila = s.execute(select(NxNodo.estado_confirmacion)
+                                 .join(NxEmpresaNodo, NxEmpresaNodo.nodo_id == NxNodo.id)
+                                 .where(NxEmpresaNodo.ticker == tk.upper())
+                                 .order_by(NxEmpresaNodo.es_primario.desc(), NxNodo.id)).first()
+                if fila:
+                    estados[tk.upper()] = fila[0]
+    except Exception:  # noqa: BLE001 — sin mapa igual rankea (estado default)
+        pass
+    cand = [candidato_desde_metricas(tk, cluster=cuellos.get(tk), metricas=m, cuello_estado=estados.get(tk.upper()),
                                      runway_meses=m.get("cash_runway_months"),
                                      dilucion_overhang=bool(m.get("dilucion_overhang")), hurdle=hurdle)
             for tk, m in met.items() if tk.upper() not in con_ficha and tk.upper() not in posiciones]

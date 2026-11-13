@@ -64,6 +64,21 @@ def test_rankear_percentil_dentro_del_cluster():
     assert filas[0].ticker == "A" and filas[-1].ticker == "C"   # None al final
 
 
+def test_calibracion_cuellos_finos_diferencian():
+    # 4 nombres en cuellos de 1 (antes saturaban todos a V=1/M=1); con fallback global + estado de cuello el
+    # score diferencia, y la compuerta de supervivencia MATA al barato-que-no-sobrevive.
+    cand = [
+        CandidatoOportunidad("A", "c1", brecha_raw=0.30, momentum_raw=0.4, cuello_estado="confirmado", runway_meses=40),
+        CandidatoOportunidad("B", "c2", brecha_raw=0.10, momentum_raw=0.2, cuello_estado="vigilancia", runway_meses=40),
+        CandidatoOportunidad("C", "c3", brecha_raw=-0.2, momentum_raw=-0.1, cuello_estado="promesa", runway_meses=40),
+        CandidatoOportunidad("D", "c4", brecha_raw=0.25, momentum_raw=0.3, cuello_estado="confirmado", runway_meses=4),
+    ]
+    d = {f.ticker: f for f in rankear_oportunidades(cand)}
+    assert d["A"].v == 1.0 and d["C"].v == 0.0        # percentil GLOBAL (no satura en cuellos de 1)
+    assert d["A"].score > d["B"].score > 0            # el estado del cuello + la brecha diferencian
+    assert d["D"].score == 0.0 and d["D"].v > 0       # barato pero runway 4m → compuerta A=0 lo mata
+
+
 def _fila(tk, score):
     from backend.agentes.oportunidad import FilaScore
     return FilaScore(ticker=tk, cluster="c", score=score, v=0.5, m=0.5, c=0.5, a=1.0)

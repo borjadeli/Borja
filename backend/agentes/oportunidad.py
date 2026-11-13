@@ -137,17 +137,26 @@ class FilaScore:
     a: float
 
 
-def rankear_oportunidades(candidatos: list[CandidatoOportunidad]) -> list[FilaScore]:
-    """Computa V (brecha) y M (momentum) como PERCENTILES dentro del cluster, luego el score. Ordena desc
-    (mejor primero; None al final)."""
+def rankear_oportunidades(candidatos: list[CandidatoOportunidad], *, min_peers: int = 4) -> list[FilaScore]:
+    """Computa V (brecha) y M (momentum) como PERCENTILES, luego el score. Ordena desc (mejor primero; None al
+    final). FIX de calibración (r9 P1): el percentil es DENTRO del cluster solo si tiene ≥`min_peers` nombres con
+    dato; si no (cuellos de 1-2 nombres, donde saturaba en 0/1), cae al percentil GLOBAL del universo — así el
+    score diferencia en vez de empatar a todos los 'mejores de su cuello'."""
+    v_global = percentiles_cluster({c.ticker: c.brecha_raw for c in candidatos})
+    m_global = percentiles_cluster({c.ticker: c.momentum_raw for c in candidatos})
     por_cluster: dict[str | None, list[CandidatoOportunidad]] = defaultdict(list)
     for c in candidatos:
         por_cluster[c.cluster].append(c)
     v_pct: dict[str, float | None] = {}
     m_pct: dict[str, float | None] = {}
     for grupo in por_cluster.values():
-        vb = percentiles_cluster({c.ticker: c.brecha_raw for c in grupo})
-        vm = percentiles_cluster({c.ticker: c.momentum_raw for c in grupo})
+        n_valid = sum(1 for c in grupo if c.brecha_raw is not None)
+        if n_valid >= min_peers:
+            vb = percentiles_cluster({c.ticker: c.brecha_raw for c in grupo})
+            vm = percentiles_cluster({c.ticker: c.momentum_raw for c in grupo})
+        else:                                             # cuello fino → percentil global (no satura)
+            vb = {c.ticker: v_global[c.ticker] for c in grupo}
+            vm = {c.ticker: m_global[c.ticker] for c in grupo}
         v_pct.update(vb)
         m_pct.update(vm)
     filas: list[FilaScore] = []

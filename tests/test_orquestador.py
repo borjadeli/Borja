@@ -309,3 +309,27 @@ def test_correr_semana_aplica_invertible_fn_camino_real():
     acc = {d.ticker: d.accion for d in r.decisiones}
     assert acc["OKLO"] == "analizado" and acc["GOOG"] == "triage_descarta"   # GOOG filtrado, no se analizó
     assert an.llamadas == 1                                                   # solo OKLO
+
+
+def test_escenarios_cambiaron():
+    from dataclasses import dataclass
+    from backend.agentes.orquestador import _escenarios_cambiaron
+
+    @dataclass
+    class _E:
+        nombre: str
+        metrica_terminal: float
+        multiplo_salida: float
+        prob: float
+
+    @dataclass
+    class _D:
+        escenarios: list
+
+    base = _D([_E("bear", 200e6, 5, 0.25), _E("base", 500e6, 8, 0.5), _E("bull", 900e6, 12, 0.25)])
+    # idénticos → no cambió (Bear se saltea en el refresh)
+    assert _escenarios_cambiaron(base, _D([_E("bear", 200e6, 5, 0.25), _E("base", 500e6, 8, 0.5),
+                                           _E("bull", 900e6, 12, 0.25)])) is False
+    # base +30% → cambió materialmente (Bear corre)
+    assert _escenarios_cambiaron(base, _D([_E("bear", 200e6, 5, 0.25), _E("base", 650e6, 8, 0.5),
+                                           _E("bull", 900e6, 12, 0.25)])) is True

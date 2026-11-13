@@ -50,6 +50,23 @@ def _pack_hechos(pack: DataPack) -> tuple[float | None, float | None, bool]:
     return revenue_fy, (rw.value if comp else None), bool(comp)
 
 
+def _escenarios_cambiaron(prev_dossier, new_dossier, *, umbral: float = 0.15) -> bool:
+    """True si los escenarios del refresh difieren materialmente (>umbral) del dossier previo — gatilla el Bear
+    (doc 80 §E: 'Bear solo si cambian escenarios'). Un escenario nuevo/que desapareció también cuenta."""
+    pa = {e.nombre: e for e in (getattr(prev_dossier, "escenarios", None) or [])}
+    nu = {e.nombre: e for e in (getattr(new_dossier, "escenarios", None) or [])}
+    if set(pa) != set(nu):
+        return True
+    for nombre, e in nu.items():
+        p = pa[nombre]
+        for attr in ("metrica_terminal", "multiplo_salida", "prob"):
+            a, b = getattr(e, attr, None), getattr(p, attr, None)
+            if a is not None and b:
+                if abs(a - b) / abs(b) > umbral:
+                    return True
+    return False
+
+
 def hash_pack(pack: DataPack) -> str:
     """Hash de los insumos MATERIALES ORIGINALES del data pack — clave de reutilización del Dossier.
     EXCLUYE: (a) métricas de mercado volátiles (precio/ADV/market cap/shares) y (b) DataPoints DERIVED
@@ -265,8 +282,14 @@ class Orquestador:
                     res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="sin_dossier", triage=td,
                                                       costo_usd=costo))
                     continue
-                atk = self.bear.atacar(r_an.dossier)
-                costo += atk.meta.cost_usd
+                # REFRESH barato (doc 80 §E): si es una ACTUALIZACIÓN (ya había dossier → la tesis ya fue
+                # atacada) y los escenarios NO cambiaron materialmente, se SALTEA el Bear. Un nombre NUEVO o un
+                # refresh con escenarios movidos → Bear corre (re-ataca lo que cambió).
+                es_refresh = prev is not None and prev.dossier is not None
+                atk = None
+                if (not es_refresh) or _escenarios_cambiaron(prev.dossier, r_an.dossier):
+                    atk = self.bear.atacar(r_an.dossier)
+                    costo += atk.meta.cost_usd
                 # el verificador recibe el pack (para contraste XBRL) + el known_at más nuevo de los datos de
                 # FILING (XBRL), para la regla de vigencia 1d, + hoy (falsador vencido 1e). OJO: NO usar el
                 # max del pack entero — los datos de mercado (Yahoo) tienen known_at=hoy y contaminarían el

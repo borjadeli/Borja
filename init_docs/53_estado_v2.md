@@ -121,8 +121,19 @@ blackout solo re-análisis, tramos opcionales, estacionamiento con gate de sobre
   decisiones previas). Falta cablearlo a `pm.decidir`.
 - **P3 (archivo inteligente) núcleo HECHO:** `backend/agentes/archivo.py` — lápida + reingreso por motivo
   (PRECIO/FUNDAMENTAL/SCORE/NUNCA). Falta: mapa vivo (briefs de cuello) + cablear el pre-filtro a discovery.
-- **Próximo:** cerrar el wiring vivo (packet→PM, selección real por carriles, pre-filtro de discovery) + mapa
-  vivo + P4 (oportunidad perdida, sombras nuevas, D4 duro). 859 tests. **No codear fuera del doc 80.**
+- **P2 CERRADO:** packet cableado a `pm.decidir` (el runner lo arma del store de fichas + ledger).
+- **P3 núcleo HECHO:** `archivo.py` (lápida + reingreso) + pre-filtro de lápida en el validador de discovery.
+- **VALIDADO EN VIVO (2026-11-13):** backfill de 11 fichas + packet real + **smoke con PM**: el PM, viendo la
+  memoria viva, **vendió MP (RECORTE) y compró IESC (COMPRA)** — el ciclo completo operando. El smoke destapó un
+  **bug de datos** (IESC: acciones XBRL pre-split 19,9M vs feed 42,4M → falso COMPRA); **FIX cableado** (la ficha
+  usa el feed post-split cuando divergen >25% + marca `datos_conflicted` → no comprable sin re-verificar; la
+  guarda "re-chequeo de acciones al cruzar" del doc 80 que faltaba). IESC corregida → RECORTE.
+- **Herramientas operativas ($0 LLM):** `ops.backfill_fichas` (arma las fichas del cache) · `ops.job_fichas` (el
+  LATIDO DIARIO: recalcula + alertas de cambio de zona; agendar en el scheduler). Estado real hoy: 11 fichas,
+  todas RECORTE/MANTENER (mercado caro — paciencia funcionando, nada en zona de compra).
+- **Próximo:** selección real por carriles (deep por oportunidad, no evento — el #1 del operador) · mapa vivo
+  (briefs de cuello + disolución vía XBRL) · P4 (oportunidad perdida, sombras, D4 duro) · momentum por
+  aceleración. 861 tests. **No codear fuera del doc 80.**
 
 ## Actualización 2026-11-05 (tarde) — vistas + caps/PM + r7 Bloque 1 (valuación como motor)
 

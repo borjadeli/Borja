@@ -84,6 +84,9 @@ _XBRL_INSTANT = [
     # ORIGINAL (hecho de filing, no volátil) → entran al hash. Cobertura real a medir (Gate A, doc 78).
     ("rpo", "RevenueRemainingPerformanceObligation", "USD"),
     ("contract_liability", "ContractWithCustomerLiability", "USD"),
+    # r9 mapa vivo (doc 80 §B): inventarios → señal de DISOLUCIÓN del cuello (capex↑ + inventarios↑ + margen↓
+    # aparece en el tablero XBRL ANTES que en la narrativa — insight de IA3).
+    ("inventarios", "InventoryNet", "USD"),
 ]
 _XBRL_ANUAL = [
     ("operating_income_loss", "OperatingIncomeLoss", "USD"),

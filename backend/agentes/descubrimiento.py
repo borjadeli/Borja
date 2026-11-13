@@ -56,15 +56,20 @@ def _tiene_fuente_primaria(fuentes: list[str]) -> bool:
 
 def validar_propuesta(p: PropuestaEmpresa, *, ips_cfg: dict, universo_actual: set[str],
                       nodos_conocidos: set[str] | None = None, cap_requerido: bool = False,
-                      hoy: date | None = None) -> tuple[bool, list[str]]:
-    """Validadores DUROS deterministas (doc 76 + r6 #3). Liquidez NO se valida. `nodos_conocidos` → exige
-    ENCAJE EN EL MAPA (el mapa valida, no el humano). `cap_requerido` (auto-entrada sin humano) → un market cap
-    sin resolver NO entra (en vez de quedar 'a verificar')."""
+                      reingreso_fn=None, hoy: date | None = None) -> tuple[bool, list[str]]:
+    """Validadores DUROS deterministas (doc 76 + r6 #3 + r9 P3). Liquidez NO se valida. `nodos_conocidos` → exige
+    ENCAJE EN EL MAPA. `cap_requerido` → un market cap sin resolver NO entra. `reingreso_fn(ticker)->(bool,razon)`
+    (r9 §J): pre-filtro de LÁPIDA — si el nombre salió y su política de reingreso dice que NO vuelve (descartada
+    sin cambio de fundamentals, cuello resuelto), se SUPRIME (no re-investigar; ahorra budget)."""
     motivos: list[str] = []
     if not _ticker_valido(p.ticker):
         motivos.append(f"ticker inválido: '{p.ticker}'")
     if p.ticker.strip().upper() in {t.upper() for t in universo_actual}:
         motivos.append("duplicado: ya está en el universo")
+    if reingreso_fn is not None:
+        vuelve, razon = reingreso_fn(p.ticker.strip().upper())
+        if vuelve is False and razon:
+            motivos.append(f"suprimido por lápida: {razon}")
     if nodos_conocidos is not None and p.cuello.strip() not in nodos_conocidos:
         motivos.append(f"sin encaje en el mapa: '{p.cuello[:60]}' no es un cuello conocido")
     mc_min = float(ips_cfg.get("market_cap_min_usd", 0))

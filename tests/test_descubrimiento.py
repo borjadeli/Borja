@@ -279,3 +279,14 @@ def test_overlay_round_trip_crece_el_mapa(tmp_path, monkeypatch):
     assert "Cuello nuevo Z" in overlay.nombres_overlay()
     assert "Cuello nuevo Z" in nodos_conocidos()              # ya es un nodo conocido para el encaje
     assert len(territorios_activos()) == antes + 1           # el mapa creció solo
+
+
+def test_validador_suprime_por_lapida():
+    # una descartada cuya lápida dice que NO vuelve (p.ej. tesis rota sin cambio) → rechazada (no re-investigar)
+    def reingreso_fn(tk):
+        return (False, "misma huella que al salir → suprimido") if tk == "NUVL" else (True, "")
+    ok, m = validar_propuesta(_p("NUVL"), ips_cfg=_IPS, universo_actual=set(), reingreso_fn=reingreso_fn)
+    assert not ok and any("suprimido por lápida" in x for x in m)
+    # una que SÍ puede volver (se abarató) → pasa
+    ok2, _ = validar_propuesta(_p("OTRA"), ips_cfg=_IPS, universo_actual=set(), reingreso_fn=reingreso_fn)
+    assert ok2

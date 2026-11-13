@@ -24,7 +24,9 @@ from datetime import date
 
 # Política por clase (hurdles/pisos), aprobada por el operador 2026-11-12 (doc 80 §3). Se puede pasar desde el
 # ips.yaml; estos son los defaults. piso None = sin piso (especulativa: la limita el tamaño, no el downside).
-HURDLES_DEFAULT = {"core": 0.15, "satelite": 0.20, "especulativa": 0.30, "watchlist": 0.30}
+# r9a #1 (calibración): hurdles bajados (el bear ya está en E[V] → sin doble-castigo); el piso es PÉRDIDA
+# ESPERADA (prob_bear × pérdida_bear ≤ piso), no peor-caso; especulativa exige V_bull ≥ 5×P en vez de piso.
+HURDLES_DEFAULT = {"core": 0.12, "satelite": 0.15, "especulativa": 0.20, "watchlist": 0.20}
 PISOS_DEFAULT = {"core": 0.35, "satelite": 0.50, "especulativa": None, "watchlist": None}
 HURDLE_MIN_DEFAULT = 0.08
 _INF = float("inf")
@@ -140,7 +142,8 @@ def _por_nombre(escenarios: list[EscenarioF], *, deuda_neta, acciones, dilucion_
 
 def calcular_puente(escenarios: list[EscenarioF], *, precio: float, deuda_neta: float, acciones: float,
                     dilucion_total: float, clase: str,
-                    hurdles=None, pisos=None, hurdle_min: float = HURDLE_MIN_DEFAULT
+                    hurdles=None, pisos=None, hurdle_min: float = HURDLE_MIN_DEFAULT,
+                    bull_min_especulativa: float = 5.0
                     ) -> tuple[Puente, Gatillos, Latido] | None:
     """Corazón del reloj rápido: de los escenarios (reloj lento) + el precio de hoy → puente, zonas y latido.
     Puro. None si faltan insumos (precio/acciones/escenarios). `clase` elige hurdle y piso."""
@@ -160,14 +163,23 @@ def calcular_puente(escenarios: list[EscenarioF], *, precio: float, deuda_neta: 
     piso = pisos.get(clase)                                        # None = sin piso
     v_bear = por.get("bear")
     v_bull = por.get("bull")
+    prob_bear = next((max(0.0, e.prob) / suma_prob for e in vivos if e.nombre == "bear"), 0.0)
 
     r_p = (e_v / precio) ** (1.0 / T) - 1.0 if e_v > 0 else -1.0
     perdida_bear = (v_bear / precio - 1.0) if v_bear is not None else None
 
-    # precios equivalentes de cada gatillo (la condición es política; el precio es su equivalente de hoy)
+    # precios equivalentes de cada gatillo (la condición es política; el precio es su equivalente de hoy):
     p_compra_ret = e_v / ((1.0 + hurdle) ** T) if e_v > 0 else None
-    p_compra_piso = (v_bear / (1.0 - piso)) if (v_bear is not None and piso is not None and piso < 1) else _INF
-    compra = None if p_compra_ret is None else round(min(p_compra_ret, p_compra_piso), 4)
+    # piso = pérdida ESPERADA máxima (r9a #1): prob_bear × (1 − V_bear/P) ≤ piso → P ≤ V_bear/(1 − piso/prob_bear)
+    if v_bear is not None and piso is not None and piso < 1 and prob_bear > 0:
+        k = 1.0 - piso / prob_bear
+        p_compra_piso = (v_bear / k) if k > 0 else _INF           # k≤0 → la pérdida esperada nunca excede el piso
+    else:
+        p_compra_piso = _INF
+    # especulativa: además exige V_bull ≥ bull_min × precio → P ≤ V_bull / bull_min (doc 80 §3)
+    p_compra_bull = (v_bull / bull_min_especulativa) if (clase == "especulativa" and v_bull is not None
+                                                         and bull_min_especulativa) else _INF
+    compra = None if p_compra_ret is None else round(min(p_compra_ret, p_compra_piso, p_compra_bull), 4)
     recorte = round(e_v / ((1.0 + hurdle_min) ** T), 4) if e_v > 0 else None
     salida = round(v_bull / ((1.0 + hurdle_min) ** T), 4) if v_bull is not None else None
 

@@ -23,13 +23,13 @@ def test_valor_accion_equity_bridge():
 
 
 def test_puente_ordena_zonas():
-    # satélite (hurdle 20%, piso 50%). E[V] = .25×10 + .5×40 + .25×108 = 49.5
+    # satélite r9a: hurdle 15%, piso 50% como pérdida ESPERADA. E[V] = .25×10 + .5×40 + .25×108 = 49.5
     p = calcular_puente(_ESC, precio=40.0, clase="satelite", **_POL)
     assert p is not None
     puente, gat, lat = p
     assert puente.e_v == 49.5 and puente.horizonte == 4
-    # compra = min(E[V]/(1.2)^4 , V_bear/(1−.5)) = min(49.5/2.0736, 10/0.5=20) = min(23.87, 20) = 20 (piso manda)
-    assert abs(gat.compra - 20.0) < 1e-2
+    # compra = E[V]/(1.15)^4 = 49.5/1.749 = 28.30 (el piso esperado no ata: prob_bear 0.25 × pérdida < 0.50)
+    assert abs(gat.compra - 28.30) < 0.1
     # recorte = 49.5/(1.08)^4 = 36.39 ; salida = 108/(1.08)^4 = 79.4
     assert abs(gat.recorte - 36.39) < 0.1 and abs(gat.salida - 79.4) < 0.2
     assert gat.compra < gat.recorte < gat.salida          # ordenamiento del espectro de precios
@@ -38,20 +38,28 @@ def test_puente_ordena_zonas():
 def test_zonas_segun_precio():
     def zona(precio):
         return calcular_puente(_ESC, precio=precio, clase="satelite", **_POL)[2].zona
-    assert zona(18) == "COMPRA"      # ≤ 20
-    assert zona(30) == "MANTENER"    # entre compra (20) y recorte (36.4)
+    assert zona(25) == "COMPRA"      # ≤ 28.3
+    assert zona(32) == "MANTENER"    # entre compra (28.3) y recorte (36.4)
     assert zona(50) == "RECORTE"     # entre recorte (36.4) y salida (79.4)
     assert zona(90) == "SALIDA"      # > 79.4 (ni el bull paga el mínimo)
 
 
-def test_piso_bear_limita_la_compra():
-    # aislado: MISMO hurdle, con piso vs sin piso → el piso solo puede EXIGIR comprar más abajo (o igual)
-    h = {"x": 0.20}
+def test_piso_perdida_esperada():
+    # el piso ahora es pérdida ESPERADA (prob_bear × pérdida_bear ≤ piso). Con un piso muy chico, ata y baja la
+    # compra; con uno holgado, no ata. prob_bear=0.25, V_bear=10.
+    h = {"x": 0.15}
+    # piso 0.05: P ≤ V_bear/(1 − 0.05/0.25) = 10/(1−0.2) = 12.5 → la compra baja a 12.5 (piso manda)
+    con_piso = calcular_puente(_ESC, precio=40, clase="x", hurdles=h, pisos={"x": 0.05}, **_POL)[1].compra
+    assert abs(con_piso - 12.5) < 1e-2
+    # sin piso: compra = E[V]/1.15^4 = 28.30 (solo el hurdle)
     sin_piso = calcular_puente(_ESC, precio=40, clase="x", hurdles=h, pisos={"x": None}, **_POL)[1].compra
-    con_piso = calcular_puente(_ESC, precio=40, clase="x", hurdles=h, pisos={"x": 0.50}, **_POL)[1].compra
-    assert con_piso <= sin_piso
-    # hurdle-only = 49.5/1.2^4 = 23.87; con piso = min(23.87, V_bear/0.5=20) = 20 (el piso manda)
-    assert abs(sin_piso - 23.87) < 0.1 and abs(con_piso - 20.0) < 1e-2
+    assert abs(sin_piso - 28.30) < 0.1 and con_piso < sin_piso
+
+
+def test_especulativa_exige_bull_5x():
+    # especulativa: compra = min(E[V]/1.2^4=23.87, V_bull/5=108/5=21.6) → el bull≥5× ata
+    g = calcular_puente(_ESC, precio=40, clase="especulativa", **_POL)[1]
+    assert abs(g.compra - 21.6) < 0.1
 
 
 @dataclass

@@ -95,13 +95,25 @@ def candidato_desde_metricas(ticker: str, *, cluster: str | None, metricas: dict
                              anios: int = 4, hurdle: float = 0.20) -> CandidatoOportunidad:
     """Arma un CandidatoOportunidad desde la lente de valuación (fuente_valuacion). brecha = g_entregado −
     g_exigido; momentum v1 = crecimiento YoY + señal de backlog (proxy; la aceleración real necesita 2 YoY)."""
+    ev = metricas.get("enterprise_value")
+    rev = metricas.get("revenue")
     g_ent = metricas.get("revenue_growth_yoy")
     g_ent = (g_ent / 100.0) if g_ent is not None else None                  # viene en % → fracción
-    g_exig = g_exigido(ev=metricas.get("enterprise_value"), revenue=metricas.get("revenue"),
-                       mult_ref=mult_ref, anios=anios, hurdle=hurdle)
-    brecha = (g_ent - g_exig) if (g_ent is not None and g_exig is not None) else None
+    g_exig = g_exigido(ev=ev, revenue=rev, mult_ref=mult_ref, anios=anios, hurdle=hurdle)
+    vc = metricas.get("valor_contratado_ajustado")                          # RPO × margen bruto
+    if g_ent is not None and g_exig is not None:
+        brecha = g_ent - g_exig
+    elif (not rev or rev <= 0) and vc and ev and ev > 0:
+        # r9a #3b: SIN ventas pero CON contrato firme (RPO ajustado por margen) → "un contrato firme cuenta
+        # aunque no genere caja". brecha = cobertura del EV por el valor contratado − 1 (>0 = el contrato ya
+        # cubre el EV → barato). Así una pre-revenue con backlog compite por OPORTUNIDAD, no solo exploración.
+        brecha = round(vc / ev - 1.0, 4)
+    else:
+        brecha = None
     cov = metricas.get("backlog_coverage")
     momentum = None if g_ent is None else round(g_ent + (0.1 if (cov and cov >= 1.0) else 0.0), 4)
+    if momentum is None and brecha is not None:     # pre-revenue con contrato: momentum = la cobertura de backlog
+        momentum = round(min(1.0, (cov or 0.0) / 3.0), 4) if cov else 0.3
     return CandidatoOportunidad(
         ticker=ticker.upper(), cluster=cluster, brecha_raw=brecha, momentum_raw=momentum,
         cuello_estado=cuello_estado, cuello_rol=cuello_rol, prioridad_macro=prioridad_macro,

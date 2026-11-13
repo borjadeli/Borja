@@ -103,3 +103,15 @@ def test_blackout_excluye():
         posiciones=set(), fichas_zona={"OKLO": "COMPRA"}, fichas_estado={"OKLO": "VIGENTE"},
         scores=[_fila("NUEVA1", 0.9)], cupo_oportunidad=4, blackout={"OKLO", "NUEVA1"})
     assert sel.banca == [] and sel.oportunidad == []   # ambos en blackout → no entran
+
+
+def test_pre_revenue_con_contrato_tiene_brecha():
+    # r9a #3b: SIN ventas pero CON valor contratado (RPO×margen) → brecha = vc/EV − 1 (no None) → compite por
+    # oportunidad, no solo exploración. Es el criterio del operador: un contrato firme cuenta sin caja.
+    c = candidato_desde_metricas("PRE", cluster="nuclear",
+                                 metricas={"enterprise_value": 2e9, "valor_contratado_ajustado": 2.6e9,
+                                           "backlog_coverage": 2.0})          # revenue ausente
+    assert c.brecha_raw is not None and abs(c.brecha_raw - 0.3) < 1e-6        # 2.6/2.0 − 1 = 0.30 (barato)
+    assert c.momentum_raw is not None
+    # sin ventas y SIN contrato → sigue None (solo exploración)
+    assert candidato_desde_metricas("X", cluster="n", metricas={"enterprise_value": 1e9}).brecha_raw is None

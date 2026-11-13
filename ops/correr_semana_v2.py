@@ -180,26 +180,24 @@ def _dry_run_universo(candidatos, *, ips, cupo: int, valor=None, posiciones: set
     la señal de valor (r7 §3/§8) → imprime el top-15 más barato por cuello."""
     from backend.agentes.embudo import seleccionar_para_deep
     invertible_fn, gigante_barato_fn, cupo_forzados, cupo_gigantes = _filtros_embudo(candidatos, ips)
+    cupo_op = int(ips.cfg.get("cupo_oportunidad", 4))
     sel = seleccionar_para_deep(candidatos, cupo=cupo,
-                                pre_earnings_top_n=int(ips.cfg.get("pre_earnings_top_n", 3)),
                                 dias_earnings=int(ips.cfg.get("dias_earnings_proximo", 10)),
                                 invertible_fn=invertible_fn, cupo_forzados=cupo_forzados,
-                                gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes)
+                                gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes,
+                                eventos_solo_posiciones=True, cupo_oportunidad=cupo_op)   # r9 §D
     n_deep = len(sel["deep"])
-    print("\n=== DRY-RUN --universo (misma selección que la corrida real; sin gasto de Analista/Bear/PM) ===")
+    _pos = [t for t, _m in sel['forzados']]
+    _op = [t for t, _m in sel.get('oportunidad', [])]
+    print("\n=== DRY-RUN --universo (doc 80 §D: eventos solo tenencias + oportunidad; sin gasto LLM) ===")
     print(f"candidatos: {len(candidatos)}")
-    print(f"GIGANTES caídos → ¿barato? → ALERTA ({len(sel['gigantes_watch'])}): {[t for t, _ in sel['gigantes_watch']]}")
-    print(f"NO INVERTIBLES (fuera del IPS por market cap, excluidos del deep) ({len(sel['no_invertible'])}): "
-          f"{[t for t, _ in sel['no_invertible']]}")
-    _pos_f = [t for t, m in sel['forzados'] if m == "posición"]
-    _ev_f = [t for t, m in sel['forzados'] if m != "posición"]
-    print(f"FORZADOS ({len(sel['forzados'])}): {len(_pos_f)} posición (reserva, fuera del tope) {_pos_f}"
-          f"  +  {len(_ev_f)} evento fuerte (tope {cupo_forzados}) {_ev_f}")
-    print(f"PRECIO fuerte ({len(sel['precio'])}): {[t for t, _ in sel['precio']]}")
-    print(f"PRE-EARNINGS top ({len(sel['pre_earnings'])}): {[t for t, _ in sel['pre_earnings']]}")
-    print(f"PROMOVIDOS por cupo ({len(sel['promovidos'])}/{cupo}): {[t for t, _ in sel['promovidos']]}")
-    print(f"en espera (post-earnings / cola / sin trigger / overflow forzado): {len(sel['espera'])}")
-    print(f"→ análisis profundos estimados: {n_deep}  ·  costo estimado: ~${n_deep * 0.68:.2f}")
+    print(f"TENENCIAS → deep/refresh ({len(_pos)}): {_pos}")
+    print(f"OPORTUNIDAD → deep completo (cupo {cupo_op}, {len(_op)}): {_op}")
+    print(f"GIGANTES caídos → ALERTA ({len(sel['gigantes_watch'])}): {[t for t, _ in sel['gigantes_watch']]}")
+    print(f"NO INVERTIBLES (fuera del IPS por market cap) ({len(sel['no_invertible'])})")
+    print(f"en espera (no-tenencia sin oportunidad — el evento solo movió su score): {len(sel['espera'])}")
+    costo = len(_pos) * 0.25 + (len(_op) + len(sel['gigantes_watch'])) * 0.68   # tenencias=refresh, oportunidad=completo
+    print(f"→ deeps: {len(_op)} completos + {len(_pos)} refresh de tenencias  ·  costo estimado: ~${costo:.2f}")
     if valor:
         from backend.agentes.embudo import top_por_valor
         ratios, met, cuellos = valor
@@ -334,14 +332,11 @@ def main() -> int:
                                                       posiciones=posiciones, ips=ips)
             forzar = {t.upper() for t in (sel_op.oportunidad + sel_op.banca)}
             por_tk = {c[0].upper(): c[1] for c in candidatos}
-            forzados_op = []
             for tk in forzar:
                 s = por_tk.get(tk)
-                if s is not None and not s.tiene_evento_fuerte:
-                    s.tiene_evento_fuerte = True           # entra al carril forzado del embudo
-                    forzados_op.append(tk)
-            if forzados_op:
-                print(f"OPORTUNIDAD → deep forzado ({len(forzados_op)}): {sorted(forzados_op)}")
+                if s is not None:
+                    s.forzado_oportunidad = True           # r9 §D: carril de OPORTUNIDAD (no evento)
+            print(f"OPORTUNIDAD → deep ({len(forzar & set(por_tk))}): {sorted(forzar & set(por_tk))}")
         if args.dry_run:
             _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6, posiciones=posiciones,
                               valor=(valor_ratios, valor_met, valor_cuellos) if valor_ratios else None)
@@ -371,7 +366,8 @@ def main() -> int:
         res = runner.correr(candidatos, session=paper, precios=precios, contexto=contexto,
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap,
                             invertible_fn=inv_fn, cupo_forzados=cupo_forz,
-                            gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig, precios_meta=precios_meta)
+                            gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig, precios_meta=precios_meta,
+                            eventos_solo_posiciones=args.universo, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)))
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:

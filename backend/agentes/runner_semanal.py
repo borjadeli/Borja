@@ -136,7 +136,8 @@ class RunnerSemanal:
                ciclo: str | None = None, comision: float = 0.0,
                cupo_cobertura: int = 0, bootstrap: bool = False,
                invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
-               cupo_gigantes: int = 0, precios_meta: dict[str, dict] | None = None) -> ResultadoRunner:
+               cupo_gigantes: int = 0, precios_meta: dict[str, dict] | None = None,
+               eventos_solo_posiciones: bool = False, cupo_oportunidad: int | None = None) -> ResultadoRunner:
         hoy = hoy or date.today()
         ciclo = ciclo or hoy.isoformat()
 
@@ -146,7 +147,9 @@ class RunnerSemanal:
         research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy,
                                                cupo_cobertura=cupo_cobertura, bootstrap=bootstrap,
                                                invertible_fn=invertible_fn, cupo_forzados=cupo_forzados,
-                                               gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes)
+                                               gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes,
+                                               eventos_solo_posiciones=eventos_solo_posiciones,
+                                               cupo_oportunidad=cupo_oportunidad)
         memo_txt = research.memo.resumen if research.memo else ""
 
         dossiers: list[tuple[Dossier, VerificationReport]] = []

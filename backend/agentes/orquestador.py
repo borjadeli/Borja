@@ -169,7 +169,8 @@ class Orquestador:
                       cupo_cobertura: int = 0, bootstrap: bool = False,
                       pre_earnings_top_n: int = 3, dias_earnings: int = 10,
                       invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
-                      cupo_gigantes: int = 0) -> ResultadoSemana:
+                      cupo_gigantes: int = 0, eventos_solo_posiciones: bool = False,
+                      cupo_oportunidad: int | None = None) -> ResultadoSemana:
         """`cupo_cobertura`: cuántos nombres NUNCA analizados se promueven a research esta semana aunque el
         triage no los marque (ordenados por la prioridad de su cuello) — resuelve que un nombre nuevo
         prometedor nunca entre (auditoría P0.3). `bootstrap=True`: promueve TODOS los nuevos (primera pasada
@@ -193,7 +194,8 @@ class Orquestador:
         sel = seleccionar_para_deep(cands_sel, cupo=cupo, pre_earnings_top_n=pre_earnings_top_n,
                                     dias_earnings=dias_earnings, invertible_fn=invertible_fn,
                                     cupo_forzados=cupo_forzados, gigante_barato_fn=gigante_barato_fn,
-                                    cupo_gigantes=cupo_gigantes)
+                                    cupo_gigantes=cupo_gigantes, eventos_solo_posiciones=eventos_solo_posiciones,
+                                    cupo_oportunidad=cupo_oportunidad)
         motivos_sel = {tk: m for grupo in ("forzados", "precio", "pre_earnings", "promovidos", "gigantes_watch")
                        for tk, m in sel[grupo]}
         for _s, _r, td in triages:

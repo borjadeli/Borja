@@ -43,6 +43,7 @@ class SenalesTriage:
     tiene_evento_fuerte: bool = False  # CRR crítico / ≥N red flags / filing material
     prioridad_cuello: int = 0          # prioridad del cuello de la empresa en el mapa (0-3) — ordena el cupo
     valor_percentil_cuello: float | None = None  # r7 §3: 1.0 = el más barato de su cuello (sube en la fila)
+    forzado_oportunidad: bool = False             # r9 §D: seleccionado por el carril de OPORTUNIDAD (no por evento)
 
 
 def _clamp01(x: float) -> float:

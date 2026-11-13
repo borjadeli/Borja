@@ -177,9 +177,50 @@ def ordenar_cobertura(nuevos: list, *, ips_cfg: dict, ctx_fn, dias_a_evento_fn=N
 
 # --------------------------------------------------------------------------- selección de deep (una sola fuente)
 
+def _seleccionar_carriles(candidatos, *, invertible_fn=None, gigante_barato_fn=None,
+                          cupo_gigantes: int = 0, cupo_oportunidad: int | None = None) -> dict:
+    """Selección LIMPIA del doc 80 §D (r9): tenencias (siempre) + oportunidad (no-tenencias, capeado). Los
+    eventos de no-tenencias NO fuerzan deep (solo mueven el score, computado aguas arriba)."""
+    posiciones, oportunidad, espera, no_invertible, gig_rank = [], [], [], [], []
+    for tk, s, _res in candidatos:
+        if not s.es_posicion and invertible_fn is not None and not invertible_fn(tk):
+            if gigante_barato_fn is not None and gigante_barato_fn(tk):
+                gig_rank.append((s.precio_vs_tesis_pct if s.precio_vs_tesis_pct is not None else 0.0, tk))
+            else:
+                no_invertible.append((tk, "fuera de rango IPS (market cap)"))
+            continue
+        if s.es_posicion:
+            posiciones.append((tk, "posición (evento pre/post → refresh)"))
+        elif getattr(s, "forzado_oportunidad", False):
+            oportunidad.append((tk, "oportunidad (top score / banca en zona)"))
+        else:
+            espera.append((tk, "no-tenencia sin oportunidad (el evento solo mueve el score)"))
+    if cupo_oportunidad is not None and len(oportunidad) > cupo_oportunidad:
+        espera += [(tk, "oportunidad sobre el cupo") for tk, _m in oportunidad[cupo_oportunidad:]]
+        oportunidad = oportunidad[:cupo_oportunidad]
+    gig_rank.sort(key=lambda x: x[0])
+    gigantes_watch = [(tk, "gigante caído (deep → ¿barato? → ALERTA)") for _z, tk in gig_rank[:cupo_gigantes]]
+    no_invertible += [(tk, "gigante caído (sobre el cupo)") for _z, tk in gig_rank[cupo_gigantes:]]
+    deep = {tk for tk, _ in posiciones + oportunidad + gigantes_watch}
+    return {"forzados": posiciones, "oportunidad": oportunidad, "precio": [], "pre_earnings": [],
+            "promovidos": [], "gigantes_watch": gigantes_watch, "espera": espera,
+            "no_invertible": no_invertible, "deep": deep}
+
+
 def seleccionar_para_deep(candidatos, *, cupo: int, pre_earnings_top_n: int = 3,
                           dias_earnings: int = 10, invertible_fn=None, cupo_forzados=None,
-                          gigante_barato_fn=None, cupo_gigantes: int = 0) -> dict:
+                          gigante_barato_fn=None, cupo_gigantes: int = 0,
+                          eventos_solo_posiciones: bool = False, cupo_oportunidad: int | None = None) -> dict:
+    """r9 §D (doc 80): con `eventos_solo_posiciones=True` el deep queda LIMPIO —
+    - **TENENCIAS** → deep siempre (eventos: pre Y post earnings, red flags; ya tienen ficha → el runner las
+      rutea a REFRESH barato, no comité completo).
+    - **NO-TENENCIAS** → SOLO por OPORTUNIDAD (`forzado_oportunidad`, capeado a `cupo_oportunidad`); los eventos
+      de una no-tenencia **mueven su score aguas arriba, NO fuerzan deep**. Sin carril de evento/precio/
+      pre-earnings para no-posiciones.
+    (default False = comportamiento viejo, para compat de tests.) El filtro de admisibilidad + gigantes siguen."""
+    if eventos_solo_posiciones:
+        return _seleccionar_carriles(candidatos, invertible_fn=invertible_fn, gigante_barato_fn=gigante_barato_fn,
+                                     cupo_gigantes=cupo_gigantes, cupo_oportunidad=cupo_oportunidad)
     """ÚNICA fuente de verdad de 'qué va a análisis profundo' — la usan el dry-run Y el runner real (así lo
     que ves en --dry-run es lo que corre). Opera sobre las `SenalesTriage` de cada candidato
     `(ticker, señal, resumen)`. Reglas (doc 64 + doc 76):

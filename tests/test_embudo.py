@@ -242,3 +242,34 @@ def test_seleccion_gigante_caido_va_a_watch_el_resto_no_invertible():
     assert "GOOG" in sel["deep"]
     assert "AAPL" in {t for t, _ in sel["no_invertible"]}   # caído pero sobre el cupo
     assert "IBM" in {t for t, _ in sel["no_invertible"]}    # no cayó → no es candidato a barato
+
+
+def test_seleccion_r9_eventos_solo_posiciones():
+    """doc 80 §D: tenencias → deep; no-tenencias SOLO por oportunidad; un evento en no-tenencia NO fuerza deep."""
+    from backend.agentes.embudo import seleccionar_para_deep
+    from backend.agentes.triage import SenalesTriage
+
+    def _s(**kw):
+        base = dict(dias_desde_dossier=30, hechos_nuevos=0, dias_a_evento=None, precio_vs_tesis_pct=None)
+        base.update(kw)
+        return SenalesTriage(**base)
+
+    cands = [
+        ("POS", _s(es_posicion=True), ""),                                  # tenencia → deep
+        ("OPORT", _s(forzado_oportunidad=True), ""),                        # no-tenencia, oportunidad → deep
+        ("EVENTO", _s(tiene_evento_fuerte=True), ""),                       # no-tenencia con evento → NO deep
+        ("PRECIO", _s(precio_vs_tesis_pct=99.0), ""),                       # no-tenencia con precio → NO deep
+        ("EARN", _s(dias_a_evento=3), ""),                                  # no-tenencia pre-earnings → NO deep
+    ]
+    sel = seleccionar_para_deep(cands, cupo=0, eventos_solo_posiciones=True, cupo_oportunidad=4)
+    assert sel["deep"] == {"POS", "OPORT"}                                  # solo tenencia + oportunidad
+    assert {t for t, _ in sel["espera"]} == {"EVENTO", "PRECIO", "EARN"}    # los demás esperan (el evento movió su score)
+
+
+def test_seleccion_r9_capea_oportunidad():
+    from backend.agentes.embudo import seleccionar_para_deep
+    from backend.agentes.triage import SenalesTriage
+    cands = [(f"OP{i}", SenalesTriage(dias_desde_dossier=30, hechos_nuevos=0, dias_a_evento=None,
+                                      precio_vs_tesis_pct=None, forzado_oportunidad=True), "") for i in range(6)]
+    sel = seleccionar_para_deep(cands, cupo=0, eventos_solo_posiciones=True, cupo_oportunidad=4)
+    assert len(sel["oportunidad"]) == 4 and len([t for t, _ in sel["espera"]]) == 2

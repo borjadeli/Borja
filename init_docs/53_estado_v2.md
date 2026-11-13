@@ -98,6 +98,23 @@ de docs 75/76. Todo commiteado en `destete-v2-fase3`. **800 tests verdes.**
 > construcción. **Requiere decisión de método del operador** (relajar bandas / cambiar el mandato del PM vs.
 > mantener la disciplina power-law). Ver dudas respondidas 2026-11-05.
 
+## Actualización 2026-11-13 (r8→r9) — rediseño CERRADO (doc 80) + P0 ficha viva HECHO
+
+**El rediseño grande del sistema operativo de investigación/portfolio** (embudo/memoria/universo/deep) se
+trianguló con **3 IAs** (docs 79 brief → **80 convergencia + diseño cerrado**) y lo **aprobó el operador**
+(2026-11-12). Núcleos: **ficha viva** (tesis lenta del comité / precio rápido del código; gatillos derivados de
+escenarios; vigencia por EVENTO, no TTL) + **priorización por oportunidad** (score solo para ficha-less).
+Decisiones del operador: PACIENCIA (se ablandó el "~90-100%"), **sin bandas D4 core/satélite** (espec 10% dura),
+blackout solo re-análisis, tramos opcionales, estacionamiento con gate de sobrevaluación. Implementación P0→P4.
+- **P0 (ficha viva) CERRADO (2026-11-13):** `backend/agentes/ficha.py` (puro: puente equity-bridge + zonas
+  COMPRA/MANTENER/RECORTE/SALIDA con hurdle+piso por clase, aprobados en `ips.yaml`) + `ficha_store.py` (store
+  JSON + backfill desde el cache de dossiers + **job diario** `recalcular_todas` que emite alertas de cambio de
+  zona + vigencia por evento) + `ops.backfill_fichas`. **Validado en vivo:** MP compra $17,83 / OKLO compra
+  $3,84 (ambas RECORTE hoy). Caso de aceptación cumplido en test (cara→cae→COMPRA sin re-deep). 841 tests.
+- **Próximo: P1** (motor de oportunidad + Triage nuevo: score para ficha-less, distancia-a-zona para fichas,
+  carriles con cupo, blackout, productos de research delta/refresh/completo). Después P2 (packet del PM) · P3
+  (archivo+mapa vivo+discovery) · P4 (evaluación+D4 duro). **No codear fuera del doc 80.**
+
 ## Actualización 2026-11-05 (tarde) — vistas + caps/PM + r7 Bloque 1 (valuación como motor)
 
 Sesión con el operador. Tres frentes:

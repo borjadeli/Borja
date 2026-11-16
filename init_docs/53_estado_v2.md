@@ -98,6 +98,30 @@ de docs 75/76. Todo commiteado en `destete-v2-fase3`. **800 tests verdes.**
 > construcción. **Requiere decisión de método del operador** (relajar bandas / cambiar el mandato del PM vs.
 > mantener la disciplina power-law). Ver dudas respondidas 2026-11-05.
 
+## Actualización 2026-11-16 (r9a) — revisión externa r9a: calibración + guardas + Bloque 2 (gold + parser)
+
+Punch-list de revisión externa sobre el rediseño doc 80. Cerrado:
+- **#1 (calibración de zonas + prompt del PM) HECHO (sesión previa):** hurdles core 12% / sat 15% / espec 20%;
+  piso como PÉRDIDA ESPERADA (`prob_bear×pérdida ≤ piso`, no castigo doble con el bear ya en E[V], doc 74);
+  especulativa exige `V_bull ≥ 5×P`. Prompt PM: las ZONAS son INFORMACIÓN, no órdenes (PACIENCIA; RECORTE→
+  re-suscripción, COMPRA→señal blanda). `ips.yaml`: `ficha_hurdles`/`ficha_pisos`/`ficha_bull_min_especulativa`.
+- **#2 (guarda determinista) HECHO:** `packet_pm` cruza el reloj RÁPIDO (zona=precio) con el LENTO (tesis). Si una
+  tenencia está en RECORTE/SALIDA pero su tesis NO está VIGENTE, la alerta marca `requiere_refresh` y dice
+  "refrescá la ficha antes de cortar por valuación" → NO se corta al ganador por un V_i stale (no bloquea la venta;
+  el PM decide; risk-off siempre ejecuta).
+- **#3 a/c/d (Bloque 2: contratos) HECHO + MEDIDO:** **gold set etiquetado (35) + AUDITADO por agentes** —
+  Verificador ciego (Haiku) + escalado al Auditor (Sonnet), operador afuera (decisión 2026-11-16: "yo no
+  chequeo nada; que lo chequee un agente"): **35/35 de acuerdo, 0 divergencias, $0.0079** (`ops.auditar_gold_
+  contratos`). **HALLAZGO:** el Item 1.01 está dominado por financiamiento+M&A; solo ~6% son contratos de
+  revenue (2 firmes, ambos de gobierno: LEU/DOE $900M HALEU, MP/DoD price floor NdPr). **Parser** `backend/
+  agentes/contratos.py` (pre-filtro determinista Item 1.01 + Verificador Haiku) → `ops.medir_parser_contratos`:
+  **100% accuracy, precision/recall 100%** en la clase 'cuenta' (3/3 contratos de revenue, 0 FP). **#3a** bonus
+  aditivo fresco al score (firme 0.05 / cond 0.02, decae a 0 en 90d; NUNCA agranda el size). **#3c** carril
+  `contrato_nuevo` en `asignar_carriles` (contrato firme/cond fresco = deep garantizado fuera del cupo).
+- **Pendiente de CORRIDA REAL (operador):** cablear el feed de 8-K 1.01 → parser → `contratos_nuevos` en el run
+  semanal vivo; **#4 doc 77** (necesita una corrida end-to-end con el PM viendo contratos/bonus/carril). La
+  consola está sandboxeada del host → la corrida la dispara el operador.
+
 ## Actualización 2026-11-13 (r8→r9) — rediseño CERRADO (doc 80) + P0 ficha viva HECHO
 
 **El rediseño grande del sistema operativo de investigación/portfolio** (embudo/memoria/universo/deep) se

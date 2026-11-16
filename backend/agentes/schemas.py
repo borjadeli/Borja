@@ -117,6 +117,15 @@ class EscenarioValuacion(BaseModel):
     anios: int = Field(ge=1)
     prob: float = Field(ge=0, le=1)
     ancla_tasa_base: str | None = None        # D3: id de fila de tasas_base que ancla esta prob (o "sin_muestra")
+    # Cash bridge por escenario (doc 83 F1): HIPÓTESIS de fuentes y usos hasta el año terminal. En USD. El código
+    # hace la contabilidad (deuda/acciones terminales); el analista solo estima los flujos. 0 si no aplica.
+    fcf_cumulative: float = 0.0              # FCF operativo acumulado a T (incluye CAPEX de mantenimiento; negativo = quema)
+    new_equity_proceeds: float = 0.0         # caja NETA levantada por emisión primaria en el camino
+    new_equity_shares: float = 0.0           # acciones nuevas emitidas por esa emisión
+    new_debt: float = 0.0                    # deuda nueva tomada
+    debt_repaid: float = 0.0                 # deuda repagada
+    distributions: float = 0.0               # dividendos + recompras (salida de caja al accionista)
+    dilucion_sbc: float | None = None        # dilución por SBC específica del escenario (None → usa dilucion_esperada_pct)
 
 
 class Catalizador(BaseModel):

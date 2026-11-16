@@ -95,8 +95,21 @@ precio implica (expectations investing). Reglas (doc 74 D1):
 - **El `bear` = "la tesis FALLA", no "se demora"**: su valor terminal ≈ lo que vale el negocio de HOY sin el
   futuro (≈ caja remanente para pre-revenue). Ahí entra la pata del presente.
 - `caja_neta_terminal` = caja − deuda estimada del año terminal (para el puente EV→equity; puede ser negativa).
-- `dilucion_esperada_pct` = dilución acumulada hasta el terminal; el PISO lo da el determinismo (gap de
-  financiamiento / precio), vos podés ponerla MÁS alta, nunca más baja.
+- **CASH BRIDGE por escenario (doc 83) — completá los flujos de fuentes y usos hasta el año terminal**, en DÓLARES
+  ABSOLUTOS. El determinismo evoluciona la deuda y las acciones con estos flujos; vos **NO** escribís la deuda ni
+  las acciones terminales — solo las hipótesis económicas:
+  - `fcf_cumulative`: FCF operativo ACUMULADO hasta T (incluí el CAPEX; **negativo = quema**). Generadora → positivo
+    (baja deuda); la que quema → negativo (consume caja / necesita financiarse).
+  - `new_equity_proceeds` + `new_equity_shares`: si para llegar al terminal necesita emitir, la caja que entra **Y**
+    las acciones que emite — las dos juntas, nunca una sin la otra.
+  - `new_debt` / `debt_repaid` / `distributions`: deuda nueva / repagada y dividendos+recompras.
+  - `dilucion_sbc`: dilución por SBC del escenario (si varía por escenario; si no, dejá `null`).
+  - **Regla anti-doble-conteo:** la caja de HOY que se gasta en construir (CAPEX) va en `fcf_cumulative` NEGATIVO,
+    NO queda intacta — las plantas ya están en la `metrica_terminal`. Si el FCF ya baja la deuda, NO reduzcas además
+    acciones por recompras. En el `bear`, si necesita más caja de la que tiene, mostralo en `new_equity`/`new_debt`;
+    si no hay financiamiento plausible, el bear puede valer poco o **cero**.
+- `dilucion_esperada_pct` = dilución SBC/baseline acumulada al terminal (fallback si no diferenciás por escenario);
+  el PISO lo da el determinismo (gap de financiamiento / precio), vos podés ponerla MÁS alta, nunca más baja.
 - Las `prob` son tu juicio, no frecuencias calibradas. Si no podés dar un puente defendible, dejá `escenarios`
   vacío (el sistema lo tratará como UNKNOWN / tamaño de opción) — mejor vacío que inventar números.
 - **Anclá la P(bull) a una TASA BASE (D3):** en el escenario `bull`, poné `ancla_tasa_base` = la **id** de la

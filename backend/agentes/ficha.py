@@ -261,7 +261,15 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
     inv = getattr(dossier, "invertibilidad", None)
     clase = (getattr(inv, "analyst_classification", None) or "especulativa")
     escen = [EscenarioF(nombre=e.nombre, metrica_terminal=e.metrica_terminal, multiplo_salida=e.multiplo_salida,
-                        anios=e.anios, prob=e.prob) for e in (getattr(dossier, "escenarios", None) or [])]
+                        anios=e.anios, prob=e.prob,
+                        fcf_cumulative=getattr(e, "fcf_cumulative", 0.0) or 0.0,
+                        new_equity_proceeds=getattr(e, "new_equity_proceeds", 0.0) or 0.0,
+                        new_equity_shares=getattr(e, "new_equity_shares", 0.0) or 0.0,
+                        new_debt=getattr(e, "new_debt", 0.0) or 0.0,
+                        debt_repaid=getattr(e, "debt_repaid", 0.0) or 0.0,
+                        distributions=getattr(e, "distributions", 0.0) or 0.0,
+                        dilucion_sbc=getattr(e, "dilucion_sbc", None))
+             for e in (getattr(dossier, "escenarios", None) or [])]
     dil = getattr(dossier, "dilucion_esperada_pct", None)
     dil = (float(dil) / 100.0) if (dil is not None and dil > 1.5) else float(dil or 0.0)  # % → fracción si vino en %
     fals = getattr(dossier, "falsador", None)

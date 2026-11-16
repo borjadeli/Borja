@@ -148,6 +148,25 @@ class _Dossier:
     negocio_y_posicion_cuello: str = "Proveedor líder del cuello X."
 
 
+def test_backfill_mapea_flujos_del_cash_bridge():
+    # F1 (doc 83): un dossier cuyos escenarios traen flujos de cash bridge → la ficha los mapea y el puente los usa.
+    from backend.agentes.schemas import EscenarioValuacion
+    escen = [
+        EscenarioValuacion(nombre="bear", metrica_terminal=700e6, tipo_metrica="ebitda", multiplo_salida=1.0,
+                           anios=6, prob=0.5, fcf_cumulative=-2.5e9),       # OKLO-like: quema la caja de obra
+        EscenarioValuacion(nombre="base", metrica_terminal=900e6, tipo_metrica="ebitda", multiplo_salida=2.0,
+                           anios=6, prob=0.3, fcf_cumulative=-1.5e9),
+        EscenarioValuacion(nombre="bull", metrica_terminal=1.2e9, tipo_metrica="ebitda", multiplo_salida=4.0,
+                           anios=6, prob=0.2, fcf_cumulative=-1.0e9),
+    ]
+    dossier = _Dossier(_Inv("especulativa"), escen, _Fals("no construye", "2028-06-30"), dilucion_esperada_pct=0.0)
+    ficha = backfill_desde_dossier("OKLO", dossier, deuda_neta=-3e9, acciones=100e6, precio=20.0, caja=3e9)
+    assert ficha.escenarios[0].fcf_cumulative == -2.5e9         # el flujo llegó a la ficha
+    assert ficha.caja == 3e9
+    # el bear ya NO suma los $3B de caja intactos: (700M + 3B − 2.5B)/100M = $12 (no $37 del puente viejo)
+    assert abs(ficha.puente.valor_accion["bear"] - 12.0) < 1e-6
+
+
 def test_caso_del_operador_cara_cae_compra_sin_redeep():
     """El corazón del doc 80: deep sobre una buenísima pero CARA → ficha en BANCA (MANTENER). Dos meses después
     cae a zona → el código la marca COMPRA recalculando SOLO el reloj rápido, sin re-correr el comité."""

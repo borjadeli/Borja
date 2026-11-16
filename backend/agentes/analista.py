@@ -86,6 +86,13 @@ def _emitir_dossier_schema() -> dict:
         "anios": {"type": "integer"},
         "prob": {"type": "number"},
         "ancla_tasa_base": {"type": ["string", "null"]},   # D3: id de fila de tasas base, o "sin_muestra"
+        # cash bridge por escenario (doc 83 F1): fuentes y usos hasta el año terminal, en USD. 0 si no aplica.
+        "fcf_cumulative": {"type": "number"},              # FCF acumulado a T (incluye CAPEX; negativo = quema)
+        "new_equity_proceeds": {"type": "number"},         # caja neta por emisión primaria
+        "new_equity_shares": {"type": "number"},           # acciones nuevas emitidas
+        "new_debt": {"type": "number"}, "debt_repaid": {"type": "number"},
+        "distributions": {"type": "number"},               # dividendos + recompras
+        "dilucion_sbc": {"type": ["number", "null"]},      # dilución SBC del escenario (null → usa dilucion_esperada_pct)
     })
     return _obj({
         "negocio_y_posicion_cuello": _S,

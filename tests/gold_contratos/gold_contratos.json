@@ -19,7 +19,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "enmienda de credit facility (revolver $1.25B)"
+        "nota_etiqueta": "enmienda de credit facility (revolver $1.25B)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una enmienda a una línea de crédito revolvente senior garantizada con Wells Fargo como agente administrativo, que es financiamiento y no un contrato de venta u offtake donde la empresa cobra ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001104659-25-109152",
@@ -33,7 +42,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "emisión de notas convertibles $1.25B"
+        "nota_etiqueta": "emisión de notas convertibles $1.25B",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es la emisión de US$1.250.000.000 en Convertible Senior Notes al 0% con vencimiento en 2030, que es financiamiento de deuda y no un contrato de ingresos por venta u offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "LEU": [
@@ -49,7 +67,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "adquisición de Westerman ($116M)"
+        "nota_etiqueta": "adquisición de Westerman ($116M)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una Membership Interest Purchase Agreement en la que la empresa adquiere el 100% de Westerman por aproximadamente $116.0 millones, pagados en efectivo y acciones, lo que es una adquisición y no un contrato de venta u offtake que genere ingresos para Centrus.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001104659-26-107103",
@@ -63,7 +90,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "underwriting/equity (shares+warrants)"
+        "nota_etiqueta": "underwriting/equity (shares+warrants)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es un underwriting agreement con Guggenheim Securities para vender acciones Clase A, pre-funded warrants y common warrants, lo que es una emisión de capital (financiamiento) y no un contrato de venta u offtake donde la empresa cobre ingresos por suministro.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001628280-26-046801",
@@ -77,7 +113,16 @@
         "vinculante": true,
         "condiciones_precedentes": null,
         "tipo_contrato": "gobierno_offtake",
-        "nota_etiqueta": "DOE firm fixed price $900M HALEU, pagos por hito, 1 MTU para mar-2032"
+        "nota_etiqueta": "DOE firm fixed price $900M HALEU, pagos por hito, 1 MTU para mar-2032",
+        "auditoria": {
+          "verificador": {
+            "label": "firme",
+            "razon": "Contrato vinculante con el Department of Energy por un precio fijo de $900 millones pagado por hitos para entregar 1 MTU de HALEU, lo que es un contrato de ingresos con precio y volumen comprometidos; las opciones adicionales no alteran el compromiso firme inicial.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001628280-26-044386",
@@ -91,7 +136,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "corporativo",
-        "nota_etiqueta": "Section 382 Rights Agreement (poison pill/NOL)"
+        "nota_etiqueta": "Section 382 Rights Agreement (poison pill/NOL)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una enmienda a un Section 382 Rights Agreement (plan de derechos tipo poison pill para proteger NOLs), que es gobierno corporativo y no un contrato de venta u offtake con ingresos para la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001628280-26-025916",
@@ -105,7 +159,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "costo",
-        "nota_etiqueta": "construction contract (Centrus PAGA al contratista; capex)"
+        "nota_etiqueta": "construction contract (Centrus PAGA al contratista; capex)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es un contrato de construcción donde ACO paga al Contratista (Geiger Brothers) por obras de expansión de la planta de enriquecimiento, con tope de $900 millones, por lo que la empresa es pagadora y no cobra ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001628280-26-007110",
@@ -119,7 +182,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "costo",
-        "nota_etiqueta": "EPC (Centrus paga; time&materials; capex)"
+        "nota_etiqueta": "EPC (Centrus paga; time&materials; capex)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es un EPC bajo el cual ACO (subsidiaria de Centrus) paga al contratista Fluor por diseño, construcción y puesta en marcha de la instalación de Piketon, sin generar ingresos para la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001104659-25-107444",
@@ -133,7 +205,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "ATM $1B"
+        "nota_etiqueta": "ATM $1B",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es un programa ATM (at-the-market) de venta de acciones Clase A por hasta $1,000,000,000 con agentes de venta que cobran comisión del 1.50%, lo que es financiamiento por capital y no un contrato de ingresos por venta de producto o offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001065059-25-000075",
@@ -147,7 +228,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "notas convertibles $805M"
+        "nota_etiqueta": "notas convertibles $805M",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Emisión de notas convertibles senior al 0% con vencimiento 2032 colocadas mediante Rule 144A, lo que es financiamiento de deuda y no un contrato de venta u offtake de ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001065059-25-000035",
@@ -161,7 +251,16 @@
         "vinculante": true,
         "condiciones_precedentes": null,
         "tipo_contrato": "gobierno_offtake",
-        "nota_etiqueta": "HALEU 2022 por fases, dependiente de opciones del DOE"
+        "nota_etiqueta": "HALEU 2022 por fases, dependiente de opciones del DOE",
+        "auditoria": {
+          "verificador": {
+            "label": "condicional",
+            "razon": "El contrato con el Department of Energy da a ACO ingresos por producción de HALEU, pero las opciones de años adicionales (Option 1b y siguientes) dependen del ejercicio discrecional del DOE y de apropiaciones del Congreso, y Option 1b requiere una propuesta de costo revisada antes de su consideración.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "RKLB": [
@@ -177,7 +276,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "merger con Iridium"
+        "nota_etiqueta": "merger con Iridium",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una fusión (Agreement and Plan of Merger) con Iridium en la que Rocket Lab adquiere acciones de Iridium pagando efectivo y acciones, sin ser un contrato de venta u offtake que genere ingresos para la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001628280-25-027920",
@@ -191,7 +299,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "adquisición de GEOST/LightRidge"
+        "nota_etiqueta": "adquisición de GEOST/LightRidge",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una compra de acciones de LightRidge Interco (dueña de GEOST) por $275 millones en efectivo y acciones, es decir, una adquisición en la que la empresa paga, no un contrato de venta u offtake que le genere ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "OKLO": [
@@ -207,7 +324,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "ATM $1B"
+        "nota_etiqueta": "ATM $1B",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es un programa ATM de venta de acciones Clase A con agentes colocadores hasta US$1.000 millones en ingresos brutos, es decir, financiamiento por emisión de capital y no un contrato de venta u offtake de la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001104659-26-060385",
@@ -221,7 +347,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "ATM $1B"
+        "nota_etiqueta": "ATM $1B",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es un programa de colocación de acciones at-the-market (ATM) por hasta $1,000,000,000 con agentes colocadores, es decir financiamiento mediante emisión de capital, no un contrato de venta u offtake de ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001104659-25-118494",
@@ -235,7 +370,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "ATM $1.5B"
+        "nota_etiqueta": "ATM $1.5B",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es un programa de venta de acciones at-the-market (ATM) de hasta $1,500,000,000 de Clase A, que es financiamiento por emisión de capital y no un contrato de venta u offtake donde la empresa cobre ingresos comprometidos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "KTOS": [
@@ -251,7 +395,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "underwriting/equity"
+        "nota_etiqueta": "underwriting/equity",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es una oferta pública underwritten de acciones comunes (14,285,714 más opción de 2,142,857) por la cual la empresa recibe capital, no un contrato de venta o offtake de productos o servicios.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001069258-25-000062",
@@ -265,7 +418,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "merger con Orbit Technologies"
+        "nota_etiqueta": "merger con Orbit Technologies",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una fusión (Agreement and Plan of Merger) en la que Kratos adquiere Orbit Technologies pagando efectivo a los accionistas (aprox. $356.3 millones), lo que es M&A donde la empresa paga y no cobra ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001069258-25-000043",
@@ -279,7 +441,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "underwriting/equity"
+        "nota_etiqueta": "underwriting/equity",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es una oferta pública de acciones comunes con underwriters (firm commitment underwritten public offering), es decir financiamiento por emisión de capital, no un contrato de venta u offtake de la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "MP": [
@@ -295,7 +466,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "credit agreement ($275M revolver)"
+        "nota_etiqueta": "credit agreement ($275M revolver)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una línea de crédito revolvente (Revolving Credit Facility de US$275.0 millones con JPMorgan como agente administrativo) con intereses, comisiones y garantías, que es financiamiento donde la empresa es prestataria y no cobra ingresos por venta o offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-25-157310",
@@ -309,7 +489,16 @@
         "vinculante": true,
         "condiciones_precedentes": null,
         "tipo_contrato": "gobierno_price_floor",
-        "nota_etiqueta": "DoD Transaction Agreement + NdPr PPA piso $110/kg + offtake 10X 10 años"
+        "nota_etiqueta": "DoD Transaction Agreement + NdPr PPA piso $110/kg + offtake 10X 10 años",
+        "auditoria": {
+          "verificador": {
+            "label": "firme",
+            "razon": "El PPA con el Department of Defense paga a la empresa trimestralmente la diferencia entre $110/kg y el precio de referencia NdPr durante 10 años, y el Offtake Agreement obliga a vender a DoD toda la producción de imanes, lo que define un contrato de ingresos firme con precio/volumen comprometido.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "LUNR": [
@@ -325,7 +514,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "adquisición COMSAT ($10M)"
+        "nota_etiqueta": "adquisición COMSAT ($10M)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una compra de membresías de interés (MIPA) por la que Buyer adquiere COMSAT LLC con un precio base en efectivo de $10 millones, es decir, una adquisición en la que la empresa paga, no un contrato de venta u offtake que le genere ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-26-254475",
@@ -339,7 +537,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "ATM $500M"
+        "nota_etiqueta": "ATM $500M",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es un Sales Agreement de programa ATM con agentes colocadores por hasta $500.0 millones en acciones Clase A, con la empresa pagando comisiones de hasta 3.0%, lo que constituye financiamiento por emisión de capital y no un contrato de ingresos por venta u offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-26-082954",
@@ -353,7 +560,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "PIPE $175M (cierre)"
+        "nota_etiqueta": "PIPE $175M (cierre)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una emisión y venta de acciones Clase A a inversores institucionales por 175 millones de dólares con un contrato de derechos de registro, lo que es financiamiento de capital y no un contrato de ingresos por venta u offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-26-068729",
@@ -367,7 +583,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "PIPE $175M (firma)"
+        "nota_etiqueta": "PIPE $175M (firma)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una Securities Purchase Agreement para emitir acciones Clase A a inversores institucionales por $175 millones, es decir, financiamiento de capital y no un contrato de venta u offtake que genere ingresos comerciales para la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-26-011200",
@@ -381,7 +606,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "corporativo",
-        "nota_etiqueta": "registration rights + waiver receivables facility"
+        "nota_etiqueta": "registration rights + waiver receivables facility",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El filing describe principalmente la adquisición (Acquisition) con registration rights para el vendedor, y un acuerdo de consentimiento/garantía sobre una facilidad de factoring de receivables; no es un contrato de venta u offtake donde la empresa cobre ingresos comprometidos, y el texto de la facilidad queda cortado.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-25-263400",
@@ -395,7 +629,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "adquisición de Lanteris"
+        "nota_etiqueta": "adquisición de Lanteris",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una Membership Interest Purchase Agreement para que Intuitive Machines adquiera el 100% de Lanteris, con contraprestación de acciones y efectivo que la empresa PAGA, no un contrato de venta u offtake donde cobra ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001193125-25-182718",
@@ -409,7 +652,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "notas convertibles $345M"
+        "nota_etiqueta": "notas convertibles $345M",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una emisión de notas convertibles senior al 2.500% por $345.0 millones con vencimiento en 2030, lo cual es financiamiento de deuda y no un contrato de venta u offtake que genere ingresos para la empresa.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001844452-25-000051",
@@ -423,7 +675,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "adquisición de KinetX ($30M)"
+        "nota_etiqueta": "adquisición de KinetX ($30M)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Stock Purchase Agreement por la adquisición de KinetX, Inc. con precio base de $30 millones pagable en efectivo y acciones Clase A, donde la empresa paga en lugar de cobrar ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ],
     "UUUU": [
@@ -439,7 +700,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "enmienda merger VAC"
+        "nota_etiqueta": "enmienda merger VAC",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El Item 1.01 describe una enmienda al Merger Agreement del VAC Acquisition, un acuerdo de fusión/adquisición, y no un contrato de venta u offtake que genere ingresos para la empresa; la disputa con un cliente se menciona solo como asunto a resolver dentro de esa enmienda.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001062993-26-003385",
@@ -453,7 +723,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "adquisición de VAC Group"
+        "nota_etiqueta": "adquisición de VAC Group",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es un Merger Agreement mediante el cual Energy Fuels adquiere las entidades Ara VAC TopCos a través de fusiones, lo que es M&A y no un contrato de ingresos u offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001062993-26-001527",
@@ -467,7 +746,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "enmienda scheme adquisición ASM"
+        "nota_etiqueta": "enmienda scheme adquisición ASM",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una adquisición de ASM mediante scheme of arrangement en la que Energy Fuels paga contraprestación en acciones/CDIs y efectivo para adquirir las acciones de ASM, sin constituir un contrato de venta u offtake que genere ingresos para la empresa que reporta.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001062993-26-000431",
@@ -481,7 +769,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "m&a",
-        "nota_etiqueta": "scheme adquisición ASM"
+        "nota_etiqueta": "scheme adquisición ASM",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una adquisición de todas las acciones de ASM mediante un esquema de arreglo (Scheme Implementation Deed), es decir una fusión/adquisición en la que Energy Fuels paga con acciones propias y efectivo, no un contrato de venta u offtake donde la empresa cobre ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001062993-25-015938",
@@ -495,7 +792,16 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "notas convertibles $600M"
+        "nota_etiqueta": "notas convertibles $600M",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "El acuerdo es una compra de notas convertibles senior al 0.75% por $700.0 millones con Goldman Sachs como representante de los initial purchasers, cuyo producto se usa para capped calls y gastos de desarrollo; es financiamiento y no un contrato de venta u offtake donde la empresa cobre ingresos.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       },
       {
         "accession": "0001062993-25-011671",
@@ -509,14 +815,28 @@
         "vinculante": null,
         "condiciones_precedentes": null,
         "tipo_contrato": "financiamiento",
-        "nota_etiqueta": "ATM (controlled equity offering)"
+        "nota_etiqueta": "ATM (controlled equity offering)",
+        "auditoria": {
+          "verificador": {
+            "label": "no_cuenta",
+            "razon": "Es un Controlled Equity Offering SM Agreement (programa ATM) mediante el cual la empresa puede vender acciones comunes a través de agentes, con comisión de hasta 3.0% sobre el producto bruto; es financiamiento por emisión de capital, no un contrato de venta de productos o offtake.",
+            "modelo": "claude-haiku-5-5"
+          },
+          "coincide": true,
+          "auditor": null
+        }
       }
     ]
   },
   "etiquetado": {
     "por": "assistant",
-    "pendiente_auditoria": true,
+    "pendiente_auditoria": false,
     "fecha": "2026-11-13",
-    "metodo": "lectura del excerpt del Item 1.01; a auditar por el Auditor-agente + operador"
+    "metodo": "etiqueta asistente + verificación ciega independiente (agente); divergencias dirimidas por el Auditor",
+    "auditado_por": {
+      "verificador": "claude-haiku-5-5",
+      "auditor": "claude-sonnet-5-5",
+      "operador": "excluido (decisión 2026-11-16)"
+    }
   }
 }

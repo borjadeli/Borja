@@ -122,6 +122,12 @@ precio implica (expectations investing). Reglas (doc 74 D1):
   - `cita`: accession/URL. Buscá en el 10-Q/10-K (nota de deuda y de capital) y 8-K de financiamiento.
   - Si no hay instrumentos materiales, dejá la lista vacía. **No publiques un puente de un nombre con converts/
     preferidas/warrants materiales sin inventariarlos** — el bear y el conteo de acciones dependen de esto.
+- **FACTORES COMUNES (`factores_carga`, doc 83 F4) — asigná los DRIVERS de los que depende la tesis**, eligiendo de
+  la taxonomía cerrada del IPS (ai_datacenter_capex, politica_industrial_us, costo_de_capital, precio_commodity,
+  ciclo_defensa, demanda_nuclear, cadena_semis, espacio_lanzamiento). 1 primario con `intensidad` 1.0 + hasta 2
+  secundarios con 0.5. Es **dependencia económica compartida** (no correlación de precios): justificá con ingresos/
+  backlog por mercado final. El IPS capea la exposición agregada a un driver — dos nombres de sectores distintos
+  pueden ser la misma apuesta (p.ej. capex de IA). NO inventes factores fuera de la taxonomía.
 - Las `prob` son tu juicio, no frecuencias calibradas. Si no podés dar un puente defendible, dejá `escenarios`
   vacío (el sistema lo tratará como UNKNOWN / tamaño de opción) — mejor vacío que inventar números.
 - **Anclá la P(bull) a una TASA BASE (D3):** en el escenario `bull`, poné `ancla_tasa_base` = la **id** de la

@@ -20,6 +20,38 @@ class ExposicionFactor:
     tickers: list[str] = field(default_factory=list)
 
 
+def exposicion_ponderada(pesos: dict[str, float], cargas: dict[str, dict[str, float]]) -> dict[str, float]:
+    """Exposición por factor con CARGAS DE INTENSIDAD (doc 83 §3): Exposure_f = Σ w_j · s_{j,f}, donde s ∈ {1.0,
+    0.5, 0}. `cargas` = ticker → {factor: intensidad}. Supera al binario (doc 70): un nombre con dependencia
+    secundaria (0.5) pesa la mitad. Devuelve {factor: exposición ponderada}."""
+    acc: dict[str, float] = {}
+    for tk, w in pesos.items():
+        if w <= 0:
+            continue
+        for f, s in (cargas.get(tk.upper(), {}) or {}).items():
+            acc[f] = round(acc.get(f, 0.0) + w * max(0.0, min(1.0, s)), 6)
+    return acc
+
+
+def factores_excedidos(pesos: dict[str, float], cargas: dict[str, dict[str, float]], *, cap: float):
+    """Factores cuya exposición ponderada supera `cap` (doc 83 §3, cap duro del IPS). Devuelve (set de factores
+    excedidos, holguras) — mismo contrato que _grupos_excedidos para el gate."""
+    from backend.agentes.ips import Violacion
+    exp = exposicion_ponderada(pesos, cargas)
+    over = {f: v for f, v in exp.items() if v > cap + 1e-9}
+    holg = [Violacion("max_por_factor", f"factor={f}: {v:.1%} > {cap:.0%}", round(cap - v, 6), "agregada")
+            for f, v in sorted(over.items(), key=lambda x: -x[1])]
+    return set(over), holg
+
+
+def perdida_por_shock(pesos: dict[str, float], perdidas: dict[str, dict[str, float]], shock: str) -> float:
+    """PortfolioLoss_shock = Σ w_j · Loss_{j,shock} (doc 83 §3): informa al PM la MAGNITUD económica de la
+    concentración (dos nombres con el mismo tag pueden perder 20% vs 65%). `perdidas` = ticker → {shock: pérdida
+    fraccional estimada por el PM}. Devuelve la pérdida de cartera bajo ese shock."""
+    return round(sum(w * (perdidas.get(tk.upper(), {}) or {}).get(shock, 0.0)
+                     for tk, w in pesos.items() if w > 0), 6)
+
+
 def exposicion_por_factor(pesos: dict[str, float], factores: dict[str, list[str]], *,
                           umbral: float = 0.30) -> list[ExposicionFactor]:
     """Agrega el peso de la cartera por FACTOR DE TESIS (doc 70). `factores` = ticker → lista de factores

@@ -76,6 +76,34 @@ def test_f3_verificacion_ciega_fail_bloquea_el_aumento(tmp_path):
     assert any("verificación ciega FAIL" in a for a in res.alertas)
 
 
+# contextos en SECTORES distintos → el cap de sector/cuello no se activa; el único binding es el factor.
+_CTX_F = {"OKLO": ContextoTicker(sector="energia", cuello="smr", market_cap=5e9, adv_usd=10e6),
+          "NBIS": ContextoTicker(sector="ai_infra", cuello="computo", market_cap=9e9, adv_usd=10e6)}
+
+
+def test_f4_cap_de_factor_bloquea_el_aumento(tmp_path):
+    # F4 (doc 83 §3): dos nombres en sectores distintos pero cargando el mismo driver con exposición ponderada
+    # > cap → el aumento que lo empeora se bloquea (aunque ningún cap de sector/cuello se active).
+    orq = _orq_ips(tmp_path, _ips(max_por_factor=0.30))
+    cargas = {"OKLO": {"ai_datacenter_capex": 1.0}, "NBIS": {"ai_datacenter_capex": 1.0}}
+    res = orq.procesar(_decision([_accion("OKLO", 0.12, "comprar")]),
+                       cartera_actual={"NBIS": 0.25}, caja_actual=0.75, contexto=_CTX_F, ciclo="c",
+                       cargas_por_ticker=cargas)
+    assert "OKLO" not in res.pesos_finales          # 0.25 + 0.12 = 0.37 > 0.30 → bloqueado por factor
+    assert any("factor=ai_datacenter_capex" in h.detalle for h in res.holguras)
+
+
+def test_f4_carga_secundaria_pondera_menos(tmp_path):
+    # carga 0.5 (dependencia secundaria) pesa la mitad → NO rompe el cap que la carga plena sí rompería.
+    orq = _orq_ips(tmp_path, _ips(max_por_factor=0.30))
+    cargas = {"OKLO": {"ai_datacenter_capex": 0.5}, "NBIS": {"ai_datacenter_capex": 0.5}}
+    res = orq.procesar(_decision([_accion("OKLO", 0.12, "comprar")]),
+                       cartera_actual={"NBIS": 0.25}, caja_actual=0.75, contexto=_CTX_F, ciclo="c",
+                       cargas_por_ticker=cargas)
+    # exposición = 0.25×0.5 + 0.12×0.5 = 0.185 < 0.30 → NO bloquea
+    assert res.pesos_finales.get("OKLO") == 0.12
+
+
 def test_f3_ciego_no_bloquea_la_venta(tmp_path):
     # una REDUCCIÓN siempre se ejecuta (risk-off), aunque el ciego dé FAIL — el gate solo frena aumentos.
     res = _orq(tmp_path).procesar(_decision([_accion("MP", 0.0, "vender")]), cartera_actual={"MP": 0.1},

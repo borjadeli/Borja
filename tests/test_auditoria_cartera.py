@@ -1,5 +1,31 @@
 """Tests de los chequeos de cartera del Auditor (v2 doc 70 D3). Puros, sin API."""
-from backend.agentes.auditoria_cartera import exposicion_por_factor, render_para_auditor, tesis_cambiada
+from backend.agentes.auditoria_cartera import (exposicion_ponderada, exposicion_por_factor, factores_excedidos,
+                                               perdida_por_shock, render_para_auditor, tesis_cambiada)
+
+
+def test_exposicion_ponderada_con_cargas():
+    # F4 (doc 83 §3): Exposure_f = Σ w·s. carga plena (1.0) pesa todo; secundaria (0.5) la mitad.
+    pesos = {"OKLO": 0.12, "NBIS": 0.20, "MP": 0.10}
+    cargas = {"OKLO": {"ai_datacenter_capex": 1.0}, "NBIS": {"ai_datacenter_capex": 0.5},
+              "MP": {"politica_industrial_us": 1.0, "ai_datacenter_capex": 0.5}}
+    exp = exposicion_ponderada(pesos, cargas)
+    assert abs(exp["ai_datacenter_capex"] - (0.12 + 0.10 + 0.05)) < 1e-9     # 0.12 + 0.20×0.5 + 0.10×0.5 = 0.27
+    assert abs(exp["politica_industrial_us"] - 0.10) < 1e-9
+
+
+def test_factores_excedidos_y_cap():
+    pesos = {"OKLO": 0.20, "NBIS": 0.20}
+    cargas = {"OKLO": {"ai_datacenter_capex": 1.0}, "NBIS": {"ai_datacenter_capex": 1.0}}
+    over, holg = factores_excedidos(pesos, cargas, cap=0.30)                 # 0.40 > 0.30
+    assert "ai_datacenter_capex" in over and holg[0].regla == "max_por_factor"
+    assert factores_excedidos(pesos, cargas, cap=0.50)[0] == set()          # 0.40 < 0.50 → nada
+
+
+def test_perdida_por_shock():
+    # dos nombres con el mismo tag pueden perder distinto (20% vs 65%) — el shock lo distingue, el tag no
+    pesos = {"OKLO": 0.10, "MP": 0.10}
+    perdidas = {"OKLO": {"capex_ia": 0.65}, "MP": {"capex_ia": 0.20}}
+    assert abs(perdida_por_shock(pesos, perdidas, "capex_ia") - (0.10 * 0.65 + 0.10 * 0.20)) < 1e-9
 
 
 def test_exposicion_por_factor_detecta_concentracion_oculta():

@@ -114,6 +114,8 @@ def _emitir_dossier_schema() -> dict:
         "invertibilidad": invertibilidad,
         "escenarios": {"type": "array", "items": escenario_val},
         "instrumentos": {"type": "array", "items": instrumento},
+        "factores_carga": {"type": "array", "items": _obj({   # F4: drivers comunes con intensidad
+            "factor": _S, "intensidad": {"type": "number"}})},
         "caja_neta_terminal": {"type": ["number", "null"]},
         "dilucion_esperada_pct": {"type": ["number", "null"]},
         "conviccion_0_1": {"type": "number"},

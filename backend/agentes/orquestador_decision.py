@@ -116,6 +116,7 @@ class OrquestadorDecision:
                  flags_por_ticker: dict[str, list[str]] | None = None,
                  ciego_por_ticker: dict[str, str] | None = None,
                  factores_por_ticker: dict[str, list[str]] | None = None,
+                 cargas_por_ticker: dict[str, dict[str, float]] | None = None,
                  clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
@@ -125,6 +126,7 @@ class OrquestadorDecision:
         verifs = {t.upper(): v for t, v in (verif_por_ticker or {}).items()}
         flags = {t.upper(): list(f) for t, f in (flags_por_ticker or {}).items()}
         ciego = {t.upper(): v for t, v in (ciego_por_ticker or {}).items()}   # F3: veredicto del Verificador ciego
+        cargas = {t.upper(): c for t, c in (cargas_por_ticker or {}).items()}  # F4: cargas de factor por ticker
 
         # operar_ahora=False → no se ejecuta nada; NO se llama al Auditor (item 6).
         if not decision.operar_ahora:
@@ -134,13 +136,13 @@ class OrquestadorDecision:
             self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
             return res
 
-        res = self._gate(decision, cartera, contexto, flags, hoy, ciego)
+        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas)
 
         # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
         if res.no_action and repropuesta_fn is not None:
             nueva = repropuesta_fn(res.holguras)
             if nueva is not None:
-                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego)
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas)
                 res, decision = res2, nueva
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
@@ -150,7 +152,8 @@ class OrquestadorDecision:
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
               contexto: dict[str, ContextoTicker], flags: dict[str, list[str]], hoy: date,
-              ciego: dict[str, str] | None = None) -> ResultadoDecision:
+              ciego: dict[str, str] | None = None,
+              cargas: dict[str, dict[str, float]] | None = None) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
         banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
@@ -212,6 +215,20 @@ class OrquestadorDecision:
                                  if (ctx.sector and h.detalle.startswith(f"sector={ctx.sector}"))
                                  or (ctx.cuello and h.detalle.startswith(f"cuello={ctx.cuello}"))]
             cand = {t: w for t, w in {**tras_red, **ok}.items() if w > 0}
+
+        # 4bis. Agregado por FACTOR común (F4, doc 83 §3): exposición ponderada por driver (cargas 0/0.5/1) sobre
+        # un cap duro → bloquea SOLO los aumentos que cargan un factor excedido (mismo patrón 1c que sector/cuello).
+        cap_f = float(self.ips.cfg.get("max_por_factor", 1.0))
+        if cargas and cap_f < 1.0:
+            from backend.agentes.auditoria_cartera import factores_excedidos
+            fac_over, holg_fac = factores_excedidos(cand, cargas, cap=cap_f)
+            if fac_over:
+                for tk in list(ok):
+                    if fac_over & set((cargas.get(tk, {}) or {}).keys()):   # el aumento carga un factor excedido
+                        del ok[tk]
+                        caidos = True
+                holguras += holg_fac
+                cand = {t: w for t, w in {**tras_red, **ok}.items() if w > 0}
 
         # 5. Agregado GLOBAL (caja/ops-sesión/turnover-rotación/max_pos): bloquea TODOS los aumentos restantes.
         caja_cand = round(1.0 - sum(cand.values()), 6)

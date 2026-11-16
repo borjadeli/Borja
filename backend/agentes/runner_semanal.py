@@ -180,9 +180,13 @@ class RunnerSemanal:
         from backend.agentes.clasificacion import ClasifTicker
         umbral_rev = float(self.decision.ips.cfg.get("umbral_revenue_recurrente_usd", 50e6))
         clasif_por_ticker: dict[str, ClasifTicker] = {}
+        cargas_por_ticker: dict[str, dict[str, float]] = {}      # F4: drivers comunes por nombre (para el cap)
         for d in research.decisiones:
             if d.dossier is None or d.verif is None or d.verif.veredicto not in ("pass", "review"):
                 continue
+            cf = {c.factor: c.intensidad for c in (getattr(d.dossier, "factores_carga", None) or [])}
+            if cf:
+                cargas_por_ticker[d.ticker.upper()] = cf
             inv = d.dossier.invertibilidad
             if inv is None:
                 continue
@@ -273,6 +277,7 @@ class RunnerSemanal:
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
             flags_por_ticker=flags, ciego_por_ticker=ciego_vered,
             clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
+            cargas_por_ticker=cargas_por_ticker,
             memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
 
         # 4bis. Estacionamiento (r7a #1): el residual que el PM NO desplegó en nombres con margen de seguridad

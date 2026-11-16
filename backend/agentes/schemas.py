@@ -213,6 +213,13 @@ class InstrumentoCapital(BaseModel):
     cita: str | None = None                  # accession/URL del filing
 
 
+class CargaFactor(BaseModel):
+    """Carga de un driver/factor común (doc 83 §3, F4). El Analista asigna la intensidad (1 primario / 0.5
+    secundario) eligiendo de la taxonomía CERRADA del IPS; el código capea la exposición ponderada de cartera."""
+    factor: str                               # debe estar en taxonomia_factores del ips.yaml
+    intensidad: float = Field(ge=0, le=1)     # 1.0 = dependencia central · 0.5 = material no dominante
+
+
 class Dossier(BaseModel):
     meta: AgentMeta
     ticker: str
@@ -231,6 +238,7 @@ class Dossier(BaseModel):
     # = dossier legacy / sin puente (→ el inverso da UNKNOWN y D4 lo trata como máx. especulativa).
     escenarios: list[EscenarioValuacion] = Field(default_factory=list)
     instrumentos: list[InstrumentoCapital] = Field(default_factory=list)   # inventario de capital (doc 83 F2)
+    factores_carga: list[CargaFactor] = Field(default_factory=list)        # drivers comunes (doc 83 F4)
     caja_neta_terminal: float | None = None        # caja − deuda estimada del año terminal (equity = EV + esto)
     dilucion_esperada_pct: float | None = None     # dilución acumulada al terminal (PISO determinista de Tier A)
     conviccion_0_1: float = Field(ge=0, le=1)

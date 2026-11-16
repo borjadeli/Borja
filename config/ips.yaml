@@ -56,6 +56,20 @@ cap_bucket_especulativo: 0.30         # suma de posiciones especulativas ≤ 30%
 cap_cluster_tematico: 0.40            # suma por cluster temático (cualquier clasificación) ≤ 40% (antes 20%)
 umbral_revenue_recurrente_usd: 50000000   # revenue FY ≥ $50M = "revenue recurrente" (techo D4, r5 item 2)
 
+# --- Concentración por FACTOR común (F4, doc 83 §3) — dependencia económica compartida, no sector/cuello ---
+# Exposure_f = Σ peso · carga (cargas 0/0.5/1 que propone el Analista). El gate bloquea los aumentos que cargan
+# un factor que supera el cap. Taxonomía CERRADA (propiedad del operador); el Analista solo asigna cargas.
+max_por_factor: 0.30                  # cap duro de exposición ponderada a un driver (rango de calibración 25-35%)
+taxonomia_factores:                   # ~8 drivers; el Analista elige de acá (1 primario + hasta 2 secundarios)
+  - ai_datacenter_capex              # gasto de capital en datacenters de IA (demanda de cómputo/energía)
+  - politica_industrial_us           # subsidios/créditos/offtake de agencias US (DoD/DOE) — revertible por elección
+  - costo_de_capital                 # tasas / ventana de financiamiento abierta (dilución/refinanciación)
+  - precio_commodity                 # precio de un mineral/insumo (NdPr, uranio, cobre…)
+  - ciclo_defensa                    # presupuesto de defensa / programas militares
+  - demanda_nuclear                  # despliegue de SMR / energía nuclear
+  - cadena_semis                     # suministro/demanda de semiconductores
+  - espacio_lanzamiento              # cadencia de lanzamientos / contratos espaciales
+
 # --- Reglas de riesgo que ANTES eran "juicio del auditor" y ahora son números (doc 55 §4.4) ---
 turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) — CABLEADO: bloquea aumentos
 # holding_period_min_dias: SACADO a propósito — gatear ventas por antigüedad contradice el principio

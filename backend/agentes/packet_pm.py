@@ -93,8 +93,15 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
         r = _resumen_de_ficha(f, peso=w)
         pack.posiciones.append(r)
         if r.zona in ("RECORTE", "SALIDA"):
+            # #2 (doc 80 §F): la zona la computa el reloj RÁPIDO (precio) sobre escenarios que escribió el
+            # comité (reloj LENTO). Si la tesis NO está VIGENTE, la señal de venta por valuación se apoya en
+            # un V_i viejo → NO cortar al ganador por un número stale; marcar que hay que refrescar primero.
+            stale = f.estado != "VIGENTE"
+            det = f"{tk} en zona {r.zona} (retorno esperado {r.retorno_esperado})"
+            if stale:
+                det += f" — OJO: tesis {f.estado}, zona sobre V_i SIN REFRESCAR; refrescá la ficha antes de cortar por valuación"
             pack.alertas.append({"ticker": tk, "tipo": "recorte", "zona": r.zona,
-                                 "detalle": f"{tk} en zona {r.zona} (retorno esperado {r.retorno_esperado})"})
+                                 "requiere_refresh": stale, "detalle": det})
         if f.estado in ("EN_REVISION", "VENCIDA", "ROTA"):
             pack.alertas.append({"ticker": tk, "tipo": "tesis", "detalle": f"{tk} tesis {f.estado}"})
 

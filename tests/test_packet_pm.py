@@ -68,6 +68,22 @@ def test_packet_marca_tesis_no_vigente():
     assert any(a["tipo"] == "tesis" and "VENCIDA" in a["detalle"] for a in pack.alertas)
 
 
+def test_recorte_sobre_tesis_vieja_exige_refresh():
+    # #2 (doc 80 §F): zona RECORTE (precio, reloj rápido) + tesis NO vigente (reloj lento) → la señal de venta
+    # por valuación se apoya en un V_i viejo; el packet marca requiere_refresh y NO corta al ganador por stale.
+    held = _ficha("MP", 50.0)        # caro → zona RECORTE
+    assert held.latido.zona in ("RECORTE", "SALIDA")
+    held.estado = "VENCIDA"
+    pack = construir_packet(fichas={"MP": held}, posiciones={"MP": 0.06}, caja_pct=0.5, equity=100000.0)
+    rec = [a for a in pack.alertas if a["tipo"] == "recorte" and a["ticker"] == "MP"]
+    assert rec and rec[0]["requiere_refresh"] is True and "SIN REFRESCAR" in rec[0]["detalle"]
+    # con tesis VIGENTE la misma zona NO exige refresh (el número es fresco)
+    held.estado = "VIGENTE"
+    pack2 = construir_packet(fichas={"MP": held}, posiciones={"MP": 0.06}, caja_pct=0.5, equity=100000.0)
+    rec2 = [a for a in pack2.alertas if a["tipo"] == "recorte" and a["ticker"] == "MP"]
+    assert rec2 and rec2[0]["requiere_refresh"] is False
+
+
 def test_packet_excluye_etf_de_posiciones():
     held = _ficha("MP", 50.0)
     pack = construir_packet(fichas={"MP": held}, posiciones={"MP": 0.06, "URA": 0.10}, caja_pct=0.3,

@@ -67,6 +67,22 @@ def test_decision_limpia_clip_none(tmp_path):
     assert res.pesos_finales == {"OKLO": 0.1} and abs(res.caja_final - 0.9) < 1e-9
 
 
+def test_f3_verificacion_ciega_fail_bloquea_el_aumento(tmp_path):
+    # F3 (doc 83 §4): si el Verificador ciego no reconcilió la evidencia primaria (FAIL), el aumento NO se abre
+    # (como inadmisible); una COMPRA bloqueada queda en caja.
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c", ciego_por_ticker={"OKLO": "FAIL"})
+    assert "OKLO" not in res.pesos_finales and abs(res.caja_final - 1.0) < 1e-9
+    assert any("verificación ciega FAIL" in a for a in res.alertas)
+
+
+def test_f3_ciego_no_bloquea_la_venta(tmp_path):
+    # una REDUCCIÓN siempre se ejecuta (risk-off), aunque el ciego dé FAIL — el gate solo frena aumentos.
+    res = _orq(tmp_path).procesar(_decision([_accion("MP", 0.0, "vender")]), cartera_actual={"MP": 0.1},
+                                  caja_actual=0.9, contexto=_ctx(), ciclo="c", ciego_por_ticker={"MP": "FAIL"})
+    assert "MP" not in res.pesos_finales          # vendida pese al FAIL
+
+
 def test_local_simple_recorta_a_cap_sin_redistribuir(tmp_path):
     res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.30)]), cartera_actual={}, caja_actual=1.0,
                                   contexto=_ctx(), ciclo="c")

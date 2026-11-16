@@ -14,9 +14,12 @@ ledger de decisiones (se inyecta solo si hay N suficiente, doc 55 §4.8).
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 from backend.agentes.ips import ContextoTicker, Violacion
 from backend.agentes.orquestador import Orquestador, ResultadoSemana
@@ -57,11 +60,14 @@ class ResultadoRunner:
 
 class RunnerSemanal:
     def __init__(self, *, research: Orquestador, pm: PM, decision: OrquestadorDecision,
-                 alertas_path: Path | str | None = _ALERTAS_PATH):
+                 alertas_path: Path | str | None = _ALERTAS_PATH, verif_ciego_fn=None):
         self.research = research
         self.pm = pm
         self.decision = decision          # su `.ledger` es el ledger de decisiones (fuente del hit-rate)
         self.alertas_path = Path(alertas_path) if alertas_path else None   # None → sin persistencia (tests)
+        # F3 (doc 83 §4): verificación ciega de los aumentos. OPT-IN explícito (gasta LLM+red): None → apagada
+        # (tests + default). El caller real pasa `verif_ciego_fn(aumentos, fichas, cutoff) -> {tk: VerificacionCiega}`.
+        self.verif_ciego_fn = verif_ciego_fn
 
     def _cargar_alertas(self) -> list[str]:
         if self.alertas_path and self.alertas_path.exists():
@@ -242,11 +248,31 @@ class RunnerSemanal:
                                    packet_txt=packet_txt, feedback=feedback)
         decision = _pm()
 
+        # 3bis. Verificación CIEGA (F3, doc 83 §4): solo sobre los nombres que el PM quiere COMPRAR/AUMENTAR
+        # (trigger por decisión de capital). El canal ciego re-extrae la evidencia primaria SIN ver el dossier;
+        # si no reconcilia (FAIL) el gate bloquea el aumento. Fail-open ante error (no tumba el ciclo); la
+        # AUSENCIA de verificación no es PASS (no desbloquea nada: el gate solo frena los FAIL explícitos).
+        ciego_vered: dict[str, str] = {}
+        if self.verif_ciego_fn is not None:              # opt-in: solo si el caller real lo cableó (gasta LLM+red)
+            try:
+                aumentos = [a.ticker for a in decision.acciones if a.accion in ("comprar", "aumentar")]
+                if aumentos:
+                    from backend.agentes.ficha_store import StoreFichas
+                    vcs = self.verif_ciego_fn(aumentos, StoreFichas().todos(), hoy.isoformat())
+                    ciego_vered = {tk: vc.veredicto for tk, vc in vcs.items()}
+                    for tk, vc in vcs.items():
+                        if vc.veredicto != "PASS":
+                            _log.warning("verificación ciega %s = %s: %s", tk, vc.veredicto,
+                                         "; ".join(f"{d.campo}({d.severidad})" for d in vc.discrepancias))
+            except Exception as e:  # noqa: BLE001 — la verificación ciega no debe tumbar el ciclo
+                _log.warning("verificación ciega falló (fail-open): %s", e)
+
         # 4. Gate duro del IPS + Auditor + ledger; re-propuesta UNA vez si el gate rechaza aumentos (1d).
         res_dec = self.decision.procesar(
             decision, cartera_actual=pesos_actual, caja_actual=caja_pct, contexto=contexto, ciclo=ciclo,
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
-            flags_por_ticker=flags, clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
+            flags_por_ticker=flags, ciego_por_ticker=ciego_vered,
+            clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
             memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
 
         # 4bis. Estacionamiento (r7a #1): el residual que el PM NO desplegó en nombres con margen de seguridad

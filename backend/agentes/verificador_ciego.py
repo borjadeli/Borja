@@ -172,3 +172,35 @@ def verificar_ciego(ticker: str, referencia: dict, *, extraer_fn, cutoff: str | 
     veredicto, discs = reconciliar(extraido or {}, referencia, tol_rel=tol_rel)
     return VerificacionCiega(ticker=ticker.upper(), veredicto=veredicto, discrepancias=discs,
                              extraido=extraido or {}, cutoff=cutoff, costo_usd=round(costo or 0.0, 4))
+
+
+# --------------------------------------------------------------------------- integración al flujo de decisión (F3)
+
+def referencia_de_ficha(ficha) -> dict:
+    """Arma la `referencia` para el canal ciego desde una ficha (lo que el dossier cree hoy). deuda_total
+    (bruta) = deuda_neta + caja; n_instrumentos = tamaño del inventario; premisa = resumen de la tesis."""
+    caja = getattr(ficha, "caja", None)
+    dn = getattr(ficha, "deuda_neta", None)
+    return {
+        "caja": caja,
+        "deuda_total": (dn + caja) if (dn is not None and caja is not None) else None,
+        "acciones_basicas": getattr(ficha, "acciones", None),
+        "n_instrumentos": len(getattr(ficha, "instrumentos", []) or []),
+        "premisa": (getattr(ficha, "tesis_resumen", "") or "")[:200],
+    }
+
+
+def verificar_decision(aumentos, fichas: dict, *, extractor=None, cutoff: str | None = None) -> dict:
+    """Corre el canal ciego SOLO sobre los nombres que el PM quiere comprar/aumentar (trigger por decisión de
+    capital, doc 83 §4). Devuelve {ticker: VerificacionCiega}. `extractor(ticker, cutoff, premisa)->(dict,costo)`
+    inyectable (default = extraer_desde_edgar real). El runner pasa `{tk: vc.veredicto}` al gate como ciego_por_ticker."""
+    extractor = extractor or (lambda tk, c, premisa: extraer_desde_edgar(tk, c, premisa_pregunta=premisa))
+    out: dict = {}
+    for tk in {t.upper() for t in aumentos}:
+        f = (fichas or {}).get(tk)
+        if f is None:
+            continue
+        ref = referencia_de_ficha(f)
+        out[tk] = verificar_ciego(tk, ref, cutoff=cutoff,
+                                  extraer_fn=lambda t, c, _r=ref: extractor(t, c, _r.get("premisa", "")))
+    return out

@@ -300,7 +300,10 @@ def main() -> int:
         contexto_fn=_contexto_mapa_fn,                   # contexto del cuello desde nx_* (r3 #5)
     )
     decision = OrquestadorDecision(ips, LedgerDecisiones(), auditor=auditor)
-    runner = RunnerSemanal(research=research, pm=pm, decision=decision)
+    # F3 (doc 83 §4): verificación ciega de los aumentos (canal de evidencia independiente). Opt-in explícito.
+    from backend.agentes.verificador_ciego import verificar_decision
+    _verif_ciego = lambda aumentos, fichas, cutoff: verificar_decision(aumentos, fichas, cutoff=cutoff)  # noqa: E731
+    runner = RunnerSemanal(research=research, pm=pm, decision=decision, verif_ciego_fn=_verif_ciego)
 
     # --- datos reales ---
     snaps = recolectar_snapshots(tickers)

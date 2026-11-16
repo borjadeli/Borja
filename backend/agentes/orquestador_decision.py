@@ -114,6 +114,7 @@ class OrquestadorDecision:
                  dossier_hash_por_ticker: dict[str, str] | None = None,
                  verif_por_ticker: dict[str, str] | None = None,
                  flags_por_ticker: dict[str, list[str]] | None = None,
+                 ciego_por_ticker: dict[str, str] | None = None,
                  factores_por_ticker: dict[str, list[str]] | None = None,
                  clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
@@ -123,6 +124,7 @@ class OrquestadorDecision:
         hashes = {t.upper(): h for t, h in (dossier_hash_por_ticker or {}).items()}
         verifs = {t.upper(): v for t, v in (verif_por_ticker or {}).items()}
         flags = {t.upper(): list(f) for t, f in (flags_por_ticker or {}).items()}
+        ciego = {t.upper(): v for t, v in (ciego_por_ticker or {}).items()}   # F3: veredicto del Verificador ciego
 
         # operar_ahora=False → no se ejecuta nada; NO se llama al Auditor (item 6).
         if not decision.operar_ahora:
@@ -132,13 +134,13 @@ class OrquestadorDecision:
             self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
             return res
 
-        res = self._gate(decision, cartera, contexto, flags, hoy)
+        res = self._gate(decision, cartera, contexto, flags, hoy, ciego)
 
         # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
         if res.no_action and repropuesta_fn is not None:
             nueva = repropuesta_fn(res.holguras)
             if nueva is not None:
-                res2 = self._gate(nueva, cartera, contexto, flags, hoy)
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego)
                 res, decision = res2, nueva
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
@@ -147,7 +149,8 @@ class OrquestadorDecision:
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
-              contexto: dict[str, ContextoTicker], flags: dict[str, list[str]], hoy: date) -> ResultadoDecision:
+              contexto: dict[str, ContextoTicker], flags: dict[str, list[str]], hoy: date,
+              ciego: dict[str, str] | None = None) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
         banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
@@ -169,9 +172,13 @@ class OrquestadorDecision:
                 aumentos[tk] = tgt
         tras_red = {t: w for t, w in pesos.items() if w > 0}
 
-        # 2. Clip de aumentos: admisibilidad + cap + flag supervivencia.
+        # 2. Clip de aumentos: verificación ciega (F3) + admisibilidad + cap + flag supervivencia.
+        ciego = ciego or {}
         ok: dict[str, float] = {}
         for tk, tgt in aumentos.items():
+            if ciego.get(tk) == "FAIL":     # F3 (doc 83 §4): el canal ciego no reconcilió la evidencia primaria
+                alertas.append(f"{tk}: verificación ciega FAIL — no confiable hasta reconciliar, NO se abre/aumenta")
+                continue
             if _inadmisible(contexto.get(tk), self.ips):
                 alertas.append(f"{tk}: inadmisible (market cap/ADV) — no se abre/aumenta")
                 continue

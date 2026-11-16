@@ -2,7 +2,8 @@
 import json
 
 from backend.agentes.base import FakeUsage, ScriptedLLM, resp_texto
-from backend.agentes.verificador_ciego import extraer_desde_edgar, reconciliar, verificar_ciego
+from backend.agentes.verificador_ciego import (extraer_desde_edgar, reconciliar, referencia_de_ficha,
+                                               verificar_ciego, verificar_decision)
 
 
 def test_pass_cuando_todo_concilia():
@@ -74,6 +75,25 @@ def test_extractor_ciego_con_llm_scripted():
         filings_fn=lambda tk: [_F("10-Q", "", "u-10q"), _F("8-K", "1.01", "u-8k")],
         fetch_fn=lambda url: "texto del filing")
     assert hechos["acciones_basicas"] == 178e6 and hechos["n_instrumentos"] == 3 and costo >= 0.0
+
+
+def test_verificar_decision_solo_sobre_aumentos():
+    # el canal ciego corre SOLO sobre los nombres a comprar; devuelve {ticker: VerificacionCiega} para el gate.
+    from backend.agentes.ficha import Ficha, Instrumento
+
+    def _ficha(tk, n_instr):
+        return Ficha(ticker=tk, nivel="BANCA", clase_d4="satelite", cuello=None, cobertura_datos="FULL",
+                     tesis_resumen="proveedor del cuello", dossier_id=None, visto_hasta=None, estado="VIGENTE",
+                     tope_duro=None, escenarios=[], dilucion_total=0.0, deuda_neta=1e9, acciones=178e6, caja=0.3e9,
+                     instrumentos=[Instrumento(f"i{k}", "convertible") for k in range(n_instr)])
+    fichas = {"MP": _ficha("MP", 0), "VST": _ficha("VST", 2)}   # MP inventario vacío (el dossier no los puso)
+    # extractor stub: para MP el ciego encuentra 3 instrumentos (el dossier decía 0) → FAIL
+    def _extractor(tk, cutoff, premisa):
+        n = {"MP": 3, "VST": 2}[tk]
+        return {"caja": 0.3e9, "deuda_total": 1.3e9, "acciones_basicas": 178e6, "n_instrumentos": n}, 0.04
+    out = verificar_decision(["MP"], fichas, extractor=_extractor)      # solo MP (el aumento)
+    assert set(out) == {"MP"} and out["MP"].veredicto == "FAIL"         # 3≠0 → FAIL
+    assert referencia_de_ficha(fichas["VST"])["n_instrumentos"] == 2    # referencia bien armada desde la ficha
 
 
 def test_orquestacion_inyectando_extractor():

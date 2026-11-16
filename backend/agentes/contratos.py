@@ -82,7 +82,7 @@ def clasificar_contrato(excerpt: str, *, items: str | list | None = None, fecha:
         return ContratoClasificado("no_cuenta", "no_1.01", "", 0.0, "no es Item 1.01", cuenta=False)
     ag = Agente("parser-contratos", "contratos-v1", modelo, cliente=cliente)
     user = f"Items: {items}\nFecha: {fecha}\n\nExcerpt del filing:\n{excerpt}"
-    j, _meta = ag.estructurado(system=SYS, user=user, payload_schema=SCHEMA, max_tokens=512)
+    j, _meta = ag.estructurado(system=SYS, user=user, payload_schema=SCHEMA, max_tokens=1024)
     label = j.get("label", "no_cuenta")
     return ContratoClasificado(
         label=label, tipo=j.get("tipo", ""), contraparte=j.get("contraparte", "") or "",

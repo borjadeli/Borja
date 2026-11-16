@@ -63,7 +63,7 @@ turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) �
 #   objeción medible del auditor (predicción falsable), no como gate duro.
 
 # --- Presupuesto LLM (el ledger de presupuesto lo hace cumplir; acá queda el número) ---
-presupuesto_usd_mes: 40.0
+presupuesto_usd_mes: 100.0    # subido de 40 → 100 (2026-11-16): fase de construcción, el operador autoriza gastar más
 presupuesto_bootstrap_usd: 25.0     # tope PROPIO de la primera pasada del universo (separado del mensual)
 
 # --- Estacionamiento en ETFs temáticos (r7a #1) ---

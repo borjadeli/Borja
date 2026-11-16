@@ -54,3 +54,32 @@ def test_carril_contrato_respeta_blackout():
         posiciones=set(), fichas_zona={}, fichas_estado={}, scores=[],
         cupo_oportunidad=4, contratos_nuevos={"X"}, blackout={"X"})
     assert sel.contrato_nuevo == []               # ya analizado pre-earnings → no re-deep
+
+
+def test_detectar_contratos_universo_feed_a_parser():
+    from dataclasses import dataclass as _dc
+    from datetime import date, datetime
+
+    from backend.agentes.contratos import detectar_contratos_universo
+
+    @_dc
+    class _F:
+        items: str
+        fecha: datetime
+        url: str
+
+    hoy = date(2026, 3, 1)
+    filings = {
+        "LEU": [_F("1.01,9.01", datetime(2026, 2, 20), "u-firme"),      # 1.01 fresco → cuenta
+                _F("2.03", datetime(2026, 2, 25), "u-fin")],            # no 1.01 → ni se clasifica
+        "MP": [_F("1.01", datetime(2025, 1, 1), "u-viejo")],            # 1.01 pero fuera de ventana (>90d)
+        "X": [_F("5.02", datetime(2026, 2, 28), "u-x")],               # sin 1.01
+    }
+    # el excerpt no importa (el cliente scripted decide); 1 respuesta porque solo LEU llega al parser
+    cli = ScriptedLLM([resp_texto(json.dumps({"label": "firme", "tipo": "gobierno_offtake",
+                                              "contraparte": "DOE", "monto_usd": 9e8, "razon": "offtake firme"}),
+                                  FakeUsage(input_tokens=800, output_tokens=60))])
+    out = detectar_contratos_universo(["LEU", "MP", "X"], filings_fn=lambda tk: filings.get(tk, []),
+                                      excerpt_fn=lambda url: "texto", hoy=hoy, cliente=cli)
+    assert set(out) == {"LEU"}                                          # solo el 1.01 fresco que cuenta
+    assert out["LEU"].label == "firme" and out["LEU"].contraparte == "DOE" and out["LEU"].bonus > 0

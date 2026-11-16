@@ -90,6 +90,62 @@ def clasificar_contrato(excerpt: str, *, items: str | list | None = None, fecha:
         cuenta=label in ("firme", "condicional"))
 
 
+@dataclass
+class ContratoFresco:
+    ticker: str
+    label: str                 # firme | condicional
+    dias_desde: float
+    bonus: float
+    contraparte: str
+    monto_usd: float
+    url: str
+    fecha: str
+
+
+def detectar_contratos_universo(tickers: list[str], *, filings_fn=None, excerpt_fn=None,
+                                hoy=None, modelo: str = VERIF_MODEL, cliente=None) -> dict[str, ContratoFresco]:
+    """Feed → parser (r9a #3): para cada ticker busca 8-K con Item 1.01 dentro de la ventana (VENTANA_DIAS),
+    clasifica cada uno y QUEDA con el contrato de ingresos (firme/condicional) MÁS FRESCO. Devuelve
+    ticker→ContratoFresco (solo los que cuentan). `filings_fn`/`excerpt_fn` son inyectables para test.
+    Gasta LLM solo en los 8-K 1.01 reales (el pre-filtro ya descartó el resto)."""
+    from datetime import date, datetime
+    if filings_fn is None:
+        from backend.services.edgar import get_recent_filings
+        filings_fn = lambda tk: get_recent_filings(tk, tipos=("8-K",), dias=VENTANA_DIAS)  # noqa: E731
+    if excerpt_fn is None:
+        from ops.gold_contratos import _excerpt
+        excerpt_fn = _excerpt
+    hoy = hoy or date.today()
+    out: dict[str, ContratoFresco] = {}
+    for tk in tickers:
+        mejor: ContratoFresco | None = None
+        for f in filings_fn(tk):
+            items = getattr(f, "items", None)
+            if not es_item_contrato(items):
+                continue
+            fecha_dt = getattr(f, "fecha", None)
+            fstr = fecha_dt.date().isoformat() if isinstance(fecha_dt, datetime) else str(fecha_dt or "")
+            try:
+                dias = (hoy - (fecha_dt.date() if isinstance(fecha_dt, datetime) else date.fromisoformat(fstr))).days
+            except Exception:
+                continue
+            if dias < 0 or dias > VENTANA_DIAS:
+                continue
+            c = clasificar_contrato(excerpt_fn(f.url), items=items, fecha=fstr, modelo=modelo, cliente=cliente)
+            if not c.cuenta:
+                continue
+            b = bonus_contrato(c.label, dias)
+            if b <= 0:
+                continue
+            cf = ContratoFresco(tk.upper(), c.label, float(dias), b, c.contraparte, c.monto_usd,
+                                getattr(f, "url", ""), fstr)
+            if mejor is None or cf.dias_desde < mejor.dias_desde:
+                mejor = cf
+        if mejor is not None:
+            out[tk.upper()] = mejor
+    return out
+
+
 def bonus_contrato(label: str | None, dias_desde: float | None) -> float:
     """Bonus aditivo por un contrato de ingresos FRESCO. Firme > condicional; decae lineal a 0 en VENTANA_DIAS.
     0 si no cuenta, sin fecha, o fuera de ventana. NO es un multiplicador del size (doc 80: el contrato aporta

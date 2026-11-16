@@ -127,10 +127,11 @@ def _filtros_embudo(candidatos, ips):
     return _invertible, _gigante_barato, int(ips.cfg.get("cupo_forzados", 8)), int(ips.cfg.get("cupo_gigantes", 2))
 
 
-def _seleccion_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips):
+def _seleccion_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips, contratos: dict | None = None):
     """r9 P1 (doc 80 §D): rankea las ficha-less por score de oportunidad + asigna carriles (banca/oportunidad),
-    leyendo el store de fichas + el estado del cuello (nx). Determinista, $0. La USAN el dry-run Y el run real
-    ('dry-run = real'). Devuelve (sel, scores, n_fichas)."""
+    leyendo el store de fichas + el estado del cuello (nx). Determinista, $0 (salvo `contratos`, ya precomputado).
+    La USAN el dry-run Y el run real ('dry-run = real'). `contratos` (r9a #3): ticker→ContratoFresco → suma el
+    bonus al score y mete el nombre en el carril contrato_nuevo. Devuelve (sel, scores, n_fichas)."""
     from backend.agentes.ficha_store import StoreFichas
     from backend.agentes.oportunidad import asignar_carriles, candidato_desde_metricas, rankear_oportunidades
     fichas = StoreFichas().todos()
@@ -153,13 +154,22 @@ def _seleccion_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips):
                     estados[tk.upper()] = fila[0]
     except Exception:  # noqa: BLE001 — sin mapa igual rankea (estado default)
         pass
-    cand = [candidato_desde_metricas(tk, cluster=cuellos.get(tk), metricas=m, cuello_estado=estados.get(tk.upper()),
+    contratos = contratos or {}
+    cand = []
+    for tk, m in met.items():
+        if tk.upper() in con_ficha or tk.upper() in posiciones:
+            continue
+        c = candidato_desde_metricas(tk, cluster=cuellos.get(tk), metricas=m, cuello_estado=estados.get(tk.upper()),
                                      runway_meses=m.get("cash_runway_months"),
                                      dilucion_overhang=bool(m.get("dilucion_overhang")), hurdle=hurdle)
-            for tk, m in met.items() if tk.upper() not in con_ficha and tk.upper() not in posiciones]
+        cf = contratos.get(tk.upper())
+        if cf is not None:
+            c.bonus = cf.bonus                            # r9a #3a: contrato fresco → bonus aditivo al score
+        cand.append(c)
     scores = rankear_oportunidades(cand)
     sel = asignar_carriles(posiciones=posiciones, fichas_zona=fichas_zona, fichas_estado=fichas_estado,
-                           scores=scores, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)))
+                           scores=scores, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)),
+                           contratos_nuevos=set(contratos))     # r9a #3c: carril contrato_nuevo
     return sel, scores, len(fichas)
 
 
@@ -260,6 +270,9 @@ def main() -> int:
     ap.add_argument("--sin-valor", action="store_true",
                     help="con --universo: saltear la señal de valor (r7 §3) para una corrida rápida sin "
                          "assemblar la lente de valuación de todo el universo")
+    ap.add_argument("--contratos", action="store_true",
+                    help="con --universo: detectar 8-K Item 1.01 recientes → parser (Haiku) → bonus al score + "
+                         "carril contrato_nuevo (r9a #3). Gasta un poco de LLM (solo en los 1.01 reales).")
     args = ap.parse_args()
     tickers = [t.upper() for t in (args.tickers or ["OKLO"])]
 
@@ -328,14 +341,25 @@ def main() -> int:
         # ficha-less + la banca en zona de compra a deep (antes del check de dry-run → dry-run = real). El cupo +
         # el ledger de presupuesto (fail-closed) acotan el gasto. Se saltea con --sin-valor (no hay métricas).
         if valor_met:
+            contratos = {}
+            if args.contratos:                              # r9a #3: feed 8-K 1.01 → parser → bonus + carril
+                from backend.agentes.contratos import detectar_contratos_universo
+                tks_sin_ficha = [tk for tk in valor_met if tk.upper() not in posiciones]
+                print(f"detectando contratos (8-K 1.01) en {len(tks_sin_ficha)} nombres…")
+                contratos = detectar_contratos_universo(tks_sin_ficha)
+                for tk, cf in sorted(contratos.items()):
+                    print(f"  CONTRATO {cf.label.upper()} {tk}: {cf.contraparte or '—'} "
+                          f"${cf.monto_usd:,.0f} (hace {cf.dias_desde:.0f}d) bonus +{cf.bonus}")
             sel_op, _sc, _nf = _seleccion_oportunidad(met=valor_met, cuellos=valor_cuellos,
-                                                      posiciones=posiciones, ips=ips)
-            forzar = {t.upper() for t in (sel_op.oportunidad + sel_op.banca)}
+                                                      posiciones=posiciones, ips=ips, contratos=contratos)
+            forzar = {t.upper() for t in (sel_op.oportunidad + sel_op.banca + sel_op.contrato_nuevo)}
             por_tk = {c[0].upper(): c[1] for c in candidatos}
             for tk in forzar:
                 s = por_tk.get(tk)
                 if s is not None:
                     s.forzado_oportunidad = True           # r9 §D: carril de OPORTUNIDAD (no evento)
+            if sel_op.contrato_nuevo:
+                print(f"CONTRATO NUEVO → deep garantizado: {sel_op.contrato_nuevo}")
             print(f"OPORTUNIDAD → deep ({len(forzar & set(por_tk))}): {sorted(forzar & set(por_tk))}")
         if args.dry_run:
             _dry_run_universo(candidatos, ips=ips, cupo=args.cupo or 6, posiciones=posiciones,

@@ -35,6 +35,10 @@ def _datos_de_pack(ticker: str, *, as_of: date, cuello_fn=None) -> dict | None:
     feed_sh = next((p.value for p in shares if "xbrl" not in (p.source.name or "").lower()), None)
     xbrl_sh = next((p.value for p in shares if "xbrl" in (p.source.name or "").lower()), None)
     conflicted = bool(feed_sh and xbrl_sh and abs(feed_sh - xbrl_sh) / max(feed_sh, xbrl_sh) > 0.25)
+    # Balance desactualizado (8-K 2.01/2.03/1.01 post-XBRL): deuda/acciones del pack posiblemente vencidas
+    # (adquisición/deuda fuera de companyfacts) → también NO comprable sin reconciliar (hallazgo IESC/DBM).
+    if any(p.metric == "flag_balance_desactualizado" for p in puntos):
+        conflicted = True
     acciones = feed_sh if conflicted else (xbrl_sh or feed_sh)
     if not acciones:
         return None

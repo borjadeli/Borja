@@ -13,8 +13,8 @@ def _p(metric, value, *, source, known_at=HOY, unit="shares"):
     return DataPoint(entity="X", metric=metric, value=value, unit=unit, source=source, known_at=known_at)
 
 
-def _flags(puntos):
-    return {p.metric: p for p in fuente_consistencia("X", HOY, puntos)}
+def _flags(puntos, filings_fn=lambda t: []):   # sin red por default (el check #5 no dispara)
+    return {p.metric: p for p in fuente_consistencia("X", HOY, puntos, filings_fn=filings_fn)}
 
 
 def test_shares_divergentes_marca_conflicted():
@@ -38,6 +38,36 @@ def test_datos_xbrl_viejos():
     viejo = HOY - timedelta(days=500)
     puntos = [_p("cash", 1e9, source=_XBRL, known_at=viejo, unit="USD")]
     assert "flag_datos_viejos" in _flags(puntos)
+
+
+class _F:                                           # mimetiza RecentFiling (items/fecha/accession)
+    def __init__(self, items, fecha, accn="0001-26-000001"):
+        self.items, self.fecha, self.accession_number = items, fecha, accn
+
+
+def test_balance_desactualizado_por_8k_posterior():
+    # IESC/DBM: XBRL de julio + 8-K 2.01 (adquisición) de octubre → balance del pack vencido → CONFLICTED.
+    xbrl_jul = date(2026, 7, 31)
+    puntos = [_p("cash", 77e6, source=_XBRL, known_at=xbrl_jul, unit="USD")]
+    filings = [_F("1.01,2.01,7.01,9.01", date(2026, 10, 6)),   # adquisición completada, POSTERIOR al XBRL
+               _F("2.02,9.01", date(2026, 9, 1))]              # earnings (no de balance) → ignorado
+    f = _flags(puntos, filings_fn=lambda t: filings)
+    assert "flag_balance_desactualizado" in f and f["flag_balance_desactualizado"].estado == "CONFLICTED"
+    assert "2026-10-06" in f["flag_balance_desactualizado"].note
+
+
+def test_balance_fresco_8k_previo_no_marca():
+    # 8-K de balance ANTERIOR al XBRL (ya está incorporado en companyfacts) → no dispara.
+    puntos = [_p("cash", 77e6, source=_XBRL, known_at=date(2026, 7, 31), unit="USD")]
+    filings = [_F("2.03,9.01", date(2026, 6, 1))]              # deuda, pero previa al 10-Q
+    assert "flag_balance_desactualizado" not in _flags(puntos, filings_fn=lambda t: filings)
+
+
+def test_balance_8k_no_de_balance_no_marca():
+    # 8-K posterior pero de ítems NO-balance (8.01 otros eventos) → no dispara.
+    puntos = [_p("cash", 77e6, source=_XBRL, known_at=date(2026, 7, 31), unit="USD")]
+    filings = [_F("8.01,9.01", date(2026, 10, 1))]
+    assert "flag_balance_desactualizado" not in _flags(puntos, filings_fn=lambda t: filings)
 
 
 def test_pack_sano_sin_flags():

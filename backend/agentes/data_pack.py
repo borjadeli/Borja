@@ -409,10 +409,19 @@ def fuente_valuacion(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[
     return out
 
 
-def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[DataPoint]:
+# 8-K que CAMBIAN el balance (deuda/acciones) y NO están en companyfacts hasta el próximo 10-Q:
+# 2.01 = adquisición/disposición completada · 2.03 = obligación financiera directa (deuda nueva) ·
+# 1.01 = acuerdo material (suele ser el acuerdo de compra/financiamiento). Si hay uno POSTERIOR al último
+# XBRL, el balance del pack puede estar desactualizado (el agujero que mordió en IESC/DBM, 2026-11).
+_ITEMS_8K_BALANCE = {"2.01", "2.03", "1.01"}
+
+
+def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint],
+                        filings_fn=None) -> list[DataPoint]:
     """Chequeos de consistencia AUTOMÁTICOS sobre cada pack (r6 #4 'verificar siempre'): sin leer el filing,
     cruza las fuentes que tenemos y marca banderas CONFLICTED que el Analista/Verificador ven. Barato,
-    determinista, para TODOS los nombres. NO reemplaza al set dorado (métricas solo-XBRL sin contraparte)."""
+    determinista, para TODOS los nombres. NO reemplaza al set dorado (métricas solo-XBRL sin contraparte).
+    `filings_fn` (inyectable para test) lista filings recientes para el check de frescura del balance (#5)."""
     tk = ticker.upper()
     src = Source(name="consistencia:v1", document_type="calculadora")
     out: list[DataPoint] = []
@@ -453,6 +462,32 @@ def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint]) -> li
     if rev is not None and mc is not None and mc > 0 and rev > 5 * mc:
         flag("revenue_sospechoso", f"revenue FY ${rev:,.0f} > 5× market cap ${mc:,.0f} ({rev/mc:.0f}×) → "
              f"¿revenue grossed-up/notional, no ventas económicas? (EV/revenue sería una ganga falsa)")
+
+    # 5) BALANCE DESACTUALIZADO (2026-11, hallazgo IESC/DBM): el balance (deuda/acciones) sale de XBRL
+    # periódico, cuyo último punto es el 10-Q/K. Un 8-K con ítem 2.01/2.03/1.01 POSTERIOR a ese XBRL cambia el
+    # balance y NO aparece en companyfacts hasta el próximo 10-Q → la deuda/acciones del pack están vencidas.
+    # Caza el agujero que un LLM+web externo vio y nuestro comité no (ningún agente re-mira EDGAR por el balance).
+    if knowns:
+        ref = max(knowns)                                    # fecha del último XBRL (el balance del pack)
+        try:
+            if filings_fn is None:
+                from backend.services.edgar import get_recent_filings
+                filings_fn = lambda t: get_recent_filings(t, tipos=("8-K",), dias=300)  # noqa: E731
+            posteriores = []
+            for f in filings_fn(tk):
+                its = set((getattr(f, "items", "") or "").replace(" ", "").split(","))
+                fdt = getattr(f, "fecha", None)
+                fd = fdt.date() if hasattr(fdt, "date") else fdt
+                if (its & _ITEMS_8K_BALANCE) and fd and fd > ref:
+                    posteriores.append((fd, its & _ITEMS_8K_BALANCE, getattr(f, "accession_number", "")))
+            if posteriores:
+                posteriores.sort(reverse=True)
+                det = "; ".join(f"{d} ítems {sorted(i)} ({a})" for d, i, a in posteriores[:3])
+                flag("balance_desactualizado",
+                     f"hay 8-K material POSTERIOR al último XBRL ({ref}): {det} → la deuda/acciones del pack "
+                     f"pueden estar vencidas (adquisición/deuda nueva fuera de companyfacts); RECONCILIAR antes de comprar")
+        except Exception as e:  # noqa: BLE001 — sin red igual devuelve el resto de los checks
+            log.warning("check de frescura del balance falló para %s: %s", tk, e)
 
     return out
 

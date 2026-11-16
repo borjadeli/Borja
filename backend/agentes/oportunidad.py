@@ -190,6 +190,7 @@ def rankear_oportunidades(candidatos: list[CandidatoOportunidad], *, min_peers: 
 class Seleccion:
     tenencias: list[str] = field(default_factory=list)      # obligatorio (post-earnings / ruptura)
     banca: list[str] = field(default_factory=list)          # fichas vigentes en/cerca de zona de compra
+    contrato_nuevo: list[str] = field(default_factory=list)  # #3c: contrato firme/condicional FRESCO → deep garantizado
     oportunidad: list[str] = field(default_factory=list)    # top score ficha-less + fichas vencidas con gatillo
     exploracion: list[str] = field(default_factory=list)
     espera: list[tuple[str, str]] = field(default_factory=list)
@@ -197,16 +198,22 @@ class Seleccion:
 
 def asignar_carriles(*, posiciones: set[str], fichas_zona: dict[str, str], fichas_estado: dict[str, str],
                      scores: list[FilaScore], cupo_oportunidad: int = 4,
-                     blackout: set[str] | None = None) -> Seleccion:
+                     blackout: set[str] | None = None, contratos_nuevos: set[str] | None = None) -> Seleccion:
     """Reparte el deep en carriles (doc 80 §D). `fichas_zona`: ticker→zona (COMPRA/MANTENER/RECORTE/SALIDA) de las
-    fichas vigentes. `blackout`: nombres YA analizados a ≤14d de earnings (no se re-analizan). Las posiciones van
-    siempre (reserva, fuera del cupo). Banca = ficha vigente en zona COMPRA. Oportunidad = top score ficha-less +
-    fichas VENCIDAS con gatillo, capeado a `cupo_oportunidad`."""
+    fichas vigentes. `blackout`: nombres YA analizados a ≤14d de earnings (no se re-analizan). `contratos_nuevos`:
+    nombres con un contrato de ingresos firme/condicional FRESCO (#3c) → deep GARANTIZADO (un contrato firme es un
+    hecho duro que merece mirada, no espera cupo). Las posiciones van siempre (reserva, fuera del cupo). Banca =
+    ficha vigente en zona COMPRA. Oportunidad = top score ficha-less + fichas VENCIDAS con gatillo, capeado."""
     posiciones = {t.upper() for t in posiciones}
     blackout = {t.upper() for t in (blackout or set())}
+    contratos_nuevos = {t.upper() for t in (contratos_nuevos or set())}
     sel = Seleccion()
     sel.tenencias = sorted(posiciones)
     con_ficha = set(fichas_zona) | set(fichas_estado)
+
+    # Carril contrato nuevo (#3c): hecho duro (contrato firme/condicional fresco) → deep garantizado, fuera del
+    # cupo de oportunidad. Excluye posiciones (ya tienen ficha) y blackout (pre-earnings ya analizado).
+    sel.contrato_nuevo = sorted(t for t in contratos_nuevos if t not in posiciones and t not in blackout)
 
     # Banca: ficha VIGENTE (no posición) cuya zona es COMPRA → va al PM barato (distancia a zona = 0).
     for tk, zona in fichas_zona.items():
@@ -222,7 +229,8 @@ def asignar_carriles(*, posiciones: set[str], fichas_zona: dict[str, str], ficha
                         and tk.upper() not in posiciones and tk.upper() not in blackout]
     ranked_ficha_less = [f.ticker.upper() for f in scores
                          if f.score is not None and f.ticker.upper() not in con_ficha
-                         and f.ticker.upper() not in posiciones and f.ticker.upper() not in blackout]
+                         and f.ticker.upper() not in posiciones and f.ticker.upper() not in blackout
+                         and f.ticker.upper() not in sel.contrato_nuevo]      # ya tiene deep garantizado
     cola = vencidas_en_zona + ranked_ficha_less
     sel.oportunidad = cola[:max(0, cupo_oportunidad)]
     sel.espera = [(tk, "sobre el cupo de oportunidad") for tk in cola[max(0, cupo_oportunidad):]]

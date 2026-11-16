@@ -197,6 +197,22 @@ class Invertibilidad(BaseModel):
     analyst_classification: ClasifInvertibilidad
 
 
+class InstrumentoCapital(BaseModel):
+    """Inventario de un instrumento de capital material (doc 83 F2). El Analista lo provee CON cita al filing; el
+    código (resolver) decide por términos qué convierte en cada escenario. Sin esto, un share count 'fully diluted'
+    sumado a mano es engañoso (caso MP: 178M básicas + converts/preferida/warrant, no un número único)."""
+    id: str
+    tipo: Literal["convertible", "convertible_preferred", "warrant", "term_debt"]
+    principal: float = 0.0                    # nominal en USD (absoluto)
+    conversion_price: float | None = None     # convierte si V_i ≥ este precio
+    potential_shares: float = 0.0             # acciones si convierte/ejerce
+    en_deuda_xbrl: bool = False               # ¿ya está en la deuda del balance? (no doble-contar)
+    liq_preference: float = 0.0               # preferida: piso de liquidación USD (senior al común si no convierte)
+    strike: float | None = None              # warrant: precio de ejercicio (entra caja)
+    hedge_cap: float | None = None           # capped call: tope hasta el que se neutraliza la dilución
+    cita: str | None = None                  # accession/URL del filing
+
+
 class Dossier(BaseModel):
     meta: AgentMeta
     ticker: str
@@ -214,6 +230,7 @@ class Dossier(BaseModel):
     # Puente económico al precio (doc 74 D1): escenarios numéricos + insumos del equity bridge/dilución. Vacío
     # = dossier legacy / sin puente (→ el inverso da UNKNOWN y D4 lo trata como máx. especulativa).
     escenarios: list[EscenarioValuacion] = Field(default_factory=list)
+    instrumentos: list[InstrumentoCapital] = Field(default_factory=list)   # inventario de capital (doc 83 F2)
     caja_neta_terminal: float | None = None        # caja − deuda estimada del año terminal (equity = EV + esto)
     dilucion_esperada_pct: float | None = None     # dilución acumulada al terminal (PISO determinista de Tier A)
     conviccion_0_1: float = Field(ge=0, le=1)

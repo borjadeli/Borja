@@ -110,6 +110,18 @@ precio implica (expectations investing). Reglas (doc 74 D1):
     si no hay financiamiento plausible, el bear puede valer poco o **cero**.
 - `dilucion_esperada_pct` = dilución SBC/baseline acumulada al terminal (fallback si no diferenciás por escenario);
   el PISO lo da el determinismo (gap de financiamiento / precio), vos podés ponerla MÁS alta, nunca más baja.
+- **INVENTARIO DE INSTRUMENTOS (`instrumentos`, doc 83 F2) — listá cada instrumento de capital material con cita
+  al filing.** El código decide por términos qué convierte en cada escenario (if-converted); vos NO calculás las
+  acciones fully-diluted a mano (sumar todo es engañoso — caso MP). Por instrumento:
+  - `tipo`: `convertible` / `convertible_preferred` / `warrant` / `term_debt`.
+  - `principal` (nominal USD), `conversion_price` (o `strike` si es warrant), `potential_shares` (acciones si convierte).
+  - `en_deuda_xbrl`: **true si el nominal YA está en la deuda del balance** (p.ej. notas convertibles contabilizadas
+    como deuda) → al convertir el código las resta de la deuda (evita doble conteo). **Clave:** si una convertible
+    ya está en `long_term_debt`, marcala true, NO la sumes aparte.
+  - `liq_preference` (preferida: piso de liquidación USD, senior al común si no convierte), `hedge_cap` (capped call).
+  - `cita`: accession/URL. Buscá en el 10-Q/10-K (nota de deuda y de capital) y 8-K de financiamiento.
+  - Si no hay instrumentos materiales, dejá la lista vacía. **No publiques un puente de un nombre con converts/
+    preferidas/warrants materiales sin inventariarlos** — el bear y el conteo de acciones dependen de esto.
 - Las `prob` son tu juicio, no frecuencias calibradas. Si no podés dar un puente defendible, dejá `escenarios`
   vacío (el sistema lo tratará como UNKNOWN / tamaño de opción) — mejor vacío que inventar números.
 - **Anclá la P(bull) a una TASA BASE (D3):** en el escenario `bull`, poné `ancla_tasa_base` = la **id** de la

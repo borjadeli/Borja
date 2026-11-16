@@ -70,6 +70,17 @@ def test_balance_8k_no_de_balance_no_marca():
     assert "flag_balance_desactualizado" not in _flags(puntos, filings_fn=lambda t: filings)
 
 
+def test_instrumentos_dilutivos_marca():
+    # F2 (doc 83): acciones antidilutivas excluidas del EPS significativas vs las básicas → hay instrumentos a
+    # inventariar (converts/preferidas/warrants). Es el detector determinista del caso MP.
+    puntos = [_p("shares_outstanding", 178e6, source=_XBRL),
+              _p("antidilutive_shares", 64e6, source=_XBRL)]            # 36% de las básicas → dispara
+    assert "flag_instrumentos_dilutivos" in _flags(puntos)
+    # antidilutivas chicas (< 10%) → no dispara
+    ok = [_p("shares_outstanding", 178e6, source=_XBRL), _p("antidilutive_shares", 5e6, source=_XBRL)]
+    assert "flag_instrumentos_dilutivos" not in _flags(ok)
+
+
 def test_pack_sano_sin_flags():
     puntos = [_p("shares_outstanding", 100e6, source=_FEED),
               _p("shares_outstanding", 98e6, source=_XBRL),

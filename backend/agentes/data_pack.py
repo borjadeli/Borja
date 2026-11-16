@@ -220,6 +220,11 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
     emit("warrants_outstanding",                        # conteo de warrants vigentes (cuando está tageado)
          _pit(_extract_concept(facts, "ClassOfWarrantOrRightOutstanding", unit="shares"), as_of, anual=False),
          "shares", "instant")
+    # acciones excluidas del EPS DILUIDO por antidilutivas (doc 83 F2): en empresas con pérdidas, la dilución
+    # potencial de converts/preferidas/warrants SOLO aparece acá (diluido = básico). Detector de inventario.
+    emit("antidilutive_shares",
+         _pit(_extract_concept(facts, "AntidilutiveSecuritiesExcludedFromComputationOfEarningsPerShareAmount",
+                               unit="shares"), as_of, anual=False), "shares", "instant")
     return out
 
 
@@ -411,9 +416,10 @@ def fuente_valuacion(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[
 
 # 8-K que CAMBIAN el balance (deuda/acciones) y NO están en companyfacts hasta el próximo 10-Q:
 # 2.01 = adquisición/disposición completada · 2.03 = obligación financiera directa (deuda nueva) ·
-# 1.01 = acuerdo material (suele ser el acuerdo de compra/financiamiento). Si hay uno POSTERIOR al último
-# XBRL, el balance del pack puede estar desactualizado (el agujero que mordió en IESC/DBM, 2026-11).
-_ITEMS_8K_BALANCE = {"2.01", "2.03", "1.01"}
+# 1.01 = acuerdo material (suele ser el acuerdo de compra/financiamiento) · 3.02 = venta de equity no registrada
+# (dilución / instrumentos nuevos — doc 83 F2). Si hay uno POSTERIOR al último XBRL, el balance del pack puede
+# estar desactualizado (el agujero que mordió en IESC/DBM, 2026-11).
+_ITEMS_8K_BALANCE = {"2.01", "2.03", "1.01", "3.02"}
 
 
 def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint],
@@ -462,6 +468,15 @@ def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint],
     if rev is not None and mc is not None and mc > 0 and rev > 5 * mc:
         flag("revenue_sospechoso", f"revenue FY ${rev:,.0f} > 5× market cap ${mc:,.0f} ({rev/mc:.0f}×) → "
              f"¿revenue grossed-up/notional, no ventas económicas? (EV/revenue sería una ganga falsa)")
+
+    # 6) INSTRUMENTOS DILUTIVOS A INVENTARIAR (doc 83 F2): acciones antidilutivas excluidas del EPS significativas
+    # vs las básicas → hay converts/preferidas/warrants cuyo inventario el dossier DEBE tener (si no, el bear y el
+    # conteo de acciones quedan mal, como MP). Advisory: le dice al Analista "inventariá estos instrumentos".
+    anti = next((p.value for p in puntos if p.metric == "antidilutive_shares" and p.value), None)
+    base_sh = xbrl_sh or feed_sh
+    if anti and base_sh and anti > 0.10 * base_sh:
+        flag("instrumentos_dilutivos", f"acciones antidilutivas excluidas del EPS = {anti:,.0f} ({anti/base_sh:.0%} "
+             f"de las básicas) → hay converts/preferidas/warrants; el dossier DEBE inventariarlos (doc 83 F2)")
 
     # 5) BALANCE DESACTUALIZADO (2026-11, hallazgo IESC/DBM): el balance (deuda/acciones) sale de XBRL
     # periódico, cuyo último punto es el 10-Q/K. Un 8-K con ítem 2.01/2.03/1.01 POSTERIOR a ese XBRL cambia el

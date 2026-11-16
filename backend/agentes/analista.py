@@ -94,6 +94,14 @@ def _emitir_dossier_schema() -> dict:
         "distributions": {"type": "number"},               # dividendos + recompras
         "dilucion_sbc": {"type": ["number", "null"]},      # dilución SBC del escenario (null → usa dilucion_esperada_pct)
     })
+    # inventario de instrumentos de capital (doc 83 F2): el analista provee términos + cita; el código resuelve.
+    instrumento = _obj({
+        "id": _S, "tipo": {"type": "string", "enum": ["convertible", "convertible_preferred", "warrant", "term_debt"]},
+        "principal": {"type": "number"}, "conversion_price": {"type": ["number", "null"]},
+        "potential_shares": {"type": "number"}, "en_deuda_xbrl": {"type": "boolean"},
+        "liq_preference": {"type": "number"}, "strike": {"type": ["number", "null"]},
+        "hedge_cap": {"type": ["number", "null"]}, "cita": _S,
+    })
     return _obj({
         "negocio_y_posicion_cuello": _S,
         "claims": {"type": "array", "items": claim},
@@ -105,6 +113,7 @@ def _emitir_dossier_schema() -> dict:
         "falsador": falsador,
         "invertibilidad": invertibilidad,
         "escenarios": {"type": "array", "items": escenario_val},
+        "instrumentos": {"type": "array", "items": instrumento},
         "caja_neta_terminal": {"type": ["number", "null"]},
         "dilucion_esperada_pct": {"type": ["number", "null"]},
         "conviccion_0_1": {"type": "number"},

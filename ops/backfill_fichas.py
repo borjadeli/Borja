@@ -48,7 +48,8 @@ def _datos_de_pack(ticker: str, *, as_of: date, cuello_fn=None) -> dict | None:
     precio = _val("precio")
     knowns = [p.known_at for p in puntos if p.known_at and "xbrl" in (p.source.name or "").lower()]
     conocido = max(knowns).isoformat() if knowns else None
-    return {"acciones": acciones, "deuda_neta": deuda_neta, "precio": precio, "datos_conflicted": conflicted,
+    return {"acciones": acciones, "deuda_neta": deuda_neta, "caja": liquidez, "precio": precio,
+            "datos_conflicted": conflicted,
             "cuello": (cuello_fn(ticker) if cuello_fn else None), "conocido_hasta": conocido,
             "cobertura": "PARCIAL" if "." in ticker else "FULL"}
 

@@ -9,13 +9,19 @@ DOS RELOJES:
 El dossier (pydantic, inmutable, cacheado) es la EVIDENCIA que origina la ficha; la ficha es la VISTA VIVA que lo
 envuelve y lo trasciende. Este módulo es PURO y determinista (testeable sin red ni LLM).
 
-Aritmética del puente (doc 80 §1.F):
-    V_i  = (métrica_i × múltiplo_i − deuda_neta) / (acciones × (1 + dilución_total))     # equity bridge / acción
-    E[V] = Σ prob_i · V_i
-    r(P) = (E[V] / P)^(1/T) − 1
-    COMPRA  ⇔ r(P) ≥ hurdle[clase]  Y  V_bear/P − 1 ≥ −piso[clase]
-    RECORTE ⇔ r(P) < hurdle_min
-    SALIDA  ⇔ P > V_bull / (1 + hurdle_min)^T
+Aritmética del puente (doc 83 — cash bridge por escenario; supera al doc 80):
+    EV_i = métrica_i × múltiplo_i                                                         # enterprise value terminal
+    equity_i = EV_i − deuda_neta₀ + FCF_acum_i + emisión_i − distribuciones_i + deuda_convertida_i − K_i
+    V_i  = max(0, equity_i) / (acciones₀ × (1 + dilución_SBC_i) + acciones_nuevas_i + acciones_conversión_i)
+    E[V] = Σ prob_i · V_i ;  r(P) = (E[V] / P)^(1/T) − 1
+    COMPRA  ⇔ r(P) ≥ hurdle[clase]  Y  pérdida esperada ≤ piso[clase]
+    RECORTE ⇔ r(P) < hurdle_min ;  SALIDA ⇔ P > V_bull / (1 + hurdle_min)^T
+
+Cash bridge (doc 83 §2): la deuda ya NO está congelada. Cada escenario lleva sus propios flujos de fuentes y
+usos (FCF acumulado, emisión, deuda nueva/repago, distribuciones, conversión de instrumentos). new_debt y
+debt_repaid se cancelan entre caja y deuda → el equity usa deuda_neta₀ + los flujos netos. `max(0,…)`: el común
+no puede valer menos que cero (responsabilidad limitada). Con todos los flujos en 0 se reduce al puente viejo.
+**El LLM aporta los flujos (hipótesis); el código hace la contabilidad** (ningún agente escribe la deuda terminal).
 """
 from __future__ import annotations
 
@@ -39,6 +45,18 @@ class EscenarioF:
     multiplo_salida: float
     anios: int
     prob: float
+    # Cash bridge por escenario (doc 83 F1) — flujos de fuentes y usos. Default 0 → se reduce al puente viejo.
+    # Los emite el comité como HIPÓTESIS; el código reconcilia. NO son un modelo de capital markets.
+    fcf_cumulative: float = 0.0        # FCF operativo acumulado a T (incluye CAPEX de mantenimiento)
+    new_equity_proceeds: float = 0.0   # caja NETA levantada por emisión primaria
+    new_equity_shares: float = 0.0     # acciones nuevas emitidas por esa emisión
+    new_debt: float = 0.0              # deuda nueva tomada (solo afecta el assert de caja; se cancela en el equity)
+    debt_repaid: float = 0.0           # deuda repagada (idem)
+    distributions: float = 0.0         # dividendos + recompras (salida de caja)
+    debt_converted: float = 0.0        # deuda que convierte a equity (F2): baja deuda → sube equity
+    shares_converted: float = 0.0      # acciones emitidas por conversión de instrumentos (F2)
+    senior_claims: float = 0.0         # K: claims senior al común que NO están en la deuda (preferidas, F2)
+    dilucion_sbc: float | None = None  # dilución SBC específica del escenario (None → usa la de la ficha)
 
 
 @dataclass
@@ -81,9 +99,10 @@ class Ficha:
     estado: str                         # VIGENTE | EN_REVISION | VENCIDA | ROTA
     tope_duro: str | None               # YYYY-MM-DD (re-suscripción obligatoria)
     escenarios: list[EscenarioF]
-    dilucion_total: float               # acumulada al terminal (PISO de Tier A)
-    deuda_neta: float                   # deuda − caja (puede ser negativa = caja neta)
+    dilucion_total: float               # SBC/baseline al terminal (fallback si el escenario no trae dilucion_sbc)
+    deuda_neta: float                   # deuda − caja HOY = D₀ − C₀ (puede ser negativa = caja neta)
     acciones: float
+    caja: float | None = None           # C₀ (caja+liquidez hoy) — para el assert de caja del cash bridge (doc 83 F1)
     falsadores: list[dict] = field(default_factory=list)
     conocido_hasta: str | None = None   # known_at del hecho más nuevo que vio la tesis (vigencia por evento)
     datos_conflicted: bool = False      # r9: banderas CONFLICTED (acciones feed≠XBRL, etc.) → NO comprable sin re-verificar
@@ -123,12 +142,37 @@ def evaluar_vigencia(ficha: Ficha, *, ultimo_filing: str | None = None, hoy: dat
 # --------------------------------------------------------------------------- puente + zonas (puro)
 
 def valor_accion(e: EscenarioF, *, deuda_neta: float, acciones: float, dilucion_total: float) -> float | None:
-    """Equity por acción diluida en el escenario `e`: (métrica×múltiplo − deuda_neta) / (acciones×(1+dilución))."""
+    """Equity por acción en el escenario `e` vía CASH BRIDGE (doc 83 §2.2). `deuda_neta`/`acciones` son los de
+    HOY (D₀−C₀ y acciones₀); los flujos del escenario (FCF/emisión/conversión/distribuciones/K) salen de `e`.
+    V_i = max(0, EV − deuda_neta₀ + FCF + emisión − distrib + deuda_convertida − K) / (acc₀×(1+SBC) + nuevas + conv).
+    (new_debt y debt_repaid NO entran al equity: se cancelan entre caja y deuda; solo cuentan en el assert de caja.)"""
     if acciones is None or acciones <= 0:
         return None
-    equity_terminal = e.metrica_terminal * e.multiplo_salida - (deuda_neta or 0.0)
-    acc_dil = acciones * (1.0 + max(0.0, dilucion_total or 0.0))
-    return equity_terminal / acc_dil if acc_dil > 0 else None
+    ev = e.metrica_terminal * e.multiplo_salida
+    equity_terminal = (ev - (deuda_neta or 0.0)
+                       + (e.fcf_cumulative or 0.0)
+                       + (e.new_equity_proceeds or 0.0)
+                       - (e.distributions or 0.0)
+                       + (e.debt_converted or 0.0)       # convertir deuda a equity sube el valor del común…
+                       - (e.senior_claims or 0.0))        # …y los claims senior (preferidas) lo bajan
+    dil = e.dilucion_sbc if e.dilucion_sbc is not None else (dilucion_total or 0.0)
+    acc_T = acciones * (1.0 + max(0.0, dil)) + (e.new_equity_shares or 0.0) + (e.shares_converted or 0.0)
+    if acc_T <= 0:
+        return None
+    return max(0.0, equity_terminal) / acc_T              # el común no vale menos que cero (responsabilidad limitada)
+
+
+def cash_terminal(e: EscenarioF, *, caja_hoy: float) -> float:
+    """Caja terminal del escenario C_T = C₀ + FCF_acum + emisión + deuda_nueva − repago − distribuciones (doc 83)."""
+    return ((caja_hoy or 0.0) + (e.fcf_cumulative or 0.0) + (e.new_equity_proceeds or 0.0)
+            + (e.new_debt or 0.0) - (e.debt_repaid or 0.0) - (e.distributions or 0.0))
+
+
+def cash_bridge_ok(e: EscenarioF, *, caja_hoy: float, caja_minima: float = 0.0) -> tuple[bool, float]:
+    """Assert anti-doble-conteo (doc 83): la caja terminal no puede caer bajo la mínima operativa. Si cae, el
+    escenario gastó caja que no tiene (funding_unresolved: el Analista debe explicar cómo se cubre). (ok, C_T)."""
+    ct = cash_terminal(e, caja_hoy=caja_hoy)
+    return (ct >= (caja_minima or 0.0) - 1e-6, round(ct, 4))
 
 
 def _por_nombre(escenarios: list[EscenarioF], *, deuda_neta, acciones, dilucion_total) -> dict[str, float]:
@@ -209,7 +253,7 @@ def calcular_puente(escenarios: list[EscenarioF], *, precio: float, deuda_neta: 
 def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones: float, precio: float | None,
                            cuello: str | None = None, nivel: str = "BANCA", cobertura: str = "FULL",
                            visto_hasta: str | None = None, conocido_hasta: str | None = None,
-                           datos_conflicted: bool = False,
+                           datos_conflicted: bool = False, caja: float | None = None,
                            dossier_id: str | None = None, hoy: date | None = None, **pol) -> Ficha:
     """Construye la ficha desde un Dossier ya cacheado ($0). Reloj lento = escenarios/clase/falsador del dossier;
     reloj rápido = calculado con el precio actual. `dossier` = schemas.Dossier (o stub con los mismos campos)."""
@@ -227,8 +271,8 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         ticker=ticker.upper(), nivel=nivel, clase_d4=clase, cuello=cuello, cobertura_datos=cobertura,
         tesis_resumen=(getattr(dossier, "negocio_y_posicion_cuello", "") or "")[:600],
         dossier_id=dossier_id, visto_hasta=visto_hasta, estado="VIGENTE", tope_duro=None,
-        escenarios=escen, dilucion_total=dil, deuda_neta=deuda_neta, acciones=acciones, falsadores=falsadores,
-        conocido_hasta=conocido_hasta, datos_conflicted=datos_conflicted,
+        escenarios=escen, dilucion_total=dil, deuda_neta=deuda_neta, acciones=acciones, caja=caja,
+        falsadores=falsadores, conocido_hasta=conocido_hasta, datos_conflicted=datos_conflicted,
         historial=[{"fecha": hoy.isoformat(), "evento": "backfill", "motivo_codigo": "DESDE_DOSSIER"}])
     if precio is not None:
         recalcular(ficha, precio=precio, deuda_neta=deuda_neta, acciones=acciones, **pol)

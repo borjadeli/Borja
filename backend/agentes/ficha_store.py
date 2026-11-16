@@ -59,7 +59,7 @@ def backfill_fichas(cache_entries: dict, *, datos_fn: Callable[[str], dict | Non
             tk, dossier, deuda_neta=float(datos.get("deuda_neta") or 0.0), acciones=float(datos["acciones"]),
             precio=datos.get("precio"), cuello=datos.get("cuello"), cobertura=datos.get("cobertura", "FULL"),
             conocido_hasta=datos.get("conocido_hasta"), datos_conflicted=bool(datos.get("datos_conflicted")),
-            dossier_id=getattr(e, "hash", None), hoy=hoy, **pol)
+            caja=datos.get("caja"), dossier_id=getattr(e, "hash", None), hoy=hoy, **pol)
         if store is not None:
             store.set(f)
         fichas.append(f)

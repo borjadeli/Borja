@@ -1,8 +1,8 @@
 """Ficha viva (r9, doc 80 §F): puente, zonas/gatillos y el caso del operador (cara → cae → COMPRA sin re-deep)."""
 from dataclasses import dataclass
 
-from backend.agentes.ficha import (EscenarioF, backfill_desde_dossier, calcular_puente, recalcular,
-                                    valor_accion)
+from backend.agentes.ficha import (EscenarioF, backfill_desde_dossier, calcular_puente, cash_bridge_ok,
+                                    cash_terminal, recalcular, valor_accion)
 
 # escenarios de una empresa con equity bridge limpio (sin deuda neta, 100M acciones, sin dilución)
 _ESC = [
@@ -20,6 +20,63 @@ def test_valor_accion_equity_bridge():
     assert valor_accion(_ESC[0], deuda_neta=500e6, acciones=100e6, dilucion_total=0.0) == 5.0
     # con 50% de dilución: 1.0B / (100M×1.5) = $6.67
     assert abs(valor_accion(_ESC[0], deuda_neta=0, acciones=100e6, dilucion_total=0.5) - 6.6667) < 1e-3
+
+
+# ----------------------------------------------------------------- Fase 1 (doc 83): tests de aceptación del cash bridge
+
+def test_aceptacion_A_caja_de_obra_no_se_cuenta_dos_veces():
+    # OKLO-like: caja hoy $3B, EV terminal $700M (las plantas YA están en el EBITDA operativo). La caja es el
+    # presupuesto de obra → se consume. El bridge NO debe sumar los $3B intactos + las plantas.
+    oklo = EscenarioF("bear", metrica_terminal=700e6, multiplo_salida=1.0, anios=6, prob=0.5,
+                      fcf_cumulative=-2.5e9)                    # quema $2.5B construyendo
+    v_bridge = valor_accion(oklo, deuda_neta=-3e9, acciones=100e6, dilucion_total=0.0)  # deuda_neta −3B = caja neta 3B
+    # frozen (viejo): sumaría la caja intacta → 700M + 3B = 3.7B / 100M = $37
+    congelado = EscenarioF("bear", metrica_terminal=700e6, multiplo_salida=1.0, anios=6, prob=0.5)  # fcf=0
+    v_congelado = valor_accion(congelado, deuda_neta=-3e9, acciones=100e6, dilucion_total=0.0)
+    assert v_congelado == 37.0 and abs(v_bridge - 12.0) < 1e-6   # 700M+3B−2.5B = 1.2B/100M = $12 < $37
+    # assert de caja: C_T = 3B − 2.5B = 0.5B ≥ 0 → ok; si quemara $3.5B, funding unresolved
+    assert cash_bridge_ok(oklo, caja_hoy=3e9)[0] is True
+    quema_de_mas = EscenarioF("bear", 700e6, 1.0, 6, 0.5, fcf_cumulative=-3.5e9)
+    assert cash_bridge_ok(quema_de_mas, caja_hoy=3e9, caja_minima=0.0)[0] is False   # gastó caja que no tiene
+
+
+def test_aceptacion_B_emision_sube_caja_Y_acciones():
+    base = EscenarioF("base", 200e6, 10.0, 4, 0.5)              # EV $2B, sin raise → $20
+    assert valor_accion(base, deuda_neta=0, acciones=100e6, dilucion_total=0.0) == 20.0
+    # emitir $1B por 10M de acciones: la caja entra (+$1B al equity) Y las acciones entran (+10M al denominador)
+    con_raise = EscenarioF("base", 200e6, 10.0, 4, 0.5, new_equity_proceeds=1e9, new_equity_shares=10e6)
+    v = valor_accion(con_raise, deuda_neta=0, acciones=100e6, dilucion_total=0.0)
+    assert abs(v - (3e9 / 110e6)) < 1e-6                        # 3B/110M = $27.27, los dos efectos reconciliados
+    # error de doble conteo que EVITAMOS: diluir sin reconocer los fondos daría menos ($2B/110M = $18.18)
+    solo_dilucion = EscenarioF("base", 200e6, 10.0, 4, 0.5, new_equity_shares=10e6)
+    assert valor_accion(solo_dilucion, deuda_neta=0, acciones=100e6, dilucion_total=0.0) < 20.0
+
+
+def test_aceptacion_C_conversion_borra_deuda_y_agrega_acciones():
+    # EV $3B, deuda_neta $1B (incluye $500M de convertible). Sin conversión → $20.
+    sin = EscenarioF("base", 300e6, 10.0, 4, 0.5)
+    assert valor_accion(sin, deuda_neta=1e9, acciones=100e6, dilucion_total=0.0) == 20.0
+    # conversión: la obligación de $500M desaparece (vuelve al equity) Y aparecen 20M de acciones — no se cuenta dos veces
+    conv = EscenarioF("base", 300e6, 10.0, 4, 0.5, debt_converted=500e6, shares_converted=20e6)
+    v = valor_accion(conv, deuda_neta=1e9, acciones=100e6, dilucion_total=0.0)
+    assert abs(v - (2.5e9 / 120e6)) < 1e-6                      # (3B−1B+0.5B)/120M = $20.83
+
+
+def test_aceptacion_D_bear_con_preferida_senior_puede_valer_cero():
+    # EV $1B, deuda_neta $0.5B, preferida senior $2B (K). El común queda detrás → vale CERO (responsabilidad limitada).
+    bear = EscenarioF("bear", 100e6, 10.0, 4, 0.4, senior_claims=2e9)
+    assert valor_accion(bear, deuda_neta=0.5e9, acciones=100e6, dilucion_total=0.0) == 0.0
+    # sin la preferida, el mismo escenario vale (1B−0.5B)/100M = $5 → la preferencia se respeta
+    sin_pref = EscenarioF("bear", 100e6, 10.0, 4, 0.4)
+    assert valor_accion(sin_pref, deuda_neta=0.5e9, acciones=100e6, dilucion_total=0.0) == 5.0
+
+
+def test_dilucion_scenario_dependent():
+    # la dilución SBC del escenario pisa a la de la ficha; bull diluye poco, bear más
+    bull = EscenarioF("bull", 100e6, 10.0, 4, 0.3, dilucion_sbc=0.05)
+    bear = EscenarioF("bear", 100e6, 10.0, 4, 0.3, dilucion_sbc=0.40)
+    assert abs(valor_accion(bull, deuda_neta=0, acciones=100e6, dilucion_total=0.20) - (1e9 / 105e6)) < 1e-6
+    assert abs(valor_accion(bear, deuda_neta=0, acciones=100e6, dilucion_total=0.20) - (1e9 / 140e6)) < 1e-6
 
 
 def test_puente_ordena_zonas():

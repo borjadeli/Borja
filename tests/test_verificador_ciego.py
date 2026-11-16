@@ -31,6 +31,18 @@ def test_fail_por_instrumentos_faltantes():
     assert any(d.campo == "n_instrumentos" and d.severidad == "material" for d in discs)
 
 
+def test_fail_por_deuda_nueva_posterior_no_reflejada():
+    # el caso IESC/DBM: el ciego no pudo leer el balance (nums null) PERO capturó $525M de deuda nueva en un 8-K
+    # posterior → la referencia ($0) no la refleja → FAIL temporal (balance stale), aunque los numéricos sean null.
+    ref = {"caja": 77.3e6, "deuda_total": 0.0, "acciones_basicas": 19.9e6, "n_instrumentos": 0}
+    ciego = {"caja": None, "deuda_total": None, "acciones_basicas": None, "n_instrumentos": None,
+             "deuda_nueva_posterior": 525e6, "adquisicion_posterior": True}
+    v, discs = reconciliar(ciego, ref)
+    assert v == "FAIL"
+    assert any(d.campo == "deuda_nueva_posterior" and d.severidad == "material" for d in discs)
+    assert any(d.campo == "adquisicion_posterior" for d in discs)
+
+
 def test_review_por_dato_faltante():
     ref = {"caja": 1e9, "deuda_total": 1e9, "acciones_basicas": 178e6, "n_instrumentos": 2}
     ciego = {"caja": 1e9, "deuda_total": None, "acciones_basicas": 178e6, "n_instrumentos": 2}  # no extrajo deuda

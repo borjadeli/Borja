@@ -71,6 +71,16 @@ def reconciliar(ciego: dict, referencia: dict, *, tol_rel: float = _TOL_REL) -> 
     if n_gc is not None and int(n_gc) != n_ref:
         discs.append(Discrepancia("n_instrumentos", n_ref, int(n_gc), "presencia", "material",
                                   "el canal ciego encontró un número distinto de instrumentos materiales"))
+    # evento POSTERIOR al último 10-Q que cambia el balance (deuda nueva / adquisición) y la referencia NO refleja
+    # → el balance de referencia está stale (el caso IESC/DBM: $525M de deuda nueva que el dossier decía $0).
+    dnp = ciego.get("deuda_nueva_posterior")
+    ref_deuda = referencia.get("deuda_total")
+    if dnp and float(dnp) > 25e6 and (ref_deuda is None or float(ref_deuda) + 1e6 < float(dnp)):
+        discs.append(Discrepancia("deuda_nueva_posterior", ref_deuda, dnp, "temporal", "material",
+                                  "un 8-K posterior al 10-Q tomó deuda nueva que la referencia no refleja (balance stale)"))
+    if ciego.get("adquisicion_posterior") is True and not referencia.get("adquisicion_conocida"):
+        discs.append(Discrepancia("adquisicion_posterior", None, True, "temporal", "material",
+                                  "adquisición/disposición material posterior al 10-Q no reflejada en la referencia"))
     # premisa de la tesis: si el ciego la marcó no sostenida → material
     if ciego.get("premisa_sostenida") is False:
         discs.append(Discrepancia("premisa_tesis", referencia.get("premisa"), ciego.get("premisa_nota"),
@@ -92,7 +102,8 @@ EXTRACTOR_MODEL = "claude-sonnet-5-5"       # barato; escala a Opus solo si un t
 _SCHEMA_CIEGO = {
     "type": "object", "additionalProperties": False,
     "required": ["caja", "deuda_total", "acciones_basicas", "n_instrumentos", "instrumentos_nota",
-                 "premisa_sostenida", "premisa_nota", "eventos_posteriores"],
+                 "premisa_sostenida", "premisa_nota", "eventos_posteriores",
+                 "deuda_nueva_posterior", "adquisicion_posterior"],
     "properties": {
         "caja": {"type": ["number", "null"]},               # caja + inversiones de corto plazo (USD)
         "deuda_total": {"type": ["number", "null"]},         # deuda financiera total (USD)
@@ -102,6 +113,9 @@ _SCHEMA_CIEGO = {
         "premisa_sostenida": {"type": ["boolean", "null"]},  # ¿la fuente primaria sostiene la premisa preguntada?
         "premisa_nota": {"type": "string"},
         "eventos_posteriores": {"type": "string"},           # 8-K materiales posteriores al último 10-Q
+        # cambios de balance en eventos POSTERIORES al último 10-Q (lo que XBRL no refleja hasta el próximo reporte):
+        "deuda_nueva_posterior": {"type": ["number", "null"]},  # deuda nueva tomada en un 8-K posterior (USD)
+        "adquisicion_posterior": {"type": ["boolean", "null"]}, # ¿hubo adquisición/disposición material posterior?
     },
 }
 
@@ -116,6 +130,9 @@ Devolvés SOLO los datos que PODÉS sostener con los filings (null si no lo enco
   warrants). instrumentos_nota: listalos brevemente con sus términos.
 - premisa_sostenida: ¿los filings sostienen la premisa preguntada? (true/false/null). premisa_nota: por qué.
 - eventos_posteriores: 8-K materiales (adquisición, deuda nueva, emisión) posteriores al último 10-Q/K.
+- deuda_nueva_posterior: si un 8-K POSTERIOR al último 10-Q tomó deuda nueva, poné el MONTO en USD (p.ej. un
+  Credit Agreement nuevo, un préstamo para financiar una compra). Es la deuda que el XBRL todavía NO refleja.
+- adquisicion_posterior: true si hubo una adquisición/disposición material posterior al último 10-Q.
 NO te anclés a ningún número previo: no te dieron ninguno. Citá el filing en las notas."""
 
 

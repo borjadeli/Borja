@@ -118,9 +118,14 @@ Punch-list de revisión externa sobre el rediseño doc 80. Cerrado:
   **100% accuracy, precision/recall 100%** en la clase 'cuenta' (3/3 contratos de revenue, 0 FP). **#3a** bonus
   aditivo fresco al score (firme 0.05 / cond 0.02, decae a 0 en 90d; NUNCA agranda el size). **#3c** carril
   `contrato_nuevo` en `asignar_carriles` (contrato firme/cond fresco = deep garantizado fuera del cupo).
-- **Pendiente de CORRIDA REAL (operador):** cablear el feed de 8-K 1.01 → parser → `contratos_nuevos` en el run
-  semanal vivo; **#4 doc 77** (necesita una corrida end-to-end con el PM viendo contratos/bonus/carril). La
-  consola está sandboxeada del host → la corrida la dispara el operador.
+- **Cableado al run vivo HECHO + VALIDADO (2026-11-16):** `detectar_contratos_universo` (feed 8-K 1.01 →
+  pre-filtro → parser Haiku → contrato de revenue más fresco) cableado a `correr_semana_v2 --universo --contratos`:
+  suma el bonus al score + mete el nombre en el carril `contrato_nuevo` (deep garantizado). **Corrido en vivo:**
+  EDGAR trajo 6 filings 1.01 (90d) en 8 nombres, Haiku los clasificó, **5/5 coinciden con el gold** donde se
+  solapan; 0 contratos de revenue frescos (el 1.01 es financiamiento+M&A → señal rala confirmada en vivo). 879 tests.
+- **Pendiente (operador):** **#4 doc 77** — una corrida semanal end-to-end COMPLETA (`--universo --contratos`, con
+  Analista/Bear/PM) para documentar el ciclo con el PM viendo contratos/bonus/carril. La consola está sandboxeada
+  del host → la corrida con comité la dispara el operador (gasta presupuesto LLM).
 
 ## Actualización 2026-11-13 (r8→r9) — rediseño CERRADO (doc 80) + P0 ficha viva HECHO
 

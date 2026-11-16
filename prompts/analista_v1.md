@@ -118,7 +118,11 @@ precio implica (expectations investing). Reglas (doc 74 D1):
   - `en_deuda_xbrl`: **true si el nominal YA está en la deuda del balance** (p.ej. notas convertibles contabilizadas
     como deuda) → al convertir el código las resta de la deuda (evita doble conteo). **Clave:** si una convertible
     ya está en `long_term_debt`, marcala true, NO la sumes aparte.
-  - `liq_preference` (preferida: piso de liquidación USD, senior al común si no convierte), `hedge_cap` (capped call).
+  - `liq_preference` (preferida: piso de liquidación USD, senior al común si no convierte).
+  - `hedge_cap` (capped call / call spread): **buscalo explícitamente** — cuando una empresa emite notas convertibles
+    suele comprar un capped call que neutraliza la dilución hasta un precio tope. Está en el MISMO 8-K/nota que la
+    convertible ("capped call transactions", "cap price"). Omitirlo subestima el bull (caso MP: cap $31,06). Poné el
+    precio tope en `hedge_cap`; null si no hay.
   - `cita`: accession/URL. Buscá en el 10-Q/10-K (nota de deuda y de capital) y 8-K de financiamiento.
   - Si no hay instrumentos materiales, dejá la lista vacía. **No publiques un puente de un nombre con converts/
     preferidas/warrants materiales sin inventariarlos** — el bear y el conteo de acciones dependen de esto.

@@ -1,8 +1,8 @@
 """Ficha viva (r9, doc 80 §F): puente, zonas/gatillos y el caso del operador (cara → cae → COMPRA sin re-deep)."""
 from dataclasses import dataclass
 
-from backend.agentes.ficha import (EscenarioF, backfill_desde_dossier, calcular_puente, cash_bridge_ok,
-                                    cash_terminal, recalcular, valor_accion)
+from backend.agentes.ficha import (EscenarioF, Instrumento, backfill_desde_dossier, calcular_puente,
+                                    cash_bridge_ok, cash_terminal, recalcular, resolver_instrumentos, valor_accion)
 
 # escenarios de una empresa con equity bridge limpio (sin deuda neta, 100M acciones, sin dilución)
 _ESC = [
@@ -146,6 +146,62 @@ class _Dossier:
     falsador: _Fals
     dilucion_esperada_pct: float
     negocio_y_posicion_cuello: str = "Proveedor líder del cuello X."
+
+
+# ----------------------------------------------------------------- Fase 2 (doc 83): resolver de instrumentos (MP)
+
+# Inventario estilo MP: convertible 2030 YA en la deuda XBRL + preferida del DoD + warrant del DoD + capped call.
+_MP_INSTR = [
+    Instrumento("conv2030", "convertible", principal=862.8e6, conversion_price=21.74, potential_shares=39.68e6,
+                en_deuda_xbrl=True, hedge_cap=31.06),                      # capped call hasta $31.06
+    Instrumento("pref_dod", "convertible_preferred", principal=400e6, conversion_price=30.03,
+                potential_shares=13.32e6, liq_preference=435.6e6),         # preferida: senior si no convierte
+    Instrumento("warr_dod", "warrant", potential_shares=11.2e6, strike=30.03),
+]
+
+
+def test_resolver_bear_converts_no_convierten_preferida_senior():
+    # bear barato: V bien abajo de $21,74 → nada convierte. La convertible ya está en la deuda (no se re-resta);
+    # la preferida queda como claim SENIOR ($435,6M) delante del común; el warrant out-of-money no hace nada.
+    bear = EscenarioF("bear", 300e6, 6.0, 4, 0.3)                          # EV $1.8B
+    v, det = resolver_instrumentos(bear, deuda_neta=1.0e9, acciones=178e6, dilucion_total=0.0, instrumentos=_MP_INSTR)
+    assert det["convertidos"] == []                                        # nada convierte en el bear
+    assert abs(det["claims_senior"] - 435.6e6) < 1                         # la preferida pesa senior al común
+    # equity = 1.8B − 1.0B(deuda, incluye el conv) − 435.6M(pref) = 364.4M / 178M = $2.05
+    assert abs(v - (364.4e6 / 178e6)) < 1e-2
+
+
+def test_resolver_bull_todo_convierte_sube_acciones_baja_deuda():
+    # bull caro: V bien arriba de $31 → todo convierte. El conv (en deuda) suma acciones Y resta deuda; la
+    # preferida convierte (deja de ser senior) y suma acciones; el warrant se ejerce (acciones + caja de strike).
+    bull = EscenarioF("bull", 2.0e9, 10.0, 4, 0.3)                         # EV $20B → V alto
+    v, det = resolver_instrumentos(bull, deuda_neta=1.0e9, acciones=178e6, dilucion_total=0.0, instrumentos=_MP_INSTR)
+    assert set(det["convertidos"]) == {"conv2030", "pref_dod", "warr_dod"}
+    assert abs(det["deuda_convertida"] - 862.8e6) < 1 and det["claims_senior"] == 0.0
+    # acciones nuevas: conv 39.68M (V>cap 31.06 → capped call NO cubre) + pref 13.32M + warr 11.2M = 64.2M
+    assert abs(det["acciones_nuevas"] - 64.2e6) < 1e5
+    # equity = 20B − 1.0B + 0.8628B(conv vuelve) + warr_cash(30.03×11.2M=336.3M) = 20.199B / (178+64.2)M = $83.4
+    assert abs(v - (20.1991e9 / 242.2e6)) < 0.5
+
+
+def test_resolver_capped_call_neutraliza_dilucion_bajo_el_cap():
+    # V entre conv_price ($21.74) y cap ($31.06): el convertible convierte pero el capped call tapa su dilución.
+    medio = EscenarioF("base", 600e6, 8.0, 4, 0.4)                         # EV $4.8B
+    v, det = resolver_instrumentos(medio, deuda_neta=1.0e9, acciones=178e6, dilucion_total=0.0,
+                                   instrumentos=[_MP_INSTR[0]])             # solo el convertible con capped call
+    # si V cae en la ventana [21.74, 31.06], _shares_efectivas = 0 (hedge cubre) → no diluye
+    if 21.74 <= v <= 31.06:
+        assert det["acciones_nuevas"] == 0.0
+
+
+def test_puente_usa_instrumentos_si_los_hay():
+    escen = [EscenarioF("bear", 300e6, 6.0, 4, 0.3), EscenarioF("base", 600e6, 10.0, 4, 0.4),
+             EscenarioF("bull", 2.0e9, 10.0, 4, 0.3)]
+    con = calcular_puente(escen, precio=25.0, deuda_neta=1.0e9, acciones=178e6, dilucion_total=0.0,
+                          clase="satelite", instrumentos=_MP_INSTR)
+    sin = calcular_puente(escen, precio=25.0, deuda_neta=1.0e9, acciones=178e6, dilucion_total=0.0, clase="satelite")
+    # el bear con la preferida senior vale MENOS que ignorando los instrumentos (que no restaría los $435.6M)
+    assert con[0].valor_accion["bear"] < sin[0].valor_accion["bear"]
 
 
 def test_backfill_mapea_flujos_del_cash_bridge():

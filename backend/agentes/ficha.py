@@ -103,6 +103,7 @@ class Ficha:
     deuda_neta: float                   # deuda − caja HOY = D₀ − C₀ (puede ser negativa = caja neta)
     acciones: float
     caja: float | None = None           # C₀ (caja+liquidez hoy) — para el assert de caja del cash bridge (doc 83 F1)
+    instrumentos: list[Instrumento] = field(default_factory=list)   # inventario de capital (doc 83 F2)
     falsadores: list[dict] = field(default_factory=list)
     conocido_hasta: str | None = None   # known_at del hecho más nuevo que vio la tesis (vigencia por evento)
     datos_conflicted: bool = False      # r9: banderas CONFLICTED (acciones feed≠XBRL, etc.) → NO comprable sin re-verificar
@@ -119,6 +120,7 @@ class Ficha:
     def from_dict(cls, d: dict) -> "Ficha":
         d = dict(d)
         d["escenarios"] = [EscenarioF(**e) for e in d.get("escenarios", [])]
+        d["instrumentos"] = [Instrumento(**i) for i in d.get("instrumentos", [])]
         d["puente"] = Puente(**d["puente"]) if d.get("puente") else None
         d["gatillos"] = Gatillos(**d["gatillos"]) if d.get("gatillos") else None
         d["latido"] = Latido(**d["latido"]) if d.get("latido") else None
@@ -148,18 +150,95 @@ def valor_accion(e: EscenarioF, *, deuda_neta: float, acciones: float, dilucion_
     (new_debt y debt_repaid NO entran al equity: se cancelan entre caja y deuda; solo cuentan en el assert de caja.)"""
     if acciones is None or acciones <= 0:
         return None
-    ev = e.metrica_terminal * e.multiplo_salida
-    equity_terminal = (ev - (deuda_neta or 0.0)
-                       + (e.fcf_cumulative or 0.0)
-                       + (e.new_equity_proceeds or 0.0)
-                       - (e.distributions or 0.0)
-                       + (e.debt_converted or 0.0)       # convertir deuda a equity sube el valor del común…
-                       - (e.senior_claims or 0.0))        # …y los claims senior (preferidas) lo bajan
-    dil = e.dilucion_sbc if e.dilucion_sbc is not None else (dilucion_total or 0.0)
-    acc_T = acciones * (1.0 + max(0.0, dil)) + (e.new_equity_shares or 0.0) + (e.shares_converted or 0.0)
+    equity_terminal, acc_T = _equity_y_acciones(e, deuda_neta=deuda_neta, acciones=acciones,
+                                                dilucion_total=dilucion_total)
     if acc_T <= 0:
         return None
     return max(0.0, equity_terminal) / acc_T              # el común no vale menos que cero (responsabilidad limitada)
+
+
+def _equity_y_acciones(e: EscenarioF, *, deuda_neta, acciones, dilucion_total,
+                       dc: float = 0.0, sc: float = 0.0, senior: float = 0.0, wcash: float = 0.0
+                       ) -> tuple[float, float]:
+    """Numerador (equity terminal) y denominador (acciones terminales) del cash bridge. `dc`/`sc`/`senior`/`wcash`
+    son los efectos de los INSTRUMENTOS resueltos para el escenario (F2): deuda convertida, acciones por conversión,
+    claims senior no-convertidos, caja por ejercicio de warrants. En 0 = sin resolver instrumentos (solo flujos)."""
+    ev = e.metrica_terminal * e.multiplo_salida
+    equity = (ev - (deuda_neta or 0.0)
+              + (e.fcf_cumulative or 0.0) + (e.new_equity_proceeds or 0.0) - (e.distributions or 0.0)
+              + (e.debt_converted or 0.0) + dc + wcash         # deuda que convierte a equity + caja de ejercicio
+              - (e.senior_claims or 0.0) - senior)             # claims senior al común (preferidas no convertidas)
+    dil = e.dilucion_sbc if e.dilucion_sbc is not None else (dilucion_total or 0.0)
+    acc_T = acciones * (1.0 + max(0.0, dil)) + (e.new_equity_shares or 0.0) + (e.shares_converted or 0.0) + sc
+    return equity, acc_T
+
+
+# --------------------------------------------------------------------------- inventario de instrumentos (doc 83 F2)
+
+@dataclass
+class Instrumento:
+    """Un instrumento de capital material (doc 83 §2.1). El inventario con cita al filing es la pieza que faltaba:
+    sin él, un share count 'fully diluted' sumado a mano es engañoso (caso MP). El resolver decide por TÉRMINOS."""
+    id: str
+    tipo: str                           # convertible | convertible_preferred | warrant | term_debt
+    principal: float = 0.0              # nominal (USD)
+    conversion_price: float | None = None   # convierte si V_i ≥ este precio (if-converted)
+    potential_shares: float = 0.0       # acciones si convierte/ejerce
+    en_deuda_xbrl: bool = False         # YA está contado en deuda_neta → al convertir se RESTA (no doble-contar)
+    liq_preference: float = 0.0         # preferida: piso de liquidación (USD), senior al común si no convierte
+    strike: float | None = None         # warrant: precio de ejercicio (entra caja al ejercer)
+    hedge_cap: float | None = None      # capped call: hasta este precio la dilución del convertible se neutraliza
+    cita: str | None = None             # accession/filing (procedencia obligatoria)
+
+    def umbral(self) -> float | None:
+        """Precio sobre el que el instrumento convierte/se ejerce."""
+        return self.strike if self.tipo == "warrant" else self.conversion_price
+
+
+def _shares_efectivas(j: Instrumento, v: float) -> float:
+    """Acciones nuevas al convertir, netas del capped call: si hay hedge_cap y V ≤ cap, la dilución está cubierta."""
+    if j.hedge_cap is not None and v <= j.hedge_cap:
+        return 0.0
+    return j.potential_shares
+
+
+def resolver_instrumentos(e: EscenarioF, *, deuda_neta: float, acciones: float, dilucion_total: float,
+                          instrumentos: list["Instrumento"], iters: int = 16) -> tuple[float | None, dict]:
+    """Resuelve los instrumentos POR TÉRMINOS en el escenario `e` (doc 83 §2.4), no por etiqueta: convierte si
+    V_i ≥ umbral (if-converted del EPS diluido). Itera a punto fijo (V depende de la resolución y viceversa).
+    - convertible/preferida que convierte → + acciones; si en_deuda_xbrl, además −deuda (vuelve al equity).
+    - convertible/preferida que NO convierte y NO está en deuda → claim SENIOR = max(principal, liq_preference).
+    - warrant in-the-money → + acciones + caja de ejercicio (strike×acciones).
+    - term_debt → se maneja en el cash bridge (flujos), no acá.
+    Devuelve (V_i, detalle). V_i=None si faltan insumos."""
+    if acciones is None or acciones <= 0:
+        return None, {}
+    reales = [j for j in (instrumentos or []) if j.tipo != "term_debt"]
+    convertidos: set[str] = set()
+    v = 0.0
+    for _ in range(iters):
+        dc = sc = senior = wcash = 0.0
+        for j in reales:
+            if j.id in convertidos:
+                s = _shares_efectivas(j, v)
+                sc += s
+                if j.tipo == "warrant":
+                    wcash += (j.strike or 0.0) * s
+                elif j.en_deuda_xbrl:
+                    dc += j.principal
+            elif j.tipo != "warrant" and not j.en_deuda_xbrl:   # no convierte y no está en deuda → senior al común
+                senior += max(j.principal, j.liq_preference)
+        equity, acc_T = _equity_y_acciones(e, deuda_neta=deuda_neta, acciones=acciones,
+                                           dilucion_total=dilucion_total, dc=dc, sc=sc, senior=senior, wcash=wcash)
+        if acc_T <= 0:
+            return None, {}
+        v = max(0.0, equity) / acc_T
+        nuevos = {j.id for j in reales if j.umbral() is not None and v >= j.umbral()}
+        if nuevos == convertidos:
+            break
+        convertidos = nuevos
+    return round(v, 4), {"convertidos": sorted(convertidos), "deuda_convertida": round(dc, 2),
+                         "acciones_nuevas": round(sc, 2), "claims_senior": round(senior, 2)}
 
 
 def cash_terminal(e: EscenarioF, *, caja_hoy: float) -> float:
@@ -175,10 +254,17 @@ def cash_bridge_ok(e: EscenarioF, *, caja_hoy: float, caja_minima: float = 0.0) 
     return (ct >= (caja_minima or 0.0) - 1e-6, round(ct, 4))
 
 
-def _por_nombre(escenarios: list[EscenarioF], *, deuda_neta, acciones, dilucion_total) -> dict[str, float]:
+def _por_nombre(escenarios: list[EscenarioF], *, deuda_neta, acciones, dilucion_total,
+                instrumentos: list["Instrumento"] | None = None) -> dict[str, float]:
+    """Valor por acción de cada escenario. Si hay inventario de instrumentos (F2), los RESUELVE por términos
+    (if-converted, iterativo); si no, usa el cash bridge de flujos directo (F1)."""
     out: dict[str, float] = {}
     for e in escenarios:
-        v = valor_accion(e, deuda_neta=deuda_neta, acciones=acciones, dilucion_total=dilucion_total)
+        if instrumentos:
+            v, _det = resolver_instrumentos(e, deuda_neta=deuda_neta, acciones=acciones,
+                                            dilucion_total=dilucion_total, instrumentos=instrumentos)
+        else:
+            v = valor_accion(e, deuda_neta=deuda_neta, acciones=acciones, dilucion_total=dilucion_total)
         if v is not None:
             out[e.nombre] = round(v, 4)
     return out
@@ -187,17 +273,19 @@ def _por_nombre(escenarios: list[EscenarioF], *, deuda_neta, acciones, dilucion_
 def calcular_puente(escenarios: list[EscenarioF], *, precio: float, deuda_neta: float, acciones: float,
                     dilucion_total: float, clase: str,
                     hurdles=None, pisos=None, hurdle_min: float = HURDLE_MIN_DEFAULT,
-                    bull_min_especulativa: float = 5.0
+                    bull_min_especulativa: float = 5.0, instrumentos: list["Instrumento"] | None = None
                     ) -> tuple[Puente, Gatillos, Latido] | None:
     """Corazón del reloj rápido: de los escenarios (reloj lento) + el precio de hoy → puente, zonas y latido.
-    Puro. None si faltan insumos (precio/acciones/escenarios). `clase` elige hurdle y piso."""
+    Puro. None si faltan insumos (precio/acciones/escenarios). `clase` elige hurdle y piso. `instrumentos` (F2):
+    inventario que el resolver aplica por escenario (converts/preferidas/warrants)."""
     hurdles = hurdles or HURDLES_DEFAULT
     pisos = pisos or PISOS_DEFAULT
     vivos = [e for e in escenarios if e and e.metrica_terminal is not None and e.multiplo_salida is not None
              and e.anios and e.anios > 0 and e.prob is not None]
     if not vivos or precio is None or precio <= 0 or not acciones or acciones <= 0:
         return None
-    por = _por_nombre(vivos, deuda_neta=deuda_neta, acciones=acciones, dilucion_total=dilucion_total)
+    por = _por_nombre(vivos, deuda_neta=deuda_neta, acciones=acciones, dilucion_total=dilucion_total,
+                      instrumentos=instrumentos)
     if not por:
         return None
     suma_prob = sum(max(0.0, e.prob) for e in vivos) or 1.0
@@ -272,6 +360,13 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
              for e in (getattr(dossier, "escenarios", None) or [])]
     dil = getattr(dossier, "dilucion_esperada_pct", None)
     dil = (float(dil) / 100.0) if (dil is not None and dil > 1.5) else float(dil or 0.0)  # % → fracción si vino en %
+    instrumentos = [Instrumento(
+        id=getattr(i, "id", None) or f"inst_{n}", tipo=getattr(i, "tipo", "convertible"),
+        principal=getattr(i, "principal", 0.0) or 0.0, conversion_price=getattr(i, "conversion_price", None),
+        potential_shares=getattr(i, "potential_shares", 0.0) or 0.0, en_deuda_xbrl=bool(getattr(i, "en_deuda_xbrl", False)),
+        liq_preference=getattr(i, "liq_preference", 0.0) or 0.0, strike=getattr(i, "strike", None),
+        hedge_cap=getattr(i, "hedge_cap", None), cita=getattr(i, "cita", None))
+        for n, i in enumerate(getattr(dossier, "instrumentos", None) or [])]
     fals = getattr(dossier, "falsador", None)
     falsadores = [{"afirmacion": getattr(fals, "afirmacion", None),
                    "fecha_limite": getattr(fals, "fecha_limite", None), "estado": "pendiente"}] if fals else []
@@ -280,6 +375,7 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         tesis_resumen=(getattr(dossier, "negocio_y_posicion_cuello", "") or "")[:600],
         dossier_id=dossier_id, visto_hasta=visto_hasta, estado="VIGENTE", tope_duro=None,
         escenarios=escen, dilucion_total=dil, deuda_neta=deuda_neta, acciones=acciones, caja=caja,
+        instrumentos=instrumentos,
         falsadores=falsadores, conocido_hasta=conocido_hasta, datos_conflicted=datos_conflicted,
         historial=[{"fecha": hoy.isoformat(), "evento": "backfill", "motivo_codigo": "DESDE_DOSSIER"}])
     if precio is not None:
@@ -296,7 +392,8 @@ def recalcular(ficha: Ficha, *, precio: float, deuda_neta: float | None = None, 
     if acciones is not None:
         ficha.acciones = acciones
     res = calcular_puente(ficha.escenarios, precio=precio, deuda_neta=ficha.deuda_neta, acciones=ficha.acciones,
-                          dilucion_total=ficha.dilucion_total, clase=ficha.clase_d4, **pol)
+                          dilucion_total=ficha.dilucion_total, clase=ficha.clase_d4,
+                          instrumentos=ficha.instrumentos, **pol)
     if res is not None:
         ficha.puente, ficha.gatillos, ficha.latido = res
     return ficha

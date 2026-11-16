@@ -98,6 +98,32 @@ de docs 75/76. Todo commiteado en `destete-v2-fase3`. **800 tests verdes.**
 > construcción. **Requiere decisión de método del operador** (relajar bandas / cambiar el mandato del PM vs.
 > mantener la disciplina power-law). Ver dudas respondidas 2026-11-05.
 
+## Actualización 2026-11-16 (r9b) — doc 83: equity bridge + instrumentos + verificador ciego + factor (F1-F4)
+
+Tras validar 4 nombres contra un LLM+web externo (doc 81), que coincidió en ranking pero cazó cosas que el comité
+no (magnitudes), se trianguló (doc 82 → **IA1+IA2 convergieron**, no hizo falta IA3) y se cerró el diseño en el
+**doc 83**. Marco: **3 objetos en la ficha** (evidence ledger / scenario economics / investment judgment). Los 4
+cambios, **construidos + testeados; F1-F3 validados EN VIVO contra el LLM real** (convergieron al revisor externo
+*arreglando el modelo, no copiando la cifra*):
+- **F1 — cash bridge por escenario** (`ficha.py`): la deuda ya NO se congela; `V_i = max(0, EV − deuda_neta₀ + FCF +
+  emisión − distrib + deuda_conv − K)/(acc₀(1+SBC)+nuevas+conv)`. Flujos por escenario (el comité da hipótesis, el
+  código hace la contabilidad). **OKLO en vivo: E[V] $24,6→$12,5** (≈ $10-11 del revisor). 4 tests de aceptación.
+- **F2 — inventario de instrumentos + resolver** (`Instrumento`/`resolver_instrumentos`, if-converted iterativo):
+  en_deuda_xbrl evita doble-conteo; preferida no-convertida = claim senior; warrant in-money; capped call. Detector
+  determinista (8-K 3.02 + tag XBRL AntidilutiveSecurities). **MP en vivo: bear $10,2→$5,94 (en el rango $1-6 del
+  revisor), E[V] $37→$27,79 (≈$30), acciones 178,3M; el Analista emitió el inventario real con en_deuda_xbrl=True.**
+- **F3 — Verificador CIEGO** (`verificador_ciego.py`): canal de evidencia INDEPENDIENTE (rompe la correlación: no
+  come del pack). Extrae de la fuente primaria SIN ver el dossier → reconciliación determinista PASS/REVIEW/FAIL;
+  captura `deuda_nueva_posterior`/`adquisicion_posterior` de los 8-K. **Cableado al gate** (FAIL bloquea el aumento;
+  reducciones nunca; opt-in, trigger por decisión de capital). **IESC en vivo ($0.039): encontró la adquisición de
+  DBM + $525M de deuda nueva que el comité se perdió → FAIL.**
+- **F4 — concentración por factor** (`auditoria_cartera` + gate): cargas de intensidad (0/0.5/1), cap duro
+  `max_por_factor` 30% (ips.yaml, taxonomía cerrada de ~8 drivers), shocks (PortfolioLoss). El Analista asigna
+  cargas; el gate bloquea aumentos que cargan un factor excedido. 909 tests.
+
+**Falta:** afinar el prompt (MP: el Analista no emitió el capped call) · **re-correr el comité completo y medir el
+cierre de brecha** vs el revisor externo por LÍNEAS del puente (no ranking) — carteras sombra. Presupuesto 40→100.
+
 ## Actualización 2026-11-16 (r9a) — revisión externa r9a: calibración + guardas + Bloque 2 (gold + parser)
 
 Punch-list de revisión externa sobre el rediseño doc 80. Cerrado:

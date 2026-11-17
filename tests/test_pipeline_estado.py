@@ -39,3 +39,30 @@ def test_clasificar_filings_ordena_por_severidad():
     ev = clasificar_filings("MP", filings)
     assert [e.tier for e in ev] == ["DURO", "REVISION", "REVISION"]   # 9.01 (IGNORAR) se filtra, DURO primero
     assert ev[0].items == ["1.03"]
+
+
+def test_poller_invalida_vigencia_y_junta_duros():
+    from dataclasses import dataclass as _dc
+
+    from backend.agentes.poller import pollear
+
+    @_dc
+    class _Ficha:
+        ticker: str
+        estado: str
+        conocido_hasta: str
+        latido: object = None
+
+    class _FF:
+        def __init__(self, tipo, items, fecha):
+            self.tipo, self.items, self.fecha, self.accession_number = tipo, items, fecha, "a"
+
+    fichas = {"MP": _Ficha("MP", "VIGENTE", "2026-07-31"),      # 10-Q nuevo (oct) > julio → EN_REVISION
+              "OK": _Ficha("OK", "VIGENTE", "2026-10-01"),      # nada material → sigue VIGENTE
+              "WOLF": _Ficha("WOLF", "VIGENTE", "2026-07-31")}  # 8-K 1.03 (quiebra) → DURO
+    filings = {"MP": [_FF("10-Q", "", "2026-10-15")], "OK": [_FF("8-K", "9.01", "2026-11-01")],
+               "WOLF": [_FF("8-K", "1.03", "2026-11-01")]}
+    res = pollear(fichas, filings_fn=lambda tk: filings.get(tk, []))
+    assert "MP" in res.en_revision and fichas["MP"].estado == "EN_REVISION"
+    assert fichas["OK"].estado == "VIGENTE"                     # 9.01 se ignora
+    assert len(res.duros) == 1 and res.duros[0].ticker == "WOLF" and res.duros[0].items == ["1.03"]

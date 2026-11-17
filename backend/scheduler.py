@@ -83,6 +83,23 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
     # recurrente del sistema v3 queda cortado. El comité PM-IA nuevo (Fase 4) reintroduce la extracción
     # (en modo batch) y el juicio (triageado a ~pocos nombres, no todo el universo).
 
+    # ---- PM AUTÓNOMO (doc 85 F1) — el "sistema nervioso", todo $0 LLM ----
+    # POLLER de filings: cada hora L-V 9-20h ET (muchos 8-K salen post-cierre). Vigila posiciones+banca,
+    # invalida vigencia (EN_REVISION) y MARCA su corrida → el dead-man's-switch del candado (26h → fail-closed).
+    from ops.job_fichas import main as _latido_main
+    from ops.poller import correr as _poller_correr
+    scheduler.add_job(
+        func=_safe_run(lambda: _poller_correr(dias=7), "poller_filings"),
+        trigger=CronTrigger(day_of_week="mon-fri", hour="9-20", minute=5, timezone="America/New_York"),
+        id="poller_filings", replace_existing=True,
+    )
+    # LATIDO de zonas: diario post-cierre (recalcula zonas de todas las fichas + alertas de cambio de zona).
+    scheduler.add_job(
+        func=_safe_run(_latido_main, "latido_fichas"),
+        trigger=CronTrigger(day_of_week="mon-fri", hour=16, minute=50, timezone="America/New_York"),
+        id="latido_fichas", replace_existing=True,
+    )
+
     _jobs_registered = True
     log.info("scheduler — %d jobs registrados", len(scheduler.get_jobs()))
 

@@ -303,9 +303,18 @@ def main() -> int:
     # F3 (doc 83 §4): verificación ciega de los aumentos (canal de evidencia independiente). Opt-in explícito.
     from backend.agentes.verificador_ciego import verificar_decision
     _verif_ciego = lambda aumentos, fichas, cutoff: verificar_decision(aumentos, fichas, cutoff=cutoff)  # noqa: E731
-    # F1/doc 85: candado ON (no se abre sin ficha comprable). pipeline_fresco se setea del estado del poller cuando
-    # exista; por ahora True (el dead-man's-switch se cablea con el poller en el próximo sub-paso).
-    runner = RunnerSemanal(research=research, pm=pm, decision=decision, verif_ciego_fn=_verif_ciego, candado_on=True)
+    # F1/doc 85: candado ON (no se abre sin ficha comprable). Se corre el POLLER primero (marca el dead-man's-switch
+    # + invalida vigencia de posiciones/banca) y se lee pipeline_fresco del estado → el candado es REAL.
+    from backend.agentes.pipeline_estado import PipelineEstado
+    try:
+        from ops.poller import correr as _poll
+        _poll(dias=14)
+    except Exception as e:  # noqa: BLE001 — si el poller falla, pipeline_fresco queda False → fail-closed (correcto)
+        print(f"⚠️  poller falló: {e}")
+    _fresco = PipelineEstado().fresco("poller")
+    print(f"pipeline_fresco (dead-man's-switch): {_fresco}")
+    runner = RunnerSemanal(research=research, pm=pm, decision=decision, verif_ciego_fn=_verif_ciego,
+                           candado_on=True, pipeline_fresco=_fresco)
 
     # --- datos reales ---
     snaps = recolectar_snapshots(tickers)

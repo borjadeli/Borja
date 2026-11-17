@@ -100,7 +100,7 @@ def _emitir_dossier_schema() -> dict:
         "principal": {"type": "number"}, "conversion_price": {"type": ["number", "null"]},
         "potential_shares": {"type": "number"}, "en_deuda_xbrl": {"type": "boolean"},
         "liq_preference": {"type": "number"}, "strike": {"type": ["number", "null"]},
-        "hedge_cap": {"type": ["number", "null"]}, "cita": _S,
+        "hedge_cap": {"type": ["number", "null"]}, "mandatory": {"type": "boolean"}, "cita": _S,
     })
     return _obj({
         "negocio_y_posicion_cuello": _S,

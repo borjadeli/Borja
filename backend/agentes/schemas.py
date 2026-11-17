@@ -210,6 +210,7 @@ class InstrumentoCapital(BaseModel):
     liq_preference: float = 0.0               # preferida: piso de liquidación USD (senior al común si no convierte)
     strike: float | None = None              # warrant: precio de ejercicio (entra caja)
     hedge_cap: float | None = None           # capped call: tope hasta el que se neutraliza la dilución
+    mandatory: bool = False                  # mandatory convertible: convierte SÍ o SÍ a T (nunca queda senior)
     cita: str | None = None                  # accession/URL del filing
 
 

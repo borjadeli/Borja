@@ -184,6 +184,23 @@ def test_resolver_bull_todo_convierte_sube_acciones_baja_deuda():
     assert abs(v - (20.1991e9 / 242.2e6)) < 0.5
 
 
+def test_resolver_mandatory_convierte_aunque_OTM():
+    # ALB (bache del bug-hunt): preferida MANDATORY convertible a $109.41. En el bear (V < $109) una opcional
+    # quedaría como claim senior ($2.3B); una MANDATORY convierte igual → diluye, NO resta senior → bear MÁS ALTO.
+    bear = EscenarioF("bear", 900e6, 7.0, 5, 0.3)              # EV $6.3B
+    pref_mand = Instrumento("alb_pref", "convertible_preferred", principal=2.3e9, conversion_price=109.41,
+                            potential_shares=21.0e6, en_deuda_xbrl=False, liq_preference=2.3e9, mandatory=True)
+    v_mand, det_m = resolver_instrumentos(bear, deuda_neta=-100e6, acciones=118e6, dilucion_total=0.0,
+                                          instrumentos=[pref_mand])
+    assert det_m["convertidos"] == ["alb_pref"] and det_m["claims_senior"] == 0.0   # convirtió, no es senior
+    # la MISMA preferida como OPCIONAL (mandatory=False) en el bear quedaría senior → vale MENOS
+    pref_opt = Instrumento("alb_pref", "convertible_preferred", principal=2.3e9, conversion_price=109.41,
+                           potential_shares=21.0e6, en_deuda_xbrl=False, liq_preference=2.3e9, mandatory=False)
+    v_opt, det_o = resolver_instrumentos(bear, deuda_neta=-100e6, acciones=118e6, dilucion_total=0.0,
+                                         instrumentos=[pref_opt])
+    assert det_o["claims_senior"] == 2.3e9 and v_mand > v_opt   # la mandatory NO castiga el bear como la opcional
+
+
 def test_resolver_capped_call_neutraliza_dilucion_bajo_el_cap():
     # V entre conv_price ($21.74) y cap ($31.06): el convertible convierte pero el capped call tapa su dilución.
     medio = EscenarioF("base", 600e6, 8.0, 4, 0.4)                         # EV $4.8B
@@ -238,6 +255,27 @@ def test_reconciliacion_deuda_inventario_vs_pack():
     f = backfill_desde_dossier("VST", dossier, deuda_neta=13.4e9, acciones=339e6, precio=128.0, caja=1e9)
     assert f.datos_conflicted is True
     assert abs(f.deuda_neta - (21.146e9 - 1e9)) < 1e6     # usa la verificada − caja
+
+
+def test_reconciliacion_deuda_incluye_convertibles_en_deuda():
+    # WOLF (bache del bug-hunt): el pack da caja neta pero el Analista inventarió converts + term_debt en deuda.
+    # La reconciliación debe sumar TODOS los en_deuda_xbrl (no solo term_debt) para cazar la deuda real.
+    class _C:
+        tipo = "convertible"; en_deuda_xbrl = True; principal = 840e6
+        id = "c"; conversion_price = 15.0; potential_shares = 50e6; liq_preference = 0.0
+        strike = None; hedge_cap = None; mandatory = False; cita = "10-Q"
+    class _T:
+        tipo = "term_debt"; en_deuda_xbrl = True; principal = 1.3e9
+        id = "t"; conversion_price = None; potential_shares = 0.0; liq_preference = 0.0
+        strike = None; hedge_cap = None; mandatory = False; cita = "10-Q"
+    dossier = _Dossier(_Inv("satelite"),
+                       [_Esc("bear", 100e6, 8, 4, 0.4), _Esc("base", 250e6, 10, 4, 0.4), _Esc("bull", 540e6, 13, 4, 0.2)],
+                       _Fals("x", "2027-01-01"), dilucion_esperada_pct=0.0)
+    dossier.instrumentos = [_C(), _T()]
+    # pack: deuda_neta −$1.04B (caja neta), caja $0.995B → gross ~−$45M; inventario $840M+$1.3B=$2.14B → corrige
+    f = backfill_desde_dossier("WOLF", dossier, deuda_neta=-1.04e9, acciones=53e6, precio=22.65, caja=0.995e9)
+    assert f.datos_conflicted is True
+    assert abs(f.deuda_neta - (2.14e9 - 0.995e9)) < 1e6     # suma convert + term_debt, no solo term_debt
 
 
 def test_caso_del_operador_cara_cae_compra_sin_redeep():

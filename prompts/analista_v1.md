@@ -119,6 +119,9 @@ precio implica (expectations investing). Reglas (doc 74 D1):
     como deuda) → al convertir el código las resta de la deuda (evita doble conteo). **Clave:** si una convertible
     ya está en `long_term_debt`, marcala true, NO la sumes aparte.
   - `liq_preference` (preferida: piso de liquidación USD, senior al común si no convierte).
+  - `mandatory`: **true si es una MANDATORY convertible** (preferida/nota que convierte sí o sí en una fecha, no a
+    opción del tenedor — p.ej. "mandatory convertible preferred"). Una mandatory **siempre** termina en acciones
+    (dilución), NUNCA queda como claim senior aunque esté out-of-the-money. Omitirlo subvalúa el bear (caso ALB).
   - `hedge_cap` (capped call / call spread): **buscalo explícitamente** — cuando una empresa emite notas convertibles
     suele comprar un capped call que neutraliza la dilución hasta un precio tope. Está en el MISMO 8-K/nota que la
     convertible ("capped call transactions", "cap price"). Omitirlo subestima el bull (caso MP: cap $31,06). Poné el

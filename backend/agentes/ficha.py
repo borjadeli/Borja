@@ -188,6 +188,7 @@ class Instrumento:
     liq_preference: float = 0.0         # preferida: piso de liquidación (USD), senior al común si no convierte
     strike: float | None = None         # warrant: precio de ejercicio (entra caja al ejercer)
     hedge_cap: float | None = None      # capped call: hasta este precio la dilución del convertible se neutraliza
+    mandatory: bool = False             # preferida/nota MANDATORY: convierte SÍ o SÍ a T (nunca queda senior), aunque OTM
     cita: str | None = None             # accession/filing (procedencia obligatoria)
 
     def umbral(self) -> float | None:
@@ -214,7 +215,8 @@ def resolver_instrumentos(e: EscenarioF, *, deuda_neta: float, acciones: float, 
     if acciones is None or acciones <= 0:
         return None, {}
     reales = [j for j in (instrumentos or []) if j.tipo != "term_debt"]
-    convertidos: set[str] = set()
+    mand = {j.id for j in reales if getattr(j, "mandatory", False)}   # mandatory: siempre convierte, nunca senior
+    convertidos: set[str] = set(mand)
     v = 0.0
     for _ in range(iters):
         dc = sc = senior = wcash = 0.0
@@ -233,7 +235,7 @@ def resolver_instrumentos(e: EscenarioF, *, deuda_neta: float, acciones: float, 
         if acc_T <= 0:
             return None, {}
         v = max(0.0, equity) / acc_T
-        nuevos = {j.id for j in reales if j.umbral() is not None and v >= j.umbral()}
+        nuevos = mand | {j.id for j in reales if j.umbral() is not None and v >= j.umbral()}
         if nuevos == convertidos:
             break
         convertidos = nuevos
@@ -365,14 +367,18 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         principal=getattr(i, "principal", 0.0) or 0.0, conversion_price=getattr(i, "conversion_price", None),
         potential_shares=getattr(i, "potential_shares", 0.0) or 0.0, en_deuda_xbrl=bool(getattr(i, "en_deuda_xbrl", False)),
         liq_preference=getattr(i, "liq_preference", 0.0) or 0.0, strike=getattr(i, "strike", None),
-        hedge_cap=getattr(i, "hedge_cap", None), cita=getattr(i, "cita", None))
+        hedge_cap=getattr(i, "hedge_cap", None), mandatory=bool(getattr(i, "mandatory", False)),
+        cita=getattr(i, "cita", None))
         for n, i in enumerate(getattr(dossier, "instrumentos", None) or [])]
     # Reconciliación de deuda (doc 83): si el Analista inventarió term_debt materialmente MAYOR que la deuda del
     # pack (XBRL crudo, que pudo quedar viejo/mal — caso VST: motor $13,4B vs real $21B) → usar la verificada
     # (la mayor, conservadora) + marcar conflicted (no comprable hasta reconciliar). El pack no manda sobre el filing.
     if caja is not None:
         d_pack_gross = (deuda_neta or 0.0) + caja
-        d_inv = sum(i.principal for i in instrumentos if i.tipo == "term_debt" and i.en_deuda_xbrl)
+        # TODOS los instrumentos contabilizados como deuda (term_debt + convertibles en_deuda_xbrl): el caso WOLF
+        # mostró que sumar solo term_debt subcontaba (los converts también están en la deuda del balance).
+        d_inv = sum(i.principal for i in instrumentos
+                    if i.en_deuda_xbrl and i.tipo in ("term_debt", "convertible", "convertible_preferred"))
         if d_inv > 0 and d_inv > d_pack_gross * 1.20:
             deuda_neta = d_inv - caja
             datos_conflicted = True

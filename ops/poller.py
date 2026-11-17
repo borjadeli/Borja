@@ -47,9 +47,11 @@ def correr(dias: int = 7) -> None:
     store.guardar()
     PipelineEstado().marcar("poller")       # dead-man's-switch: el poller está vivo
 
-    # F2: reglas de salida — si un DURO pega en una POSICIÓN → acción urgente (tier A salida / B recorte / C despertar)
+    # F2: reglas de salida — DURO en una POSICIÓN (tier A) + falsador DURO CONFIRMED (tier B) + CEO/deslistado (C).
     posiciones = _posiciones()
-    salidas = evaluar_reglas_salida(res.eventos, posiciones=posiciones)
+    from backend.agentes.falsadores import confirmados_para_salida
+    conf = confirmados_para_salida(fichas, hoy=date.today())    # evalúa los falsadores estructurados DUROS
+    salidas = evaluar_reglas_salida(res.eventos, posiciones=posiciones, falsadores_confirmados=conf)
 
     print(f"vigilados: {len(fichas)} · posiciones: {sorted(posiciones)} · eventos materiales: {len(res.eventos)} · "
           f"EN_REVISION: {res.en_revision}")

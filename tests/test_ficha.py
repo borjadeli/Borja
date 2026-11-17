@@ -223,6 +223,23 @@ def test_backfill_mapea_flujos_del_cash_bridge():
     assert abs(ficha.puente.valor_accion["bear"] - 12.0) < 1e-6
 
 
+def test_reconciliacion_deuda_inventario_vs_pack():
+    # VST (doc 83): el pack trae deuda_neta con $13.4B pero el Analista inventarió $21B de term_debt → el puente
+    # debe usar la verificada ($21B) + marcar conflicted (el pack no manda sobre el filing).
+    class _I:
+        tipo = "term_debt"; en_deuda_xbrl = True; principal = 21.146e9
+        id = "td"; conversion_price = None; potential_shares = 0.0; liq_preference = 0.0
+        strike = None; hedge_cap = None; cita = "10-Q"
+    dossier = _Dossier(_Inv("satelite"),
+                       [_Esc("bear", 6e9, 7, 4, 0.3), _Esc("base", 8e9, 8, 4, 0.5), _Esc("bull", 10e9, 10, 4, 0.2)],
+                       _Fals("x", "2027-01-01"), dilucion_esperada_pct=0.0)
+    dossier.instrumentos = [_I()]
+    # pack: deuda_neta $13.4B, caja $1B → gross $14.4B; inventario $21.146B > 14.4×1.2 → corrige
+    f = backfill_desde_dossier("VST", dossier, deuda_neta=13.4e9, acciones=339e6, precio=128.0, caja=1e9)
+    assert f.datos_conflicted is True
+    assert abs(f.deuda_neta - (21.146e9 - 1e9)) < 1e6     # usa la verificada − caja
+
+
 def test_caso_del_operador_cara_cae_compra_sin_redeep():
     """El corazón del doc 80: deep sobre una buenísima pero CARA → ficha en BANCA (MANTENER). Dos meses después
     cae a zona → el código la marca COMPRA recalculando SOLO el reloj rápido, sin re-correr el comité."""

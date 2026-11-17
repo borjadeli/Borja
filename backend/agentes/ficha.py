@@ -367,6 +367,15 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         liq_preference=getattr(i, "liq_preference", 0.0) or 0.0, strike=getattr(i, "strike", None),
         hedge_cap=getattr(i, "hedge_cap", None), cita=getattr(i, "cita", None))
         for n, i in enumerate(getattr(dossier, "instrumentos", None) or [])]
+    # Reconciliación de deuda (doc 83): si el Analista inventarió term_debt materialmente MAYOR que la deuda del
+    # pack (XBRL crudo, que pudo quedar viejo/mal — caso VST: motor $13,4B vs real $21B) → usar la verificada
+    # (la mayor, conservadora) + marcar conflicted (no comprable hasta reconciliar). El pack no manda sobre el filing.
+    if caja is not None:
+        d_pack_gross = (deuda_neta or 0.0) + caja
+        d_inv = sum(i.principal for i in instrumentos if i.tipo == "term_debt" and i.en_deuda_xbrl)
+        if d_inv > 0 and d_inv > d_pack_gross * 1.20:
+            deuda_neta = d_inv - caja
+            datos_conflicted = True
     fals = getattr(dossier, "falsador", None)
     falsadores = [{"afirmacion": getattr(fals, "afirmacion", None),
                    "fecha_limite": getattr(fals, "fecha_limite", None), "estado": "pendiente"}] if fals else []

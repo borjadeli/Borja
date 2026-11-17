@@ -1,0 +1,44 @@
+"""Reglas de salida (doc 85 F2): tier A/B/C deterministas, solo sobre posiciones."""
+from backend.agentes.event_monitor import EventoClasificado
+from backend.agentes.reglas_salida import evaluar_reglas_salida
+
+
+def _ev(tk, items, tier="DURO", accn="a1"):
+    return EventoClasificado(ticker=tk, tipo="8-K", tier=tier, items=items, fecha="2026-11-10", accession=accn)
+
+
+def test_tier_A_quiebra_en_posicion_salida_total():
+    ev = [_ev("WOLF", ["1.03"]), _ev("MP", ["4.02", "9.01"])]
+    acc = evaluar_reglas_salida(ev, posiciones={"WOLF", "MP"})
+    d = {a.ticker: a for a in acc}
+    assert d["WOLF"].accion == "SALIDA_TOTAL" and d["WOLF"].tier == "A"
+    assert d["MP"].accion == "SALIDA_TOTAL" and "non-reliance" in d["MP"].motivo
+
+
+def test_solo_posiciones():
+    # un DURO en un nombre que NO se tiene → no genera acción (lo que no se tiene, no se vende)
+    acc = evaluar_reglas_salida([_ev("XYZ", ["1.03"])], posiciones={"WOLF"})
+    assert acc == []
+
+
+def test_tier_C_salida_ceo_despierta():
+    acc = evaluar_reglas_salida([_ev("EXE", ["5.02"], tier="REVISION")], posiciones={"EXE"})
+    assert acc[0].accion == "DESPERTAR" and acc[0].tier == "C"
+
+
+def test_tier_B_falsador_duro_cumplido():
+    acc = evaluar_reglas_salida([], posiciones={"OKLO"},
+                                falsadores_confirmados={"OKLO": [{"id": "aurora_2028", "tipo": "DURO",
+                                                                  "consecuencia": "RECORTE_50"}]})
+    assert acc[0].accion == "RECORTE_50" and acc[0].tier == "B" and "aurora_2028" in acc[0].motivo
+    # consecuencia SALIDA → salida total
+    acc2 = evaluar_reglas_salida([], posiciones={"OKLO"},
+                                 falsadores_confirmados={"OKLO": [{"id": "x", "tipo": "DURO", "consecuencia": "SALIDA"}]})
+    assert acc2[0].accion == "SALIDA_TOTAL"
+
+
+def test_ordena_A_antes_que_C_y_dedup():
+    ev = [_ev("MP", ["5.02"], tier="REVISION"), _ev("MP", ["1.03"]), _ev("MP", ["1.03"], accn="a2")]
+    acc = evaluar_reglas_salida(ev, posiciones={"MP"})
+    assert acc[0].tier == "A"                      # tier A primero
+    assert len([a for a in acc if a.accion == "SALIDA_TOTAL"]) == 1   # dedup del 1.03 repetido

@@ -82,3 +82,18 @@ def evaluar_reglas_salida(eventos, *, posiciones: set[str],
 
     out.sort(key=lambda a: ("A", "B", "C").index(a.tier))
     return out
+
+
+def pesos_tras_salidas(pesos: dict[str, float], salidas: list[AccionSalida]) -> dict[str, float]:
+    """Aplica las salidas DETERMINISTAS a los pesos actuales para la ejecución: SALIDA_TOTAL → 0 · RECORTE_50 →
+    mitad · DESPERTAR → no toca pesos (lo decide el PM). Devuelve los pesos-objetivo (sin ceros)."""
+    out = {t.upper(): w for t, w in (pesos or {}).items()}
+    for s in salidas or []:
+        tk = s.ticker.upper()
+        if tk not in out:
+            continue
+        if s.accion == "SALIDA_TOTAL":
+            out[tk] = 0.0
+        elif s.accion == "RECORTE_50":
+            out[tk] = round(out[tk] * 0.5, 6)
+    return {t: w for t, w in out.items() if w > 0}

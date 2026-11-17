@@ -36,6 +36,29 @@ def _soltar_lock() -> None:
         pass
 
 
+def _ejecutar_salidas(duras) -> list:
+    """Ejecuta las salidas tier A/B en el paper (SALIDA_TOTAL→0, RECORTE_50→mitad). Risk-off: reducciones siempre.
+    Devuelve los fills. Abre el paper, proyecta pesos/caja, aplica las salidas y emite los fills del ledger."""
+    from backend.agentes.datos_reales import abrir_paper, precios_de, recolectar_snapshots
+    from backend.agentes.orquestador_decision import ResultadoDecision
+    from backend.agentes.paper_pm import ejecutar as ejecutar_paper
+    from backend.agentes.reglas_salida import pesos_tras_salidas
+    from backend.ledger import core
+    paper = abrir_paper(capital_inicial=100_000.0, fecha=date.today())
+    try:
+        proy = core.proyectar(paper, {})
+        pesos = {t.upper(): w for t, w in proy["posiciones"].items()}
+        tks = sorted({s.ticker.upper() for s in duras} | set(pesos))
+        precios = precios_de(recolectar_snapshots(tks))
+        finales = pesos_tras_salidas(pesos, duras)
+        res = ResultadoDecision(pesos_objetivo=finales, pesos_finales=finales,
+                                caja_final=round(1.0 - sum(finales.values()), 6), clip="none", no_action=False)
+        rp = ejecutar_paper(paper, res, precios=precios, fecha_fill=date.today())
+        return getattr(rp, "fills", [])
+    finally:
+        paper.close()
+
+
 def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True) -> None:
     if not _tomar_lock():
         print("⚠️  ya hay un ciclo corriendo (lock vivo) — se saltea para no duplicar")
@@ -85,6 +108,17 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True) -> None:
 
         res = correr_ciclo(poller_fn=_poller, latido_fn=_latido, drenar_fn=_drenar, pm_fn=None)
         PipelineEstado().marcar("ciclo_diario")
+
+        # AUTO-EJECUCIÓN de las salidas tier A/B (risk-off, determinista): SALIDA_TOTAL/RECORTE_50 se venden en el
+        # paper SIN esperar al PM (el tier C solo despierta). Las reducciones siempre se ejecutan (doc 85 §6).
+        salidas = res.poller.get("salidas") or []
+        duras = [s for s in salidas if s.accion in ("SALIDA_TOTAL", "RECORTE_50")]
+        if duras:
+            try:
+                _fills = _ejecutar_salidas(duras)
+                print(f"⚙️  salidas ejecutadas en el paper: {_fills}")
+            except Exception as e:  # noqa: BLE001 — una ejecución que falla no tumba el ciclo
+                print(f"⚠️  no pude ejecutar salidas: {e}")
 
         print(f"EN_REVISION: {res.poller.get('en_revision')} · cambios de zona: {len(res.cambios_zona)} · "
               f"deeps: {len(res.deeps_hechos)}")

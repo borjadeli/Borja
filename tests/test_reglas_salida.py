@@ -42,3 +42,15 @@ def test_ordena_A_antes_que_C_y_dedup():
     acc = evaluar_reglas_salida(ev, posiciones={"MP"})
     assert acc[0].tier == "A"                      # tier A primero
     assert len([a for a in acc if a.accion == "SALIDA_TOTAL"]) == 1   # dedup del 1.03 repetido
+
+
+def test_pesos_tras_salidas():
+    from backend.agentes.reglas_salida import AccionSalida, pesos_tras_salidas
+    pesos = {"WOLF": 0.10, "MP": 0.08, "OKLO": 0.05}
+    salidas = [AccionSalida("WOLF", "A", "SALIDA_TOTAL", "quiebra"),
+               AccionSalida("MP", "B", "RECORTE_50", "falsador DURO"),
+               AccionSalida("OKLO", "C", "DESPERTAR", "salida CEO")]
+    out = pesos_tras_salidas(pesos, salidas)
+    assert "WOLF" not in out                        # salida total → 0 (sacado)
+    assert abs(out["MP"] - 0.04) < 1e-9             # recorte 50%
+    assert out["OKLO"] == 0.05                      # DESPERTAR no toca el peso (lo decide el PM)

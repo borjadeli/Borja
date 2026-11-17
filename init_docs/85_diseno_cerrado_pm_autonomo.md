@@ -1,229 +1,239 @@
 # Doc 85 — Diseño CERRADO: el PM autónomo (ciclo operativo)
 
-> **Canónico.** Sucesor del doc 84 (brief). Convergido por **IA1 + IA2** (2026-11-17, convergencia casi total) +
+> **Canónico (v2, final).** Sucesor del doc 84 (brief). Convergido por **IA1 + IA2 + IA3** (2026-11-17) +
 > decisiones del operador. Cierra el COMPORTAMIENTO del PM: cuándo mira, qué puede comprar, qué pasa si quiere
-> algo sin analizar, cuándo vende, cada cuánto. **A IMPLEMENTAR en 3 etapas.** No re-abre doc 80 (ficha viva) ni
+> algo sin analizar, cuándo vende, cada cuánto. **A IMPLEMENTAR en 3 fases.** No re-abre doc 80 (ficha viva) ni
 > doc 83 (equity bridge). Relacionado: [[84]], doc 80, doc 83.
 
 ## 0. El principio que unifica todo
 > **El determinismo decide qué está PERMITIDO y qué está ROTO; el LLM/PM decide qué hacer dentro de ese espacio.
-> La autonomía del PM NO viene de correr el LLM más seguido — viene de que las reglas que no admiten juicio se
-> ejecuten SOLAS, para reservar el juicio donde sí importa.**
+> La autonomía NO viene de correr el LLM más seguido — viene de que las reglas sin-juicio se ejecuten SOLAS.**
 
-La evolución clave: de un *sistema de investigación* (el comité analiza, el PM elige) a un *sistema de gestión de
-capital que dirige su propia investigación* (el PM administra la cartera, detecta qué conocimiento le falta y
-asigna recursos para adquirirlo). La ficha viva (doc 80) resolvió *conservar* el conocimiento; el **scheduler**
-resuelve *cuándo usarlo*; **REQUEST_DEEP** resuelve *cómo ampliarlo* según la necesidad de la cartera.
+Dos corolarios que afinan las IAs:
+- **Lo que falta es un "sistema nervioso":** poller que detecta cambios → cola que encola trabajo → despertador
+  que convoca al PM. Los distintos orígenes (evento de posición, revalidación, pedido del PM, pedido del
+  operador, oportunidad) son **la misma cola** vista de distintos lados. El candado y el bucle de deep son la
+  misma pieza: lo que el gate rechaza por falta de ficha **vuelve a la cola como pedido**.
+- **Las salidas no se vuelven crujientes automatizando el precio, sino con el PRE-COMPROMISO:** la consecuencia de
+  un falsador se escribe junto con la tesis, en frío, y no se negocia cuando la posición pierde.
 
-Determinismo (reglas que se ejecutan solas): **candado · event watcher · scheduler · freeze de aumentos en
-señales duras.** Juicio (el espacio de decisión): **el deep, el comité, qué comprar/cuánto, las salidas
-graduables.**
+Evolución: de un *sistema de investigación* (el comité analiza, el PM elige) a un *sistema de gestión de capital
+que dirige su propia investigación*.
 
 ## 1. Arquitectura: 5 componentes de infra, CERO agentes nuevos
 Se conservan comité, PM, Auditor y fichas. Se agregan 5 piezas (varias son tablas/funciones sobre lo existente):
 
 | Componente | Responsabilidad |
 |---|---|
-| **Scheduler** | Ejecuta el latido diario y los ciclos autónomos (semanal + por evento) |
-| **Event Monitor** | Detecta filings/precio/eventos que requieren atención |
-| **Research Queue** | Centraliza y prioriza los pedidos de deep (una sola cola) |
-| **Budget Manager** | Autoriza y contabiliza el costo; reserva antes de cada deep |
-| **Decision Gate** | Impide incorporar riesgo no autorizado (el candado) — ya existe parcialmente |
+| **Scheduler/Pipeline** | Encadenado diario idempotente + ciclos (semanal + por evento), con control de vida |
+| **Event Monitor (poller)** | Poll EDGAR por CIK (y fuentes no-US) de filings de posiciones/banca/cola |
+| **Research Queue** | Una sola cola de deep con origen + prioridad, drenada a DIARIO con presupuesto por carril |
+| **Budget Manager** | Autoriza y contabiliza; reserva el costo máximo ANTES de cada deep |
+| **Decision Gate** | El candado: impide incorporar riesgo no autorizado (ya existe parcialmente) |
 
-## 2. El candado (Decision Gate) — determinista, no en el prompt
-**Ninguna posición individual se abre ni se aumenta sin ficha VIGENTE, verificada y con datos críticos usables.**
-Regla dura en el gate (devuelve NO_TRADE + motivo en el log), no una sugerencia que el PM overridea con texto.
+## 2. El candado (Decision Gate) — fail-closed, en el gate, no en el prompt
+Toda orden que **abra o aumente** una posición en acciones se rechaza salvo que **AL MOMENTO DEL GATE** se cumplan:
+1. **Ficha VIGENTE** (ni EN_REVISION ni VENCIDA).
+2. **Zona COMPRA**, recalculada con el precio del momento. *(También para AUMENTAR una posición propia — la banca
+   filtra por COMPRA pero las posiciones no; sin esto el PM podría aumentar en MANTENER/SALIDA.)*
+3. **Datos limpios:** precio del último cierre o más fresco; share count con fecha ≥ último filing periódico;
+   ningún filing de dilución sin procesar (424B/S-1/S-3/8-K 3.02); ninguna corporate action pendiente; **pipeline
+   del día corrido**.
 
-| Estado de la ficha | Abrir | Aumentar | Reducir | Cerrar |
-|---|---|---|---|---|
-| VIGENTE + zona COMPRA | ✅ | ✅ | ✅ | ✅ |
-| VIGENTE + otra zona | ❌ | ❌ | ✅ | ✅ |
-| EN_REVISION | ❌ | ❌ | ✅ | ✅ |
-| SIN ficha | ❌ | ❌ | ✅ | ✅ |
-| Datos críticos inválidos (`datos_conflicted`) | ❌ | ❌ | ✅ | ✅ |
+- La orden sale con **precio límite = techo de la zona COMPRA** ("comprar hasta $X"). Cierra el hueco decisión↔ejecución.
+- **El gate RELEE estado y precio; no confía en el packet** (si salió un filing entre la decisión y la orden, no
+  aprueba con estado viejo).
+- Distingue rechazo que **requiere investigación** (SIN_FICHA_VIGENTE, REFRESH_REQUIRED → crea la solicitud de
+  deep) de uno que solo **impide operar** (FUERA_DE_ZONA, DATOS_SUCIOS, violación IPS → no dispara deep).
+- **Asimétrico: las REDUCCIONES nunca se bloquean** (risk-off; solo chequeos operativos: identidad, tenencia, no
+  abrir short, factibilidad). En rotación, cada pata se evalúa sola (si la venta pasa y la compra se rechaza, queda caja).
+- **🔴 DEAD MAN'S SWITCH (el candado DEPENDE del poller vivo):** cada etapa del pipeline escribe su timestamp; si
+  el pipeline **no corrió en 26h**, el gate pasa a **fail-closed para compras** + alerta al operador. Un candado
+  sin poller vivo es decorativo (si el poller muere, toda ficha queda VIGENTE para siempre).
 
-- La zona COMPRA **habilita** una decisión, no la ordena. Toda compra sigue sujeta al IPS.
-- **Sin excepción para promediar a la baja.** Una caída del 30% puede ser oportunidad o una tesis muerta —
-  justamente ahí hay que exigir ficha vigente. Si el PM lo quiere igual, dispara REQUEST_DEEP (§4), no la compra.
-- **Re-chequeo point-in-time en la EJECUCIÓN:** se valida la info disponible AL AUTORIZAR, no la del packet. Si
-  aparece un filing entre la decisión del PM y la orden, **la autorización de compra se invalida** hasta resolver.
-- El gate distingue rechazo que **requiere investigación** (DEEP_REQUIRED / REFRESH_REQUIRED → a la cola) de uno
-  que solo **impide operar** (NO_MARGIN_OF_SAFETY / violación IPS → no dispara deep).
-- **Asimétrico: las REDUCCIONES nunca se bloquean** (risk-off). Solo chequeos operativos básicos (identidad,
-  tenencia disponible, no abrir short accidental, factibilidad). El estacionamiento en ETFs es carril aparte (no
-  es una vía para eludir el candado).
+**Sin excepción para promediar a la baja con ficha vencida** (el caso más peligroso: la ficha vence por un 10-Q y
+el precio cae por ese mismo 10-Q). La posición EN_REVISION va a P0 (SLA 48h); recién con la ficha fresca en COMPRA
+se promedia. **ETFs de estacionamiento: exentos, con lista blanca explícita en el IPS.** Cambios involuntarios
+(spin-off, split) no cuentan como aumentar; ejercer derechos de suscripción sí.
 
-## 3. Cadencia: vigilar / investigar / decidir (tres relojes distintos)
-| Actividad | Frecuencia | Quién | Costo |
-|---|---|---|---|
-| **Latido** (precios, zonas, pesos, IPS, alertas) | diario | código | $0 |
-| **Vigilancia de eventos** (filings/resultados/precio) | cada ~60 min en sesión + barrido | Event Monitor | $0 |
-| **PM-LLM** (decidir) | semanal + por evento accionable | PM | medio |
-| **Comité** (deep/refresh de fichas) | semanal + por evento material / pedido prioritario | comité | alto |
-
-**Disparadores (determinista → LLM):**
-- nuevo precio → recalcular zona (sin LLM); entra a COMPRA → actualizar banca (+ PM si es accionable).
-- RECORTE → alerta + PM; **SALIDA → alerta prioritaria + revisión obligatoria** (no auto-trim).
-- nuevo 10-Q/10-K → invalida vigencia (→ EN_REVISION, comité por prioridad).
-- **8-K potencialmente material → clasificar + BLOQUEAR compras preventivamente** mientras se evalúa (triage/comité).
-- falsador confirmado → **freeze de aumentos** + PM urgente.
-- caída abrupta → buscar causa (triage); pedido del operador → a la cola.
-- **El 8-K es el hueco que hace sentir muerto al PM: esperar al comité semanal para procesarlo es tarde.** Por
-  eso la corrida **extraordinaria** por evento crítico (acotada: ¿la nueva info exige una decisión de cartera?).
-- No todo 8-K amerita deep ni todo salto de precio significa que la tesis cambió: el 1er paso es resolver si hay
-  info nueva que afecte supuestos económicos / riesgo / supervivencia / valuación. Emisores extranjeros: sus
-  reportes equivalentes.
-
-**Corrida semanal:** el PM re-evalúa la cartera como un todo aunque no haya alertas. Elige los deeps con **mayor
-capacidad de mejorar/proteger el portfolio por presupuesto restante** (no una cantidad fija). Puede terminar sin
-operar. **La pregunta semanal no es "¿sigue siendo buena?" sino "si hoy tuviera este capital libre, ¿seguiría
-eligiendo esta posición frente a las demás oportunidades?"** (costo de oportunidad, neto de fricción/impuestos).
-
-## 4. El bucle REQUEST_DEEP (el PM dirige su investigación)
-El PM gana una acción: **REQUEST_DEEP** (no es intención de compra vinculante; es "vale la pena investigar esto").
-Flujo: 1ª pasada del PM → REQUEST_DEEP (con hipótesis + qué decisión cambiaría) → asignación (elegibilidad +
-prioridad + presupuesto) → comité (investiga INDEPENDIENTE) → ficha → 2ª pasada del PM (compra / observa /
-descarta). **Máx 2 pasadas por ciclo; la 2ª no genera otro deep inmediato (anti-recursión).** Las reducciones de
-la 1ª pasada NO esperan al deep.
-
-**Una sola Research Queue con prioridad** (el origen NO determina la calidad), con reserva para incidentes de
-cartera que **protege la capacidad de discovery** (mientras no haya incidentes, se conserva presupuesto para
-descubrir nombres nuevos):
-
-| Prioridad | Investigación |
-|---|---|
-| **P0** | riesgo crítico en una posición |
-| **P1** | actualización material de una posición existente |
-| **P2** | oportunidad accionable del PM (REQUEST_DEEP) |
-| **P3** | oportunidad fuerte de discovery |
-| **P4** | investigación exploratoria |
-
-Config inicial: 2 pedidos del PM/ciclo · 1 deep inmediato por iniciativa del PM · 1 investigación pendiente por
-ticker (dedup: si dos piden el mismo, se consolida y sube prioridad) · vigencia de un pedido exploratorio 14 días
-· tickers fuera del mapa permitidos. Los eventos críticos de posiciones no consumen el cupo exploratorio.
-
-**Deep inmediato (misma vuelta) solo si:** hay presupuesto + la empresa es elegible + la investigación tiene
-consecuencia plausible sobre una decisión actual (sustituir una posición deteriorada, desplegar caja estacionada,
-resolver incertidumbre de una posición). Un nombre nunca analizado **no puede estar "en zona COMPRA"** — a lo
-sumo hay indicios preliminares de valuación atractiva. El comité investiga con INDEPENDENCIA del deseo del PM
-(anti confirmation-bias).
-
-## 5. Input del operador — mapa ≠ universo elegible
-- **El mapa identifica DÓNDE buscar; el universo elegible define EN QUÉ se puede invertir.** El mapa es discovery,
-  no una frontera rígida. Una buena empresa de fuera del mapa no se pierde.
-- El operador incorpora cualquier ticker, pero **no puede declararlo apto para comprar sin que pase los gates.**
-  Flujo: ticker → validación de identidad/elegibilidad (instrumento/mercado/liquidez/mandato) → validación de
-  fuente primaria → cola → comité → ficha. **Salta el DISCOVERY, no el comité ni la validación primaria ni el IPS.**
-- Tres comandos: **WATCH X** (observación + scoring) · **RESEARCH X** (deep en el próximo cupo) · **REVIEW X**
-  (reconsiderar una tesis existente). El operador prioriza presupuesto, NO convierte eso en compra automática.
-- **Fuera del mapa** = se incorpora sin problema. **Incompatible con el IPS** = se puede investigar pero no comprar
-  sin un cambio EXPLÍCITO del mandato. **El PM no puede ampliar el IPS por iniciativa propia.**
-- Campo `origin` en la ficha/request (DISCOVERY / DESEO_PM / OPERADOR / EVENT) → se audita el desempeño por origen.
-
-## 6. Salidas: automatizar la OBLIGACIÓN de decidir, no la decisión
-No se introducen stops automáticos de precio por defecto (cortarían al ganador por ruido). Se automatiza **el
-deber de actuar**, no la orden.
-
-| Evento | Regla automática (determinista) | Decisión del PM |
+## 3. Cadencia: un pipeline diario encadenado + PM semanal + despertares por evento
+| Cuándo | Qué | Costo |
 |---|---|---|
-| Zona RECORTE | alerta + revisión | mantener o recortar |
-| **Zona SALIDA** | **revisión obligatoria prioritaria** (NO auto-trim) | justificar mantener / reducir / salir |
-| Falsador CONFIRMED | **freeze de aumentos** + revisión urgente | recortar / salir / mantener justificado |
-| Going concern | freeze de aumentos + revisión crítica | evaluar supervivencia (no siempre = liquidar) |
-| Material weakness | clasificar gravedad + freeze si afecta datos críticos | evaluar impacto |
-| Límite IPS excedido | bloquear ops que agraven el exceso | plan de reducción |
-| Stop duro definido en el IPS | aplicar regla preautorizada | **no puede revocarla** |
+| **Cada hora** (también fuera de horario — muchos 8-K salen post-cierre) | poller de filings de posiciones/banca/cola | $0 |
+| **Diario, post-cierre** (encadenado idempotente) | 1) cerrar poller · 2) latido (zonas + transiciones) · 3) **drenar la cola** · 4) zonas de fichas nuevas · 5) condiciones de despertar · 6) **PM si corresponde** | $0 + deeps + PM ocasional |
+| **Semanal** | revisión completa del PM aunque no haya alertas; encolar top-N de oportunidad | PM + deeps |
+| **Mensual** | reporte al operador: costo y SLA por carril, acierto por origen, salidas por tier | $0 |
 
-- **Zona SALIDA invierte la carga de la prueba:** el PM ya no justifica por qué comprar, sino **por qué seguir
-  manteniendo**. Si mantiene, exige 3 campos: razón explícita · condición que lo haría vender · fecha/evento de
-  reconsideración. Si cree que cambió la valuación, no la modifica solo: pide un deep.
-- **Anti-racionalización:** falsador CONFIRMED → freeze + PM urgente → *reducir/salir* (ejecuta sin deep nuevo) o
-  *mantener* (justificación + **Auditor** + revisión obligatoria). Si el PM no responde / falla / sin presupuesto →
-  la alerta queda ABIERTA, el freeze se mantiene y **se escala al operador.** El sistema NO transforma una falla
-  del modelo en una decisión implícita de mantener.
-- **Falsadores estructurados** (id, condición, deadline, evidencia, severidad, estado, `action_on_breach`). Tipos:
-  hito / económico / estructural / supervivencia. **Evidencia ambigua → SUSPECTED, no CONFIRMED** (un error de
-  extracción no puede volverse una orden de liquidación).
+**El orden importa:** si el PM corre antes del drenaje, decide con fichas viejas. **Máximo 1 despertar del PM por
+día** (debounce), además del semanal. El packet de despertar dice que **no hacer nada es una respuesta válida**
+(anti sesgo de acción).
 
-## 7. Revisión de posiciones — un reloj de MANTENIMIENTO (no otro de valuación)
-No se toca la vigencia por evento del doc 80. Se agrega metadata operativa para que **ninguna posición quede
-olvidada** (detecta "deuda de investigación"):
+**Disparadores — 8-K por número de ítem, determinista, $0:**
+- **Regla dura (§6 tier A/B):** 1.03 quiebra · 4.02 non-reliance · 4.01 renuncia de auditor con desacuerdos.
+- **Revisión P0/P1:** 2.02 resultados · 2.06 impairment · 5.02 salida CEO/CFO · 2.04 aceleración de deuda · 3.01
+  deslistado · 1.01/1.02 contratos materiales.
+- **Dilución:** 3.02 / S-1 / S-3 / 424B → recalcular share count + zona EL MISMO DÍA.
+- **Triage con modelo chico:** 8.01 / 7.01 → si toca la tesis, a P1.
+- **10-Q/10-K de una posición → EN_REVISION → P0.** **Anti-doble-deep:** el 2.02 (earnings, semanas antes del
+  10-Q) dispara el deep; cuando llega el 10-Q del mismo período, alcanza un **diff-check del Verificador** (going
+  concern, factores de riesgo, hechos posteriores, share count).
+- **Emisores extranjeros:** mapa de eventos por **tipo de emisor** (20-F/40-F/6-K, SEDAR+) + TTL de respaldo (§7),
+  si no, nunca vencen.
+- **Caída fuerte sin filing que la explique** (−20% en el día o −30% desde el último deep) → **deep P1 de
+  revalidación, NO venta** (el mercado puede saber algo que los filings aún no dicen).
+- **Histéresis** (anti-flapping): la alerta de transición entra en el umbral y sale a umbral + 3-5% (o dos cierres
+  seguidos). No toca el cálculo de zonas del doc 80.
 
-| Revisión | Frecuencia | Quién | Costo |
-|---|---|---|---|
-| precio / zona | diaria | código | $0 |
-| riesgos / falsadores | continua por evento | código + triage | bajo |
-| conveniencia de mantener | semanal | PM | medio |
-| revisión ligera de tesis | cada 90 días | PM | bajo |
-| deep-refresh | evento material **o 180 días** sin update | comité | alto |
+**Corrida semanal:** el PM re-evalúa la cartera como un todo. La pregunta no es *"¿sigue siendo buena?"* sino
+**"si hoy tuviera este capital libre, ¿seguiría eligiendo esta posición frente a las demás oportunidades?"**
+(costo de oportunidad, neto de fricción). Puede terminar sin operar.
 
-`position_review`: `last_deep_at`, `last_pm_review_at`, `last_thesis_review_at`, `next_deep_due`, `review_status`.
-A los **180 días sin deep → entra OBLIGATORIAMENTE a la cola**; si no se cumple por presupuesto → **se bloquean
-nuevos aumentos** (sin cambiar el estado formal de vigencia). Las **posiciones tienen prioridad de mantenimiento**
-sobre la banca; una ficha vencida de un nombre lejos de sus zonas puede quedar meses sin refrescar (no perjudica).
-El **deep-refresh por TTL puede ser más LIVIANO** que el inicial ("deep de mantenimiento": verifica que los
-falsadores siguen observables + no hay riesgos nuevos + la tesis no fue superada por los hechos).
+## 4. El bucle REQUEST_DEEP (el PM dirige su investigación) — drenaje diario, sin 2ª pasada
+El PM gana la acción **SOLICITAR_DEEP(ticker)**. **NO hay segunda pasada en el mismo ciclo** (reentrada compleja
+para ahorrar un día, en una estrategia de PACIENCIA): como la cola se **drena a diario**, el pedido tarda un día
+hábil y despierta al PM al día siguiente. Flujo:
+1. El PM emite SOLICITAR_DEEP, o intenta COMPRAR y el gate lo rechaza por SIN_FICHA_VIGENTE (crea la misma
+   solicitud, consume el mismo cupo).
+2. **Dedup:** si ya hay ficha VIGENTE, no se gasta deep (se convierte en alerta de precio: "X vigente en MANTENER;
+   COMPRA desde $Y"). Si ya hay solicitud activa, se suma el origen.
+3. El **drenaje de esa noche** corre el deep dentro del cupo del carril.
+4. Si la ficha nueva cae en COMPRA → despierta al PM al día siguiente. Si cae en otra zona → va al **radar** con su
+   precio de compra + una línea de feedback al PM; el latido avisa si después cruza a COMPRA.
 
-## 8. Presupuesto — por FUNCIÓN, no por agente
-Un **único Budget Manager** (costo ejecutado + reservado + disponible). **Reserva el costo máximo ANTES de cada
-deep.** Política inicial sobre el tope mensual: **~60% research regular · ~20% reserva de eventos críticos · ~20%
-PM+coordinación+triage.** Un incidente crítico puede usar la reserva + el regular no comprometido; si no alcanza →
-**se escala al operador (el límite no se rompe en silencio).** No asumir $0.70/deep: si el real ronda $5, el
-mantenimiento puede comerse casi todo. La cola ordena por riesgo de cartera / potencial de cambiar una asignación
-/ urgencia / calidad preliminar — sin un cálculo sofisticado de valor esperado.
+- **El PM solo pide nombres de SU packet** (oportunidades/mapa/banca/radar/posiciones). **NO pide tickers de
+  afuera** (un LLM proponiendo tickers de memoria trae sesgo a nombres populares, datos viejos, tickers mal
+  resueltos). Los externos los trae **el operador** (§5).
+- **Pedido CIEGO:** el motivo del PM se guarda para auditoría, pero el Analista NO lo ve (si el comité sabe que el
+  PM quiere el nombre, el deep se vuelve una justificación).
+- **Cupo propio:** 2-3 pedidos del PM/semana; lo no usado pasa a oportunidad, **nunca al revés** (lo sistemático no
+  se queda sin presupuesto por lo discrecional). **Cooldown 90 días:** un nombre analizado que no quedó en COMPRA
+  no se re-pide, salvo filing nuevo o zona sombra en COMPRA.
+
+**Una sola Research Queue con prioridad** (el origen NO determina la calidad): **P0** evento de posición ·
+**P1** revalidación / pedido del PM / pedido del operador · **P2** oportunidad. SLA: P0 48h, P1 72h. Dedup por
+ticker (se consolida y sube prioridad; no se investiga dos veces). Cierre ATÓMICO de la solicitud (re-correr el
+pipeline no cobra dos veces el mismo deep).
+
+## 5. Input del operador — mapa ≠ universo elegible; salta la SELECCIÓN del discovery, no sus FILTROS
+El discovery hace dos cosas: **encontrar** candidatos y **filtrar** basura (fuentes primarias, invertibilidad). La
+atención del operador reemplaza la PRIMERA función, no la segunda. Comando: **analizar TICKER [bolsa]**. Flujo:
+1. **Resolver la entidad:** ticker → CIK/ISIN + bolsa. Si es ambiguo, confirmar con el operador antes de gastar
+   (un deep sobre la entidad equivocada = hasta $5 y una ficha falsa).
+2. **Admisión determinista $0:** bolsa permitida, filings primarios accesibles, liquidez + market cap dentro del
+   IPS. Si falla un límite del IPS → igual se puede analizar, pero la ficha queda **"no invertible bajo IPS"** y el
+   gate la bloquea (el PM no puede ampliar el IPS por iniciativa propia).
+3. **Carril operador en la cola, P1** (3-5/semana).
+4. **Deep normal, CIEGO al origen** (ni el Analista ni el PM saben que lo pidió el operador — anti sesgo de autoridad).
+5. **Clasificación OBLIGATORIA** en el deep: sector, cuello, factores del IPS. Un nombre fuera del mapa no los trae,
+   y sin ellos el gate no puede calcular los caps → **fail-closed**.
+6. Después es una ficha más: universo extendido, `origen=operador`, latido diario, el mismo candado.
+
+**Tag de origen** (DISCOVERY / PM / OPERADOR / EVENT): atribución (el paper compara nombres del operador vs
+discovery con la misma vara) + feedback al discovery (un nombre del operador que pasa el deep y el discovery no
+había encontrado = fallo de recall, se registra).
+
+## 6. Salidas — regla para lo objetivo/binario/asimétrico; juicio para lo continuo/ruidoso
+**Lo que las vuelve crujientes es el PRE-COMPROMISO + disparar por CAMBIO, no por nivel.** En small caps pre-revenue
+going concern / material weakness / avisos de deslistado son endémicos: cada ficha guarda una **línea base** de
+esas banderas al deep, y la regla dispara solo si aparece algo que NO estaba.
+
+| Señal | Tipo | Acción |
+|---|---|---|
+| 4.02 non-reliance/restatement · quiebra (1.03) · renuncia de auditor con desacuerdos · suspensión SEC / fraude | **A — regla** | **Salida total.** Advisory: VENDER urgente (canal propio). Paper: ejecuta en la apertura siguiente con slippage realista |
+| Going concern NUEVO (ausente en la línea base) | **B — regla** | recorte **50%** + deep P0 |
+| Falsador DURO cumplido | **B — regla** | la consecuencia pre-comprometida (SALIDA o RECORTE_50) + deep P0 |
+| Zona SALIDA en una posición | **C — juicio guiado** | deep P1 que revalida el bull; si la ficha fresca confirma SALIDA → recorte 1/3, y otro 1/3 si sigue así 20 ruedas después |
+| Falsador BLANDO · material weakness nueva · salida CEO/CFO · otro cambio de auditor · 8-K de triage · aviso de precio mínimo | **C — juicio con escalada** | despierta al PM con **respuesta obligatoria**: recortar, o mantener con motivo escrito (queda para el Auditor) |
+| Zona RECORTE | **D — información** | decide el PM; el cap de peso del IPS hace el resto |
+| Caída fuerte sin evento | **revisión** | deep P1, sin venta |
+
+**Por qué SALIDA no es venta automática:** el retorno esperado es negativo incluso en el bull (mantener contradice
+el método), pero el riesgo real es que el bull esté viejo → revalidar primero, recortar después cubre los dos riesgos.
+
+**Falsadores estructurados (la pieza clave):** `{métrica, fuente (tag XBRL | campo | tipo de evento), operador,
+umbral, fecha_límite, tipo: DURO|BLANDO, consecuencia: SALIDA|RECORTE_50|REVISIÓN, línea_base}`.
+- El **Bear** los escribe; el **Verificador RECHAZA la ficha** si un falsador DURO no es verificable por máquina.
+- **Toda ficha lleva ≥1 falsador DURO con fecha límite** (corta la plata muerta: el catalizador que nunca llega).
+- Numéricos → XBRL del filing nuevo, $0. Textuales (going concern) → modelo chico; dispara solo si devuelve la
+  **cita literal** y esa cita aparece por coincidencia exacta en el filing.
+- **Solo se AGREGAN:** borrar o aflojar un falsador exige motivo escrito + firma del Verificador (anti "mover el
+  arco"; se registra la deriva del valor justo por nombre).
+- **Shock sectorial:** los tiers B y C se agrupan en UN solo despertar del PM, con vista de cartera.
+- **Advisory que nadie ejecuta:** canal propio para tier A + registro de recomendado vs ejecutado.
+
+## 7. Revisión de posiciones — evento + TTL de respaldo + deep en FRÍO anual
+No se toca la vigencia por evento del doc 80. Se agregan tres capas:
+- **Por evento (principal):** deep incremental con cada resultado trimestral (§3).
+- **TTL de respaldo:** período de reporte del emisor **+ 60 días** desde el último deep (~150d trimestrales —
+  cubre el hueco Q3→10-K; ~240d semestrales). Si el poller funciona, casi nunca dispara. Vencido → a la cola; si
+  no se cumple por presupuesto → **se bloquean nuevos aumentos** (sin cambiar la vigencia formal).
+- **Deep en FRÍO anual (con el 10-K):** el Analista escribe **SIN ver la ficha anterior**; después se compara. Si
+  el valor justo difiere **>25%** o cambian los falsadores → el Verificador reconcilia (estado de ficha que EXIGE
+  reconciliación, no una línea de log) + el PM recibe la bandera. **Es el Verificador ciego del doc 83 aplicado en
+  el TIEMPO** — el antídoto contra la tesis congelada por anclaje del refresh incremental.
+
+Metadata operativa (`position_review`: `last_deep_at`, `tipo_deep` incremental|frío, `last_pm_review_at`,
+`next_deep_due`, `review_status`). **Fichas de banca (fuera de cartera): sin TTL** — vencen con el próximo filing →
+zona sombra; se re-analizan solo si la zona sombra entra en COMPRA o las piden el PM/operador. El gasto queda
+proporcional a lo accionable.
+
+## 8. Presupuesto — por FUNCIÓN, con budget manager
+Un único Budget Manager (ejecutado + reservado + disponible); **reserva el costo máximo ANTES de cada deep.**
+Política inicial: **~60% research regular · ~20% reserva de eventos críticos · ~20% PM+coordinación+triage.** P0 sin
+tope pero presupuestado por temporada (los earnings se amontonan en ~3 semanas); P2 se frena solo. Un incidente
+crítico usa la reserva + el regular no comprometido; si no alcanza → **se escala al operador (el límite no se rompe
+en silencio).** No asumir $0.70/deep: si el real ronda $5, el mantenimiento se come casi todo.
 
 ## 9. El ciclo operativo (run_cycle) — con las salvaguardas
 ```
-update_market_data() → detect_and_register_events() → update_fichas_and_zones() → invalidate_outdated_fichas()
-if needs_portfolio_decision(trigger):
-    execute_priority_research_within_budget()
-    packet = build_pm_packet()          # incluye changes_since_last_decision
+cerrar_poller() → latido_zonas_y_transiciones() → drenar_cola_dentro_de_presupuesto()
+→ zonas_de_fichas_nuevas() → evaluar_condiciones_de_despertar()
+if hay_motivo_de_despertar() or es_semanal():
+    packet = build_pm_packet()          # incluye changes_since_last_decision + radar
     decision = pm.decide(packet)
-    execute_validated_orders(decision)  # gate point-in-time + persistencia ANTES de operar
+    execute_validated_orders(decision)  # gate RELEE estado/precio; persistencia ANTES de operar
     enqueue_research_requests(decision)
-    if actionable_deep_available_within_budget():   # 2ª pasada, UNA sola
-        execute_one_requested_deep(); refresh_market_and_event_state()
-        packet = build_pm_packet(); decision = pm.decide(packet)
-        execute_validated_orders(decision); enqueue_research_requests(decision)
 persist_cycle_state()
 ```
 **Obligatorio:** persistencia antes de operar · recuperación tras fallo · lock de ejecuciones simultáneas ·
-anti-duplicados. *Un scheduler que duplica órdenes al reiniciar es peor que uno manual.*
+anti-duplicados (cierre atómico de solicitudes y órdenes). *Un scheduler que duplica órdenes al reiniciar es peor
+que uno manual.* **Packet `changes_since_last_decision`:** new_buy_candidates · zone_transitions · material_events ·
+completed_research · rejected_orders · unresolved_alerts · overdue_reviews · **radar** (hasta 10 fichas VIGENTES
+fuera de COMPRA, por distancia al precio de compra). *La ficha es la memoria de la empresa; el ledger de decisiones
+es la memoria del PM; el packet conecta ambas.*
 
-**Packet incremental — `changes_since_last_decision`:** new_buy_candidates · zone_transitions · material_events ·
-completed_research · rejected_orders · unresolved_alerts · overdue_position_reviews. *La ficha es la memoria de la
-empresa; el ledger de decisiones es la memoria del PM; el packet conecta ambas.*
+## 10. Orden de implementación (3 fases)
+- **F1 — Autonomía mínima (P0):** pipeline diario encadenado + **poller EDGAR con control de vida (dead man's
+  switch)** + **candado fail-closed en el gate** + **cola única con presupuesto por carril**. *(Sin poller vivo el
+  candado es decorativo; por eso van juntos.)* → *BORJA empieza a correr sin intervención humana.*
+- **F2 — Salidas y despertar:** **despertador del PM** (debounce 1/día) + **reglas de salida duras (tier A/B)** +
+  **falsadores estructurados** con línea base en las fichas nuevas + SOLICITAR_DEEP + input del operador. → *las
+  salidas se vuelven crujientes sin depender de que el PM esté corriendo.*
+- **F3 — Calidad y costo:** histéresis en alertas · **deep en frío anual** · triage LLM de 8-K (8.01/7.01) ·
+  métricas por carril y origen · revisiones 90/180d. → *se calibra con datos del paper trading.*
 
-## 10. Orden de implementación (3 etapas)
-- **Etapa 1 — Autonomía mínima (P0, primero):** Scheduler (diario + semanal) · latido de todas las fichas · **gate
-  duro de compras** · **Event Monitor de filings (8-K/10-Q)** · alertas persistentes + corrida extraordinaria del
-  PM · Budget Manager básico. → *BORJA empieza a funcionar sin intervención humana.*
-- **Etapa 2 — Autonomía de investigación:** REQUEST_DEEP · Research Queue centralizada con prioridad · 2ª pasada
-  del PM · tickers del operador (WATCH/RESEARCH/REVIEW) · reservas de presupuesto. → *el PM decide qué conocimiento
-  necesita adquirir.*
-- **Etapa 3 — Gestión madura del riesgo:** falsadores estructurados (OK/SUSPECTED/CONFIRMED) · protocolos de salida
-  + escalamiento · revisiones periódicas (90/180d) · clasificación fina de eventos · métricas del sistema. →
-  *BORJA identifica y corrige sus propios errores.*
+## 11. Tests de aceptación + métricas
+1. Empresa sin ficha no se compra aunque el PM insista. · 2. Posición vencida no se aumenta. · 3. Reducción no se
+bloquea por tesis vencida. · 4. Filing invalidante bloquea compras antes de ejecutar (gate relee). · 5. Ticker
+externo del operador puede terminar en ficha elegible. · 6. El PM pide un deep y reconsidera al día siguiente. ·
+7. Evento crítico convoca al PM fuera del semanal. · 8. Deep fallido NO deja ficha falsamente vigente. · 9.
+Reinicio no duplica compras ni deeps. · 10. Pipeline sin correr 26h → fail-closed. · 11. Corrida sin oportunidades
+termina sin operar.
 
-## 11. Tests de aceptación (criterios, a implementar)
-1. Una empresa sin ficha no puede comprarse aunque el PM insista.
-2. Una posición vencida no puede aumentarse.
-3. Una reducción no se bloquea por tesis vencida.
-4. Un filing invalidante bloquea compras antes de ejecutar (point-in-time).
-5. Un ticker externo puede terminar en una ficha elegible.
-6. El PM puede pedir un deep y reconsiderar su decisión.
-7. Un evento crítico convoca al PM fuera del ciclo semanal.
-8. Un deep fallido NO deja una ficha falsamente vigente.
-9. Un reinicio no duplica compras ni investigaciones.
-10. El sistema respeta el presupuesto máximo (escala, no rompe en silencio).
-11. Una corrida sin oportunidades puede terminar sin operaciones.
+**Métricas:** compras sin ficha vigente (=0) · tiempo evento→revisión · alertas críticas sin resolver · costo
+research/mes y SLA por carril · deeps que cambian decisiones · % de falsadores DUROS verificables por máquina ·
+turnover (despertadas vs semanales) · acierto por origen · retorno/drawdown/benchmark · timestamps de info +
+ejecución con gap/slippage vs volumen.
 
-**Métricas de salud:** compras sin ficha vigente (= 0) · tiempo evento→revisión · alertas críticas sin resolver ·
-costo de research/mes · deeps que cambian decisiones · oportunidades válidas no atendidas · turnover (hiperactividad)
-· retorno/drawdown/benchmark · timestamps de disponibilidad de info + ejecución con costos/slippage razonables.
+## 12. Parámetros iniciales (a calibrar con el paper) + qué NO construir
+Pedidos del PM 2-3/sem (lo no usado → oportunidad) · tickers del operador 3-5/sem · cooldown PM 90d · SLA P0 48h /
+P1 72h · despertares ≤1/día · **control de vida del pipeline 26h → fail-closed** · histéresis 3-5% o dos cierres ·
+revalidación por caída −20%/día o −30% desde el último deep · TTL = período de reporte + 60d · deep en frío anual ·
+divergencia frío-vs-incremental >25% exige reconciliación · recorte por SALIDA confirmada 1/3 + 1/3 a 20 ruedas ·
+recorte tier B 50%.
 
-## 12. Qué NO se construye (sobreingeniería)
-Agente supervisor del PM (ya está el Auditor) · PM corriendo cada hora · comité diario de todas las posiciones ·
-deep periódico de TODA la banca · multiagente de priorización de deeps (una cola ordenada alcanza) · stops de
-precio dinámicos (contradicen la filosofía) · orquestación distribuida · auto-trim por % arbitrario · ampliar el
-IPS por iniciativa del PM.
+**NO construir (sobreingeniería):** 2ª pasada del PM en el mismo ciclo · stops por precio (la salida por valuación
+ya es la zona SALIDA) · pedidos del PM fuera de su packet · score de urgencia para nombres sin ficha (sin ficha no
+hay zona) · agente supervisor del PM (ya está el Auditor) · PM cada hora · comité diario de todas las posiciones ·
+deep periódico de toda la banca · multiagente de priorización · orquestación distribuida · ampliar el IPS por
+iniciativa del PM.

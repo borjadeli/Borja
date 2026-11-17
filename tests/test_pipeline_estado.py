@@ -1,0 +1,41 @@
+"""Dead man's switch + event monitor (doc 85 F1)."""
+from datetime import datetime, timedelta, timezone
+
+from backend.agentes.event_monitor import clasificar_filing, clasificar_filings
+from backend.agentes.pipeline_estado import PipelineEstado
+
+
+def test_dead_man_switch(tmp_path):
+    pe = PipelineEstado(tmp_path / "pe.json")
+    assert pe.fresco("poller") is False                      # nunca corrió → fail-closed
+    pe.marcar("poller")
+    assert pe.fresco("poller") is True                       # recién corrido → vivo
+    # corrió hace 30h → muerto
+    pe.marcar("poller", cuando=datetime.now(timezone.utc) - timedelta(hours=30))
+    assert pe.fresco("poller", max_horas=26) is False
+    # persiste entre instancias
+    assert PipelineEstado(tmp_path / "pe.json").fresco("poller", max_horas=26) is False
+
+
+def test_clasificar_filing():
+    assert clasificar_filing("10-Q")[0] == "REVISION"        # periódico → invalida vigencia
+    assert clasificar_filing("8-K", "1.03")[0] == "DURO"     # quiebra → regla de salida
+    assert clasificar_filing("8-K", "4.02,9.01")[0] == "DURO"  # non-reliance
+    assert clasificar_filing("8-K", "2.02")[0] == "REVISION"   # earnings → cola
+    assert clasificar_filing("8-K", "3.02")[0] == "DILUCION"   # venta de equity → recalcular zona
+    assert clasificar_filing("8-K", "8.01")[0] == "TRIAGE"     # otros eventos → triage
+    assert clasificar_filing("8-K", "9.01")[0] == "IGNORAR"    # solo exhibits → nada
+    assert clasificar_filing("S-3")[0] == "DILUCION"
+    assert clasificar_filing("20-F")[0] == "REVISION"          # emisor extranjero
+
+
+class _F:
+    def __init__(self, tipo, items, accn="a1"):
+        self.tipo, self.items, self.fecha, self.accession_number = tipo, items, "2026-11-10", accn
+
+
+def test_clasificar_filings_ordena_por_severidad():
+    filings = [_F("8-K", "2.02"), _F("8-K", "1.03"), _F("8-K", "9.01"), _F("10-Q", "")]
+    ev = clasificar_filings("MP", filings)
+    assert [e.tier for e in ev] == ["DURO", "REVISION", "REVISION"]   # 9.01 (IGNORAR) se filtra, DURO primero
+    assert ev[0].items == ["1.03"]

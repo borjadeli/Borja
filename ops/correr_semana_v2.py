@@ -303,7 +303,9 @@ def main() -> int:
     # F3 (doc 83 §4): verificación ciega de los aumentos (canal de evidencia independiente). Opt-in explícito.
     from backend.agentes.verificador_ciego import verificar_decision
     _verif_ciego = lambda aumentos, fichas, cutoff: verificar_decision(aumentos, fichas, cutoff=cutoff)  # noqa: E731
-    runner = RunnerSemanal(research=research, pm=pm, decision=decision, verif_ciego_fn=_verif_ciego)
+    # F1/doc 85: candado ON (no se abre sin ficha comprable). pipeline_fresco se setea del estado del poller cuando
+    # exista; por ahora True (el dead-man's-switch se cablea con el poller en el próximo sub-paso).
+    runner = RunnerSemanal(research=research, pm=pm, decision=decision, verif_ciego_fn=_verif_ciego, candado_on=True)
 
     # --- datos reales ---
     snaps = recolectar_snapshots(tickers)

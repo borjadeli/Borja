@@ -118,6 +118,7 @@ class OrquestadorDecision:
                  factores_por_ticker: dict[str, list[str]] | None = None,
                  cargas_por_ticker: dict[str, dict[str, float]] | None = None,
                  clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
+                 comprable_por_ticker: dict[str, bool] | None = None, pipeline_fresco: bool = True,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
@@ -126,6 +127,12 @@ class OrquestadorDecision:
         verifs = {t.upper(): v for t, v in (verif_por_ticker or {}).items()}
         flags = {t.upper(): list(f) for t, f in (flags_por_ticker or {}).items()}
         ciego = {t.upper(): v for t, v in (ciego_por_ticker or {}).items()}   # F3: veredicto del Verificador ciego
+        # F1/doc 85 — EL CANDADO: `comprable` = ficha VIGENTE en zona COMPRA con datos limpios (lo computa el
+        # store de fichas). `pipeline_fresco` = el dead-man's-switch (si el poller no corrió, no se confía en
+        # NINGUNA vigencia → fail-closed para compras). Se consulta AL MOMENTO DEL GATE, no del packet.
+        # OPT-IN: None = candado apagado (backward-compat); un dict (aun vacío) = candado activo.
+        comprable = (None if comprable_por_ticker is None
+                     else {t.upper(): bool(v) for t, v in comprable_por_ticker.items()})
         cargas = {t.upper(): c for t, c in (cargas_por_ticker or {}).items()}  # F4: cargas de factor por ticker
 
         # operar_ahora=False → no se ejecuta nada; NO se llama al Auditor (item 6).
@@ -136,13 +143,13 @@ class OrquestadorDecision:
             self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
             return res
 
-        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas)
+        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco)
 
         # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
         if res.no_action and repropuesta_fn is not None:
             nueva = repropuesta_fn(res.holguras)
             if nueva is not None:
-                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas)
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco)
                 res, decision = res2, nueva
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
@@ -153,7 +160,8 @@ class OrquestadorDecision:
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
               contexto: dict[str, ContextoTicker], flags: dict[str, list[str]], hoy: date,
               ciego: dict[str, str] | None = None,
-              cargas: dict[str, dict[str, float]] | None = None) -> ResultadoDecision:
+              cargas: dict[str, dict[str, float]] | None = None,
+              comprable: dict[str, bool] | None = None, pipeline_fresco: bool = True) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
         banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
@@ -175,10 +183,18 @@ class OrquestadorDecision:
                 aumentos[tk] = tgt
         tras_red = {t: w for t, w in pesos.items() if w > 0}
 
-        # 2. Clip de aumentos: verificación ciega (F3) + admisibilidad + cap + flag supervivencia.
+        # 2. Clip de aumentos: CANDADO (F1/doc 85) + verificación ciega (F3) + admisibilidad + cap + flag.
         ciego = ciego or {}
+        candado_on = comprable is not None   # opt-in: solo aplica si el caller pasó comprable_por_ticker
+        if candado_on and not pipeline_fresco:   # DEAD MAN'S SWITCH: sin poller vivo no se confía en ninguna vigencia
+            alertas.append("PIPELINE_CAIDO — el poller no corrió (>26h); fail-closed: NINGUNA compra/aumento se abre")
         ok: dict[str, float] = {}
         for tk, tgt in aumentos.items():
+            if candado_on and not pipeline_fresco:   # dead man's switch: bloquea TODOS los aumentos
+                continue
+            if candado_on and not comprable.get(tk, False):  # CANDADO: sin ficha VIGENTE en COMPRA + datos limpios → no se abre
+                alertas.append(f"{tk}: SIN_FICHA_VIGENTE/FUERA_DE_ZONA — candado (doc 85): no se abre/aumenta sin ficha comprable")
+                continue
             if ciego.get(tk) == "FAIL":     # F3 (doc 83 §4): el canal ciego no reconcilió la evidencia primaria
                 alertas.append(f"{tk}: verificación ciega FAIL — no confiable hasta reconciliar, NO se abre/aumenta")
                 continue

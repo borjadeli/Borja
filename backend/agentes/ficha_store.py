@@ -95,3 +95,14 @@ def recalcular_todas(store: StoreFichas, *, precios_fn: Callable[[str], float | 
         store.set(f)
     store.guardar()
     return alertas
+
+
+def comprable_por_ticker(fichas: dict) -> dict[str, bool]:
+    """CANDADO (doc 85): ticker → ¿es comprable? = ficha VIGENTE en zona COMPRA con datos limpios. El gate lo
+    consulta al momento de decidir (no confía en el packet). `fichas` = dict ticker→Ficha (del store)."""
+    out: dict[str, bool] = {}
+    for tk, f in (fichas or {}).items():
+        zona = f.latido.zona if getattr(f, "latido", None) else None
+        out[tk.upper()] = (zona == "COMPRA" and getattr(f, "estado", None) == "VIGENTE"
+                           and not getattr(f, "datos_conflicted", False))
+    return out

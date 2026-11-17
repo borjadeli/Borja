@@ -60,7 +60,8 @@ class ResultadoRunner:
 
 class RunnerSemanal:
     def __init__(self, *, research: Orquestador, pm: PM, decision: OrquestadorDecision,
-                 alertas_path: Path | str | None = _ALERTAS_PATH, verif_ciego_fn=None):
+                 alertas_path: Path | str | None = _ALERTAS_PATH, verif_ciego_fn=None,
+                 candado_on: bool = False, pipeline_fresco: bool = True):
         self.research = research
         self.pm = pm
         self.decision = decision          # su `.ledger` es el ledger de decisiones (fuente del hit-rate)
@@ -68,6 +69,10 @@ class RunnerSemanal:
         # F3 (doc 83 §4): verificación ciega de los aumentos. OPT-IN explícito (gasta LLM+red): None → apagada
         # (tests + default). El caller real pasa `verif_ciego_fn(aumentos, fichas, cutoff) -> {tk: VerificacionCiega}`.
         self.verif_ciego_fn = verif_ciego_fn
+        # F1/doc 85 — candado: OPT-IN (el caller real lo prende). `pipeline_fresco` = dead-man's-switch (lo setea el
+        # pipeline según el último poller; en el caller real viene de la tabla de estado). Default: apagado/fresco.
+        self.candado_on = candado_on
+        self.pipeline_fresco = pipeline_fresco
 
     def _cargar_alertas(self) -> list[str]:
         if self.alertas_path and self.alertas_path.exists():
@@ -271,10 +276,22 @@ class RunnerSemanal:
             except Exception as e:  # noqa: BLE001 — la verificación ciega no debe tumbar el ciclo
                 _log.warning("verificación ciega falló (fail-open): %s", e)
 
+        # 3ter. CANDADO (F1, doc 85): comprable = ficha VIGENTE en zona COMPRA + datos limpios (lo computa el store).
+        # Se consulta AL MOMENTO DEL GATE (no del packet). pipeline_fresco = dead-man's-switch (opt-in vía caller).
+        comprable_tk: dict[str, bool] | None = None
+        if self.candado_on:
+            try:
+                from backend.agentes.ficha_store import StoreFichas, comprable_por_ticker as _comprable
+                comprable_tk = _comprable(StoreFichas().todos())
+            except Exception as e:  # noqa: BLE001 — si no se puede computar, el gate recibe {} (fail-closed p/ compras)
+                _log.warning("no pude computar comprable (candado fail-closed): %s", e)
+                comprable_tk = {}
+
         # 4. Gate duro del IPS + Auditor + ledger; re-propuesta UNA vez si el gate rechaza aumentos (1d).
         res_dec = self.decision.procesar(
             decision, cartera_actual=pesos_actual, caja_actual=caja_pct, contexto=contexto, ciclo=ciclo,
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
+            comprable_por_ticker=comprable_tk, pipeline_fresco=self.pipeline_fresco,
             flags_por_ticker=flags, ciego_por_ticker=ciego_vered,
             clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
             cargas_por_ticker=cargas_por_ticker,

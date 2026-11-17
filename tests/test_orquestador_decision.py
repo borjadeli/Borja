@@ -67,6 +67,40 @@ def test_decision_limpia_clip_none(tmp_path):
     assert res.pesos_finales == {"OKLO": 0.1} and abs(res.caja_final - 0.9) < 1e-9
 
 
+def test_f1_candado_bloquea_compra_sin_ficha_comprable(tmp_path):
+    # doc 85: el candado (opt-in) exige ficha VIGENTE en zona COMPRA + datos limpios. Sin eso → no se abre.
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": False})
+    assert "OKLO" not in res.pesos_finales and abs(res.caja_final - 1.0) < 1e-9
+    assert any("candado" in a for a in res.alertas)
+    # con ficha comprable → sí abre
+    res2 = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                   contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": True})
+    assert res2.pesos_finales.get("OKLO") == 0.1
+
+
+def test_f1_dead_mans_switch_bloquea_todo(tmp_path):
+    # doc 85: si el pipeline no corrió (poller muerto), fail-closed → NINGUNA compra, aunque la ficha sea comprable.
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": True}, pipeline_fresco=False)
+    assert "OKLO" not in res.pesos_finales and any("PIPELINE_CAIDO" in a for a in res.alertas)
+
+
+def test_f1_candado_no_bloquea_la_venta(tmp_path):
+    # el candado es ASIMÉTRICO: una reducción siempre se ejecuta, aunque no haya ficha comprable ni pipeline fresco.
+    res = _orq(tmp_path).procesar(_decision([_accion("MP", 0.0, "vender")]), cartera_actual={"MP": 0.1},
+                                  caja_actual=0.9, contexto=_ctx(), ciclo="c",
+                                  comprable_por_ticker={}, pipeline_fresco=False)
+    assert "MP" not in res.pesos_finales          # vendida pese al candado + pipeline caído
+
+
+def test_f1_candado_opt_in_off_por_default(tmp_path):
+    # sin comprable_por_ticker (None) el candado está apagado → compra normal (backward-compat).
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales.get("OKLO") == 0.1
+
+
 def test_f3_verificacion_ciega_fail_bloquea_el_aumento(tmp_path):
     # F3 (doc 83 §4): si el Verificador ciego no reconcilió la evidencia primaria (FAIL), el aumento NO se abre
     # (como inadmisible); una COMPRA bloqueada queda en caja.

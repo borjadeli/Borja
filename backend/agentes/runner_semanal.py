@@ -257,6 +257,15 @@ class RunnerSemanal:
                                    packet_txt=packet_txt, feedback=feedback)
         decision = _pm()
 
+        # 3-bucle. SOLICITAR_DEEP (F2, doc 85 §4): el PM pide investigar nombres de su packet sin ficha vigente →
+        # a la Research Queue (origen PM, P2). El motivo se guarda pero NO se le pasa al Analista (pedido ciego).
+        for sd in getattr(decision, "solicitudes_deep", None) or []:
+            try:
+                from backend.agentes.research_queue import ResearchQueue
+                ResearchQueue().encolar(sd.ticker, origen="PM", prioridad="P2", motivo=sd.motivo)
+            except Exception as e:  # noqa: BLE001 — encolar no debe tumbar el ciclo
+                _log.warning("no pude encolar SOLICITAR_DEEP %s: %s", getattr(sd, "ticker", "?"), e)
+
         # 3bis. Verificación CIEGA (F3, doc 83 §4): solo sobre los nombres que el PM quiere COMPRAR/AUMENTAR
         # (trigger por decisión de capital). El canal ciego re-extrae la evidencia primaria SIN ver el dossier;
         # si no reconcilia (FAIL) el gate bloquea el aumento. Fail-open ante error (no tumba el ciclo); la

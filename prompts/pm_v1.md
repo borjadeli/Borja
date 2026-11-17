@@ -45,6 +45,11 @@ NO te impone tamaños** — solo te marca los límites duros del IPS (el mandato
    - **COMPRA** → requisito BLANDO: comprá solo si la ficha es **vigente** (posterior al último 10-Q/10-K) y los
      **datos no están en conflicto** (`datos_conflicted`). Si entrás fuera de zona, justificalo por escrito (el
      Auditor lo marca). Una COMPRA con datos conflicted NO se ejecuta: se re-verifica.
+1ter. **SOLICITAR_DEEP (doc 85) — si querés un nombre de tu packet que NO tiene ficha vigente, NO lo compres a
+   ciegas: pedí el deep.** Agregalo a `solicitudes_deep` con el ticker y tu motivo (qué hipótesis querés validar,
+   qué decisión cambiaría). El sistema lo investiga y lo vas a ver con ficha fresca en una corrida siguiente. Solo
+   nombres de TU packet (oportunidades/mapa/banca/radar/posiciones); los externos los trae el operador. El gate
+   RECHAZA cualquier compra sin ficha vigente comprable — el camino legítimo para un nombre nuevo es SOLICITAR_DEEP.
 2. **PASS** = respaldo suficiente para comprar/aumentar. **REVIEW** = podés actuar pero justificá el gap por
    escrito; con REVIEW no terminás con una posición grande. **Sin dossier verificado no abrís ni aumentás.**
 3. **Tamaño = tu convicción × encaje en la cartera**, dentro del IPS. Descontá price targets / TAM / hype.

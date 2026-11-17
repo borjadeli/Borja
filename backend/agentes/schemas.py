@@ -310,11 +310,19 @@ class RespuestaFlag(BaseModel):
     motivo: str
 
 
+class SolicitudDeep(BaseModel):
+    """SOLICITAR_DEEP (doc 85 F2): el PM pide investigar un nombre SIN ficha vigente de SU packet. No es compra;
+    el motivo se guarda para auditoría pero NO se le pasa al Analista (pedido ciego, anti confirmation-bias)."""
+    ticker: str
+    motivo: str = ""
+
+
 class PMDecision(BaseModel):
     meta: AgentMeta
     acciones: list[PMAccion] = Field(default_factory=list)
     respuestas_flags: list[RespuestaFlag] = Field(
         default_factory=list, description="debe cubrir todos los flags de supervivencia; se valida en código")
+    solicitudes_deep: list[SolicitudDeep] = Field(default_factory=list)   # doc 85 F2: el PM dirige investigación
     operar_ahora: bool                        # puede quedarse en caja / no operar
     razon_timing: str
 

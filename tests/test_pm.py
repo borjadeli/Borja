@@ -61,6 +61,19 @@ def _ctx():
     return {"OKLO": ContextoTicker(sector="energia", cuello="smr", market_cap=5e9, adv_usd=10e6)}
 
 
+def test_pm_solicita_deep():
+    # F2 (doc 85): el PM pide un deep de un nombre sin ficha vigente → solicitudes_deep (no compra a ciegas).
+    payload = _decision_payload([])
+    payload["solicitudes_deep"] = [{"ticker": "RXRX", "motivo": "posible sustituto de una posición deteriorada"}]
+    dec = _pm([resp_tool("emitir_decision", payload, _U)]).decidir(
+        dossiers=[(_dossier(), _verif())], cartera_actual={}, caja_actual=1.0, contexto=_ctx())
+    assert len(dec.solicitudes_deep) == 1 and dec.solicitudes_deep[0].ticker == "RXRX"
+    # backward-compat: un payload SIN el campo parsea con default []
+    dec2 = _pm([resp_tool("emitir_decision", _decision_payload([]), _U)]).decidir(
+        dossiers=[(_dossier(), _verif())], cartera_actual={}, caja_actual=1.0, contexto=_ctx())
+    assert dec2.solicitudes_deep == []
+
+
 def test_pm_usa_dryrun_y_emite():
     cli_resps = [
         resp_tool("validar_ips", {"pesos": {"OKLO": 0.1}, "ops_semana": 1}, _U),

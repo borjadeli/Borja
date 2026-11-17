@@ -44,9 +44,11 @@ def _emitir_decision_schema() -> dict:
         "tesis": _S, "falsador": falsador, "que_me_haria_vender": _S,
     })
     respuesta_flag = _obj({"flag_id": _S, "accion": {"type": "string", "enum": _FLAG_ACCION}, "motivo": _S})
+    solicitud_deep = _obj({"ticker": _S, "motivo": _S})   # SOLICITAR_DEEP (doc 85 F2)
     return _obj({
         "acciones": {"type": "array", "items": accion},
         "respuestas_flags": {"type": "array", "items": respuesta_flag},
+        "solicitudes_deep": {"type": "array", "items": solicitud_deep},
         "operar_ahora": {"type": "boolean"},
         "razon_timing": _S,
     })

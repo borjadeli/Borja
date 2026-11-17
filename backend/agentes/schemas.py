@@ -167,6 +167,12 @@ class Falsador(BaseModel):
     fecha_limite: str                        # YYYY-MM-DD
     que_lo_mataria: str
     vara_externa: VaraExterna | None = None
+    # ESTRUCTURA (doc 85 F2) — para la regla de salida determinista. Si es verificable por máquina → tipo DURO.
+    metrica: str | None = None               # p.ej. "revenue_2027" | "aurora_online" | "going_concern"
+    operador: Literal["<", "<=", ">", ">=", "==", "!="] | None = None
+    umbral: float | None = None
+    tipo: Literal["DURO", "BLANDO"] = "BLANDO"
+    consecuencia: Literal["SALIDA", "RECORTE_50", "REVISION"] = "REVISION"
 
 
 RiesgoRemanente = Literal["cientifico", "ingenieria", "comercial", "escala"]

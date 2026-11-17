@@ -390,8 +390,17 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
             deuda_neta = d_inv - caja
             datos_conflicted = True
     fals = getattr(dossier, "falsador", None)
-    falsadores = [{"afirmacion": getattr(fals, "afirmacion", None),
-                   "fecha_limite": getattr(fals, "fecha_limite", None), "estado": "pendiente"}] if fals else []
+    falsadores = []
+    if fals:
+        # estructura del doc 85 F2 (para la regla de salida); conserva afirmacion/fecha_limite para compatibilidad.
+        falsadores = [{"id": (getattr(fals, "afirmacion", None) or "falsador")[:40],
+                       "afirmacion": getattr(fals, "afirmacion", None),
+                       "metrica": getattr(fals, "metrica", None) or (getattr(fals, "afirmacion", "") or "")[:60],
+                       "operador": getattr(fals, "operador", None), "umbral": getattr(fals, "umbral", None),
+                       "fecha_limite": getattr(fals, "fecha_limite", None),
+                       "tipo": getattr(fals, "tipo", "BLANDO") or "BLANDO",
+                       "consecuencia": getattr(fals, "consecuencia", "REVISION") or "REVISION",
+                       "estado": "OK"}]
     ficha = Ficha(
         ticker=ticker.upper(), nivel=nivel, clase_d4=clase, cuello=cuello, cobertura_datos=cobertura,
         tesis_resumen=(getattr(dossier, "negocio_y_posicion_cuello", "") or "")[:600],

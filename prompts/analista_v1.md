@@ -45,6 +45,12 @@ REGLAS DURAS
   (quién lo reporta y cómo — sin fuente es tan infalsable como una narrativa) + `accion_si_dispara`. Preferí
   hitos verificados por terceros a hitos propios. Si de verdad NO hay benchmark comparable, poné
   `no_aplica=true` con `razon_no_aplica` (el Verificador la revisa). Sin vara externa válida → REVIEW.
+  - **ESTRUCTURÁLO para la regla de salida (doc 85):** además del texto, completá `metrica` (p.ej. `revenue_2027`,
+    `aurora_online`, `going_concern`), `operador` (`<`/`>`/`<=`/…) + `umbral` si es NUMÉRICO (o solo `fecha_limite`
+    si es un hito), `tipo` (**DURO** si es verificable por máquina con XBRL o una fecha dura; **BLANDO** si necesita
+    interpretación) y `consecuencia` (**SALIDA** si al cumplirse la tesis muere entera · **RECORTE_50** si duele
+    pero no mata · **REVISION** si solo abre revisión). Un falsador DURO dispara su consecuencia SOLO; uno BLANDO
+    despierta al PM. Preferí DUROS verificables (el Verificador rechaza un DURO que no se puede chequear por máquina).
 - Sé parco y concreto. No incluyas un campo de "razonamiento": poné una explicación corta donde corresponda.
 
 ANÁLISIS DEL FUTURO — completá la ficha `invertibilidad` siguiendo ESTE ORDEN (el orden evita que la

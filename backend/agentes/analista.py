@@ -63,7 +63,11 @@ def _emitir_dossier_schema() -> dict:
         "metrica": _S, "umbral": _S, "comparador": _S, "fuente_medicion": _S,
         "accion_si_dispara": _S, "no_aplica": {"type": "boolean"}, "razon_no_aplica": _S,
     })
-    falsador = _obj({"afirmacion": _S, "fecha_limite": _S, "que_lo_mataria": _S, "vara_externa": vara_externa})
+    falsador = _obj({"afirmacion": _S, "fecha_limite": _S, "que_lo_mataria": _S, "vara_externa": vara_externa,
+                     # estructura (doc 85 F2): métrica + operador + umbral (o hito con fecha) → regla de salida
+                     "metrica": _S, "operador": _S, "umbral": {"type": ["number", "null"]},
+                     "tipo": {"type": "string", "enum": ["DURO", "BLANDO"]},
+                     "consecuencia": {"type": "string", "enum": ["SALIDA", "RECORTE_50", "REVISION"]}})
     # ficha de invertibilidad temporal (doc 70 D2) — el análisis de FUTURO
     invertibilidad = _obj({
         "riesgo_remanente": {"type": "string", "enum": ["cientifico", "ingenieria", "comercial", "escala"]},

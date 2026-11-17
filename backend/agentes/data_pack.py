@@ -416,10 +416,11 @@ def fuente_valuacion(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[
 
 # 8-K que CAMBIAN el balance (deuda/acciones) y NO están en companyfacts hasta el próximo 10-Q:
 # 2.01 = adquisición/disposición completada · 2.03 = obligación financiera directa (deuda nueva) ·
-# 1.01 = acuerdo material (suele ser el acuerdo de compra/financiamiento) · 3.02 = venta de equity no registrada
-# (dilución / instrumentos nuevos — doc 83 F2). Si hay uno POSTERIOR al último XBRL, el balance del pack puede
-# estar desactualizado (el agujero que mordió en IESC/DBM, 2026-11).
-_ITEMS_8K_BALANCE = {"2.01", "2.03", "1.01", "3.02"}
+# 3.02 = venta de equity no registrada (dilución) → DUROS: el balance cambió de verdad → bloquea.
+# 1.01 = acuerdo material (amplio) → puede o no tocar el balance → advisory (scan 2026-11-17: 11/14 eran duros,
+# 3 eran 1.01-solo y posiblemente ruido). El conjunto detecta el agujero que mordió en IESC/DBM.
+_ITEMS_8K_BALANCE_DURO = {"2.01", "2.03", "3.02"}
+_ITEMS_8K_BALANCE = _ITEMS_8K_BALANCE_DURO | {"1.01"}
 
 
 def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint],
@@ -488,19 +489,26 @@ def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint],
             if filings_fn is None:
                 from backend.services.edgar import get_recent_filings
                 filings_fn = lambda t: get_recent_filings(t, tipos=("8-K",), dias=300)  # noqa: E731
-            posteriores = []
+            posteriores, duros = [], False
             for f in filings_fn(tk):
                 its = set((getattr(f, "items", "") or "").replace(" ", "").split(","))
                 fdt = getattr(f, "fecha", None)
                 fd = fdt.date() if hasattr(fdt, "date") else fdt
-                if (its & _ITEMS_8K_BALANCE) and fd and fd > ref:
-                    posteriores.append((fd, its & _ITEMS_8K_BALANCE, getattr(f, "accession_number", "")))
+                hit = its & _ITEMS_8K_BALANCE
+                if hit and fd and fd > ref:
+                    posteriores.append((fd, hit, getattr(f, "accession_number", "")))
+                    duros = duros or bool(hit & _ITEMS_8K_BALANCE_DURO)
             if posteriores:
                 posteriores.sort(reverse=True)
                 det = "; ".join(f"{d} ítems {sorted(i)} ({a})" for d, i, a in posteriores[:3])
-                flag("balance_desactualizado",
-                     f"hay 8-K material POSTERIOR al último XBRL ({ref}): {det} → la deuda/acciones del pack "
-                     f"pueden estar vencidas (adquisición/deuda nueva fuera de companyfacts); RECONCILIAR antes de comprar")
+                if duros:   # 2.01/2.03/3.02 → el balance cambió (adquisición/deuda/emisión) → CONFLICTED (bloquea)
+                    flag("balance_desactualizado",
+                         f"hay 8-K material POSTERIOR al último XBRL ({ref}): {det} → la deuda/acciones del pack "
+                         f"pueden estar vencidas (adquisición/deuda/emisión fuera de companyfacts); RECONCILIAR antes de comprar")
+                else:       # solo 1.01 (acuerdo material amplio) → ADVISORY (no bloquea; precisión, scan 2026-11-17)
+                    flag("balance_revisar",
+                         f"hay 8-K 1.01 (acuerdo material) POSTERIOR al último XBRL ({ref}): {det} → puede o no "
+                         f"tocar el balance; el Analista lo mira, no bloquea")
         except Exception as e:  # noqa: BLE001 — sin red igual devuelve el resto de los checks
             log.warning("check de frescura del balance falló para %s: %s", tk, e)
 

@@ -70,6 +70,22 @@ def test_balance_8k_no_de_balance_no_marca():
     assert "flag_balance_desactualizado" not in _flags(puntos, filings_fn=lambda t: filings)
 
 
+def test_balance_8k_solo_101_es_advisory_no_bloquea():
+    # precisión (scan 2026-11-17): un 8-K POSTERIOR solo con 1.01 (acuerdo material amplio, puede no tocar el
+    # balance) → flag_balance_revisar ADVISORY, NO el flag_balance_desactualizado que bloquea.
+    puntos = [_p("cash", 77e6, source=_XBRL, known_at=date(2026, 7, 31), unit="USD")]
+    filings = [_F("1.01,9.01", date(2026, 10, 6))]
+    f = _flags(puntos, filings_fn=lambda t: filings)
+    assert "flag_balance_revisar" in f and "flag_balance_desactualizado" not in f
+
+
+def test_balance_8k_con_203_si_bloquea():
+    # 2.03 (deuda nueva) POSTERIOR → señal DURA → flag_balance_desactualizado (bloquea), aunque venga con 1.01.
+    puntos = [_p("cash", 77e6, source=_XBRL, known_at=date(2026, 7, 31), unit="USD")]
+    filings = [_F("1.01,2.03,9.01", date(2026, 10, 6))]
+    assert "flag_balance_desactualizado" in _flags(puntos, filings_fn=lambda t: filings)
+
+
 def test_instrumentos_dilutivos_marca():
     # F2 (doc 83): acciones antidilutivas excluidas del EPS significativas vs las básicas → hay instrumentos a
     # inventariar (converts/preferidas/warrants). Es el detector determinista del caso MP.

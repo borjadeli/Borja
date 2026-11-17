@@ -52,7 +52,8 @@ class EscenarioF:
     new_equity_shares: float = 0.0     # acciones nuevas emitidas por esa emisión
     new_debt: float = 0.0              # deuda nueva tomada (solo afecta el assert de caja; se cancela en el equity)
     debt_repaid: float = 0.0           # deuda repagada (idem)
-    distributions: float = 0.0         # dividendos + recompras (salida de caja)
+    distributions: float = 0.0         # dividendos + recompras (salida de caja TOTAL)
+    buyback_shares: float = 0.0        # acciones RECOMPRADAS (retiradas): bajan el denominador (recompra barata = accretiva)
     debt_converted: float = 0.0        # deuda que convierte a equity (F2): baja deuda → sube equity
     shares_converted: float = 0.0      # acciones emitidas por conversión de instrumentos (F2)
     senior_claims: float = 0.0         # K: claims senior al común que NO están en la deuda (preferidas, F2)
@@ -103,6 +104,7 @@ class Ficha:
     deuda_neta: float                   # deuda − caja HOY = D₀ − C₀ (puede ser negativa = caja neta)
     acciones: float
     caja: float | None = None           # C₀ (caja+liquidez hoy) — para el assert de caja del cash bridge (doc 83 F1)
+    bajo_caja: bool = False             # E[V] < caja neta/acción → sospechoso (negocio destruye caja o escenarios malos; caso NNDM)
     instrumentos: list[Instrumento] = field(default_factory=list)   # inventario de capital (doc 83 F2)
     falsadores: list[dict] = field(default_factory=list)
     conocido_hasta: str | None = None   # known_at del hecho más nuevo que vio la tesis (vigencia por evento)
@@ -169,7 +171,8 @@ def _equity_y_acciones(e: EscenarioF, *, deuda_neta, acciones, dilucion_total,
               + (e.debt_converted or 0.0) + dc + wcash         # deuda que convierte a equity + caja de ejercicio
               - (e.senior_claims or 0.0) - senior)             # claims senior al común (preferidas no convertidas)
     dil = e.dilucion_sbc if e.dilucion_sbc is not None else (dilucion_total or 0.0)
-    acc_T = acciones * (1.0 + max(0.0, dil)) + (e.new_equity_shares or 0.0) + (e.shares_converted or 0.0) + sc
+    acc_T = (acciones * (1.0 + max(0.0, dil)) + (e.new_equity_shares or 0.0) + (e.shares_converted or 0.0)
+             + sc - (e.buyback_shares or 0.0))        # recompras retiran acciones (la caja ya salió en distributions)
     return equity, acc_T
 
 
@@ -192,8 +195,11 @@ class Instrumento:
     cita: str | None = None             # accession/filing (procedencia obligatoria)
 
     def umbral(self) -> float | None:
-        """Precio sobre el que el instrumento convierte/se ejerce."""
-        return self.strike if self.tipo == "warrant" else self.conversion_price
+        """Precio sobre el que el instrumento convierte/se ejerce. Un warrant listado SIN strike se asume
+        penny/vested (in-the-money) → umbral 0 (siempre se ejerce, diluye) en vez de caer al vacío (caso ACHR)."""
+        if self.tipo == "warrant":
+            return self.strike if self.strike is not None else 0.0
+        return self.conversion_price
 
 
 def _shares_efectivas(j: Instrumento, v: float) -> float:
@@ -358,6 +364,7 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
                         new_debt=getattr(e, "new_debt", 0.0) or 0.0,
                         debt_repaid=getattr(e, "debt_repaid", 0.0) or 0.0,
                         distributions=getattr(e, "distributions", 0.0) or 0.0,
+                        buyback_shares=getattr(e, "buyback_shares", 0.0) or 0.0,
                         dilucion_sbc=getattr(e, "dilucion_sbc", None))
              for e in (getattr(dossier, "escenarios", None) or [])]
     dil = getattr(dossier, "dilucion_esperada_pct", None)
@@ -411,4 +418,16 @@ def recalcular(ficha: Ficha, *, precio: float, deuda_neta: float | None = None, 
                           instrumentos=ficha.instrumentos, **pol)
     if res is not None:
         ficha.puente, ficha.gatillos, ficha.latido = res
+        ficha.bajo_caja = bajo_caja_neta(ficha.puente.e_v, ficha.deuda_neta, ficha.acciones)
     return ficha
+
+
+def bajo_caja_neta(e_v: float, deuda_neta: float, acciones: float) -> bool:
+    """¿El valor esperado por acción quedó por DEBAJO de la caja neta por acción? (doc 83, hallazgo NNDM). Un
+    negocio no vale menos que su efectivo de liquidación salvo que lo esté destruyendo — o que los escenarios
+    estén mal (múltiplos bajos, recompras no modeladas). Advisory: marca para revisión, NO bloquea (un cash-box
+    barato puede ser una oportunidad). net_cash_ps = −deuda_neta/acciones (deuda_neta<0 = caja neta)."""
+    if not acciones or acciones <= 0:
+        return False
+    net_cash_ps = -(deuda_neta or 0.0) / acciones
+    return net_cash_ps > 0 and e_v is not None and e_v < net_cash_ps

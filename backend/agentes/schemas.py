@@ -124,7 +124,8 @@ class EscenarioValuacion(BaseModel):
     new_equity_shares: float = 0.0           # acciones nuevas emitidas por esa emisión
     new_debt: float = 0.0                    # deuda nueva tomada
     debt_repaid: float = 0.0                 # deuda repagada
-    distributions: float = 0.0               # dividendos + recompras (salida de caja al accionista)
+    distributions: float = 0.0               # dividendos + recompras (salida de caja TOTAL al accionista)
+    buyback_shares: float = 0.0              # acciones RECOMPRADAS/retiradas (bajan el conteo; recompra barata = accretiva)
     dilucion_sbc: float | None = None        # dilución por SBC específica del escenario (None → usa dilucion_esperada_pct)
 
 

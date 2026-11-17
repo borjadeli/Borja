@@ -102,7 +102,10 @@ precio implica (expectations investing). Reglas (doc 74 D1):
     (baja deuda); la que quema → negativo (consume caja / necesita financiarse).
   - `new_equity_proceeds` + `new_equity_shares`: si para llegar al terminal necesita emitir, la caja que entra **Y**
     las acciones que emite — las dos juntas, nunca una sin la otra.
-  - `new_debt` / `debt_repaid` / `distributions`: deuda nueva / repagada y dividendos+recompras.
+  - `new_debt` / `debt_repaid` / `distributions`: deuda nueva / repagada y la CAJA total que sale por dividendos+recompras.
+  - `buyback_shares`: si hay RECOMPRAS, las **acciones retiradas** (además del cash en `distributions`). Clave en
+    cash-boxes que cotizan bajo su caja: recomprar barato ACHICA el conteo y SUBE el valor/acción (caso NNDM). Sin
+    esto, una recompra se vería como pura pérdida de caja. Dividendo puro → `buyback_shares`=0.
   - `dilucion_sbc`: dilución por SBC del escenario (si varía por escenario; si no, dejá `null`).
   - **Regla anti-doble-conteo:** la caja de HOY que se gasta en construir (CAPEX) va en `fcf_cumulative` NEGATIVO,
     NO queda intacta — las plantas ya están en la `metrica_terminal`. Si el FCF ya baja la deuda, NO reduzcas además

@@ -1,8 +1,35 @@
 """Ficha viva (r9, doc 80 §F): puente, zonas/gatillos y el caso del operador (cara → cae → COMPRA sin re-deep)."""
 from dataclasses import dataclass
 
-from backend.agentes.ficha import (EscenarioF, Instrumento, backfill_desde_dossier, calcular_puente,
-                                    cash_bridge_ok, cash_terminal, recalcular, resolver_instrumentos, valor_accion)
+from backend.agentes.ficha import (EscenarioF, Instrumento, backfill_desde_dossier, bajo_caja_neta,
+                                    calcular_puente, cash_bridge_ok, cash_terminal, recalcular,
+                                    resolver_instrumentos, valor_accion)
+
+
+def test_recompra_achica_acciones_y_sube_valor():
+    # NNDM (bache del cruce): una recompra baja la caja (en distributions) Y retira acciones (buyback_shares).
+    # Comprar barato achica el denominador → sube V/acción. Sin buyback_shares sería pura destrucción.
+    base = EscenarioF("base", 100e6, 1.0, 4, 1.0)                 # EV $100M
+    sin = valor_accion(base, deuda_neta=-300e6, acciones=200e6, dilucion_total=0.0)   # caja neta $300M
+    con = EscenarioF("base", 100e6, 1.0, 4, 1.0, distributions=60e6, buyback_shares=43e6)
+    v = valor_accion(con, deuda_neta=-300e6, acciones=200e6, dilucion_total=0.0)
+    # sin: (100M+300M)/200M = $2.00 ; con: (100M+300M−60M)/(200M−43M) = 340M/157M = $2.17 → MÁS por la recompra
+    assert abs(sin - 2.0) < 1e-6 and v > sin and abs(v - (340e6 / 157e6)) < 1e-4
+
+
+def test_warrant_sin_strike_se_ejerce_no_se_tira():
+    # ACHR (bache del cruce): un warrant listado sin strike (penny/vested, ITM) debe DILUIR, no caer al vacío.
+    base = EscenarioF("base", 500e6, 2.0, 4, 1.0)                 # EV $1B, V alto
+    warr = Instrumento("penny", "warrant", potential_shares=20e6, strike=None)
+    v, det = resolver_instrumentos(base, deuda_neta=0.0, acciones=100e6, dilucion_total=0.0, instrumentos=[warr])
+    assert det["convertidos"] == ["penny"] and det["acciones_nuevas"] == 20e6   # se ejerció (diluyó), no se ignoró
+
+
+def test_bajo_caja_neta():
+    # E[V] $1.04 con caja neta $1.59/acción → bajo_caja True (el caso NNDM)
+    assert bajo_caja_neta(1.04, deuda_neta=-315e6, acciones=198e6) is True    # net cash/sh = 315/198 = $1.59
+    assert bajo_caja_neta(5.0, deuda_neta=-315e6, acciones=198e6) is False    # E[V] arriba de la caja → ok
+    assert bajo_caja_neta(1.0, deuda_neta=500e6, acciones=100e6) is False     # con deuda (no caja neta) → no aplica
 
 # escenarios de una empresa con equity bridge limpio (sin deuda neta, 100M acciones, sin dilución)
 _ESC = [

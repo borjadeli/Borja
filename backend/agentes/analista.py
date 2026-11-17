@@ -91,7 +91,8 @@ def _emitir_dossier_schema() -> dict:
         "new_equity_proceeds": {"type": "number"},         # caja neta por emisión primaria
         "new_equity_shares": {"type": "number"},           # acciones nuevas emitidas
         "new_debt": {"type": "number"}, "debt_repaid": {"type": "number"},
-        "distributions": {"type": "number"},               # dividendos + recompras
+        "distributions": {"type": "number"},               # dividendos + recompras (caja)
+        "buyback_shares": {"type": "number"},              # acciones recompradas/retiradas (bajan el conteo)
         "dilucion_sbc": {"type": ["number", "null"]},      # dilución SBC del escenario (null → usa dilucion_esperada_pct)
     })
     # inventario de instrumentos de capital (doc 83 F2): el analista provee términos + cita; el código resuelve.

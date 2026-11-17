@@ -104,6 +104,10 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
                                  "requiere_refresh": stale, "detalle": det})
         if f.estado in ("EN_REVISION", "VENCIDA", "ROTA"):
             pack.alertas.append({"ticker": tk, "tipo": "tesis", "detalle": f"{tk} tesis {f.estado}"})
+        if getattr(f, "bajo_caja", False):   # E[V] < caja neta/acción → revisar escenarios (múltiplos/recompras)
+            pack.alertas.append({"ticker": tk, "tipo": "bajo_caja",
+                                 "detalle": f"{tk}: E[V] por DEBAJO de la caja neta/acción — revisar escenarios "
+                                            f"(múltiplos muy bajos / recompras no modeladas) o es un cash-box barato"})
 
     # BANCA en zona de compra (candidatas a ENTRADA) — fichas vigentes, no tenencias, en COMPRA.
     for tk, f in fichas.items():

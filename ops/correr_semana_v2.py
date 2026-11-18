@@ -465,6 +465,30 @@ def main() -> int:
           + ("  ⚠️ no se pudo leer (fail-closed)" if _gm is None else ""))
     print(f"decisión del PM: operar={res.decision.operar_ahora} · acciones={len(res.decision.acciones)} "
           f"· clip={res.resultado_decision.clip} · no_action={res.resultado_decision.no_action}")
+    # --- Observabilidad (2026-11-18): hacer VISIBLE qué vio/propuso/pidió el PM y cómo lo cuestionó el Auditor,
+    #     aunque termine en no-op (antes era una caja negra: 'operar=False' y nada más). $0.
+    print(f"razón del timing: {getattr(res.decision, 'razon_timing', None) or '—'}")
+    if res.decision.acciones:
+        print("lo que PROPUSO el PM (aunque no opere):")
+        for a in res.decision.acciones:
+            print(f"  {a.ticker:6} {a.accion:9} peso {a.peso_objetivo:.1%} conv {a.conviccion_0_1:.2f} "
+                  f"— {(a.tesis or '')[:80]}")
+    fichaless = [fs for fs in (scores_op or []) if fs.score is not None][:8]
+    if fichaless:
+        print("oportunidades FICHA-LESS que vio el PM (abajo del corte de auto-deep; puede SOLICITAR_DEEP):")
+        for fs in fichaless:
+            print(f"  {fs.ticker:6} score {fs.score} [{fs.cluster}]")
+    sd = getattr(res.decision, "solicitudes_deep", None) or []
+    print(f"deeps que PIDIÓ el PM: {[s.ticker for s in sd] or '(ninguno)'}")
+    aud = res.resultado_decision.auditoria
+    if aud is not None and aud.objeciones:
+        print(f"AUDITOR — {len(aud.objeciones)} objeciones (el PM reevaluó: {res.resultado_decision.reevaluado_por_auditor}):")
+        for o in aud.objeciones:
+            print(f"  [{o.severidad}] {o.tipo}: {(o.detalle or '')[:140]}")
+    elif res.decision.operar_ahora:
+        print("AUDITOR: sin objeciones.")
+    else:
+        print("AUDITOR: no corrió (el PM eligió no operar; el Auditor solo cuestiona decisiones de capital).")
     if res.resultado_decision.demoradas:
         print(f"demoradas por el auditor: {res.resultado_decision.demoradas}")
     print(f"fills del paper: {res.paper.fills}")

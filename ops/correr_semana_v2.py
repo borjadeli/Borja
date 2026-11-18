@@ -431,7 +431,8 @@ def main() -> int:
         paper.close()
 
     # Fase 5: baseline "Opus+web solo" (la vara que dice si el COMITÉ agrega). Gasta ~$0.5-1.
-    if not args.sin_opus_solo:
+    # En solo-PM (DESPERTAR) NO corre: no hubo comité contra el cual medir, y un wake debe ser barato (r10 P0-3).
+    if not args.sin_opus_solo and not args.solo_pm:
         try:
             from backend.agentes.carteras_sombra import LedgerSombras, SnapshotSombra
             from backend.agentes.opus_solo import OpusSolo

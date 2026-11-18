@@ -159,7 +159,9 @@ def extraer_desde_edgar(ticker: str, cutoff: str | None, *, premisa_pregunta: st
     user = (f"Empresa: {ticker}\nCorte: {cutoff or 'hoy'}\nPremisa de la tesis a verificar: "
             f"{premisa_pregunta or '(ninguna)'}\n\n=== FILINGS PRIMARIOS ===\n" + "\n\n".join(partes))
     ag = Agente("verificador-ciego", "ciego-v1", modelo, cliente=cliente)
-    j, meta = ag.estructurado(system=_SYS_CIEGO, user=user, payload_schema=_SCHEMA_CIEGO, max_tokens=1024)
+    # 2048: con 1024 la salida se truncaba (JSON inválido → payload vacío → REVIEW espurio) cuando hay varias
+    # discrepancias; el canal ciego debe poder enumerarlas todas (visto en la humo solo-PM, r10).
+    j, meta = ag.estructurado(system=_SYS_CIEGO, user=user, payload_schema=_SCHEMA_CIEGO, max_tokens=2048)
     return (j or {}), float(getattr(meta, "cost_usd", 0.0) or 0.0)
 
 

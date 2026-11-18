@@ -13,9 +13,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-# 8-K por número de ítem → tier (doc 85 §3)
-_ITEMS_DURO = {"1.03", "4.02", "4.01"}        # quiebra · non-reliance/restatement · cambio de auditor c/desacuerdos
-_ITEMS_REVISION = {"2.02", "2.06", "5.02", "2.04", "3.01", "1.01", "1.02", "2.01"}
+# 8-K por número de ítem → tier (doc 85 §3 + r10). DURO = solo lo catastrófico e inequívoco. 4.01 (cambio de
+# auditor) NO es duro por sí solo: sin desacuerdos es rutina → REVISION (el PM/comité mira si hay desacuerdos).
+_ITEMS_DURO = {"1.03", "4.02"}                # quiebra · non-reliance/restatement
+_ITEMS_REVISION = {"2.02", "2.06", "5.02", "2.04", "3.01", "1.01", "1.02", "2.01", "4.01"}
 _ITEMS_DILUCION = {"3.02"}                     # venta de equity no registrada (dilución)
 _ITEMS_TRIAGE = {"8.01", "7.01"}              # otros eventos / Reg FD → triage
 FORMS_DILUCION = {"S-1", "S-3", "424B5", "424B3", "424B4"}

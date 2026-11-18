@@ -39,35 +39,49 @@ class Falsador:
         return asdict(self)
 
 
+# una métrica es NUMÉRICA-verificable solo si su `fuente` apunta a un tag XBRL (no un nombre inventado como
+# "revenue_2027" o "aurora_online", que nadie puede chequear por máquina).
+def _es_numerico(f: Falsador) -> bool:
+    fuente = (f.fuente or "").lower()
+    tiene_tag = "xbrl" in fuente or ":" in fuente or fuente.startswith("tag")
+    return f.operador in _OPS and f.umbral is not None and bool(f.metrica) and tiene_tag
+
+
 def es_verificable(f: Falsador) -> bool:
-    """¿Se puede chequear por máquina? Numérico (operador+umbral+métrica) o hito con fecha_limite. El Verificador
-    rechaza una ficha con un falsador DURO que NO sea verificable (doc 85: 'toda ficha ≥1 DURO verificable')."""
-    if f.operador in _OPS and f.umbral is not None and f.metrica:
-        return True
-    return bool(f.fecha_limite and f.metrica)
+    """¿Se puede chequear por máquina? SOLO numérico con tag XBRL (operador+umbral+métrica+fuente=tag). Un hito
+    textual ('aurora_online') NO es verificable por máquina → no puede ser DURO (el Verificador lo rechaza)."""
+    return _es_numerico(f)
 
 
 def evaluar(f: Falsador, *, valor: float | None = None, hoy: date | None = None,
             evidencia_ambigua: bool = False, cumplido: bool | None = None) -> str:
-    """Devuelve el estado (OK/SUSPECTED/CONFIRMED). `valor` = métrica del filing nuevo (numérico). `cumplido` =
-    para hitos: ¿el hito ya se cumplió? (True → OK aunque venza). `evidencia_ambigua` → SUSPECTED (textual dudoso)."""
+    """Estado (OK/SUSPECTED/CONFIRMED). r10: NUNCA CONFIRMED por ausencia de dato.
+    - numérico con tag XBRL: necesita `valor`; si cruza el umbral → CONFIRMED; si no → OK; sin valor → SUSPECTED
+      (pide el dato, no vende). Si además tiene fecha y venció sin cruzar el umbral → EXPIRED (renovar, no vender).
+    - hito/textual: solo CONFIRMED con evidencia explícita de que NO se cumplió (`cumplido=False`); ambiguo o sin
+      resolver → SUSPECTED (despierta al PM). Vencer la fecha SIN evidencia NO confirma."""
     hoy = hoy or date.today()
     if evidencia_ambigua:
         return "SUSPECTED"
-    # numérico: si la condición de KILL se cumple → CONFIRMED
-    op = _OPS.get(f.operador or "")
-    if valor is not None and op is not None and f.umbral is not None:
-        return "CONFIRMED" if op(valor, f.umbral) else "OK"
-    # hito con fecha: venció sin cumplirse → CONFIRMED (plata muerta)
-    if f.fecha_limite and hoy.isoformat() > f.fecha_limite and not cumplido:
+    vencido = bool(f.fecha_limite and hoy.isoformat() > f.fecha_limite)
+    if _es_numerico(f):
+        if valor is None:
+            return "SUSPECTED"                         # falta el dato → pide, no vende (nunca CONFIRMED por ausencia)
+        if _OPS[f.operador](float(valor), f.umbral):
+            return "CONFIRMED"
+        return "EXPIRED" if vencido else "OK"          # ventana vencida sin cruzar → renovar, no vender
+    # hito/textual: CONFIRMED solo con evidencia explícita de incumplimiento
+    if cumplido is False:
         return "CONFIRMED"
+    if vencido and cumplido is None:
+        return "SUSPECTED"                             # venció pero no se puede resolver → al PM, no auto-venta
     return "OK"
 
 
 def confirmados_para_salida(fichas: dict, *, valor_fn=None, hoy: date | None = None) -> dict[str, list[dict]]:
-    """Evalúa los falsadores DUROS de cada ficha → el dict {ticker: [{id,tipo,consecuencia}]} que consume
-    `reglas_salida.evaluar_reglas_salida` (tier B). `valor_fn(ticker, metrica)` → valor actual (o None).
-    Solo DURO CONFIRMED dispara una regla; BLANDO/SUSPECTED van a juicio del PM, no a regla."""
+    """Evalúa los falsadores DUROS de cada ficha → {ticker: [{id,tipo,consecuencia,estado}]} que consume
+    `reglas_salida` (tier B → DESPERTAR al PM). `valor_fn(ticker, metrica)` → valor actual (o None). r10: un DURO
+    CONFIRMED o SUSPECTED despierta al PM; NUNCA auto-vende (eso lo decide el PM + Auditor)."""
     hoy = hoy or date.today()
     out: dict[str, list[dict]] = {}
     for tk, f in (fichas or {}).items():
@@ -76,9 +90,10 @@ def confirmados_para_salida(fichas: dict, *, valor_fn=None, hoy: date | None = N
             if fal is None or fal.tipo != "DURO":
                 continue
             valor = valor_fn(tk, fal.metrica) if valor_fn else None
-            if evaluar(fal, valor=valor, hoy=hoy) == "CONFIRMED":
+            estado = evaluar(fal, valor=valor, hoy=hoy)
+            if estado in ("CONFIRMED", "SUSPECTED"):
                 out.setdefault(tk.upper(), []).append(
-                    {"id": fal.id, "tipo": "DURO", "consecuencia": fal.consecuencia})
+                    {"id": fal.id, "tipo": "DURO", "consecuencia": fal.consecuencia, "estado": estado})
     return out
 
 

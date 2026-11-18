@@ -36,24 +36,48 @@ def _soltar_lock() -> None:
         pass
 
 
+_EJECUTADAS = Path("data/salidas_ejecutadas.json")
+
+
+def _ya_ejecutadas() -> set:
+    try:
+        return set(json.loads(_EJECUTADAS.read_text()))
+    except Exception:  # noqa: BLE001
+        return set()
+
+
+def _marcar_ejecutadas(claves: set) -> None:
+    _EJECUTADAS.parent.mkdir(parents=True, exist_ok=True)
+    _EJECUTADAS.write_text(json.dumps(sorted(_ya_ejecutadas() | claves), ensure_ascii=False, indent=2))
+
+
 def _ejecutar_salidas(duras) -> list:
-    """Ejecuta las salidas tier A/B en el paper (SALIDA_TOTAL→0, RECORTE_50→mitad). Risk-off: reducciones siempre.
-    Devuelve los fills. Abre el paper, proyecta pesos/caja, aplica las salidas y emite los fills del ledger."""
+    """Ejecuta SOLO las salidas tier A (SALIDA_TOTAL → vende la posición) en el paper. r10: el determinismo se
+    limita a lo catastrófico; tier B/C despiertan al PM. IDEMPOTENTE: una salida ya disparada (por accession/id)
+    no se repite. Pesos = valor de mercado / equity; toca SOLO el ticker de la salida (no rebalancea el resto)."""
     from backend.agentes.datos_reales import abrir_paper, precios_de, recolectar_snapshots
     from backend.agentes.orquestador_decision import ResultadoDecision
     from backend.agentes.paper_pm import ejecutar as ejecutar_paper
     from backend.agentes.reglas_salida import pesos_tras_salidas
     from backend.ledger import core
+    ya = _ya_ejecutadas()
+    nuevas = [s for s in duras if s.accion == "SALIDA_TOTAL" and f"{s.ticker}:{s.fuente}" not in ya]
+    if not nuevas:
+        return []
     paper = abrir_paper(capital_inicial=100_000.0, fecha=date.today())
     try:
-        proy = core.proyectar(paper, {})
-        pesos = {t.upper(): w for t, w in proy["posiciones"].items()}
-        tks = sorted({s.ticker.upper() for s in duras} | set(pesos))
+        tks_pos = list(core.proyectar(paper, {})["posiciones"].keys())
+        tks = sorted(set(tks_pos) | {s.ticker.upper() for s in nuevas})
         precios = precios_de(recolectar_snapshots(tks))
-        finales = pesos_tras_salidas(pesos, duras)
+        proy = core.proyectar(paper, precios)
+        equity = proy["equity"] or 1.0
+        pesos = {t.upper(): round((pp.shares * precios.get(t, 0.0)) / equity, 6)
+                 for t, pp in proy["posiciones"].items()}        # peso = valor de mercado / equity (no objetos)
+        finales = pesos_tras_salidas(pesos, nuevas)              # solo pone a 0 los tickers de la salida
         res = ResultadoDecision(pesos_objetivo=finales, pesos_finales=finales,
                                 caja_final=round(1.0 - sum(finales.values()), 6), clip="none", no_action=False)
         rp = ejecutar_paper(paper, res, precios=precios, fecha_fill=date.today())
+        _marcar_ejecutadas({f"{s.ticker}:{s.fuente}" for s in nuevas})   # idempotencia: no repetir
         return getattr(rp, "fills", [])
     finally:
         paper.close()
@@ -109,10 +133,10 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_
         res = correr_ciclo(poller_fn=_poller, latido_fn=_latido, drenar_fn=_drenar, pm_fn=None)
         PipelineEstado().marcar("ciclo_diario")
 
-        # AUTO-EJECUCIÓN de las salidas tier A/B (risk-off, determinista): SALIDA_TOTAL/RECORTE_50 se venden en el
-        # paper SIN esperar al PM (el tier C solo despierta). Las reducciones siempre se ejecutan (doc 85 §6).
+        # AUTO-EJECUCIÓN: SOLO tier A catastrófico (SALIDA_TOTAL por quiebra/restatement). r10: tier B/C despiertan
+        # al PM (él + Auditor deciden); el determinismo se limita a lo inequívoco. Idempotente.
         salidas = res.poller.get("salidas") or []
-        duras = [s for s in salidas if s.accion in ("SALIDA_TOTAL", "RECORTE_50")]
+        duras = [s for s in salidas if s.accion == "SALIDA_TOTAL"]
         if duras:
             try:
                 _fills = _ejecutar_salidas(duras)

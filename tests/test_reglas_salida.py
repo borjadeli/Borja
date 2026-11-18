@@ -26,15 +26,12 @@ def test_tier_C_salida_ceo_despierta():
     assert acc[0].accion == "DESPERTAR" and acc[0].tier == "C"
 
 
-def test_tier_B_falsador_duro_cumplido():
+def test_tier_B_falsador_duro_despierta_no_auto_vende():
+    # r10: un falsador DURO cumplido NO auto-vende — DESPIERTA al PM (él + Auditor deciden). Determinismo al mínimo.
     acc = evaluar_reglas_salida([], posiciones={"OKLO"},
                                 falsadores_confirmados={"OKLO": [{"id": "aurora_2028", "tipo": "DURO",
-                                                                  "consecuencia": "RECORTE_50"}]})
-    assert acc[0].accion == "RECORTE_50" and acc[0].tier == "B" and "aurora_2028" in acc[0].motivo
-    # consecuencia SALIDA → salida total
-    acc2 = evaluar_reglas_salida([], posiciones={"OKLO"},
-                                 falsadores_confirmados={"OKLO": [{"id": "x", "tipo": "DURO", "consecuencia": "SALIDA"}]})
-    assert acc2[0].accion == "SALIDA_TOTAL"
+                                                                  "consecuencia": "SALIDA", "estado": "CONFIRMED"}]})
+    assert acc[0].accion == "DESPERTAR" and acc[0].tier == "B" and "aurora_2028" in acc[0].motivo
 
 
 def test_ordena_A_antes_que_C_y_dedup():

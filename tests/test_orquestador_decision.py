@@ -91,6 +91,35 @@ def test_f1_zona_compra_blanda_entra_libre_pero_marcada(tmp_path):
     assert any("FUERA de zona COMPRA" in a and "MARCADA" in a for a in res.alertas)   # pero MARCADA para el Auditor
 
 
+def test_objecion_media_vuelve_al_pm_y_reevalua(tmp_path):
+    # doc 85 + directiva operador: una objeción MEDIA del Auditor le VUELVE al PM → re-decide. Acá el PM, al
+    # reevaluar, MODIFICA (achica OKLO 0.1→0.04). El resultado final refleja la decisión revisada.
+    obj = AuditObjecion(tipo="concentracion", detalle="todo en un factor", severidad="media")
+    orq = _orq(tmp_path, auditor=_FakeAuditor([obj]))
+    nueva = _decision([_accion("OKLO", 0.04, "comprar")])
+    res = orq.procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c",
+                       reevaluar_auditor_fn=lambda objs: nueva)
+    assert res.reevaluado_por_auditor is True
+    assert res.pesos_finales.get("OKLO") == 0.04        # la decisión REVISADA, no la original (0.1)
+
+
+def test_objecion_baja_NO_vuelve_al_pm(tmp_path):
+    # una objeción "baja" es ruido → NO dispara reevaluación (umbral media+).
+    obj = AuditObjecion(tipo="coherencia", detalle="menor", severidad="baja")
+    orq = _orq(tmp_path, auditor=_FakeAuditor([obj]))
+    llamado = {"n": 0}
+
+    def _reeval(objs):
+        llamado["n"] += 1
+        return _decision([_accion("OKLO", 0.04, "comprar")])
+
+    res = orq.procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c", reevaluar_auditor_fn=_reeval)
+    assert res.reevaluado_por_auditor is False and llamado["n"] == 0
+    assert res.pesos_finales.get("OKLO") == 0.1         # la decisión original, intacta
+
+
 def test_f1_dead_mans_switch_bloquea_todo(tmp_path):
     # doc 85: si el pipeline no corrió (poller muerto), fail-closed → NINGUNA compra, aunque la ficha sea comprable.
     res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,

@@ -38,6 +38,14 @@ def _fmt_holguras(holguras: list[Violacion]) -> str:
     return "\n".join(f"- {v.regla}: {v.detalle} (holgura {v.holgura:+.3f})" for v in holguras) or "(sin detalle)"
 
 
+def _fmt_objeciones(objeciones) -> str:
+    """Las objeciones del Auditor, como feedback para que el PM REEVALÚE (doc 85): puede mantener su decisión
+    (refutando por escrito) o modificarla. No es una orden del código — es el cuestionamiento del Auditor."""
+    cuerpo = "\n".join(f"- [{o.severidad}] {o.tipo}: {o.detalle}" for o in objeciones) or "(sin detalle)"
+    return ("EL AUDITOR CUESTIONÓ TU DECISIÓN. Reevaluá cada objeción: o la REFUTÁS por escrito (y mantenés la "
+            "acción) o MODIFICÁS la decisión. No la ignores.\n" + cuerpo)
+
+
 def cartera_desde_ledger(session, precios: dict[str, float]) -> tuple[dict[str, float], float, float]:
     """Proyecta el ledger fiel → (pesos por ticker, fracción en caja, equity). Point-in-time con `precios`."""
     est = core.proyectar(session, precios)
@@ -319,7 +327,8 @@ class RunnerSemanal:
                 _log.warning("no pude computar comprable (candado fail-closed): %s", e)
                 comprable_tk, admis_duro_tk = {}, {}
 
-        # 4. Gate duro del IPS + Auditor + ledger; re-propuesta UNA vez si el gate rechaza aumentos (1d).
+        # 4. Gate duro del IPS + Auditor + ledger; re-propuesta UNA vez si el gate rechaza aumentos (1d). Y, si el
+        # Auditor objeta (media+), el PM REEVALÚA una vez (doc 85): mantiene refutando o modifica (reevaluar_auditor_fn).
         res_dec = self.decision.procesar(
             decision, cartera_actual=pesos_actual, caja_actual=caja_pct, contexto=contexto, ciclo=ciclo,
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
@@ -328,7 +337,8 @@ class RunnerSemanal:
             flags_por_ticker=flags, ciego_por_ticker=ciego_vered,
             clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
             cargas_por_ticker=cargas_por_ticker,
-            memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)))
+            memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)),
+            reevaluar_auditor_fn=lambda objs: _pm(feedback=_fmt_objeciones(objs)))
 
         # 4bis. Estacionamiento (r7a #1): el residual que el PM NO desplegó en nombres con margen de seguridad
         # se aparca en ETFs temáticos (ponderados por los clusters del mapa), NUNCA en nombres caros. Solo si

@@ -100,6 +100,7 @@ class ResultadoDecision:
     alertas: list[str] = field(default_factory=list)
     holguras: list[Violacion] = field(default_factory=list)   # para la re-propuesta del PM
     decision_ids: list[str] = field(default_factory=list)
+    reevaluado_por_auditor: bool = False     # el PM re-decidió tras una objeción media+ del Auditor (doc 85)
 
 
 class OrquestadorDecision:
@@ -120,7 +121,7 @@ class OrquestadorDecision:
                  clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
                  comprable_por_ticker: dict[str, bool] | None = None, pipeline_fresco: bool = True,
                  admisible_duro_por_ticker: dict[str, bool] | None = None,
-                 memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
+                 memo_macro: str = "", repropuesta_fn=None, reevaluar_auditor_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
         precios = {t.upper(): p for t, p in (precios or {}).items()}
@@ -158,9 +159,25 @@ class OrquestadorDecision:
                 res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
                 res, decision = res2, nueva
 
-        self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                                  hashes, verifs, memo_macro, factores=factores_por_ticker,
-                                  clasif=clasif_por_ticker, bull=bull_por_ticker)
+        # El Auditor cuestiona la decisión que pasó el gate.
+        res.auditoria = self._auditar(res, decision, cartera, caja_actual, contexto, memo_macro, verifs,
+                                      factores=factores_por_ticker, clasif=clasif_por_ticker)
+        # doc 85 + directiva del operador: una objeción MEDIA+ del Auditor le VUELVE al PM → re-decide (puede
+        # MANTENER su decisión o MODIFICARLA, por escrito). UNA sola vuelta (sin loop infinito; +1 llamada al PM).
+        objs_media = [o for o in (res.auditoria.objeciones if res.auditoria else []) if o.severidad in ("media", "alta")]
+        if objs_media and reevaluar_auditor_fn is not None:
+            nueva = reevaluar_auditor_fn(res.auditoria.objeciones)
+            if nueva is not None:
+                res = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
+                decision = nueva
+                res.reevaluado_por_auditor = True
+                # re-auditar la decisión REVISADA (queda en el ledger; NO vuelve a loopear aunque objete)
+                res.auditoria = self._auditar(res, decision, cartera, caja_actual, contexto, memo_macro, verifs,
+                                              factores=factores_por_ticker, clasif=clasif_por_ticker)
+        # ALTA en la auditoría final → demora los aumentos (como antes).
+        if res.auditoria and any(o.severidad == "alta" for o in res.auditoria.objeciones):
+            res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
+        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
@@ -285,25 +302,25 @@ class OrquestadorDecision:
                                    f"ALERTA al PM, no se vende a la fuerza")
         return res
 
-    def _auditar_y_registrar(self, res, decision, cartera, caja_actual, contexto, ciclo, precios,
-                             hashes, verifs, memo_macro, factores=None, clasif=None, bull=None) -> None:
-        if self.auditor is not None:
-            viol = list(res.holguras)
-            # análisis de cartera determinista para el Auditor (doc 70 D3): concentración por factor de tesis
-            # + tesis cambiada vs entrada (contra el ledger). Factores por ticker los provee el caller (mapa).
-            from backend.agentes.auditoria_cartera import (exposicion_por_factor, render_para_auditor,
-                                                           tesis_cambiada)
-            exp = exposicion_por_factor(res.pesos_finales, factores or {}) if factores else []
-            cambiadas = tesis_cambiada(self.ledger, set(res.pesos_finales))
-            cartera_analisis = render_para_auditor(exp, cambiadas)
-            cartera_analisis += self._sizing_shadow(res.pesos_finales, clasif, factores)
-            res.auditoria = self.auditor.auditar(
-                decision, cartera_actual=cartera, caja_actual=caja_actual,
-                memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol,
-                cartera_analisis=cartera_analisis)
-            if any(o.severidad == "alta" for o in res.auditoria.objeciones):
-                res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
-        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull)
+    def _auditar(self, res, decision, cartera, caja_actual, contexto, memo_macro, verifs,
+                 factores=None, clasif=None):
+        """Corre el Auditor sobre la decisión (NO registra, NO decide demoras — eso lo hace `procesar`).
+        Devuelve el `AuditReport` (o None si no hay auditor)."""
+        if self.auditor is None:
+            return None
+        viol = list(res.holguras)
+        # análisis de cartera determinista para el Auditor (doc 70 D3): concentración por factor de tesis
+        # + tesis cambiada vs entrada (contra el ledger). Factores por ticker los provee el caller (mapa).
+        from backend.agentes.auditoria_cartera import (exposicion_por_factor, render_para_auditor,
+                                                       tesis_cambiada)
+        exp = exposicion_por_factor(res.pesos_finales, factores or {}) if factores else []
+        cambiadas = tesis_cambiada(self.ledger, set(res.pesos_finales))
+        cartera_analisis = render_para_auditor(exp, cambiadas)
+        cartera_analisis += self._sizing_shadow(res.pesos_finales, clasif, factores)
+        return self.auditor.auditar(
+            decision, cartera_actual=cartera, caja_actual=caja_actual,
+            memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol,
+            cartera_analisis=cartera_analisis)
 
     def _sizing_shadow(self, pesos: dict, clasif: dict | None, factores: dict | None) -> str:
         """D4 en modo SOMBRA (doc 74): señal de banda por clasificación + caps agregados para el Auditor. No

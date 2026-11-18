@@ -15,11 +15,19 @@ caja (1−Σpesos) rinde 0. Append-only en JSONL. doc 59: no esperar nada signif
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+_log = logging.getLogger(__name__)
 _SOMBRAS_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "carteras_sombra_v2.jsonl"
+
+# Guard de print malo (2026-11-18): un retorno de 1 ticker en un paso con |r| > 50% es casi siempre un split
+# sin ajustar o un print sucio del proveedor (visto: ITA $213.70→$71.73 ⇒ índice etf_ita falso −66%), no un
+# retorno real. Se DESCARTA esa pata (carry-forward) para que un dato malo no corrompa el índice multiplicativo.
+# No es un ajuste de splits de verdad (eso es más grande); es una red de seguridad del benchmark sombra.
+_MAX_MOVE_PASO = 0.50
 
 # ETFs temáticos (industrias del futuro) + índice amplio, para comparar el picking (doc 59 §6c).
 ETFS_DEFAULT = {"etf_smh": "SMH", "etf_ura": "URA", "etf_ita": "ITA", "etf_copx": "COPX", "spy": "SPY"}
@@ -82,7 +90,12 @@ class LedgerSombras:
             for t, w in prev.pesos.items():
                 p0, p1 = prev.precios.get(t), cur.precios.get(t)
                 if p0 and p1:
-                    ret += w * (p1 / p0 - 1.0)       # la caja (1−Σw) rinde 0
+                    r = p1 / p0 - 1.0
+                    if abs(r) > _MAX_MOVE_PASO:      # print malo/split sin ajustar → descartá la pata (no corrompas)
+                        _log.warning("sombra %s: salto implausible %s %.2f→%.2f (%+.0f%%) %s→%s — descartado",
+                                     cartera, t, p0, p1, r * 100, prev.fecha, cur.fecha)
+                        continue
+                    ret += w * r                     # la caja (1−Σw) rinde 0
             idx *= (1.0 + ret)
             curva.append((cur.fecha, round(idx, 6)))
         return curva

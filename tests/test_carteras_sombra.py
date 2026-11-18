@@ -26,6 +26,25 @@ def test_curva_etf_full_weight(tmp_path):
     assert abs(ld.curva("spy")[-1][1] - 1.01) < 1e-6        # +1%
 
 
+def test_guard_descarta_print_malo(tmp_path):
+    # un print corrupto (ITA $213→$71, split fantasma) NO debe corromper el índice: la pata se descarta → la
+    # curva se queda en el nivel previo en vez de un falso −66% (visto en vivo 2026-11-18).
+    ld = LedgerSombras(path=tmp_path / "s.jsonl")
+    ld.registrar(SnapshotSombra(fecha="2026-11-04", cartera="etf_ita", pesos={"ITA": 1.0}, precios={"ITA": 213.70}))
+    ld.registrar(SnapshotSombra(fecha="2026-11-13", cartera="etf_ita", pesos={"ITA": 1.0}, precios={"ITA": 71.73}))
+    ld.registrar(SnapshotSombra(fecha="2026-11-16", cartera="etf_ita", pesos={"ITA": 1.0}, precios={"ITA": 71.51}))
+    idx = ld.curva("etf_ita")[-1][1]
+    assert idx > 0.9      # NO el 0.33 corrupto: el salto −66% se descartó
+
+
+def test_guard_respeta_movimiento_real_grande(tmp_path):
+    # un movimiento real dentro del umbral (p.ej. −40% de un small-cap) SÍ cuenta (no sobre-filtra)
+    ld = LedgerSombras(path=tmp_path / "s.jsonl")
+    ld.registrar(SnapshotSombra(fecha="2026-11-04", cartera="pm", pesos={"ACHR": 1.0}, precios={"ACHR": 10.0}))
+    ld.registrar(SnapshotSombra(fecha="2026-11-13", cartera="pm", pesos={"ACHR": 1.0}, precios={"ACHR": 6.5}))
+    assert abs(ld.curva("pm")[-1][1] - 0.65) < 1e-6      # −35% real pasa
+
+
 def test_registrar_ciclo_crea_las_carteras_estandar(tmp_path):
     ld = LedgerSombras(path=tmp_path / "s.jsonl")
     ld.registrar_ciclo("2026-10-28", pm_pesos={"OKLO": 0.03}, pass_nombres=["OKLO", "ACHR"],

@@ -71,8 +71,8 @@ def _ejecutar_salidas(duras) -> list:
         precios = precios_de(recolectar_snapshots(tks))
         proy = core.proyectar(paper, precios)
         equity = proy["equity"] or 1.0
-        pesos = {t.upper(): round((pp.shares * precios.get(t, 0.0)) / equity, 6)
-                 for t, pp in proy["posiciones"].items()}        # peso = valor de mercado / equity (no objetos)
+        pesos = {t.upper(): round((pp.shares * precios.get(t.upper(), 0.0)) / equity, 6)
+                 for t, pp in proy["posiciones"].items()}        # peso = valor de mercado / equity (.upper: patrón del runner)
         finales = pesos_tras_salidas(pesos, nuevas)              # solo pone a 0 los tickers de la salida
         res = ResultadoDecision(pesos_objetivo=finales, pesos_finales=finales,
                                 caja_final=round(1.0 - sum(finales.values()), 6), clip="none", no_action=False)

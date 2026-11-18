@@ -168,6 +168,13 @@ class OrquestadorDecision:
         if objs_media and reevaluar_auditor_fn is not None:
             nueva = reevaluar_auditor_fn(res.auditoria.objeciones)
             if nueva is not None:
+                if not nueva.operar_ahora:    # el PM, ante la objeción, decide NO operar → se RESPETA (no ejecuta nada)
+                    res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, nueva.acciones),
+                                            pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
+                                            no_action=False, reevaluado_por_auditor=True, auditoria=res.auditoria,
+                                            alertas=["PM reevaluó tras el Auditor y decidió NO operar ahora"])
+                    self._registrar(res, nueva, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
+                    return res
                 res = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
                 decision = nueva
                 res.reevaluado_por_auditor = True

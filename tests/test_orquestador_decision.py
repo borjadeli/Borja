@@ -104,6 +104,19 @@ def test_objecion_media_vuelve_al_pm_y_reevalua(tmp_path):
     assert res.pesos_finales.get("OKLO") == 0.04        # la decisión REVISADA, no la original (0.1)
 
 
+def test_reevaluacion_el_pm_se_baja_no_ejecuta_nada(tmp_path):
+    # BUG cazado en auto-auditoría: si el PM, tras la objeción, decide NO operar (operar_ahora=False), NO se
+    # ejecuta nada — antes mi loop lo gateaba igual e igual operaba.
+    obj = AuditObjecion(tipo="concentracion", detalle="todo un factor", severidad="media")
+    orq = _orq(tmp_path, auditor=_FakeAuditor([obj]))
+    se_baja = _decision([_accion("OKLO", 0.1, "comprar")], operar=False)   # el PM se arrepiente
+    res = orq.procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c", reevaluar_auditor_fn=lambda objs: se_baja)
+    assert res.reevaluado_por_auditor is True
+    assert res.pesos_finales == {} and res.caja_final == 1.0        # cartera intacta, nada ejecutado
+    assert any("NO operar" in a for a in res.alertas)
+
+
 def test_objecion_baja_NO_vuelve_al_pm(tmp_path):
     # una objeción "baja" es ruido → NO dispara reevaluación (umbral media+).
     obj = AuditObjecion(tipo="coherencia", detalle="menor", severidad="baja")

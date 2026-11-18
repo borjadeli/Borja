@@ -15,13 +15,20 @@ _log = logging.getLogger(__name__)
 _REPO = Path(__file__).resolve().parent.parent.parent
 
 
-def disparar_comite(*, universo: bool = True, contratos: bool = True, timeout: int = 2400) -> dict:
-    """Corre `ops.correr_semana_v2` como subproceso. Devuelve {ok, returncode, resumen}. Fail-safe: nunca lanza."""
+def disparar_comite(*, universo: bool = True, contratos: bool = True, solo_pm: bool = False,
+                    timeout: int = 2400) -> dict:
+    """Corre `ops.correr_semana_v2` como subproceso. Devuelve {ok, returncode, resumen}. Fail-safe: nunca lanza.
+
+    `solo_pm=True` (r10 P0-3 / doc 85 DESPERTAR): el PM decide sobre su packet SIN comité (barato). En ese modo
+    se ignoran `universo`/`contratos` (no hay scan de universo ni deeps de oportunidad)."""
     cmd = [sys.executable, "-m", "ops.correr_semana_v2"]
-    if universo:
-        cmd.append("--universo")
-    if contratos:
-        cmd.append("--contratos")
+    if solo_pm:
+        cmd.append("--solo-pm")
+    else:
+        if universo:
+            cmd.append("--universo")
+        if contratos:
+            cmd.append("--contratos")
     _log.info("disparando comité: %s", " ".join(cmd[2:]))
     try:
         p = subprocess.run(cmd, cwd=str(_REPO), capture_output=True, text=True, timeout=timeout)

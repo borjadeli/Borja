@@ -122,6 +122,50 @@ def test_pm_sin_accion_no_opera(tmp_path, sesion):
     assert core.proyectar(sesion, {"OKLO": 50.0})["posiciones"] == {}
 
 
+def test_solo_pm_usa_cache_sin_comite(tmp_path, sesion, monkeypatch):
+    # DESPERTAR (r10 P0-3 / doc 85): solo_pm=True NO corre el comité; el PM decide sobre las fichas VIGENTES
+    # con los dossiers del CACHE. Si el runner intentara correr el comité, el stub revienta.
+    import backend.agentes.ficha_store as fs
+    from backend.agentes.orquestador import _Entrada
+
+    class _FakeFicha:
+        def __init__(self, ticker, estado):
+            self.ticker, self.estado = ticker, estado
+
+    class _FakeStore:
+        def __init__(self, *a, **k):
+            pass
+
+        def todos(self):
+            return {"OKLO": _FakeFicha("OKLO", "VIGENTE")}
+
+    monkeypatch.setattr(fs, "StoreFichas", _FakeStore)
+
+    class _CacheStub:
+        def todos(self):
+            return {"OKLO": _Entrada(hash="h9", fecha=F, dossier=_dossier(), verif=_verif())}
+
+    class _ResearchSoloPM:
+        cache = _CacheStub()
+
+        def correr_semana(self, *a, **k):
+            raise AssertionError("solo_pm NO debe correr el comité")
+
+    pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",
+                   cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([_accion()]), _U)])), _ips())
+    decision = OrquestadorDecision(_ips(), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    runner = RunnerSemanal(research=_ResearchSoloPM(), pm=pm, decision=decision, alertas_path=None)
+
+    res = runner.correr([], session=sesion, precios={"OKLO": 50.0},
+                        contexto={"OKLO": ContextoTicker(sector="energia", cuello="smr",
+                                                         market_cap=5e9, adv_usd=10e6)},
+                        hoy=F, ciclo="c", solo_pm=True)
+    # el PM vio el dossier del CACHE (no del comité) y la compra se registró con SU hash
+    assert res.dossiers_considerados == ["OKLO"]
+    ds = decision.ledger.decisiones()
+    assert len(ds) == 1 and ds[0].dossier_hash == "h9"
+
+
 def test_r2_alertas_se_persisten(tmp_path, sesion):
     # el PM compra un nombre INADMISIBLE (market cap > 60B) → el gate no lo abre y genera alerta → se persiste
     pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",

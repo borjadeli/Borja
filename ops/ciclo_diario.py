@@ -152,10 +152,10 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_
             print("🔔 DESPERTAR AL PM:")
             for m in res.motivos_despertar:
                 print(f"  - {m}")
-            if despertar_pm:          # dispara el comité de verdad (el ledger de presupuesto es la guarda de costo)
-                from backend.agentes.disparar_comite import disparar_comite
-                r = disparar_comite(universo=True, contratos=True)
-                print(f"\n=== COMITÉ DISPARADO (ok={r['ok']}) ===\n{r['resumen']}")
+            if despertar_pm:          # r10 P0-3: el DESPERTAR corre SOLO el PM (su packet), no el comité completo.
+                from backend.agentes.disparar_comite import disparar_comite    # los análisis nuevos van por la cola.
+                r = disparar_comite(solo_pm=True)
+                print(f"\n=== PM DESPERTADO (solo-PM, ok={r['ok']}) ===\n{r['resumen']}")
         else:
             print("sin motivo para despertar al PM (válido: no hacer nada).")
     finally:

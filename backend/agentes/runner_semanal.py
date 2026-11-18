@@ -148,36 +148,55 @@ class RunnerSemanal:
                cupo_cobertura: int = 0, bootstrap: bool = False,
                invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
                cupo_gigantes: int = 0, precios_meta: dict[str, dict] | None = None,
-               eventos_solo_posiciones: bool = False, cupo_oportunidad: int | None = None) -> ResultadoRunner:
+               eventos_solo_posiciones: bool = False, cupo_oportunidad: int | None = None,
+               solo_pm: bool = False) -> ResultadoRunner:
         hoy = hoy or date.today()
         ciclo = ciclo or hoy.isoformat()
-
-        # 1. Research bajo presupuesto → dossiers verificados por nombre (con cupo de cobertura/bootstrap).
-        # Los filtros del embudo (market cap pre-deep, carril forzado capeado, gigantes) se pasan iguales que
-        # en el dry-run → "dry-run = corrida real" (doc 76).
-        research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy,
-                                               cupo_cobertura=cupo_cobertura, bootstrap=bootstrap,
-                                               invertible_fn=invertible_fn, cupo_forzados=cupo_forzados,
-                                               gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes,
-                                               eventos_solo_posiciones=eventos_solo_posiciones,
-                                               cupo_oportunidad=cupo_oportunidad)
-        memo_txt = research.memo.resumen if research.memo else ""
 
         dossiers: list[tuple[Dossier, VerificationReport]] = []
         hashes: dict[str, str] = {}
         verifs: dict[str, str] = {}
         flags: dict[str, list[str]] = {}
-        for d in research.decisiones:
-            if d.dossier is None or d.verif is None:
-                continue
-            tk = d.ticker.upper()
-            verifs[tk] = d.verif.veredicto
-            if d.verif.flags_supervivencia:
-                flags[tk] = list(d.verif.flags_supervivencia)
-            if d.hash:
-                hashes[tk] = d.hash
-            if d.verif.veredicto in ("pass", "review"):          # FAIL no justifica compra/aumento
-                dossiers.append((d.dossier, d.verif))
+
+        # 1. Dossiers verificados por nombre. Dos caminos:
+        #  - semanal/evento (default): corre el COMITÉ bajo presupuesto (Analista→Bear→Verificador). Los filtros
+        #    del embudo se pasan iguales que el dry-run → "dry-run = corrida real" (doc 76).
+        #  - DESPERTAR (solo_pm, r10 P0-3 / doc 85): el PM decide sobre su packet (fichas VIGENTES + cartera) SIN
+        #    correr el comité. Los dossiers salen del CACHE (ya verificados); los análisis NUEVOS van por la cola.
+        if solo_pm:
+            from backend.agentes.ficha_store import StoreFichas
+            vigentes = {f.ticker.upper() for f in StoreFichas().todos().values() if f.estado == "VIGENTE"}
+            cache = getattr(self.research, "cache", None)
+            entradas = cache.todos() if cache is not None else {}
+            for tk, e in entradas.items():
+                if tk in vigentes and e.verif is not None and e.verif.veredicto in ("pass", "review"):
+                    verifs[tk] = e.verif.veredicto
+                    if e.verif.flags_supervivencia:
+                        flags[tk] = list(e.verif.flags_supervivencia)
+                    if e.hash:
+                        hashes[tk] = e.hash
+                    dossiers.append((e.dossier, e.verif))
+            research = ResultadoSemana(memo=None)   # sin comité → clasif/bull shadow quedan vacíos (OK para un wake)
+            memo_txt = ""
+        else:
+            research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy,
+                                                   cupo_cobertura=cupo_cobertura, bootstrap=bootstrap,
+                                                   invertible_fn=invertible_fn, cupo_forzados=cupo_forzados,
+                                                   gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes,
+                                                   eventos_solo_posiciones=eventos_solo_posiciones,
+                                                   cupo_oportunidad=cupo_oportunidad)
+            memo_txt = research.memo.resumen if research.memo else ""
+            for d in research.decisiones:
+                if d.dossier is None or d.verif is None:
+                    continue
+                tk = d.ticker.upper()
+                verifs[tk] = d.verif.veredicto
+                if d.verif.flags_supervivencia:
+                    flags[tk] = list(d.verif.flags_supervivencia)
+                if d.hash:
+                    hashes[tk] = d.hash
+                if d.verif.veredicto in ("pass", "review"):          # FAIL no justifica compra/aumento
+                    dossiers.append((d.dossier, d.verif))
 
         # D4 (doc 74 + r5 item 2): clasificación por nombre para la señal de sizing (sombra). El techo de hechos
         # usa DATOS DUROS del pack (NO traccion_0_4, que la declara el Analista): revenue recurrente = revenue FY

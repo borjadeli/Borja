@@ -273,6 +273,9 @@ def main() -> int:
     ap.add_argument("--contratos", action="store_true",
                     help="con --universo: detectar 8-K Item 1.01 recientes → parser (Haiku) → bonus al score + "
                          "carril contrato_nuevo (r9a #3). Gasta un poco de LLM (solo en los 1.01 reales).")
+    ap.add_argument("--solo-pm", action="store_true",
+                    help="DESPERTAR (r10 P0-3 / doc 85): el PM decide sobre su packet (fichas VIGENTES del cache + "
+                         "cartera) SIN correr el comité. Barato — los análisis nuevos van por la cola (drenaje).")
     args = ap.parse_args()
     tickers = [t.upper() for t in (args.tickers or ["OKLO"])]
 
@@ -325,7 +328,22 @@ def main() -> int:
     # --universo (r3 #7 / r4 #1b): candidatos desde TODO nx con señales reales + fechas del cache +
     # posiciones del paper + prioridad del cuello del mapa. El Triage/embudo filtra qué va a deep.
     from backend.database import session_scope
-    if args.universo:
+    if args.solo_pm:
+        # DESPERTAR (r10 P0-3): sin comité. Los tickers que necesitan precio/contexto = posiciones del paper ∪
+        # nombres con ficha VIGENTE (lo que el PM puede sizar). El research lo saltea el runner (solo_pm=True).
+        from backend.agentes.ficha_store import StoreFichas
+        _paper_tmp = abrir_paper(capital_inicial=args.capital, fecha=date.today())
+        try:
+            _pos = _posiciones_paper(_paper_tmp)
+        finally:
+            _paper_tmp.close()
+        _vig = {f.ticker.upper() for f in StoreFichas().todos().values() if f.estado == "VIGENTE"}
+        tickers = sorted(_pos | _vig) or tickers
+        print(f"DESPERTAR (solo-PM, sin comité): posiciones={sorted(_pos)} + fichas VIGENTES={sorted(_vig)}")
+        snaps = recolectar_snapshots(tickers)
+        precios = precios_de(snaps)
+        candidatos = _candidatos(tickers)
+    elif args.universo:
         from backend.agentes import data_pack as dp
         from backend.agentes.universo import (candidatos_del_universo, cuello_primario,
                                               tickers_universo, valor_del_universo)
@@ -405,7 +423,8 @@ def main() -> int:
                             hoy=date.today(), cupo_cobertura=args.cupo, bootstrap=args.bootstrap,
                             invertible_fn=inv_fn, cupo_forzados=cupo_forz,
                             gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig, precios_meta=precios_meta,
-                            eventos_solo_posiciones=args.universo, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)))
+                            eventos_solo_posiciones=args.universo, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)),
+                            solo_pm=args.solo_pm)
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:

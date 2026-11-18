@@ -45,24 +45,30 @@ el LLM no hace mejor: **datos + límites + triage**.
   **inputs** del data pack, nunca veredicto. (`backend/services/`, `backend/nucleo/` calculadoras + motor de evidencia.)
 - **B — IPS** (`config/ips.yaml`, a construir): el único lugar donde el código manda, con reglas del operador
   (máx posiciones, peso máx/nombre **20%**, caps sector/cuello, rango market cap **$150M–$60B**, liquidez,
-  caja, máx ops/semana, presupuesto LLM **$40/mes**). Si el PM viola el IPS, el código rechaza y devuelve.
+  caja, máx ops/semana, presupuesto LLM **$100/mes** — subido de $40 en fase de construcción). Si el PM viola el
+  IPS, el código rechaza y devuelve. **Candado (doc 85):** DURO = ficha VIGENTE + datos limpios + pipeline vivo
+  (dead-man's-switch 26h) para abrir; la zona COMPRA es BLANDA (fuera de zona el PM entra ≤3% con justificación).
 - **C — Agentes** (razonan y deciden): Macro · Map Curator+Discovery · Triage · **Analista** (Opus+web
   agéntico) · Bear/Red-team · Verificador · **PM** · Auditor. Prompts versionados, salida pydantic, costo
   registrado, fuentes citadas.
-- **D — Monitoreo por eventos** (el determinismo detecta, el PM decide): filings / precio / red flags /
-  falsadores que vencen / 5 vías de `salida.py` → abren una **revisión** del nombre. Las 5 vías son **alertas**,
-  no ventas automáticas.
+- **D — Monitoreo por eventos** (el determinismo detecta, el PM decide): poller horario de filings / precio /
+  red flags / falsadores que vencen → **DESPIERTAN al PM** (corre solo el PM sobre su packet, no el comité).
+  **Determinismo al MÍNIMO (directiva del operador, r10):** solo el tier A catastrófico (quiebra 8-K 1.03,
+  restatement 4.02) auto-ejecuta risk-off; todo lo demás es **alerta** que abre una revisión — el PM decide, el
+  Auditor cuestiona. Falsadores estructurados: NUNCA se dan por confirmados por ausencia de dato.
 - **E — Ledger y evaluación**: ledger append-only + hit-rate de falsadores + Brier + P&L; **carteras sombra**
   desde el día 1 (equal-weight, "Opus+web solo", ETFs temáticos).
 
 ## 4. Estado actual — ver doc 53 (vivo)
-**DESTETE v2: Fases 1-3 completas; Fase 4 + P1 validados en vivo (2026-10-28).** El comité completo existe y
-corre end-to-end: `fuente_xbrl` (datos point-in-time) + calculadoras (runway/dilución) → Analista/Bear/
-Verificador (con contraste numérico vs XBRL y clase epistémica por URL) → PM (sizea bajo IPS) → Auditor →
-paper nuevo (`paper_pm.py` sobre el ledger fiel). **Primera compra real: el PM compró OKLO 3% en el smoke #2.**
-Dos auditorías externas (docs 57/58) convergidas (59); P0/r2 cerrados. Lectura advisory: `ops.estado_v2`.
-Suite: ~612 tests verdes. Lo vivo y el "qué falta" están en el doc 53. (El framing v1 "el determinismo decide"
-quedó invertido; el método v1 se conserva como herramienta — ver `init_docs/00_MAPA_DOCUMENTOS.md`.)
+**DESTETE v2: comité end-to-end en vivo + PM AUTÓNOMO construido (doc 85, F1+F2; r10 aplicada).** El comité
+corre: `fuente_xbrl` (datos point-in-time) + calculadoras (runway/dilución) → Analista/Bear/Verificador
+(contraste numérico vs XBRL + clase epistémica por URL) → PM (sizea bajo IPS) → Auditor → paper nuevo
+(`paper_pm.py` sobre el ledger fiel). **Sistema nervioso autónomo (doc 85):** poller horario · event monitor
+8-K · reglas de salida (solo tier A auto) · Research Queue + input del operador (`ops.solicitar`) + SOLICITAR_DEEP
+del PM · drenaje (cola→MISMO comité→ficha) · run_cycle diario · comité semanal + DESPERTAR solo-PM. Agendado en
+el scheduler (⚠️ toma efecto al **reiniciar el host**). **Primera compra real: el PM compró OKLO 3% en el smoke #2.**
+Suite: **~953 tests verdes.** Lo vivo y el "qué falta" (P0-3 ya hecho; P1-5 hecho; doc 77 pendiente) están en el
+doc 53. (El framing v1 "el determinismo decide" quedó invertido; el método v1 se conserva como herramienta.)
 
 ## 5. Mapa del código
 - `backend/nucleo/` — **motor de evidencia + calculadoras CONSERVADOS** (fact_store, extractor_citado,

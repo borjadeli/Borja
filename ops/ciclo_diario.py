@@ -59,7 +59,7 @@ def _ejecutar_salidas(duras) -> list:
         paper.close()
 
 
-def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True) -> None:
+def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_pm: bool = True) -> None:
     if not _tomar_lock():
         print("⚠️  ya hay un ciclo corriendo (lock vivo) — se saltea para no duplicar")
         return
@@ -128,6 +128,10 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True) -> None:
             print("🔔 DESPERTAR AL PM:")
             for m in res.motivos_despertar:
                 print(f"  - {m}")
+            if despertar_pm:          # dispara el comité de verdad (el ledger de presupuesto es la guarda de costo)
+                from backend.agentes.disparar_comite import disparar_comite
+                r = disparar_comite(universo=True, contratos=True)
+                print(f"\n=== COMITÉ DISPARADO (ok={r['ok']}) ===\n{r['resumen']}")
         else:
             print("sin motivo para despertar al PM (válido: no hacer nada).")
     finally:
@@ -138,5 +142,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--presupuesto", type=float, default=6.0)
     ap.add_argument("--sin-drenaje", action="store_true")
+    ap.add_argument("--sin-despertar", action="store_true", help="computa el despertar pero NO dispara el comité")
     a = ap.parse_args()
-    correr(a.presupuesto, con_drenaje=not a.sin_drenaje)
+    correr(a.presupuesto, con_drenaje=not a.sin_drenaje, despertar_pm=not a.sin_despertar)

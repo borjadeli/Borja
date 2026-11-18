@@ -94,11 +94,21 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
     )
     # CICLO DIARIO (doc 85 §9): post-cierre, encadena poller → latido → drenaje de la cola → decide despertar al PM
     # (cambio de zona / deep en COMPRA / regla de salida). Con lock anti-duplicados. Incluye el latido.
+    # El ciclo diario dispara el comité SOLO si hay motivo (despertar_pm=True por default; el ledger de
+    # presupuesto fail-closed es la guarda de costo). Si no hay motivo, no gasta LLM.
     from ops.ciclo_diario import correr as _ciclo_diario
     scheduler.add_job(
         func=_safe_run(lambda: _ciclo_diario(drenar_presupuesto=6.0), "ciclo_diario"),
         trigger=CronTrigger(day_of_week="mon-fri", hour=16, minute=50, timezone="America/New_York"),
         id="ciclo_diario", replace_existing=True,
+    )
+    # COMITÉ SEMANAL (doc 85 §3): la revisión completa del PM aunque no haya alertas. Domingo 18:00 ET (antes de
+    # la semana). Es la corrida que re-evalúa la cartera como un todo. GASTA LLM (acotado por el presupuesto).
+    from backend.agentes.disparar_comite import disparar_comite
+    scheduler.add_job(
+        func=_safe_run(lambda: disparar_comite(universo=True, contratos=True), "comite_semanal"),
+        trigger=CronTrigger(day_of_week="sun", hour=18, minute=0, timezone="America/New_York"),
+        id="comite_semanal", replace_existing=True,
     )
 
     _jobs_registered = True

@@ -77,6 +77,8 @@ turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) �
 #   objeción medible del auditor (predicción falsable), no como gate duro.
 
 # --- Presupuesto LLM (el ledger de presupuesto lo hace cumplir; acá queda el número) ---
+peso_max_compra_blanda: 0.03  # r10/doc 80 §H: tope de una entrada FUERA de zona COMPRA (ficha vigente+datos limpios
+                              #   pero zona≠COMPRA). El PM decide la entrada; el determinismo solo limita el tamaño.
 presupuesto_usd_mes: 100.0    # subido de 40 → 100 (2026-11-16): fase de construcción, el operador autoriza gastar más
 presupuesto_bootstrap_usd: 25.0     # tope PROPIO de la primera pasada del universo (separado del mensual)
 

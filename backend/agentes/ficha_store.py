@@ -98,11 +98,21 @@ def recalcular_todas(store: StoreFichas, *, precios_fn: Callable[[str], float | 
 
 
 def comprable_por_ticker(fichas: dict) -> dict[str, bool]:
-    """CANDADO (doc 85): ticker → ¿es comprable? = ficha VIGENTE en zona COMPRA con datos limpios. El gate lo
-    consulta al momento de decidir (no confía en el packet). `fichas` = dict ticker→Ficha (del store)."""
+    """CANDADO (doc 85): ticker → ¿es comprable PLENO? = ficha VIGENTE en zona COMPRA con datos limpios. El gate
+    lo consulta al momento de decidir (no confía en el packet). `fichas` = dict ticker→Ficha (del store)."""
     out: dict[str, bool] = {}
     for tk, f in (fichas or {}).items():
         zona = f.latido.zona if getattr(f, "latido", None) else None
         out[tk.upper()] = (zona == "COMPRA" and getattr(f, "estado", None) == "VIGENTE"
                            and not getattr(f, "datos_conflicted", False))
+    return out
+
+
+def admisible_duro_por_ticker(fichas: dict) -> dict[str, bool]:
+    """CANDADO DURO (r10 / doc 80 §H): ticker → ¿ficha VIGENTE con datos limpios? (SIN exigir zona COMPRA). Es el
+    requisito INEQUÍVOCO para abrir; la zona COMPRA es BLANDA (el PM puede entrar fuera de zona con peso chico +
+    justificación + el Auditor revisa). Sin esto (ficha vencida / datos sucios / sin ficha) → NO se abre ni chico."""
+    out: dict[str, bool] = {}
+    for tk, f in (fichas or {}).items():
+        out[tk.upper()] = (getattr(f, "estado", None) == "VIGENTE" and not getattr(f, "datos_conflicted", False))
     return out

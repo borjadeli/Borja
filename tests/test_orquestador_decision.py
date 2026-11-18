@@ -67,16 +67,27 @@ def test_decision_limpia_clip_none(tmp_path):
     assert res.pesos_finales == {"OKLO": 0.1} and abs(res.caja_final - 0.9) < 1e-9
 
 
-def test_f1_candado_bloquea_compra_sin_ficha_comprable(tmp_path):
-    # doc 85: el candado (opt-in) exige ficha VIGENTE en zona COMPRA + datos limpios. Sin eso → no se abre.
+def test_f1_candado_duro_bloquea_sin_ficha_vigente(tmp_path):
+    # r10: candado DURO = sin ficha VIGENTE + datos limpios → NO se abre (ni chico). admis_duro=False → bloquea.
     res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
-                                  contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": False})
-    assert "OKLO" not in res.pesos_finales and abs(res.caja_final - 1.0) < 1e-9
-    assert any("candado" in a for a in res.alertas)
-    # con ficha comprable → sí abre
+                                  contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": False},
+                                  admisible_duro_por_ticker={"OKLO": False})
+    assert "OKLO" not in res.pesos_finales and any("candado duro" in a for a in res.alertas)
+    # con ficha comprable (VIGENTE+COMPRA) → abre pleno
     res2 = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
-                                   contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": True})
+                                   contexto=_ctx(), ciclo="c", comprable_por_ticker={"OKLO": True},
+                                   admisible_duro_por_ticker={"OKLO": True})
     assert res2.pesos_finales.get("OKLO") == 0.1
+
+
+def test_f1_zona_compra_blanda_capea_a_3pct(tmp_path):
+    # r10/doc 80 §H: ficha VIGENTE + datos limpios pero NO en COMPRA → el PM PUEDE entrar, capeado a ≤3%.
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c",
+                                  comprable_por_ticker={"OKLO": False},      # no en COMPRA
+                                  admisible_duro_por_ticker={"OKLO": True})  # pero vigente + datos limpios
+    assert res.pesos_finales.get("OKLO") == 0.03                            # capeado a la banda blanda, NO bloqueado
+    assert any("FUERA de zona COMPRA" in a for a in res.alertas)
 
 
 def test_f1_dead_mans_switch_bloquea_todo(tmp_path):

@@ -42,9 +42,11 @@ NO te impone tamaños** — solo te marca los límites duros del IPS (el mandato
    - **RECORTE / SALIDA por valuación** → NO vendas automático. Dispara una **re-suscripción de la tesis**
      (refresh): si los escenarios siguen, podés mantener al ganador; el **único recorte obligatorio es peso >
      banda**. No vendas un ganador solo porque la etiqueta dice RECORTE.
-   - **COMPRA** → requisito BLANDO: comprá solo si la ficha es **vigente** (posterior al último 10-Q/10-K) y los
-     **datos no están en conflicto** (`datos_conflicted`). Si entrás fuera de zona, justificalo por escrito (el
-     Auditor lo marca). Una COMPRA con datos conflicted NO se ejecuta: se re-verifica.
+   - **COMPRA → requisito BLANDO (vos decidís, doc 80 §H):** el candado DURO exige ficha **vigente** (posterior al
+     último 10-Q/10-K) + **datos limpios** (`datos_conflicted`=false) + pipeline vivo. Eso es inequívoco. Pero la
+     ZONA es blanda: si la ficha está vigente y limpia pero NO en zona COMPRA, **podés entrar igual con ≤3%** +
+     justificación escrita (el Auditor la revisa; el gate te capea el tamaño solo). En zona COMPRA entrás pleno.
+     Sin ficha vigente/limpia NO entrás ni chico → pedí el deep (`solicitudes_deep`). Datos conflicted → re-verificar.
 1ter. **SOLICITAR_DEEP (doc 85) — si querés un nombre de tu packet que NO tiene ficha vigente, NO lo compres a
    ciegas: pedí el deep.** Agregalo a `solicitudes_deep` con el ticker y tu motivo (qué hipótesis querés validar,
    qué decisión cambiaría). El sistema lo investiga y lo vas a ver con ficha fresca en una corrida siguiente. Solo

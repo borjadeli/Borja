@@ -119,6 +119,7 @@ class OrquestadorDecision:
                  cargas_por_ticker: dict[str, dict[str, float]] | None = None,
                  clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
                  comprable_por_ticker: dict[str, bool] | None = None, pipeline_fresco: bool = True,
+                 admisible_duro_por_ticker: dict[str, bool] | None = None,
                  memo_macro: str = "", repropuesta_fn=None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
@@ -133,6 +134,11 @@ class OrquestadorDecision:
         # OPT-IN: None = candado apagado (backward-compat); un dict (aun vacío) = candado activo.
         comprable = (None if comprable_por_ticker is None
                      else {t.upper(): bool(v) for t, v in comprable_por_ticker.items()})
+        # r10 / doc 80 §H — zona COMPRA BLANDA: `admisible_duro` (VIGENTE + datos limpios, SIN exigir COMPRA) es el
+        # requisito duro; si es admisible pero NO está en COMPRA, el PM puede entrar con peso chico (el determinismo
+        # limita el TAMAÑO, no prohíbe — el PM decide, el Auditor revisa). None → se deriva de comprable (sin blando).
+        admis_duro = ({t.upper(): bool(v) for t, v in admisible_duro_por_ticker.items()}
+                      if admisible_duro_por_ticker is not None else comprable)
         cargas = {t.upper(): c for t, c in (cargas_por_ticker or {}).items()}  # F4: cargas de factor por ticker
 
         # operar_ahora=False → no se ejecuta nada; NO se llama al Auditor (item 6).
@@ -143,13 +149,13 @@ class OrquestadorDecision:
             self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
             return res
 
-        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco)
+        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
 
         # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
         if res.no_action and repropuesta_fn is not None:
             nueva = repropuesta_fn(res.holguras)
             if nueva is not None:
-                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco)
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
                 res, decision = res2, nueva
 
         self._auditar_y_registrar(res, decision, cartera, caja_actual, contexto, ciclo, precios,
@@ -161,7 +167,8 @@ class OrquestadorDecision:
               contexto: dict[str, ContextoTicker], flags: dict[str, list[str]], hoy: date,
               ciego: dict[str, str] | None = None,
               cargas: dict[str, dict[str, float]] | None = None,
-              comprable: dict[str, bool] | None = None, pipeline_fresco: bool = True) -> ResultadoDecision:
+              comprable: dict[str, bool] | None = None, pipeline_fresco: bool = True,
+              admis_duro: dict[str, bool] | None = None) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
         banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
@@ -183,17 +190,20 @@ class OrquestadorDecision:
                 aumentos[tk] = tgt
         tras_red = {t: w for t, w in pesos.items() if w > 0}
 
-        # 2. Clip de aumentos: CANDADO (F1/doc 85) + verificación ciega (F3) + admisibilidad + cap + flag.
+        # 2. Clip de aumentos: CANDADO (F1/doc 85 + r10) + verificación ciega (F3) + admisibilidad + cap + flag.
         ciego = ciego or {}
+        admis = admis_duro if admis_duro is not None else comprable
         candado_on = comprable is not None   # opt-in: solo aplica si el caller pasó comprable_por_ticker
+        peso_max_blando = float(self.ips.cfg.get("peso_max_compra_blanda", 0.03))   # r10/doc 80 §H
         if candado_on and not pipeline_fresco:   # DEAD MAN'S SWITCH: sin poller vivo no se confía en ninguna vigencia
             alertas.append("PIPELINE_CAIDO — el poller no corrió (>26h); fail-closed: NINGUNA compra/aumento se abre")
         ok: dict[str, float] = {}
         for tk, tgt in aumentos.items():
             if candado_on and not pipeline_fresco:   # dead man's switch: bloquea TODOS los aumentos
                 continue
-            if candado_on and not comprable.get(tk, False):  # CANDADO: sin ficha VIGENTE en COMPRA + datos limpios → no se abre
-                alertas.append(f"{tk}: SIN_FICHA_VIGENTE/FUERA_DE_ZONA — candado (doc 85): no se abre/aumenta sin ficha comprable")
+            # CANDADO DURO: sin ficha VIGENTE + datos limpios → NO se abre (ni chico). Es el requisito inequívoco.
+            if candado_on and not admis.get(tk, False):
+                alertas.append(f"{tk}: SIN_FICHA_VIGENTE/DATOS_SUCIOS — candado duro: no se abre (pedí deep)")
                 continue
             if ciego.get(tk) == "FAIL":     # F3 (doc 83 §4): el canal ciego no reconcilió la evidencia primaria
                 alertas.append(f"{tk}: verificación ciega FAIL — no confiable hasta reconciliar, NO se abre/aumenta")
@@ -202,6 +212,11 @@ class OrquestadorDecision:
                 alertas.append(f"{tk}: inadmisible (market cap/ADV) — no se abre/aumenta")
                 continue
             tope = peso_max
+            # ZONA COMPRA BLANDA (r10/doc 80 §H): admisible pero NO en COMPRA → el PM puede entrar, capeado a ≤3%
+            # (el determinismo limita el TAMAÑO, no prohíbe; el PM justifica, el Auditor revisa).
+            if candado_on and not comprable.get(tk, False):
+                tope = min(tope, peso_max_blando)
+                alertas.append(f"{tk}: entrada FUERA de zona COMPRA — blanda, capeada a {tope:.0%} (el PM justifica, el Auditor revisa)")
             if _flag_no_resuelto(tk, flags.get(tk, []), decision.respuestas_flags):
                 tope = min(tope, cap_flag)
                 alertas.append(f"{tk}: flag de supervivencia no resuelto → tope {tope:.0%}")

@@ -288,19 +288,24 @@ class RunnerSemanal:
         # 3ter. CANDADO (F1, doc 85): comprable = ficha VIGENTE en zona COMPRA + datos limpios (lo computa el store).
         # Se consulta AL MOMENTO DEL GATE (no del packet). pipeline_fresco = dead-man's-switch (opt-in vía caller).
         comprable_tk: dict[str, bool] | None = None
+        admis_duro_tk: dict[str, bool] | None = None
         if self.candado_on:
             try:
-                from backend.agentes.ficha_store import StoreFichas, comprable_por_ticker as _comprable
-                comprable_tk = _comprable(StoreFichas().todos())
+                from backend.agentes.ficha_store import (StoreFichas, admisible_duro_por_ticker as _admis,
+                                                         comprable_por_ticker as _comprable)
+                _fichas = StoreFichas().todos()
+                comprable_tk = _comprable(_fichas)
+                admis_duro_tk = _admis(_fichas)   # zona COMPRA blanda: el requisito duro es VIGENTE+datos limpios
             except Exception as e:  # noqa: BLE001 — si no se puede computar, el gate recibe {} (fail-closed p/ compras)
                 _log.warning("no pude computar comprable (candado fail-closed): %s", e)
-                comprable_tk = {}
+                comprable_tk, admis_duro_tk = {}, {}
 
         # 4. Gate duro del IPS + Auditor + ledger; re-propuesta UNA vez si el gate rechaza aumentos (1d).
         res_dec = self.decision.procesar(
             decision, cartera_actual=pesos_actual, caja_actual=caja_pct, contexto=contexto, ciclo=ciclo,
             hoy=hoy, precios=precios, dossier_hash_por_ticker=hashes, verif_por_ticker=verifs,
             comprable_por_ticker=comprable_tk, pipeline_fresco=self.pipeline_fresco,
+            admisible_duro_por_ticker=admis_duro_tk,
             flags_por_ticker=flags, ciego_por_ticker=ciego_vered,
             clasif_por_ticker=clasif_por_ticker, bull_por_ticker=bull_por_ticker,
             cargas_por_ticker=cargas_por_ticker,

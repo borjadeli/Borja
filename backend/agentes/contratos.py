@@ -34,7 +34,7 @@ SCHEMA = {
     },
 }
 
-SYS = """Sos un Verificador financiero. Clasificás un acuerdo material (SEC 8-K, Item 1.01)
+SYS = """Sos un Verificador financiero. Clasificás un 8-K (Item 1.01 acuerdo definitivo, o 7.01/8.01 anuncio)
 según si es un CONTRATO DE INGRESOS/OFFTAKE para la empresa que reporta.
 
 label:
@@ -66,27 +66,49 @@ class ContratoClasificado:
     cuenta: bool               # label in (firme, condicional)
 
 
-def es_item_contrato(items: str | list | None) -> bool:
-    """Pre-filtro determinista: solo el Item 1.01 (material definitive agreement) es candidato a contrato
-    de ingresos. Evita gastar LLM en 8-K de otros ítems."""
+def clase_item(items: str | list | None) -> str | None:
+    """Pre-filtro determinista → qué clase de candidato es el 8-K (P1-5, doc 85):
+    - "definitivo": Item 1.01 (material definitive agreement) → puede ser 'firme'.
+    - "anuncio": Item 7.01 (Reg FD) / 8.01 (Other Events) → press-release/aviso; a lo sumo 'condicional'
+      (no es un acuerdo vinculante, aunque mencione un contrato o monto).
+    - None: ningún ítem de contrato → no se gasta LLM."""
     if not items:
-        return False
+        return None
     s = ",".join(items) if isinstance(items, (list, tuple)) else str(items)
-    return "1.01" in s
+    if "1.01" in s:
+        return "definitivo"
+    if "7.01" in s or "8.01" in s:
+        return "anuncio"
+    return None
+
+
+def es_item_contrato(items: str | list | None) -> bool:
+    """Candidato a contrato de ingresos: Item 1.01 (definitivo) o 7.01/8.01 (anuncio). Evita gastar LLM en el resto."""
+    return clase_item(items) is not None
 
 
 def clasificar_contrato(excerpt: str, *, items: str | list | None = None, fecha: str | None = None,
                         modelo: str = VERIF_MODEL, cliente=None) -> ContratoClasificado:
-    """Clasifica un filing. Si no es Item 1.01 → no_cuenta sin LLM. Si lo es → Verificador (Haiku)."""
-    if not es_item_contrato(items):
-        return ContratoClasificado("no_cuenta", "no_1.01", "", 0.0, "no es Item 1.01", cuenta=False)
+    """Clasifica un filing. Sin ítem de contrato → no_cuenta sin LLM. Si lo es → Verificador (Haiku). Un
+    7.01/8.01 (anuncio) se CAPEA a 'condicional' aunque el LLM diga 'firme': sin el 1.01 no hay acuerdo
+    definitivo, es un aviso (P1-5)."""
+    clase = clase_item(items)
+    if clase is None:
+        return ContratoClasificado("no_cuenta", "no_contrato", "", 0.0, "no es ítem de contrato (1.01/7.01/8.01)",
+                                    cuenta=False)
     ag = Agente("parser-contratos", "contratos-v1", modelo, cliente=cliente)
-    user = f"Items: {items}\nFecha: {fecha}\n\nExcerpt del filing:\n{excerpt}"
+    nota = "" if clase == "definitivo" else ("\n\n[ES UN 7.01/8.01 — ANUNCIO/PRESS RELEASE, NO un acuerdo "
+                                             "definitivo: a lo sumo 'condicional', NUNCA 'firme'.]")
+    user = f"Items: {items}\nFecha: {fecha}{nota}\n\nExcerpt del filing:\n{excerpt}"
     j, _meta = ag.estructurado(system=SYS, user=user, payload_schema=SCHEMA, max_tokens=1024)
     label = j.get("label", "no_cuenta")
+    razon = j.get("razon", "")
+    if clase == "anuncio" and label == "firme":          # cap duro: un aviso no es firme aunque el LLM se entusiasme
+        label = "condicional"
+        razon = f"[capeado a condicional: es 7.01/8.01, no 1.01] {razon}"
     return ContratoClasificado(
         label=label, tipo=j.get("tipo", ""), contraparte=j.get("contraparte", "") or "",
-        monto_usd=float(j.get("monto_usd") or 0.0), razon=j.get("razon", ""),
+        monto_usd=float(j.get("monto_usd") or 0.0), razon=razon,
         cuenta=label in ("firme", "condicional"))
 
 

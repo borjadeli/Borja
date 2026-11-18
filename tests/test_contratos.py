@@ -7,15 +7,16 @@ from backend.agentes.contratos import (bonus_contrato, clasificar_contrato, es_i
 from backend.agentes.oportunidad import FilaScore, asignar_carriles
 
 
-def test_prefiltro_item_101():
+def test_prefiltro_item_contrato():
     assert es_item_contrato("1.01") and es_item_contrato(["1.01", "9.01"])
+    assert es_item_contrato("7.01") and es_item_contrato(["8.01", "9.01"])    # P1-5: anuncios también son candidatos
     assert not es_item_contrato("2.03") and not es_item_contrato(None) and not es_item_contrato([])
 
 
-def test_no_101_no_gasta_llm():
-    # sin Item 1.01 → no_cuenta SIN cliente LLM (si llamara a la API, no habría cliente y tiraría)
+def test_no_contrato_no_gasta_llm():
+    # sin ítem de contrato → no_cuenta SIN cliente LLM (si llamara a la API, no habría cliente y tiraría)
     c = clasificar_contrato("texto cualquiera", items="2.03", fecha="2026-01-01", cliente=None)
-    assert c.label == "no_cuenta" and c.cuenta is False and c.tipo == "no_1.01"
+    assert c.label == "no_cuenta" and c.cuenta is False and c.tipo == "no_contrato"
 
 
 def test_clasifica_con_cliente_scripted():
@@ -24,6 +25,15 @@ def test_clasifica_con_cliente_scripted():
     cli = ScriptedLLM([resp_texto(json.dumps(payload), FakeUsage(input_tokens=800, output_tokens=60))])
     c = clasificar_contrato("DOE firm fixed price HALEU $900M", items="1.01", fecha="2026-02-01", cliente=cli)
     assert c.label == "firme" and c.cuenta is True and c.contraparte == "DOE" and c.monto_usd == 9e8
+
+
+def test_anuncio_801_capea_firme_a_condicional():
+    # P1-5: un 8.01/7.01 (press release) que el LLM clasifica "firme" se CAPEA a condicional (no es acuerdo definitivo)
+    payload = {"label": "firme", "tipo": "gobierno_offtake", "contraparte": "Walmart",
+               "monto_usd": 6e9, "razon": "anuncia acuerdo de suministro"}
+    cli = ScriptedLLM([resp_texto(json.dumps(payload), FakeUsage(input_tokens=800, output_tokens=60))])
+    c = clasificar_contrato("announces $6B supply agreement with Walmart", items="8.01", fecha="2026-02-01", cliente=cli)
+    assert c.label == "condicional" and c.cuenta is True and "capeado" in c.razon
 
 
 def test_bonus_decae_y_filtra():

@@ -121,9 +121,10 @@ class RunnerSemanal:
         res_dec.pesos_finales = finales
         res_dec.caja_final = caja
 
-    def _packet_txt(self, pesos: dict, caja_pct: float, equity: float, memo: str, hoy) -> str:
+    def _packet_txt(self, pesos: dict, caja_pct: float, equity: float, memo: str, hoy, scores=None) -> str:
         """Arma + renderiza el PM Decision Packet (r9 P2) desde el store de fichas + el ledger de decisiones.
-        Best-effort: si no hay fichas todavía, devuelve "" (el PM sigue con dossiers + cartera como antes)."""
+        `scores`: FilaScore de oportunidades ficha-less (las que NO se mandaron a deep automático) → el PM las ve y
+        puede SOLICITAR_DEEP. Best-effort: si no hay fichas todavía, devuelve "" (el PM sigue con dossiers + cartera)."""
         try:
             from backend.agentes.estacionamiento import tickers_parking
             from backend.agentes.ficha_store import StoreFichas
@@ -136,7 +137,7 @@ class RunnerSemanal:
                 ult_dec[reg.ticker.upper()] = {"ticker": reg.ticker.upper(), "accion": reg.accion,
                                                "tesis": reg.tesis}
             pack = construir_packet(fichas=fichas, posiciones=pesos, caja_pct=caja_pct, equity=equity,
-                                    memo_macro=memo, decisiones_previas=list(ult_dec.values()),
+                                    scores=scores, memo_macro=memo, decisiones_previas=list(ult_dec.values()),
                                     tickers_etf=tickers_parking(self.decision.ips.cfg), as_of=hoy)
             return render_packet(pack)
         except Exception:  # noqa: BLE001 — el packet es contexto; si falla, el PM decide igual
@@ -157,7 +158,7 @@ class RunnerSemanal:
                invertible_fn=None, cupo_forzados=None, gigante_barato_fn=None,
                cupo_gigantes: int = 0, precios_meta: dict[str, dict] | None = None,
                eventos_solo_posiciones: bool = False, cupo_oportunidad: int | None = None,
-               solo_pm: bool = False) -> ResultadoRunner:
+               solo_pm: bool = False, scores_oportunidad=None) -> ResultadoRunner:
         hoy = hoy or date.today()
         ciclo = ciclo or hoy.isoformat()
 
@@ -274,7 +275,7 @@ class RunnerSemanal:
 
         # 2bis. PM Decision Packet (r9 P2, doc 80 §G): la memoria viva (fichas/zonas/banca/alertas/decisiones
         # previas) que el PM recibe junto a los dossiers frescos. Best-effort: sin store de fichas, se saltea.
-        packet_txt = self._packet_txt(pesos_actual, caja_pct, _equity, memo_txt, hoy)
+        packet_txt = self._packet_txt(pesos_actual, caja_pct, _equity, memo_txt, hoy, scores=scores_oportunidad)
 
         # 3. PM decide (con las ops ya usadas en la semana para su dry-run y las alertas previas).
         def _pm(feedback: str = ""):

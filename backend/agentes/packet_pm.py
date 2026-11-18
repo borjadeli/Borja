@@ -150,7 +150,8 @@ def render_packet(pack: PaquetePM) -> str:
         for r in pack.banca_en_zona:
             L.append(f"- {r.ticker} precio {r.precio} ≤ compra {r.gatillo_compra} · ret_esp {r.retorno_esperado}")
     if pack.oportunidades_top:
-        L.append("\nOPORTUNIDADES NUEVAS (top score, sin ficha — necesitan deep si competirían por capital):")
+        L.append("\nOPORTUNIDADES NUEVAS (sin ficha, abajo del corte de auto-deep) — si alguna te interesa, "
+                 "SOLICITAR_DEEP (no se puede comprar sin ficha):")
         for o in pack.oportunidades_top[:8]:
             L.append(f"- {o['ticker']} score {o['score']} [{o['cluster']}]")
     if pack.alertas:

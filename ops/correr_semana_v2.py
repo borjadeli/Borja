@@ -328,6 +328,7 @@ def main() -> int:
     # --universo (r3 #7 / r4 #1b): candidatos desde TODO nx con señales reales + fechas del cache +
     # posiciones del paper + prioridad del cuello del mapa. El Triage/embudo filtra qué va a deep.
     from backend.database import session_scope
+    scores_op: list = []     # oportunidades ficha-less que NO van a deep automático → el PM las ve y puede pedir deep
     if args.solo_pm:
         # DESPERTAR (r10 P0-3): sin comité. Los tickers que necesitan precio/contexto = posiciones del paper ∪
         # nombres con ficha VIGENTE (lo que el PM puede sizar). El research lo saltea el runner (solo_pm=True).
@@ -385,6 +386,9 @@ def main() -> int:
             sel_op, _sc, _nf = _seleccion_oportunidad(met=valor_met, cuellos=valor_cuellos,
                                                       posiciones=posiciones, ips=ips, contratos=contratos)
             forzar = {t.upper() for t in (sel_op.oportunidad + sel_op.banca + sel_op.contrato_nuevo)}
+            # El PM ve las oportunidades ficha-less que quedaron ABAJO del corte de auto-deep (las de arriba le
+            # llegan con ficha) → puede SOLICITAR_DEEP las que le interesen (packet, doc 85 / decisión del operador).
+            scores_op = [fs for fs in _sc if fs.ticker.upper() not in forzar]
             por_tk = {c[0].upper(): c[1] for c in candidatos}
             for tk in forzar:
                 s = por_tk.get(tk)
@@ -424,7 +428,7 @@ def main() -> int:
                             invertible_fn=inv_fn, cupo_forzados=cupo_forz,
                             gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig, precios_meta=precios_meta,
                             eventos_solo_posiciones=args.universo, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)),
-                            solo_pm=args.solo_pm)
+                            solo_pm=args.solo_pm, scores_oportunidad=scores_op)
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:

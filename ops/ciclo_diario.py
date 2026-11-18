@@ -51,33 +51,50 @@ def _marcar_ejecutadas(claves: set) -> None:
     _EJECUTADAS.write_text(json.dumps(sorted(_ya_ejecutadas() | claves), ensure_ascii=False, indent=2))
 
 
+def _clave(s) -> str:
+    return f"{s.ticker}:{s.fuente}"
+
+
+def _planear_salidas(duras, ya: set, pesos_actuales: dict) -> tuple:
+    """PURO (testeable): dadas las salidas DURAS, las claves YA ejecutadas (ticker:fuente) y los pesos actuales
+    de la cartera, devuelve (pesos_finales, claves_nuevas). SOLO SALIDA_TOTAL cuenta (tier B/C despiertan al PM,
+    no se auto-ejecutan); IDEMPOTENTE (una salida ya disparada no se repite); toca SOLO el ticker de la salida (el
+    resto de la cartera queda igual). Sin salidas nuevas → (None, set())."""
+    from backend.agentes.reglas_salida import pesos_tras_salidas
+    nuevas = [s for s in duras if s.accion == "SALIDA_TOTAL" and _clave(s) not in ya]
+    if not nuevas:
+        return None, set()
+    return pesos_tras_salidas(pesos_actuales, nuevas), {_clave(s) for s in nuevas}
+
+
 def _ejecutar_salidas(duras) -> list:
     """Ejecuta SOLO las salidas tier A (SALIDA_TOTAL → vende la posición) en el paper. r10: el determinismo se
     limita a lo catastrófico; tier B/C despiertan al PM. IDEMPOTENTE: una salida ya disparada (por accession/id)
-    no se repite. Pesos = valor de mercado / equity; toca SOLO el ticker de la salida (no rebalancea el resto)."""
+    no se repite. Pesos = valor de mercado / equity; toca SOLO el ticker de la salida (no rebalancea el resto).
+    La lógica pura (filtro + idempotencia + pesos) está en `_planear_salidas`; acá va solo el IO."""
     from backend.agentes.datos_reales import abrir_paper, precios_de, recolectar_snapshots
     from backend.agentes.orquestador_decision import ResultadoDecision
     from backend.agentes.paper_pm import ejecutar as ejecutar_paper
-    from backend.agentes.reglas_salida import pesos_tras_salidas
     from backend.ledger import core
     ya = _ya_ejecutadas()
-    nuevas = [s for s in duras if s.accion == "SALIDA_TOTAL" and f"{s.ticker}:{s.fuente}" not in ya]
-    if not nuevas:
+    if not any(s.accion == "SALIDA_TOTAL" and _clave(s) not in ya for s in duras):   # nada nuevo → no abrir el paper
         return []
     paper = abrir_paper(capital_inicial=100_000.0, fecha=date.today())
     try:
         tks_pos = list(core.proyectar(paper, {})["posiciones"].keys())
-        tks = sorted(set(tks_pos) | {s.ticker.upper() for s in nuevas})
+        tks = sorted(set(tks_pos) | {s.ticker.upper() for s in duras if s.accion == "SALIDA_TOTAL"})
         precios = precios_de(recolectar_snapshots(tks))
         proy = core.proyectar(paper, precios)
         equity = proy["equity"] or 1.0
         pesos = {t.upper(): round((pp.shares * precios.get(t.upper(), 0.0)) / equity, 6)
                  for t, pp in proy["posiciones"].items()}        # peso = valor de mercado / equity (.upper: patrón del runner)
-        finales = pesos_tras_salidas(pesos, nuevas)              # solo pone a 0 los tickers de la salida
+        finales, claves = _planear_salidas(duras, ya, pesos)
+        if finales is None:
+            return []
         res = ResultadoDecision(pesos_objetivo=finales, pesos_finales=finales,
                                 caja_final=round(1.0 - sum(finales.values()), 6), clip="none", no_action=False)
         rp = ejecutar_paper(paper, res, precios=precios, fecha_fill=date.today())
-        _marcar_ejecutadas({f"{s.ticker}:{s.fuente}" for s in nuevas})   # idempotencia: no repetir
+        _marcar_ejecutadas(claves)                              # idempotencia: no repetir
         return getattr(rp, "fills", [])
     finally:
         paper.close()

@@ -1,6 +1,47 @@
-"""run_cycle (doc 85): encadenado + decisión de despertar al PM."""
+"""run_cycle (doc 85): encadenado + decisión de despertar al PM + plan de salidas (lógica pura)."""
 from backend.agentes.ciclo import correr_ciclo, razones_despertar
 from backend.agentes.reglas_salida import AccionSalida
+from ops.ciclo_diario import _planear_salidas
+
+
+def test_planear_salidas_solo_total_toca_solo_su_ticker():
+    # SALIDA_TOTAL de WOLF → WOLF a 0 (sale del dict), el RESTO de la cartera intacto.
+    pesos = {"WOLF": 0.1, "MP": 0.2, "OKLO": 0.05}
+    finales, claves = _planear_salidas([AccionSalida("WOLF", "A", "SALIDA_TOTAL", "quiebra", "acc1")], set(), pesos)
+    assert finales == {"MP": 0.2, "OKLO": 0.05} and claves == {"WOLF:acc1"}
+
+
+def test_planear_salidas_tier_B_C_no_auto_ejecutan():
+    # r10: tier B (RECORTE_50) y tier C (DESPERTAR) NO se auto-ejecutan (despiertan al PM) → nada que planear.
+    pesos = {"WOLF": 0.1, "MP": 0.2}
+    assert _planear_salidas([AccionSalida("WOLF", "C", "DESPERTAR", "ceo")], set(), pesos) == (None, set())
+    assert _planear_salidas([AccionSalida("WOLF", "B", "RECORTE_50", "falsador")], set(), pesos) == (None, set())
+
+
+def test_planear_salidas_idempotente():
+    # una salida YA ejecutada (misma clave ticker:fuente) NO se repite.
+    pesos = {"WOLF": 0.1, "MP": 0.2}
+    sal = [AccionSalida("WOLF", "A", "SALIDA_TOTAL", "quiebra", "acc1")]
+    assert _planear_salidas(sal, {"WOLF:acc1"}, pesos) == (None, set())       # ya está → no repite
+    finales, claves = _planear_salidas(sal, set(), pesos)                     # distinta corrida sin la clave → sí
+    assert "WOLF" not in finales and claves == {"WOLF:acc1"}
+
+
+def test_lock_anti_duplicados_y_huerfano(tmp_path, monkeypatch):
+    # garantía pre-restart (doc 85: 'duplicar al reiniciar es peor que manual'): dos ciclos no corren a la vez,
+    # pero un lock huérfano (proceso muerto, mtime viejo) NO bloquea para siempre.
+    import os
+    import time
+
+    import ops.ciclo_diario as cd
+    monkeypatch.setattr(cd, "_LOCK", tmp_path / "ciclo.lock")
+    assert cd._tomar_lock() is True         # libre → lo toma
+    assert cd._tomar_lock() is False        # lock vivo → NO duplica
+    cd._soltar_lock()
+    assert cd._tomar_lock() is True         # liberado → vuelve a tomar
+    old = time.time() - cd._LOCK_TTL - 10   # simula un lock huérfano (proceso que murió sin soltarlo)
+    os.utime(cd._LOCK, (old, old))
+    assert cd._tomar_lock() is True         # TTL vencido → retoma (no queda trabado para siempre)
 
 
 def test_razones_despertar():

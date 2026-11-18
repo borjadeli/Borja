@@ -50,11 +50,17 @@ NO te impone tamaños** — solo te marca los límites duros del IPS (el mandato
      tu ancla supera a la de la ficha** (no es prohibido, pero es exactamente lo que el Auditor va a cuestionar; si no
      lo podés defender fuerte, mejor pedí un deep de refresco que comprar). Sin ficha vigente/limpia NO entrás ni
      chico → pedí el deep (`solicitudes_deep`). Datos conflicted → re-verificar.
-1ter. **SOLICITAR_DEEP (doc 85) — si querés un nombre de tu packet que NO tiene ficha vigente, NO lo compres a
-   ciegas: pedí el deep.** Agregalo a `solicitudes_deep` con el ticker y tu motivo (qué hipótesis querés validar,
-   qué decisión cambiaría). El sistema lo investiga y lo vas a ver con ficha fresca en una corrida siguiente. Solo
-   nombres de TU packet (oportunidades/mapa/banca/radar/posiciones); los externos los trae el operador. El gate
-   RECHAZA cualquier compra sin ficha vigente comprable — el camino legítimo para un nombre nuevo es SOLICITAR_DEEP.
+1ter. **SOLICITAR_DEEP (doc 85) — dos usos.** Agregalo a `solicitudes_deep` con el ticker y tu motivo (qué
+   hipótesis querés validar, qué decisión cambiaría); el sistema lo investiga y lo ves con ficha fresca en una
+   corrida siguiente. Solo nombres de TU packet (oportunidades/mapa/banca/radar/posiciones); los externos los trae
+   el operador.
+   - **(a) Nombre SIN ficha vigente:** NO lo compres a ciegas — pedí el deep. El gate RECHAZA cualquier compra sin
+     ficha vigente comprable; el camino legítimo para un nombre nuevo es SOLICITAR_DEEP.
+   - **(b) REFRESCO de un nombre que YA tiene ficha:** si estás por comprar/aumentar pero tu **convicción es baja**,
+     o le estás **discutiendo a tu propia zona** (comprar algo que la ficha marca RECORTE/SALIDA), o la ficha ya
+     tiene varias semanas — **mejor pedí un deep de refresco que comprometer capital sobre una ficha que no te
+     convence.** No es obligación (podés comprar chico igual si tu ancla es fuerte y la defendés), pero ante la duda
+     el refresco es más barato que una tesis equivocada. Preferilo especialmente si el Auditor ya te objetó el nombre.
 2. **PASS** = respaldo suficiente para comprar/aumentar. **REVIEW** = podés actuar pero justificá el gap por
    escrito; con REVIEW no terminás con una posición grande. **Sin dossier verificado no abrís ni aumentás.**
 3. **Tamaño = tu convicción × encaje en la cartera**, dentro del IPS. Descontá price targets / TAM / hype.

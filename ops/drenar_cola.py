@@ -17,23 +17,42 @@ from backend.agentes.research_queue import ResearchQueue
 M_OPUS = "claude-opus-5-5"
 
 
+M_SONNET = "claude-sonnet-5-5"
+
+
 def _deep_real(ticker: str, *, ciego: bool = False) -> dict:
-    """Corre el deep de UN nombre: data pack → Analista (Opus+web) → cache del dossier → ficha viva. Devuelve
-    {estado_ficha, zona, costo}. El motivo NO llega acá (pedido ciego). `ciego` = deep en frío (F3, aún no usado)."""
-    from backend.agentes import data_pack as dp
+    """Corre el deep de UN nombre con EL MISMO COMITÉ que el semanal (r10 P0-2: un solo camino de análisis):
+    data pack → Analista (Opus+web, con contexto de mapa) → Bear → Verificador. La ficha queda VIGENTE SOLO si el
+    Verificador NO da FAIL; un FAIL no compromete capital (ficha ROTA). Devuelve {estado_ficha, zona, costo,
+    veredicto}. El motivo NO llega acá (pedido ciego). `ciego` = deep en frío (F3, aún no usado)."""
+    from datetime import date as _d
+
+    from backend.agentes import bear as m_bear, data_pack as dp
     from backend.agentes.analista import Analista, PROMPT_VERSION
     from backend.agentes.base import Agente
+    from backend.agentes.bear import Bear
     from backend.agentes.ficha import backfill_desde_dossier
     from backend.agentes.ficha_store import StoreFichas
+    from backend.agentes.verificador import verificar
     from ops.backfill_fichas import _datos_de_pack
+    from ops.correr_semana_v2 import _contexto_mapa_fn
 
-    pack = dp.ensamblar(ticker, as_of=date.today())
-    r = Analista(Agente("analista", PROMPT_VERSION, M_OPUS)).analizar(ticker, data_pack=pack,
-                                                                      contexto_cuello="", memo_macro="")
+    hoy = _d.today()
+    pack = dp.ensamblar(ticker, as_of=hoy)
+    r = Analista(Agente("analista", PROMPT_VERSION, M_OPUS)).analizar(
+        ticker, data_pack=pack, contexto_cuello=_contexto_mapa_fn(ticker), memo_macro="")
     costo = float(getattr(r.meta, "cost_usd", 0.0) or 0.0)
     if r.dossier is None:
-        return {"estado_ficha": None, "zona": None, "costo": costo}
-    datos = _datos_de_pack(ticker, as_of=date.today()) or {}
+        return {"estado_ficha": None, "zona": None, "costo": costo, "veredicto": "sin_dossier"}
+    atk = Bear(Agente("bear", m_bear.PROMPT_VERSION, M_SONNET)).atacar(r.dossier)
+    costo += float(getattr(atk.meta, "cost_usd", 0.0) or 0.0)
+    knowns = [p.known_at for p in pack.puntos if p.known_at and "xbrl" in (p.source.name or "").lower()]
+    verif = verificar(r.dossier, r.fuentes, pack={p.metric: p for p in pack.puntos},
+                      ultimo_filing_periodico=max(knowns) if knowns else None, hoy=hoy)
+    costo += float(getattr(verif.meta, "cost_usd", 0.0) or 0.0)
+    if verif.veredicto == "fail":     # FAIL → NO vigente: no se compromete capital con un dossier que no pasó
+        return {"estado_ficha": "ROTA", "zona": None, "costo": costo, "veredicto": "fail"}
+    datos = _datos_de_pack(ticker, as_of=hoy) or {}
     f = backfill_desde_dossier(ticker, r.dossier, deuda_neta=float(datos.get("deuda_neta") or 0.0),
                                acciones=float(datos.get("acciones") or 0.0) or 1.0, precio=datos.get("precio"),
                                caja=datos.get("caja"), cuello=datos.get("cuello"),
@@ -42,7 +61,7 @@ def _deep_real(ticker: str, *, ciego: bool = False) -> dict:
     store.set(f)
     store.guardar()
     zona = f.latido.zona if f.latido else None
-    return {"estado_ficha": f.estado, "zona": zona, "costo": costo}
+    return {"estado_ficha": f.estado, "zona": zona, "costo": costo, "veredicto": verif.veredicto}
 
 
 def correr(presupuesto: float = 8.0, max_n: int | None = None) -> None:

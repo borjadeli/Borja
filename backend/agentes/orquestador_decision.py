@@ -194,7 +194,6 @@ class OrquestadorDecision:
         ciego = ciego or {}
         admis = admis_duro if admis_duro is not None else comprable
         candado_on = comprable is not None   # opt-in: solo aplica si el caller pasó comprable_por_ticker
-        peso_max_blando = float(self.ips.cfg.get("peso_max_compra_blanda", 0.03))   # r10/doc 80 §H
         if candado_on and not pipeline_fresco:   # DEAD MAN'S SWITCH: sin poller vivo no se confía en ninguna vigencia
             alertas.append("PIPELINE_CAIDO — el poller no corrió (>26h); fail-closed: NINGUNA compra/aumento se abre")
         ok: dict[str, float] = {}
@@ -212,11 +211,11 @@ class OrquestadorDecision:
                 alertas.append(f"{tk}: inadmisible (market cap/ADV) — no se abre/aumenta")
                 continue
             tope = peso_max
-            # ZONA COMPRA BLANDA (r10/doc 80 §H): admisible pero NO en COMPRA → el PM puede entrar, capeado a ≤3%
-            # (el determinismo limita el TAMAÑO, no prohíbe; el PM justifica, el Auditor revisa).
+            # ZONA COMPRA BLANDA (doc 80 §H): admisible pero NO en COMPRA → el PM puede entrar y sizea LIBRE bajo el
+            # IPS; la entrada queda MARCADA y la revisa el Auditor + se mide aparte. SIN cap especial de zona (el cap
+            # de 3% se sacó: contradecía §H y forzaba recortes que el PM no quería — era determinismo de más).
             if candado_on and not comprable.get(tk, False):
-                tope = min(tope, peso_max_blando)
-                alertas.append(f"{tk}: entrada FUERA de zona COMPRA — blanda, capeada a {tope:.0%} (el PM justifica, el Auditor revisa)")
+                alertas.append(f"{tk}: entrada FUERA de zona COMPRA — MARCADA (el PM justifica, el Auditor la revisa)")
             if _flag_no_resuelto(tk, flags.get(tk, []), decision.respuestas_flags):
                 tope = min(tope, cap_flag)
                 alertas.append(f"{tk}: flag de supervivencia no resuelto → tope {tope:.0%}")

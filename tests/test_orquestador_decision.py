@@ -80,14 +80,15 @@ def test_f1_candado_duro_bloquea_sin_ficha_vigente(tmp_path):
     assert res2.pesos_finales.get("OKLO") == 0.1
 
 
-def test_f1_zona_compra_blanda_capea_a_3pct(tmp_path):
-    # r10/doc 80 §H: ficha VIGENTE + datos limpios pero NO en COMPRA → el PM PUEDE entrar, capeado a ≤3%.
+def test_f1_zona_compra_blanda_entra_libre_pero_marcada(tmp_path):
+    # doc 80 §H: ficha VIGENTE + datos limpios pero NO en COMPRA → el PM entra y sizea LIBRE bajo el IPS; la
+    # entrada queda MARCADA (la revisa el Auditor). SIN cap especial de zona (el cap de 3% se sacó, era det. de más).
     res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
                                   contexto=_ctx(), ciclo="c",
                                   comprable_por_ticker={"OKLO": False},      # no en COMPRA
                                   admisible_duro_por_ticker={"OKLO": True})  # pero vigente + datos limpios
-    assert res.pesos_finales.get("OKLO") == 0.03                            # capeado a la banda blanda, NO bloqueado
-    assert any("FUERA de zona COMPRA" in a for a in res.alertas)
+    assert res.pesos_finales.get("OKLO") == 0.1                             # el PM sizea libre (no capeado)
+    assert any("FUERA de zona COMPRA" in a and "MARCADA" in a for a in res.alertas)   # pero MARCADA para el Auditor
 
 
 def test_f1_dead_mans_switch_bloquea_todo(tmp_path):

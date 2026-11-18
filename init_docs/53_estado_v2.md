@@ -98,6 +98,32 @@ de docs 75/76. Todo commiteado en `destete-v2-fase3`. **800 tests verdes.**
 > construcción. **Requiere decisión de método del operador** (relajar bandas / cambiar el mandato del PM vs.
 > mantener la disciplina power-law). Ver dudas respondidas 2026-11-05.
 
+## Actualización 2026-11-18 (r10) — PM AUTÓNOMO (doc 85) + revisión r10 (determinismo al mínimo)
+
+**El gran frente del comportamiento del PM.** Diagnóstico del operador: "el PM no funciona, nada corre solo". Se
+trianguló con **3 IAs** (doc 84 brief → **doc 85 CERRADO**: el determinismo decide qué está PERMITIDO/ROTO, el PM
+decide dentro). Construido **F1 + F2** (sistema nervioso autónomo): poller horario (vigila filings → EN_REVISION +
+dead-man's-switch 26h) · candado en el gate · event monitor (8-K ítem→tier) · reglas de salida · Research Queue +
+input del operador (`ops.solicitar`) + SOLICITAR_DEEP del PM · drenaje (cola→comité→ficha) · falsadores
+estructurados · run_cycle diario (poller→latido→drenaje→despertar) · comité semanal + on-wake. Agendado en el
+scheduler (⚠️ toma efecto al **reiniciar el host**).
+
+**Revisión externa r10 aplicada — DETERMINISMO AL MÍNIMO (directiva del operador: el PM decide, el Auditor
+cuestiona):**
+- **Salidas:** SOLO tier A catastrófico (quiebra 1.03 + restatement 4.02) auto-ejecuta (risk-off, parte del IPS).
+  Tier B/C (falsador DURO, going concern, salida CEO, material weakness, zona SALIDA) → **DESPIERTAN al PM**. 4.01
+  fuera de DURO. Bugs corregidos (verificados con repro): el evaluador de falsadores NUNCA da CONFIRMED por ausencia
+  (numérico exige tag XBRL + valor; vencido sin cruzar → EXPIRED; hito sin evidencia → SUSPECTED); `_ejecutar_salidas`
+  usa peso=valor/equity (fix TypeError), toca solo el ticker, idempotente.
+- **Zona COMPRA BLANDA (doc 80 §H):** el candado DURO exige ficha VIGENTE + datos limpios + pipeline vivo; la ZONA
+  es blanda — fuera de COMPRA el PM entra capeado a ≤3% + justificación + el Auditor revisa. El determinismo limita
+  el tamaño, no prohíbe.
+- **Un solo camino de análisis:** la cola usa el MISMO comité que el semanal (Analista+Bear+Verificador); ficha
+  VIGENTE solo si no es FAIL.
+- **PENDIENTE de r10:** P0-3 (el despertar corre el comité completo; debería correr solo el PM con su packet —
+  necesita extraer un path solo-PM de `correr_semana_v2`) · P1-5 (contratos fuera del 1.01: 7.01/8.01 EX-99) ·
+  doc 77 (ledger del paper vs sombras, necesita corrida). ~951 tests verdes.
+
 ## Actualización 2026-11-16 (r9b) — doc 83: equity bridge + instrumentos + verificador ciego + factor (F1-F4)
 
 Tras validar 4 nombres contra un LLM+web externo (doc 81), que coincidió en ranking pero cazó cosas que el comité

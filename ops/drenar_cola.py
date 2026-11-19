@@ -29,13 +29,12 @@ def _deep_real(ticker: str, *, ciego: bool = False) -> dict:
     por el PM llega al wake). Devuelve {estado_ficha, zona, costo, veredicto, modo}. `ciego` = deep en frío (F3)."""
     from datetime import date as _d
 
-    from backend.agentes import bear as m_bear, data_pack as dp
+    from backend.agentes import data_pack as dp
     from backend.agentes.analista import Analista, PROMPT_VERSION
     from backend.agentes.base import Agente
-    from backend.agentes.bear import Bear
     from backend.agentes.ficha import backfill_desde_dossier
     from backend.agentes.ficha_store import StoreFichas
-    from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH, _escenarios_cambiaron, hash_pack
+    from backend.agentes.orquestador import CacheDossiers, _CACHE_PATH, hash_pack
     from backend.agentes.verificador import verificar
     from ops.backfill_fichas import _datos_de_pack
     from ops.correr_semana_v2 import _contexto_mapa_fn
@@ -56,11 +55,7 @@ def _deep_real(ticker: str, *, ciego: bool = False) -> dict:
     costo = float(getattr(r.meta, "cost_usd", 0.0) or 0.0)
     if r.dossier is None:
         return {"estado_ficha": None, "zona": None, "costo": costo, "veredicto": "sin_dossier", "modo": modo}
-    # Bear: en un refresco cuyos escenarios NO se movieron se SALTEA (doc 80 §E); nuevo o escenarios movidos → corre.
-    es_refresh = prev is not None and prev.dossier is not None
-    if (not es_refresh) or _escenarios_cambiaron(prev.dossier, r.dossier):
-        atk = Bear(Agente("bear", m_bear.PROMPT_VERSION, M_SONNET)).atacar(r.dossier)
-        costo += float(getattr(atk.meta, "cost_usd", 0.0) or 0.0)
+    # (El Bear se sacó — doc 87: era decorativo, write-only.) Analista → Verificador.
     knowns = [p.known_at for p in pack.puntos if p.known_at and "xbrl" in (p.source.name or "").lower()]
     verif = verificar(r.dossier, r.fuentes, pack={p.metric: p for p in pack.puntos},
                       ultimo_filing_periodico=max(knowns) if knowns else None, hoy=hoy)

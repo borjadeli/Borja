@@ -252,16 +252,16 @@ class Orquestador:
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="saltado_degradacion", triage=td))
                 continue
 
-            # 2b. Reserva de peor-caso antes de correr.
-            peor = (peor_caso_usd(ANALISTA_MODEL, max_tokens=ANALISTA_MAXTOK, max_uses=ANALISTA_USES,
-                                  input_estimado=ANALISTA_IN)
-                    + peor_caso_usd(BEAR_MODEL, max_tokens=BEAR_MAXTOK, max_uses=BEAR_USES, input_estimado=BEAR_IN))
+            # 2b. Reserva de peor-caso antes de correr. (El Bear se SACÓ — doc 87: era decorativo, write-only; nadie
+            #     leía su ataque aguas abajo, ~$8 a cero impacto. La función adversarial queda pendiente de rediseño.)
+            peor = peor_caso_usd(ANALISTA_MODEL, max_tokens=ANALISTA_MAXTOK, max_uses=ANALISTA_USES,
+                                 input_estimado=ANALISTA_IN)
             if not self.ledger.reservar(peor, para_evento=para_evento):
                 res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="saltado_presupuesto", triage=td))
                 continue
 
-            # 2c. Analista → Bear → Verificador. Una falla en UN nombre (LLM flojo, red, validación) no debe
-            #     tumbar el ciclo entero → se saltea y se sigue (resiliencia; auditoría del smoke #6).
+            # 2c. Analista → Verificador (el Bear se sacó, doc 87). Una falla en UN nombre (LLM flojo, red,
+            #     validación) no debe tumbar el ciclo entero → se saltea y se sigue (resiliencia; smoke #6).
             try:
                 # DELTA-DEEP (doc 76): si hay dossier PREVIO → re-análisis barato (tesis previa + lo nuevo,
                 # web acotada); si es un nombre nuevo → análisis FULL. Baja el costo por nombre ya visto.
@@ -282,14 +282,6 @@ class Orquestador:
                     res.decisiones.append(DecisionOrq(ticker=td.ticker, accion="sin_dossier", triage=td,
                                                       costo_usd=costo))
                     continue
-                # REFRESH barato (doc 80 §E): si es una ACTUALIZACIÓN (ya había dossier → la tesis ya fue
-                # atacada) y los escenarios NO cambiaron materialmente, se SALTEA el Bear. Un nombre NUEVO o un
-                # refresh con escenarios movidos → Bear corre (re-ataca lo que cambió).
-                es_refresh = prev is not None and prev.dossier is not None
-                atk = None
-                if (not es_refresh) or _escenarios_cambiaron(prev.dossier, r_an.dossier):
-                    atk = self.bear.atacar(r_an.dossier)
-                    costo += atk.meta.cost_usd
                 # el verificador recibe el pack (para contraste XBRL) + el known_at más nuevo de los datos de
                 # FILING (XBRL), para la regla de vigencia 1d, + hoy (falsador vencido 1e). OJO: NO usar el
                 # max del pack entero — los datos de mercado (Yahoo) tienen known_at=hoy y contaminarían el
@@ -311,7 +303,7 @@ class Orquestador:
                 self.cache.guardar(td.ticker, h, r_an.dossier, verif, hoy)
             rev_fy, rw_m, fcf_neg = _pack_hechos(pack)
             res.decisiones.append(DecisionOrq(ticker=td.ticker, accion=accion_tipo, triage=td,
-                                              dossier=r_an.dossier, bear=atk, verif=verif,
+                                              dossier=r_an.dossier, bear=None, verif=verif,
                                               costo_usd=round(costo, 6), hash=h,
                                               revenue_fy=rev_fy, runway_meses=rw_m, fcf_negativo=fcf_neg))
 

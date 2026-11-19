@@ -208,11 +208,24 @@ def fuente_xbrl(ticker: str, as_of: date, *, companyfacts_fn=None, cik_fn=None) 
     # Valores negociables (componentes crudos de liquidez) — primero-encontrado entre tags equivalentes. Se
     # emiten como ORIGINAL (un tag) para la lineage; la suma (liquidez) la deriva fuente_calculadoras. doc 72.
     def emit_primero(metric: str, tags: list[str]) -> None:
+        # Entre tags equivalentes: el PRIMER tag FRESCO (known_at dentro de ~400d del as_of) en orden de
+        # prioridad. Si ninguno es fresco, cae al primer stale (no perdemos el dato, pero preferimos fresco).
+        # Antes tomaba el primero-con-dato → un tag viejo tapaba uno fresco (p.ej. RXRX dejó de reportar
+        # LongTermDebtNoncurrent en 2022 y su deuda actual vive en otro tag → emitía el stale de 2022).
+        from datetime import timedelta as _td
+        limite = as_of - _td(days=400)
+        stale = None
         for t in tags:
             e = _pit(_extract_concept(facts, t, unit="USD"), as_of, anual=False)
             if e and e.get("val") is not None:
-                emit(metric, e, "USD", "instant")
-                return
+                f = _d(e.get("filed"))
+                if f and f >= limite:
+                    emit(metric, e, "USD", "instant")
+                    return
+                if stale is None:
+                    stale = e
+        if stale is not None:
+            emit(metric, stale, "USD", "instant")
     emit_primero("cash_and_sti", _LIQ_COMBINADO)
     emit_primero("short_term_investments", _MKT_SEC_CURRENT)
     emit_primero("long_term_investments", _MKT_SEC_NONCURRENT)

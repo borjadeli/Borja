@@ -105,6 +105,27 @@ def test_xbrl_point_in_time_trae_lo_ultimo():
     assert pts["shares_outstanding"].value == 186_000_000
 
 
+def _facts_deuda_stale():
+    inst = lambda val, end, filed, form, fy, fp, accn: {  # noqa: E731
+        "val": val, "end": end, "filed": filed, "form": form, "fy": fy, "fp": fp, "accn": accn}
+    return {"facts": {"us-gaap": {
+        # el tag PRIORITARIO (LongTermDebtNoncurrent) quedó VIEJO (2022); otro de MENOR prioridad tiene dato FRESCO
+        "LongTermDebtNoncurrent": {"units": {"USD": [
+            inst(723_000, "2022-03-31", "2022-03-23", "10-K", 2021, "FY", "stale")]}},
+        "LongTermDebt": {"units": {"USD": [
+            inst(11_901_000, "2026-09-30", "2026-11-02", "10-Q", 2026, "Q3", "fresco")]}},
+    }}}
+
+
+def test_xbrl_emit_primero_prefiere_fresco_sobre_stale():
+    # guard de frescura (destapado por el A/B con RXRX, 2026-11): un tag prioritario STALE (2022) NO debe tapar
+    # uno fresco (2026). Antes emit_primero tomaba el primero-con-dato (el stale).
+    pts = {p.metric: p for p in dp.fuente_xbrl("RXRX", date(2026, 11, 19),
+                                               companyfacts_fn=lambda _c: _facts_deuda_stale(), cik_fn=lambda _t: "0")}
+    assert pts["long_term_debt"].value == 11_901_000            # el FRESCO, no el stale de 2022
+    assert pts["long_term_debt"].known_at == date(2026, 11, 2)
+
+
 def test_xbrl_anti_look_ahead():
     # as_of antes del filing del Q2 → solo se ve FY25 (filed 2026-03-01 <= as_of)
     pts = {p.metric: p for p in _xbrl("OKLO", date(2026, 5, 1))}

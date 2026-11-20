@@ -64,3 +64,37 @@ Quería que el PM "entienda el futuro para encontrar ganadores". Honesto: el map
 del nombre. La parte rescatable ("entender el futuro con datos") la da, a mediano plazo, el **percentil de
 exigencia** (§4): no te dice el ganador, te dice si lo que el precio YA cree es alcanzable. El cuello es el
 contexto que evita el error, no el que encuentra el acierto.
+
+## 8. Actualización — IA 3 (3ª triangulación, 2026-11-20): atribución + integración en escenarios
+IA 3 convergió en lo grande (cuello no suma valor; mínimo primero) y afiló tres cosas que SE INTEGRAN al diseño:
+
+1. **Atribución = variable de primera clase (corrige el test de $0).** El tablero agrega XBRL por empresa = economía
+   del **ECOSISTEMA**, NO del **CUELLO**. El test de fotónica sumó ventas TOTALES ($15B) pero Fabrinet aporta $4.6B
+   de EMS que no son el cuello → sobreestima. Se agrega **`cobertura_atribuible`** (qué % de la actividad está
+   ligada al nodo por evidencia; **DESCONOCIDA** si no se sabe, nunca inventado). **"Confirmado = economía real"
+   (§3.1) se mide sobre lo ATRIBUIBLE, no el agregado crudo.** Nunca presentar economía-de-ecosistema como
+   economía-de-cuello. (Limita: la atribución NO está en XBRL —sin segmentos/dimensionales— → en la versión
+   mínima es **anotación MANUAL** en los pocos vínculos clave, con cita; DESCONOCIDA el default honesto.)
+
+2. **El no-doble-conteo, mecanismo exacto: el cuello entra en el ESCENARIO de la empresa (futuro.py), UNA vez — NO
+   como factor aparte.** Un cuello congestionado con pedidos firmes → justifica un escenario de márgenes más
+   resistentes / mayor prob. de crecimiento sostenido, DENTRO del escenario del nombre. Nunca un bonus después de
+   valuar. **Pregunta de control:** si saco C del score pero dejo su evidencia en los escenarios, ¿cambia la
+   decisión? Si cambia SOLO porque desapareció el bonus → doble conteo. Si cambia porque se movieron probabilidades/
+   márgenes/falsadores → información genuina. **C se parte en dos usos:** discovery/priorización (señal económica
+   para dónde investigar — OK) vs PM/inversión (evidencia que modifica escenarios, SIN bonus autónomo).
+
+3. **Exposición estructurada del vínculo empresa→cuello** (nuevo): `exposicion` (revenue atribuible | DESCONOCIDA),
+   `rol` (proveedor crítico/competidor/integrador/cliente/sustituto), `captura` (márgenes/pricing power/contratos/
+   barreras), `dependencia` (cuánto del negocio/tesis depende del cuello), `fuente`. Es el problema Fabrinet (en la
+   cadena pero economía EMS) hecho atributo del vínculo. Mínimo: manual en vínculos clave, DESCONOCIDA el resto.
+
+**Tensión IA2↔IA3 en lo DIFERIDO (no urgente, las dos se difieren):** el forward-looking — IA 2 quiere **tasas base**
+(distribución histórica, Mauboussin); IA 3 dice que la tendencia histórica NO es tasa futura y quiere **escenarios
+físico-económicos** (demanda = unidades × contenido × penetración). A resolver cuando toque; ojo que el motor de IA 3
+depende de inputs fuera de XBRL (puertos, velocidades, precios) con más riesgo de invención.
+
+**Neto:** el diseño mínimo (§3) + el gate (§6) no cambian; se refuerzan. Lo que cambia: (a) el umbral "confirmado"
+va sobre revenue ATRIBUIBLE (no agregado), (b) la evidencia del cuello entra en los escenarios de futuro.py una vez
+(no como C aditivo), (c) el vínculo empresa→cuello lleva exposición estructurada. Todo manual/DESCONOCIDA en lo que
+XBRL no da. **Las 3 IAs convergieron; diseño CERRADO.**

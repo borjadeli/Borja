@@ -1,8 +1,9 @@
 # 89 — Diseño cerrado: mapa vivo, VERSIÓN MÍNIMA (2026-11-20)
 
-> Converge el brief doc 88 con DOS críticas externas (IA 1 + IA 2, ambas con auto-corrección) + un test de $0.
-> **Consenso fuerte, no hizo falta IA 3.** La lección: construir la versión MÍNIMA y MEDIR si cambia alguna
-> decisión antes de construir más. El valor probable es **defensivo** (evitar 2-3 value-traps/año), no ofensivo.
+> Converge el brief doc 88 con TRES críticas externas (IA 1 + IA 2 + IA 3, las tres con auto-corrección) + un
+> test de $0. **Consenso TOTAL (las 3 aterrizaron en el mismo MVP).** La lección: construir la versión MÍNIMA y
+> MEDIR si cambia alguna decisión antes de construir más. El valor probable es **defensivo** (evitar 2-3
+> value-traps/año), no ofensivo. El MVP de IA 3 (§9) es la síntesis operativa más clara.
 
 ## 1. Lo que el test de $0 PROBÓ (economía cruda, hoy)
 ```
@@ -98,3 +99,24 @@ depende de inputs fuera de XBRL (puertos, velocidades, precios) con más riesgo 
 va sobre revenue ATRIBUIBLE (no agregado), (b) la evidencia del cuello entra en los escenarios de futuro.py una vez
 (no como C aditivo), (c) el vínculo empresa→cuello lleva exposición estructurada. Todo manual/DESCONOCIDA en lo que
 XBRL no da. **Las 3 IAs convergieron; diseño CERRADO.**
+
+## 9. El MVP (veredicto final de IA 3 — consenso de las 3)
+IA 3 puntúa: mapa vivo **9/10** de utilidad potencial · implementación completa **5/10** beneficio/complejidad ·
+**versión simple conectada al PM 10/10 como próximo paso.** Su MVP (4 elementos), que subsume §3:
+1. **Ejecutar + persistir el tablero existente** (semanal, o por evento si es trivial).
+2. **Entregar al PM las métricas del cuello, diferenciando dato DIRECTO (atribuible) de indicador INDIRECTO
+   (ecosistema).** 3 líneas: estado · economía · cobertura.
+3. **Discovery identifica cambios materiales + los respalda con fuentes verificables** (dueño de la evidencia, NO
+   de la verdad: no inventa métricas ni cambia estados por opinión).
+4. **Usar esa info para CUESTIONAR o RESPALDAR los escenarios de `futuro.py`, SIN sumar bonus.**
+Después: **evaluar varias semanas si el mapa realmente cambia** qué empresas analiza, qué escenarios considera
+plausibles, qué inversiones recomienda. (= el gate de §6.)
+
+**El norte (IA 3, textual):** *"La ventaja competitiva de BORJA no va a ser conocer 142 cuellos. Va a ser detectar
+antes que el mercado qué empresas están capturando crecimiento económico real y todavía cotizan barato. El mapa
+tiene que ayudar a eso. Si termina siendo un segundo sistema de análisis paralelo al Analista y futuro.py, sobra."*
+
+**Punto de presupuesto (IA 3):** con un sistema ya sofisticado de agentes/verificación/valuación, el mayor retorno
+marginal NO viene de un sistema de inteligencia industrial que pronostique 142 cuellos — viene de **hacer que la
+info que YA tenés llegue bien al PM y verificar si mejora las decisiones.** (Nota BORJA: el retorno marginal más
+grande hoy ni siquiera es el mapa — es **correr lo ya construido** (PM autónomo r10/F1-F2, host sin reiniciar).)

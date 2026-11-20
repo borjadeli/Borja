@@ -35,7 +35,8 @@ def metricas_de_pack(pack) -> dict:
     growth = round(rev / revprev - 1, 4) if (rev and revprev) else None
     return {"revenue": rev, "gross_profit": v("gross_profit"),
             "operating_income_loss": v("operating_income_loss"), "capex": v("capex"),
-            "inventarios": v("inventarios"), "rpo": v("rpo"), "revenue_growth_yoy": growth}
+            "inventarios": v("inventarios"), "rpo": v("rpo"), "revenue_growth_yoy": growth,
+            "ev_revenue": v("ev_revenue")}
 
 
 def cuellos_empresas() -> dict:

@@ -23,6 +23,7 @@ class TableroCuello:
     inventario_sobre_ventas: float | None   # señal de acumulación (demanda que se enfría)
     rpo_total: float | None
     crecimiento_pond: float | None          # revenue YoY, ponderado por ventas
+    op_sobre_ventas: float | None = None    # margen OPERATIVO ponderado — el gate que separa real de especulación
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -49,6 +50,13 @@ def tablero_cuello(cuello: str, metricas_por_empresa: dict[str, dict], *, fecha:
     tot_v = sum(v for _g, v in crec)
     crec_pond = (sum(g * v for g, v in crec) / tot_v) if tot_v else None
 
+    # margen operativo ponderado — acepta `operating_income` u `operating_income_loss` (tag XBRL del pack)
+    def _op(m):
+        return m.get("operating_income", m.get("operating_income_loss"))
+    op_pares = [(_op(m), m.get("revenue")) for m in emp if _op(m) is not None and m.get("revenue")]
+    tot_op = sum(r for _o, r in op_pares)
+    op_sv = (sum(o for o, _r in op_pares) / tot_op) if tot_op else None
+
     return TableroCuello(
         cuello=cuello, fecha=(fecha or date.today()).isoformat(), n_empresas=len(emp),
         ventas_total=ventas_total,
@@ -56,7 +64,8 @@ def tablero_cuello(cuello: str, metricas_por_empresa: dict[str, dict], *, fecha:
         capex_sobre_ventas=_pond("capex"),
         inventario_sobre_ventas=_pond("inventarios"),
         rpo_total=_suma("rpo"),
-        crecimiento_pond=(round(crec_pond, 2) if crec_pond is not None else None))
+        crecimiento_pond=(round(crec_pond, 2) if crec_pond is not None else None),
+        op_sobre_ventas=(round(op_sv, 4) if op_sv is not None else None))
 
 
 # Estados del cuello (doc 80 §B): promesa → vigilancia → confirmado → resolviéndose → resuelto.
@@ -86,3 +95,149 @@ def senal_disolucion(actual: TableroCuello, previo: TableroCuello | None = None,
     if señales >= 2 and (inv_sube and margen_cede):
         return "resolviendose", f"inventario↑ + margen↓ (capacidad alcanzando demanda): {detalle}"
     return None, f"sin señal de disolución ({señales}/4): {detalle}"
+
+
+# --------------------------------------------------------------------------- clasificación de estado (doc 89 §3)
+# "Confirmado" exige ECONOMÍA REAL (no solo revenue), medida sobre el revenue ATRIBUIBLE (no el ecosistema).
+# Sin el gate de pérdida operativa, quantum pasa como confirmado (lo probamos: −506% op). Umbrales en USD crudo
+# (lo que da el pack XBRL). El operador puede moverlos a config; acá viven los defaults del test de $0 (doc 89 §1).
+@dataclass
+class UmbralesEstado:
+    min_atribuible: float = 100_000_000.0   # ventas atribuibles TTM ≥ ~$100M (materialidad)
+    min_empresa: float = 25_000_000.0       # ≥2 empresas con ≥$25M atribuibles
+    min_empresas: int = 2
+    op_min: float = -0.50                   # pérdida operativa ≤ 50% de ventas (margen op ≥ −0.50)
+    cobertura_min: float = 0.50             # bajo esto, el aviso de cobertura (no cambia el estado, lo matiza)
+
+
+@dataclass
+class EstadoCuello:
+    cuello: str
+    estado: str                 # promesa | confirmado | resolviendose | no_medible
+    razon: str
+    cobertura: float | None = None
+    cobertura_baja: bool = False
+    checks: dict = None          # auditabilidad: cada gate y su valor
+    economia: dict = None        # los números usados (atribuible, margen bruto/op, crecimiento)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EstadoCuello":
+        return cls(**d)
+
+
+def crecimiento_same_store(rev_actual: dict[str, float], rev_previo: dict[str, float]) -> float | None:
+    """Crecimiento calculado SOLO con las empresas presentes en los DOS períodos (doc 89 §3.2). Así agregar un
+    nombre nuevo al cuello NO se lee como 'crecimiento'. `None` si no hay empresas comunes o base previa 0."""
+    comunes = [tk for tk in rev_actual if tk in rev_previo and rev_previo.get(tk)]
+    if not comunes:
+        return None
+    ahora = sum(rev_actual[tk] for tk in comunes)
+    previo = sum(rev_previo[tk] for tk in comunes)
+    return round((ahora - previo) / previo, 4) if previo else None
+
+
+def clasificar_estado(tablero: TableroCuello, atribuible, *, previo: TableroCuello | None = None,
+                      crec_same_store: float | None = None, sostenido_2t: bool | None = None,
+                      umbrales: UmbralesEstado | None = None) -> EstadoCuello:
+    """Clasifica el cuello en promesa / confirmado / resolviendose / no_medible (doc 89 §3). `atribuible` es el
+    `Atribuible` de la pieza 2 (economía MEDIDA sobre lo atribuible, no el ecosistema). `crec_same_store` tiene
+    prioridad sobre el crecimiento crudo del tablero; `sostenido_2t=False` veta el gate de crecimiento."""
+    u = umbrales or UmbralesEstado()
+    cobertura = atribuible.cobertura
+    cobertura_baja = cobertura is not None and cobertura < u.cobertura_min
+    crec = crec_same_store if crec_same_store is not None else tablero.crecimiento_pond
+
+    economia = {"revenue_atribuible": atribuible.revenue_atribuible, "revenue_total": atribuible.revenue_total,
+                "margen_bruto": tablero.margen_bruto_pond, "op_sobre_ventas": tablero.op_sobre_ventas,
+                "crecimiento": crec, "n_empresas": tablero.n_empresas}
+
+    # no_medible: nadie del cuello presenta en la SEC → no se puede medir (≠ promesa, que SÍ se ve sin revenue)
+    if tablero.n_empresas == 0:
+        return EstadoCuello(cuello=tablero.cuello, estado="no_medible",
+                            razon="ninguna empresa del cuello presenta en la SEC (A-shares / privadas)",
+                            cobertura=cobertura, cobertura_baja=cobertura_baja, checks={}, economia=economia)
+
+    # disolución: tiene prioridad (una empresa barata en un cuello que se disuelve es value-trap, doc 89 §3.4)
+    if previo is not None:
+        est, raz = senal_disolucion(tablero, previo)
+        if est == "resolviendose":
+            return EstadoCuello(cuello=tablero.cuello, estado="resolviendose", razon=raz,
+                                cobertura=cobertura, cobertura_baja=cobertura_baja, checks={}, economia=economia)
+
+    n_materiales = sum(1 for v in atribuible.atribuible_por_empresa.values() if v >= u.min_empresa)
+    checks = {
+        "materialidad": (atribuible.revenue_atribuible is not None
+                         and atribuible.revenue_atribuible >= u.min_atribuible
+                         and n_materiales >= u.min_empresas),
+        "margen_bruto_positivo": tablero.margen_bruto_pond is not None and tablero.margen_bruto_pond > 0,
+        "op_no_catastrofica": tablero.op_sobre_ventas is not None and tablero.op_sobre_ventas >= u.op_min,
+        "crecimiento_positivo": crec is not None and crec > 0 and sostenido_2t is not False,
+    }
+    if all(checks.values()):
+        razon = (f"economía real atribuible: ${atribuible.revenue_atribuible/1e6:,.0f}M, "
+                 f"margen op {tablero.op_sobre_ventas:+.0%}, crecimiento {crec:+.0%}")
+        estado = "confirmado"
+    else:
+        faltan = [k for k, v in checks.items() if not v]
+        razon = f"promesa — falta(n): {', '.join(faltan)}"
+        estado = "promesa"
+    return EstadoCuello(cuello=tablero.cuello, estado=estado, razon=razon, cobertura=cobertura,
+                        cobertura_baja=cobertura_baja, checks=checks, economia=economia)
+
+
+# --------------------------------------------------------------------------- el cuello como FILTRO (doc 89 §3.4/§9.4)
+# El cuello NUNCA suma valor (sería doble conteo con futuro.py). Entra como GUÍA que CUESTIONA/RESPALDA los
+# escenarios — se le surfacea al PM, NO muta la matemática. Sin bonus, nunca cambia el tamaño.
+_GUIA = {
+    "confirmado": ("contexto", "economía de cuello confirmada: el PM mira el nombre por SU economía; el cuello es contexto favorable"),
+    "promesa": ("watchlist", "sin tesis de cuello (economía no confirmada): el nombre queda en WATCHLIST, no se invierte POR el cuello"),
+    "resolviendose": ("normalizar_margenes", "cuello en DISOLUCIÓN: normalizá los márgenes ANTES de llamar barata a la empresa (posible value-trap cíclico)"),
+    "no_medible": ("manual", "cuello no medible (sus jugadores no presentan en la SEC): tratar a mano, sin inferir economía"),
+}
+
+
+def guia_de_cuello(estado: EstadoCuello) -> dict:
+    """Traduce el estado del cuello en una GUÍA para el PM (acción + nota). No cambia size ni score — informa.
+    Si la cobertura es baja, lo agrega como advertencia (separar 'promesa' de 'no medible', doc 89 §3.3)."""
+    accion, nota = _GUIA.get(estado.estado, ("contexto", ""))
+    if estado.cobertura_baja:
+        nota += f" · ⚠ cobertura baja ({estado.cobertura:.0%} del revenue es atribuible con certeza)"
+    return {"cuello": estado.cuello, "estado": estado.estado, "accion": accion, "nota": nota}
+
+
+# --------------------------------------------------------------------------- el JOB (pieza 6): correr sobre los cuellos
+def correr_mapa(cuellos_empresas: dict[str, list[str]], metricas_por_tk: dict[str, dict], *, store,
+                atrib=None, estados_previos: dict | None = None, umbrales: "UmbralesEstado | None" = None,
+                hoy: date | None = None) -> tuple[dict, list]:
+    """Corre el tablero sobre cada cuello → clasifica → persiste la foto point-in-time → detecta cambios de
+    estado. PURO salvo el `store` (inyectable, `StoreMapa`). `cuellos_empresas`: {cuello: [tickers]}. `metricas_
+    por_tk`: {ticker: dict del pack}. `estados_previos`: {cuello: EstadoCuello|dict} de la corrida anterior (para
+    los cambios). Devuelve ({cuello: EstadoCuello}, [cambios]). El `previo` para disolución/same-store = la última
+    foto ESTRICTAMENTE anterior a hoy (idempotente ante re-corridas del mismo día)."""
+    from backend.agentes.mapa_atribucion import MapaAtribucion, revenue_atribuible
+    atrib = atrib or MapaAtribucion()
+    estados_previos = estados_previos or {}
+    hoy = hoy or date.today()
+    estados: dict[str, EstadoCuello] = {}
+    cambios: list[dict] = []
+    for cuello, tickers in cuellos_empresas.items():
+        sub = {tk: metricas_por_tk.get(tk) for tk in tickers if metricas_por_tk.get(tk)}
+        tab = tablero_cuello(cuello, sub, fecha=hoy)
+        emp_rev = {tk.upper(): m.get("revenue") for tk, m in sub.items() if m.get("revenue")}
+        atribuible = revenue_atribuible(cuello, emp_rev, atrib)
+        prev = store.previo(cuello, antes_de=hoy.isoformat())
+        prev_tab = prev.tablero if prev else None
+        crec_ss = crecimiento_same_store(emp_rev, prev.empresas_revenue) if prev else None
+        est = clasificar_estado(tab, atribuible, previo=prev_tab, crec_same_store=crec_ss, umbrales=umbrales)
+        store.set(tab, empresas_revenue=emp_rev)
+        estados[cuello] = est
+        ant = estados_previos.get(cuello)
+        ant_estado = getattr(ant, "estado", None) if ant is not None else None
+        if ant is not None and isinstance(ant, dict):
+            ant_estado = ant.get("estado")
+        if ant_estado and ant_estado != est.estado:
+            cambios.append({"cuello": cuello, "de": ant_estado, "a": est.estado, "razon": est.razon})
+    return estados, cambios

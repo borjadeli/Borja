@@ -37,6 +37,27 @@ def _soltar_lock() -> None:
 
 
 _EJECUTADAS = Path("data/salidas_ejecutadas.json")
+_MOTIVOS_NOTIF = Path("data/motivos_notificados.json")
+
+
+def _dedup_motivos(motivos: list, hoy: date, ventana_dias: int = 7) -> list:
+    """P0-2b (review r11): un mismo motivo no despierta dos veces dentro de `ventana_dias` (el mismo 8-K en el
+    lookback de 7 días, o un falsador SUSPECTED persistente). Re-despierta si reaparece tras la ventana (recordatorio
+    semanal). PURO salvo la persistencia en `_MOTIVOS_NOTIF`."""
+    try:
+        notif = json.loads(_MOTIVOS_NOTIF.read_text())
+    except Exception:  # noqa: BLE001
+        notif = {}
+    nuevos = []
+    for m in motivos:
+        last = notif.get(m)
+        if last is None or (hoy - date.fromisoformat(last)).days >= ventana_dias:
+            nuevos.append(m)
+            notif[m] = hoy.isoformat()          # el timestamp se actualiza SOLO cuando despierta
+    notif = {k: v for k, v in notif.items() if (hoy - date.fromisoformat(v)).days <= 30}   # prune >30d
+    _MOTIVOS_NOTIF.parent.mkdir(parents=True, exist_ok=True)
+    _MOTIVOS_NOTIF.write_text(json.dumps(notif, ensure_ascii=False, indent=2), encoding="utf-8")
+    return nuevos
 
 
 def _ya_ejecutadas() -> set:
@@ -115,6 +136,7 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_
             from backend.agentes.poller import pollear
             from backend.agentes.reglas_salida import evaluar_reglas_salida
             from backend.agentes.falsadores import confirmados_para_salida
+            from backend.agentes.datos_reales import valor_fn_falsadores
             from backend.services.edgar import get_recent_filings
             store = StoreFichas(); fichas = store.todos()
             rp = pollear(fichas, filings_fn=lambda tk: get_recent_filings(
@@ -124,8 +146,10 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_
             store.guardar()
             PipelineEstado().marcar("poller")
             from ops.poller import _posiciones
-            salidas = evaluar_reglas_salida(rp.eventos, posiciones=_posiciones(),
-                                            falsadores_confirmados=confirmados_para_salida(fichas, hoy=date.today()))
+            salidas = evaluar_reglas_salida(
+                rp.eventos, posiciones=_posiciones(),
+                falsadores_confirmados=confirmados_para_salida(
+                    fichas, valor_fn=valor_fn_falsadores(), hoy=date.today()))   # P0-2a: no despertar por OK diario
             return {"en_revision": rp.en_revision, "salidas": salidas}
 
         def _latido():
@@ -164,16 +188,19 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_
 
         print(f"EN_REVISION: {res.poller.get('en_revision')} · cambios de zona: {len(res.cambios_zona)} · "
               f"deeps: {len(res.deeps_hechos)}")
-        if res.motivos_despertar:
+        motivos_nuevos = _dedup_motivos(res.motivos_despertar, date.today())   # P0-2b: no repetir el mismo motivo
+        if motivos_nuevos:
             _DESPERTAR.write_text(json.dumps({"fecha": date.today().isoformat(),
-                                              "motivos": res.motivos_despertar}, ensure_ascii=False, indent=2))
+                                              "motivos": motivos_nuevos}, ensure_ascii=False, indent=2))
             print("🔔 DESPERTAR AL PM:")
-            for m in res.motivos_despertar:
+            for m in motivos_nuevos:
                 print(f"  - {m}")
             if despertar_pm:          # r10 P0-3: el DESPERTAR corre SOLO el PM (su packet), no el comité completo.
                 from backend.agentes.disparar_comite import disparar_comite    # los análisis nuevos van por la cola.
                 r = disparar_comite(solo_pm=True)
                 print(f"\n=== PM DESPERTADO (solo-PM, ok={r['ok']}) ===\n{r['resumen']}")
+        elif res.motivos_despertar:
+            print(f"motivos ya notificados en los últimos 7 días ({len(res.motivos_despertar)}): no se re-despierta.")
         else:
             print("sin motivo para despertar al PM (válido: no hacer nada).")
     finally:

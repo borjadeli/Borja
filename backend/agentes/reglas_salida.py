@@ -72,8 +72,11 @@ def evaluar_reglas_salida(eventos, *, posiciones: set[str],
             if (tk, "DESPERTAR") in vistos:
                 continue
             cons = (fl.get("consecuencia") or "REVISION").upper()
+            est = (fl.get("estado") or "").upper()
+            desc = {"CONFIRMED": "DISPARADO (verificado)",
+                    "SUSPECTED": "SIN VERIFICAR (falta el dato — NO confirmado)"}.get(est, est or "?")
             out.append(AccionSalida(tk, "B", "DESPERTAR",
-                                    f"tier B: falsador DURO '{fl.get('id', '?')}' cumplido (sugerencia: {cons})",
+                                    f"tier B: falsador DURO '{fl.get('id', '?')}' {desc} (sugerencia: {cons})",
                                     fl.get("id", "")))
             vistos.add((tk, "DESPERTAR"))
 

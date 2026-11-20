@@ -18,6 +18,30 @@ from sqlalchemy.orm import Session
 
 from backend.agentes.ips import ContextoTicker
 from backend.ledger.models import NxEmpresa, NxEmpresaNodo, NxNodo, crear_tablas
+
+
+def valor_fn_falsadores(hoy: date | None = None):
+    """Factory de `valor_fn(ticker, metrica) -> valor|None` para resolver falsadores numéricos DUROS con el
+    ÚLTIMO valor XBRL point-in-time del pack (review r11 P0-2a). Sin esto, `confirmados_para_salida` evalúa todo
+    DURO numérico como SUSPECTED → despierta al PM a diario. Cachea el pack por ticker (no re-ensambla por métrica).
+    Si el tag no resuelve, devuelve None (el falsador queda 'no verificable', el dedup evita el despertar diario)."""
+    hoy = hoy or date.today()
+    cache: dict[str, dict] = {}
+
+    def _vf(ticker: str, metrica: str | None):
+        if not metrica:
+            return None
+        tk = ticker.upper()
+        if tk not in cache:
+            try:
+                from backend.agentes import data_pack as dp
+                pack = dp.ensamblar(tk, as_of=hoy)
+                cache[tk] = {p.metric: p.value for p in pack.puntos if p.value is not None}
+            except Exception:  # noqa: BLE001 — un ticker que falla no debe tumbar la evaluación de falsadores
+                cache[tk] = {}
+        return cache[tk].get(metrica)
+
+    return _vf
 from backend.ledger import core
 
 _PAPER_DB = Path(__file__).resolve().parent.parent.parent / "data" / "paper_v2.db"

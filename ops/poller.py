@@ -49,8 +49,10 @@ def correr(dias: int = 7) -> None:
 
     # F2: reglas de salida — DURO en una POSICIÓN (tier A) + falsador DURO CONFIRMED (tier B) + CEO/deslistado (C).
     posiciones = _posiciones()
+    from backend.agentes.datos_reales import valor_fn_falsadores
     from backend.agentes.falsadores import confirmados_para_salida
-    conf = confirmados_para_salida(fichas, hoy=date.today())    # evalúa los falsadores estructurados DUROS
+    # P0-2a: con valor_fn, un DURO numérico que está OK (ej. liquidez 3e9 > umbral 1e9) NO despierta al PM.
+    conf = confirmados_para_salida(fichas, valor_fn=valor_fn_falsadores(), hoy=date.today())
     salidas = evaluar_reglas_salida(res.eventos, posiciones=posiciones, falsadores_confirmados=conf)
 
     print(f"vigilados: {len(fichas)} · posiciones: {sorted(posiciones)} · eventos materiales: {len(res.eventos)} · "

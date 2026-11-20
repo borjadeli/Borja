@@ -73,3 +73,27 @@ def test_same_store_entre_corridas(tmp_path):
                          store=store, atrib=atrib, hoy=date(2026, 9, 30))
     # same-store = (8400+4200)/(8000+4000) − 1 = 0.05  (NEW excluido)
     assert est["fotonica"].economia["crecimiento"] == round((12600 - 12000) / 12000, 4)
+
+
+def test_primera_corrida_marca_historia_corta(tmp_path):
+    store = StoreMapa(tmp_path / "m.json")
+    est, _ = correr_mapa({"fotonica": ["LITE", "COHR"]},
+                         {"LITE": _metricas(8000 * M, op=0.07), "COHR": _metricas(4000 * M, op=0.05)},
+                         store=store, atrib=_atrib(tmp_path))
+    assert est["fotonica"].historia_corta is True        # sin fotos previas → provisional
+
+
+def test_sostenido_2t_veta_pico_aislado(tmp_path):
+    store = StoreMapa(tmp_path / "m.json")
+    atrib = _atrib(tmp_path)
+    def run(d, lite, cohr):
+        return correr_mapa({"fotonica": ["LITE", "COHR"]},
+                           {"LITE": _metricas(lite, op=0.07), "COHR": _metricas(cohr, op=0.05)},
+                           store=store, atrib=atrib, hoy=d)
+    from datetime import date
+    run(date(2026, 3, 31), 10000 * M, 5000 * M)
+    run(date(2026, 6, 30), 9000 * M, 4500 * M)           # CAE
+    est, _ = run(date(2026, 9, 30), 9900 * M, 4950 * M)  # sube, pero el par previo cayó → no sostenido
+    assert est["fotonica"].historia_corta is False
+    assert est["fotonica"].estado == "promesa"           # vetado por sostenido_2t aunque el último trimestre suba
+    assert est["fotonica"].checks["crecimiento_positivo"] is False

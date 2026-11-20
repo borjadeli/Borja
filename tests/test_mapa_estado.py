@@ -79,3 +79,20 @@ def test_cobertura_baja_matiza_no_cambia_estado():
     e = clasificar_estado(tab, atrib)
     assert e.estado == "confirmado"      # la economía atribuible alcanza
     assert e.cobertura_baja is True      # pero avisa que la cobertura es baja
+
+
+def test_sostenido_2t_false_veta_confirmado():
+    tab = _tab("fotonica", op=0.07)
+    atrib = _atrib("fotonica", {"LITE": 8_000 * M, "COHR": 4_000 * M})
+    e = clasificar_estado(tab, atrib, sostenido_2t=False)      # el 2T no se sostuvo
+    assert e.estado == "promesa"
+    assert e.checks["crecimiento_positivo"] is False
+
+
+def test_historia_corta_marca_confirmado_provisional():
+    tab = _tab("fotonica", op=0.07)
+    atrib = _atrib("fotonica", {"LITE": 8_000 * M, "COHR": 4_000 * M})
+    e = clasificar_estado(tab, atrib, historia_corta=True)
+    assert e.estado == "confirmado"
+    assert e.historia_corta is True
+    assert "PROVISIONAL" in e.razon

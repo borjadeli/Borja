@@ -119,6 +119,7 @@ class EstadoCuello:
     cobertura_baja: bool = False
     checks: dict = None          # auditabilidad: cada gate y su valor
     economia: dict = None        # los números usados (atribuible, margen bruto/op, crecimiento)
+    historia_corta: bool = False # <2 fotos previas → el gate de 2T sostenidos no se puede exigir (confirmado provisional)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -141,7 +142,7 @@ def crecimiento_same_store(rev_actual: dict[str, float], rev_previo: dict[str, f
 
 def clasificar_estado(tablero: TableroCuello, atribuible, *, previo: TableroCuello | None = None,
                       crec_same_store: float | None = None, sostenido_2t: bool | None = None,
-                      umbrales: UmbralesEstado | None = None) -> EstadoCuello:
+                      historia_corta: bool = False, umbrales: UmbralesEstado | None = None) -> EstadoCuello:
     """Clasifica el cuello en promesa / confirmado / resolviendose / no_medible (doc 89 §3). `atribuible` es el
     `Atribuible` de la pieza 2 (economía MEDIDA sobre lo atribuible, no el ecosistema). `crec_same_store` tiene
     prioridad sobre el crecimiento crudo del tablero; `sostenido_2t=False` veta el gate de crecimiento."""
@@ -177,15 +178,17 @@ def clasificar_estado(tablero: TableroCuello, atribuible, *, previo: TableroCuel
         "crecimiento_positivo": crec is not None and crec > 0 and sostenido_2t is not False,
     }
     if all(checks.values()):
+        prov = " (PROVISIONAL: historia corta, sin 2T sostenidos)" if historia_corta else ""
         razon = (f"economía real atribuible: ${atribuible.revenue_atribuible/1e6:,.0f}M, "
-                 f"margen op {tablero.op_sobre_ventas:+.0%}, crecimiento {crec:+.0%}")
+                 f"margen op {tablero.op_sobre_ventas:+.0%}, crecimiento {crec:+.0%}{prov}")
         estado = "confirmado"
     else:
         faltan = [k for k, v in checks.items() if not v]
         razon = f"promesa — falta(n): {', '.join(faltan)}"
         estado = "promesa"
     return EstadoCuello(cuello=tablero.cuello, estado=estado, razon=razon, cobertura=cobertura,
-                        cobertura_baja=cobertura_baja, checks=checks, economia=economia)
+                        cobertura_baja=cobertura_baja, checks=checks, economia=economia,
+                        historia_corta=historia_corta)
 
 
 # --------------------------------------------------------------------------- el cuello como FILTRO (doc 89 §3.4/§9.4)
@@ -203,6 +206,8 @@ def guia_de_cuello(estado: EstadoCuello) -> dict:
     """Traduce el estado del cuello en una GUÍA para el PM (acción + nota). No cambia size ni score — informa.
     Si la cobertura es baja, lo agrega como advertencia (separar 'promesa' de 'no medible', doc 89 §3.3)."""
     accion, nota = _GUIA.get(estado.estado, ("contexto", ""))
+    if estado.estado == "confirmado" and estado.historia_corta:
+        nota += " · ⚠ PROVISIONAL: sin 2 trimestres de historia (puede ser un pico aislado, no economía sostenida)"
     if estado.cobertura_baja:
         nota += f" · ⚠ cobertura baja ({estado.cobertura:.0%} del revenue es atribuible con certeza)"
     return {"cuello": estado.cuello, "estado": estado.estado, "accion": accion, "nota": nota}
@@ -231,7 +236,17 @@ def correr_mapa(cuellos_empresas: dict[str, list[str]], metricas_por_tk: dict[st
         prev = store.previo(cuello, antes_de=hoy.isoformat())
         prev_tab = prev.tablero if prev else None
         crec_ss = crecimiento_same_store(emp_rev, prev.empresas_revenue) if prev else None
-        est = clasificar_estado(tab, atribuible, previo=prev_tab, crec_same_store=crec_ss, umbrales=umbrales)
+        # 2T sostenidos (doc 89 §3.1): crecimiento same-store positivo en los DOS últimos pares. Necesita ≥2 fotos
+        # previas; con menos, no se puede exigir → historia_corta (el 'confirmado' sale PROVISIONAL, no se bloquea).
+        prior = [s for s in store.serie(cuello) if s.fecha < hoy.isoformat()]
+        sostenido_2t = None
+        if len(prior) >= 2:
+            g1 = crecimiento_same_store(emp_rev, prior[-1].empresas_revenue)
+            g2 = crecimiento_same_store(prior[-1].empresas_revenue, prior[-2].empresas_revenue)
+            if g1 is not None and g2 is not None:
+                sostenido_2t = g1 > 0 and g2 > 0
+        est = clasificar_estado(tab, atribuible, previo=prev_tab, crec_same_store=crec_ss,
+                                sostenido_2t=sostenido_2t, historia_corta=len(prior) < 2, umbrales=umbrales)
         store.set(tab, empresas_revenue=emp_rev)
         estados[cuello] = est
         ant = estados_previos.get(cuello)

@@ -94,7 +94,8 @@ def _ejecutar_salidas(duras) -> list:
         res = ResultadoDecision(pesos_objetivo=finales, pesos_finales=finales,
                                 caja_final=round(1.0 - sum(finales.values()), 6), clip="none", no_action=False)
         rp = ejecutar_paper(paper, res, precios=precios, fecha_fill=date.today())
-        _marcar_ejecutadas(claves)                              # idempotencia: no repetir
+        paper.commit()                                         # P0-1: sin commit, close() hace ROLLBACK → la salida
+        _marcar_ejecutadas(claves)                             # se perdía. Marcar idempotencia SOLO tras commitear OK.
         return getattr(rp, "fills", [])
     finally:
         paper.close()

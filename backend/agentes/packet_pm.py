@@ -11,8 +11,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import date
 
-from backend.agentes.mapa_vivo import guia_de_cuello
-
 
 @dataclass
 class ResumenPosicion:
@@ -45,7 +43,6 @@ class PaquetePM:
     banca_en_zona: list[ResumenPosicion] = field(default_factory=list)   # candidatas a ENTRADA (ficha en COMPRA)
     oportunidades_top: list[dict] = field(default_factory=list)          # top score ficha-less (nuevas)
     alertas: list[dict] = field(default_factory=list)                    # recorte/rotación/deterioro/falsador
-    cuellos: list[dict] = field(default_factory=list)                    # estado económico del cuello de cada tenencia/banca (guía, sin bonus)
     decisiones_previas: list[dict] = field(default_factory=list)         # última acción del PM + por qué
     presupuesto: dict = field(default_factory=dict)
 
@@ -72,7 +69,7 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
                      scores=None, memo_macro: str = "", decisiones_previas: list[dict] | None = None,
                      presupuesto: dict | None = None, concentraciones: dict | None = None,
                      tickers_etf: set[str] | None = None, as_of: date | None = None,
-                     data_cutoff: str | None = None, estados_cuello: dict | None = None) -> PaquetePM:
+                     data_cutoff: str | None = None) -> PaquetePM:
     """Arma el packet. `fichas`: {ticker: Ficha}. `posiciones`: {ticker: peso} del ledger. `scores`: FilaScore
     de P1 (oportunidades ficha-less). TODO con un solo corte (`data_cutoff`)."""
     as_of = as_of or date.today()
@@ -135,29 +132,6 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
                                        "v": fs.v, "m": fs.m, "c": fs.c, "a": fs.a})
         if len(pack.oportunidades_top) >= 10:
             break
-
-    # MAPA DE CUELLOS (doc 89 §9.2): el estado económico del cuello de cada tenencia/banca → guía al PM. NO
-    # suma al tamaño (sin bonus): cuestiona/respalda los escenarios. Disolución de un cuello con tenencia →
-    # alerta anti-value-trap (normalizá márgenes antes de llamar barata).
-    if estados_cuello:
-        por_cuello: dict[str, list[str]] = {}
-        for r in list(pack.posiciones) + list(pack.banca_en_zona):
-            f = fichas.get(r.ticker.upper())
-            c = getattr(f, "cuello", None) if f else None
-            if c:
-                por_cuello.setdefault(c, []).append(r.ticker.upper())
-        for cuello, tks in por_cuello.items():
-            est = estados_cuello.get(cuello)
-            if est is None:
-                continue
-            guia = guia_de_cuello(est)
-            guia.update(economia=est.economia, cobertura=est.cobertura, tickers=tks)
-            pack.cuellos.append(guia)
-            if est.estado == "resolviendose":
-                tenencias = [t for t in tks if t in pos_u]
-                if tenencias:
-                    pack.alertas.append({"ticker": ",".join(tenencias), "tipo": "cuello_disolucion",
-                                         "detalle": f"cuello '{cuello}' en DISOLUCIÓN ({', '.join(tenencias)}): {guia['nota']}"})
     return pack
 
 
@@ -180,17 +154,6 @@ def render_packet(pack: PaquetePM) -> str:
                  "SOLICITAR_DEEP (no se puede comprar sin ficha):")
         for o in pack.oportunidades_top[:8]:
             L.append(f"- {o['ticker']} score {o['score']} [{o['cluster']}]")
-    if pack.cuellos:
-        L.append("\nMAPA DE CUELLOS (estado económico · guía — NO suma al tamaño; cuestiona los escenarios):")
-        for c in pack.cuellos:
-            eco = c.get("economia") or {}
-            ra = eco.get("revenue_atribuible")
-            op = eco.get("op_sobre_ventas")
-            cob = c.get("cobertura")
-            econ = (f"atribuible ${ra/1e6:,.0f}M" if ra else "atribuible n/d")
-            econ += f" · margen op {op:+.0%}" if op is not None else ""
-            econ += f" · cobertura {cob:.0%}" if cob is not None else " · cobertura DESCONOCIDA"
-            L.append(f"- {c['cuello']} [{c['estado']}] {', '.join(c.get('tickers', []))}: {econ} → {c['nota']}")
     if pack.alertas:
         L.append("\nALERTAS:")
         for a in pack.alertas:

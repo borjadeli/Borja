@@ -20,7 +20,8 @@ from backend.agentes.resumen_v2 import DossierResumen, PosicionResumen, render_d
 from backend.ledger import core
 
 
-def main() -> int:
+def construir_digest() -> str:
+    """Arma el digest advisory y lo DEVUELVE (texto). `main()` lo imprime; el job semanal lo mail-ea/persiste."""
     ips = IPS.cargar()
     tope = float(ips.cfg.get("presupuesto_usd_mes", 40.0))
 
@@ -55,10 +56,31 @@ def main() -> int:
             red_flags=[f"{r['tipo']}[{r['severidad']}]" for r in d.get("red_flags", [])])
 
     from backend.agentes.carteras_sombra import LedgerSombras
-    print(render_digest(ciclo=ciclo, equity=equity, caja_pct=caja_pct, posiciones=posiciones,
-                        decisiones=decisiones, dossiers=dossiers,
-                        gasto_mes=(gastado_mes_usd(date.today()) or 0.0), tope_mes=tope,
-                        sombras=LedgerSombras().resumen()))
+    return render_digest(ciclo=ciclo, equity=equity, caja_pct=caja_pct, posiciones=posiciones,
+                         decisiones=decisiones, dossiers=dossiers,
+                         gasto_mes=(gastado_mes_usd(date.today()) or 0.0), tope_mes=tope,
+                         sombras=LedgerSombras().resumen())
+
+
+def enviar_digest_semanal() -> str:
+    """Job semanal (scheduler, lunes 8:00 ET): arma el digest, lo PERSISTE en data/digests/ y lo mail-ea
+    (dry-run si no hay SMTP). Así la evaluación semanal sale sola. Devuelve el texto (para logs/tests)."""
+    from pathlib import Path
+    texto = construir_digest()
+    d = Path("data/digests")
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"digest_{date.today().isoformat()}.txt").write_text(texto, encoding="utf-8")
+    try:
+        from backend.services.mailer import send_email
+        send_email(subject=f"Digest semanal {date.today().isoformat()}",
+                   body_html=f"<pre>{texto}</pre>", body_text=texto, tag="digest")
+    except Exception as e:  # noqa: BLE001 — el mail no debe tumbar el job; el archivo ya quedó persistido
+        print(f"aviso: no pude enviar el digest por mail: {e}")
+    return texto
+
+
+def main() -> int:
+    print(construir_digest())
     return 0
 
 

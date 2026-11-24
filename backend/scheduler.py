@@ -110,6 +110,14 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
         trigger=CronTrigger(day_of_week="sun", hour=18, minute=0, timezone="America/New_York"),
         id="comite_semanal", replace_existing=True,
     )
+    # DIGEST SEMANAL (r11 P1-3/P2-6): lunes 8:00 ET — arma el estado + decisiones + carteras sombra, lo persiste
+    # en data/digests/ y lo mail-ea (dry-run si no hay SMTP). $0 LLM. Para EVALUAR el sistema cada semana.
+    from ops.estado_v2 import enviar_digest_semanal
+    scheduler.add_job(
+        func=_safe_run(enviar_digest_semanal, "digest_semanal"),
+        trigger=CronTrigger(day_of_week="mon", hour=8, minute=0, timezone="America/New_York"),
+        id="digest_semanal", replace_existing=True,
+    )
 
     _jobs_registered = True
     log.info("scheduler — %d jobs registrados", len(scheduler.get_jobs()))

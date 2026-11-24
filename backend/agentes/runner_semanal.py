@@ -318,6 +318,7 @@ class RunnerSemanal:
         comprable_tk: dict[str, bool] | None = None
         admis_duro_tk: dict[str, bool] | None = None
         zonas_tk: dict[str, str] = {}
+        clase_tk_ficha: dict[str, str] = {}
         if self.candado_on:
             try:
                 from backend.agentes.ficha_store import (StoreFichas, admisible_duro_por_ticker as _admis,
@@ -326,6 +327,7 @@ class RunnerSemanal:
                 comprable_tk = _comprable(_fichas)
                 admis_duro_tk = _admis(_fichas)   # zona COMPRA blanda: el requisito duro es VIGENTE+datos limpios
                 zonas_tk = {tk: f.latido.zona for tk, f in _fichas.items() if getattr(f, "latido", None)}  # P1-4
+                clase_tk_ficha = {tk: f.clase_d4 for tk, f in _fichas.items() if getattr(f, "clase_d4", None)}  # r12 #1
             except Exception as e:  # noqa: BLE001 — si no se puede computar, el gate recibe {} (fail-closed p/ compras)
                 _log.warning("no pude computar comprable (candado fail-closed): %s", e)
                 comprable_tk, admis_duro_tk = {}, {}
@@ -342,7 +344,7 @@ class RunnerSemanal:
             cargas_por_ticker=cargas_por_ticker,
             memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)),
             reevaluar_auditor_fn=lambda objs: _pm(feedback=_fmt_objeciones(objs)),
-            zonas_por_ticker=zonas_tk)
+            zonas_por_ticker=zonas_tk, clase_por_ticker=clase_tk_ficha)
 
         # 4bis. Estacionamiento (r7a #1): el residual que el PM NO desplegó en nombres con margen de seguridad
         # se aparca en ETFs temáticos (ponderados por los clusters del mapa), NUNCA en nombres caros. Solo si

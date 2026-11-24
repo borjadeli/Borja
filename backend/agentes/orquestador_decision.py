@@ -56,6 +56,14 @@ def _inadmisible(ctx: ContextoTicker | None, ips: IPS) -> bool:
     return ctx.adv_usd is not None and ctx.adv_usd < adv_min
 
 
+def _cap_por_clase(clase: str | None, ips: IPS) -> float | None:
+    """Techo DURO por clasificación efectiva (doc 80 §H / r12 #1). Devuelve el cap (0.0 = no comprable) o None
+    (clase sin tope: core/satélite → el PM sizea libre hasta peso_max). especulativa→0.10, watchlist→0.0."""
+    if not clase:
+        return None
+    return (ips.cfg.get("cap_por_clase", {}) or {}).get(clase)
+
+
 def _rotacion(cartera: dict[str, float], finales: dict[str, float], *, excluir: set[str] | None = None) -> float:
     """Rotación = compras financiadas con ventas = min(Σaumentos, Σreducciones). El despliegue neto desde
     caja (aumentos sin ventas que los financien) NO cuenta como rotación (auditoría r2 1b). `excluir` saca los
@@ -123,7 +131,8 @@ class OrquestadorDecision:
                  comprable_por_ticker: dict[str, bool] | None = None, pipeline_fresco: bool = True,
                  admisible_duro_por_ticker: dict[str, bool] | None = None,
                  memo_macro: str = "", repropuesta_fn=None, reevaluar_auditor_fn=None,
-                 zonas_por_ticker: dict[str, str] | None = None) -> ResultadoDecision:
+                 zonas_por_ticker: dict[str, str] | None = None,
+                 clase_por_ticker: dict[str, str] | None = None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
         precios = {t.upper(): p for t, p in (precios or {}).items()}
@@ -143,6 +152,12 @@ class OrquestadorDecision:
         admis_duro = ({t.upper(): bool(v) for t, v in admisible_duro_por_ticker.items()}
                       if admisible_duro_por_ticker is not None else comprable)
         cargas = {t.upper(): c for t, c in (cargas_por_ticker or {}).items()}  # F4: cargas de factor por ticker
+        # r12 #1: clase EFECTIVA por ticker para el cap duro (doc 80 §H). Preferir el dict explícito (lo arma el
+        # runner desde la ficha, cubre toda la cartera); si no vino, derivar de la clasificación fresca del ciclo.
+        clase_tk = {t.upper(): c for t, c in (clase_por_ticker or {}).items()}
+        if not clase_tk and clasif_por_ticker:
+            from backend.agentes.clasificacion import clasificacion_efectiva
+            clase_tk = {t.upper(): clasificacion_efectiva(c) for t, c in clasif_por_ticker.items()}
 
         # operar_ahora=False → no se ejecuta nada; NO se llama al Auditor (item 6).
         if not decision.operar_ahora:
@@ -152,13 +167,13 @@ class OrquestadorDecision:
             self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
             return res
 
-        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
+        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk)
 
         # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
         if res.no_action and repropuesta_fn is not None:
             nueva = repropuesta_fn(res.holguras)
             if nueva is not None:
-                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk)
                 res, decision = res2, nueva
 
         # El Auditor cuestiona la decisión que pasó el gate.
@@ -177,7 +192,7 @@ class OrquestadorDecision:
                                             alertas=["PM reevaluó tras el Auditor y decidió NO operar ahora"])
                     self._registrar(res, nueva, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
                     return res
-                res = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
+                res = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk)
                 decision = nueva
                 res.reevaluado_por_auditor = True
                 # re-auditar la decisión REVISADA (queda en el ledger; NO vuelve a loopear aunque objete)
@@ -194,10 +209,12 @@ class OrquestadorDecision:
               ciego: dict[str, str] | None = None,
               cargas: dict[str, dict[str, float]] | None = None,
               comprable: dict[str, bool] | None = None, pipeline_fresco: bool = True,
-              admis_duro: dict[str, bool] | None = None) -> ResultadoDecision:
+              admis_duro: dict[str, bool] | None = None,
+              clase_tk: dict[str, str] | None = None) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
         banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
+        clase_tk = clase_tk or {}      # r12 #1: clase efectiva por ticker (cap duro)
         alertas: list[str] = []
         clip_local = False
 
@@ -237,6 +254,16 @@ class OrquestadorDecision:
                 alertas.append(f"{tk}: inadmisible (market cap/ADV) — no se abre/aumenta")
                 continue
             tope = peso_max
+            # r12 #1 — CAP DURO por clasificación (doc 80 §H): especulativa ≤10%, watchlist 0 (no comprable).
+            cap_cl = _cap_por_clase(clase_tk.get(tk), self.ips)
+            if cap_cl is not None and cap_cl <= 0.0:
+                alertas.append(f"{tk}: clase WATCHLIST (0%) — no comprable, aumento bloqueado")
+                continue
+            if cap_cl is not None and tope > cap_cl:
+                if tgt > cap_cl + 1e-9:
+                    alertas.append(f"{tk}: cap DURO por clase ({clase_tk.get(tk)} ≤ {cap_cl:.0%}) — "
+                                   f"recortado de {tgt:.0%}")
+                tope = cap_cl
             # ZONA COMPRA BLANDA (doc 80 §H): admisible pero NO en COMPRA → el PM puede entrar y sizea LIBRE bajo el
             # IPS; la entrada queda MARCADA y la revisa el Auditor + se mide aparte. SIN cap especial de zona (el cap
             # de 3% se sacó: contradecía §H y forzaba recortes que el PM no quería — era determinismo de más).

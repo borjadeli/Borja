@@ -16,7 +16,8 @@ from backend.agentes.schemas import (
 def _ips(**over):
     cfg = {"max_posiciones": 12, "peso_max_nombre": 0.20, "max_por_sector": 0.30, "max_por_cuello": 0.35,
            "caja_min": 0.0, "caja_max": 1.0, "max_ops_semana": 9, "market_cap_min_usd": 150e6,
-           "market_cap_max_usd": 60e9, "adv_min_usd": 3e6, "cap_flag_supervivencia": 0.04}
+           "market_cap_max_usd": 60e9, "adv_min_usd": 3e6, "cap_flag_supervivencia": 0.04,
+           "cap_por_clase": {"especulativa": 0.10, "watchlist": 0.0}}
     cfg.update(over)
     return IPS(cfg)
 
@@ -420,3 +421,28 @@ def test_p1_4_entrada_en_zona_no_marca(tmp_path):
     assert res.entradas_fuera_de_zona == []
     reg = [e for e in orq.ledger._eventos() if e.get("tipo") == "decision" and e.get("ticker") == "OKLO"][-1]
     assert reg["fuera_de_zona"] is False
+
+
+def test_r12_1_cap_especulativo_duro(tmp_path):
+    # r12 #1 (repro): una especulativa pedida al 18% se recorta DURO a 10% (doc 80 §H), ya NO pasa al 18%.
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.18, "comprar")]), cartera_actual={},
+                                  caja_actual=1.0, contexto=_ctx(), ciclo="c",
+                                  clase_por_ticker={"OKLO": "especulativa"})
+    assert res.pesos_finales.get("OKLO") == 0.10
+    assert any("cap DURO por clase" in a for a in res.alertas)
+
+
+def test_r12_1_watchlist_no_comprable(tmp_path):
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.05, "comprar")]), cartera_actual={},
+                                  caja_actual=1.0, contexto=_ctx(), ciclo="c",
+                                  clase_por_ticker={"OKLO": "watchlist"})
+    assert "OKLO" not in res.pesos_finales                      # watchlist = 0 → bloqueado
+    assert any("WATCHLIST" in a for a in res.alertas)
+
+
+def test_r12_1_core_sizea_libre(tmp_path):
+    # core/satélite: SIN banda — el PM sizea libre hasta el IPS (20%); 0.15 pasa entero.
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.15, "comprar")]), cartera_actual={},
+                                  caja_actual=1.0, contexto=_ctx(), ciclo="c",
+                                  clase_por_ticker={"OKLO": "core"})
+    assert res.pesos_finales.get("OKLO") == 0.15

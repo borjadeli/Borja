@@ -395,3 +395,28 @@ def test_d4_sizing_shadow_llega_al_auditor(tmp_path):
     ca = capt.get("cartera_analisis", "")
     assert "[SOMBRA]" in ca and "SIZING POR CLASIFICACIÓN" in ca
     assert "OKLO" in ca and "banda especulativa" in ca and "INFLADA" in ca
+
+
+def test_p1_4_entrada_fuera_de_zona_se_registra(tmp_path):
+    # r11 P1-4: un aumento admitido NO en zona COMPRA se captura en el resultado y se registra en el ledger
+    # con la zona al entrar + la justificación del PM.
+    orq = _orq(tmp_path)
+    res = orq.procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c",
+                       comprable_por_ticker={"OKLO": False}, admisible_duro_por_ticker={"OKLO": True},
+                       zonas_por_ticker={"OKLO": "MANTENER"})
+    assert res.entradas_fuera_de_zona == ["OKLO"]
+    reg = [e for e in orq.ledger._eventos() if e.get("tipo") == "decision" and e.get("ticker") == "OKLO"][-1]
+    assert reg["fuera_de_zona"] is True
+    assert reg["zona_al_entrar"] == "MANTENER"
+    assert reg["justificacion_zona"]                     # el por_que_ese_tamano del PM
+
+
+def test_p1_4_entrada_en_zona_no_marca(tmp_path):
+    orq = _orq(tmp_path)
+    res = orq.procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c",
+                       comprable_por_ticker={"OKLO": True}, zonas_por_ticker={"OKLO": "COMPRA"})
+    assert res.entradas_fuera_de_zona == []
+    reg = [e for e in orq.ledger._eventos() if e.get("tipo") == "decision" and e.get("ticker") == "OKLO"][-1]
+    assert reg["fuera_de_zona"] is False

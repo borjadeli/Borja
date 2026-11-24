@@ -62,3 +62,14 @@ def test_resumen_indices(tmp_path):
     ld.registrar(SnapshotSombra(fecha="a", cartera="pm", pesos={"X": 1.0}, precios={"X": 100}))
     ld.registrar(SnapshotSombra(fecha="b", cartera="pm", pesos={"X": 1.0}, precios={"X": 120}))
     assert abs(ld.resumen()["pm"] - 1.2) < 1e-6
+
+
+def test_p1_4_pm_solo_en_zona_excluye_fuera_de_zona(tmp_path):
+    from backend.agentes.carteras_sombra import LedgerSombras
+    led = LedgerSombras(tmp_path / "s.jsonl")
+    led.registrar_ciclo("2026-11-24", pm_pesos={"MP": 0.10, "OKLO": 0.05},
+                        pass_nombres=["MP", "OKLO"], precios={"MP": 50.0, "OKLO": 20.0},
+                        etfs={}, fuera_de_zona={"OKLO"})
+    assert "pm" in led.carteras() and "pm_solo_en_zona" in led.carteras()
+    solo = led._snapshots("pm_solo_en_zona")[-1]
+    assert "OKLO" not in solo.pesos and solo.pesos.get("MP") == 0.10   # la entrada fuera de zona queda afuera

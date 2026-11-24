@@ -57,12 +57,20 @@ class LedgerSombras:
             f.write(snap.model_dump_json() + "\n")
 
     def registrar_ciclo(self, fecha: str, *, pm_pesos: dict[str, float], pass_nombres: list[str],
-                        precios: dict[str, float], etfs: dict[str, str] | None = None) -> None:
+                        precios: dict[str, float], etfs: dict[str, str] | None = None,
+                        fuera_de_zona: set[str] | None = None) -> None:
         """Registra en un ciclo las carteras estándar: `pm`, `ew_pass` y los ETFs/índice.
-        `precios` debe cubrir los tickers de pm/pass + los símbolos de los ETFs."""
+        `precios` debe cubrir los tickers de pm/pass + los símbolos de los ETFs. `fuera_de_zona` (r11 P1-4):
+        si se pasa, registra además `pm_solo_en_zona` = la MISMA cartera sin esas entradas (residual a caja),
+        para medir cuánto aportaron/restaron las entradas fuera de zona COMPRA."""
         etfs = etfs if etfs is not None else ETFS_DEFAULT
         self.registrar(SnapshotSombra(fecha=fecha, cartera="pm", pesos=pm_pesos,
                                       precios={t: precios[t] for t in pm_pesos if t in precios}))
+        if fuera_de_zona is not None:
+            fz = {t.upper() for t in fuera_de_zona}
+            solo = {t: w for t, w in pm_pesos.items() if t.upper() not in fz}
+            self.registrar(SnapshotSombra(fecha=fecha, cartera="pm_solo_en_zona", pesos=solo,
+                                          precios={t: precios[t] for t in solo if t in precios}))
         ew = pesos_equal_weight(pass_nombres)
         self.registrar(SnapshotSombra(fecha=fecha, cartera="ew_pass", pesos=ew,
                                       precios={t: precios[t] for t in ew if t in precios}))

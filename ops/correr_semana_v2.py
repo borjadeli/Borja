@@ -246,7 +246,8 @@ def _registrar_sombras(paper, precios, res) -> None:
                         if d.verif and d.verif.veredicto == "pass"]
         etf_precios = precios_de(recolectar_snapshots(list(ETFS_DEFAULT.values())))
         LedgerSombras().registrar_ciclo(date.today().isoformat(), pm_pesos=pm_pesos,
-                                        pass_nombres=pass_nombres, precios={**precios, **etf_precios})
+                                        pass_nombres=pass_nombres, precios={**precios, **etf_precios},
+                                        fuera_de_zona=set(res.resultado_decision.entradas_fuera_de_zona))
         print("carteras sombra: snapshot del ciclo registrado")
     except Exception as e:  # noqa: BLE001
         print(f"aviso: no se registraron carteras sombra: {e}")

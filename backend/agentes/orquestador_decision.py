@@ -98,6 +98,7 @@ class ResultadoDecision:
     auditoria: AuditReport | None = None
     demoradas: list[str] = field(default_factory=list)
     alertas: list[str] = field(default_factory=list)
+    entradas_fuera_de_zona: list[str] = field(default_factory=list)   # aumentos admitidos NO en zona COMPRA (r11 P1-4)
     holguras: list[Violacion] = field(default_factory=list)   # para la re-propuesta del PM
     decision_ids: list[str] = field(default_factory=list)
     reevaluado_por_auditor: bool = False     # el PM re-decidió tras una objeción media+ del Auditor (doc 85)
@@ -121,7 +122,8 @@ class OrquestadorDecision:
                  clasif_por_ticker: dict | None = None, bull_por_ticker: dict | None = None,
                  comprable_por_ticker: dict[str, bool] | None = None, pipeline_fresco: bool = True,
                  admisible_duro_por_ticker: dict[str, bool] | None = None,
-                 memo_macro: str = "", repropuesta_fn=None, reevaluar_auditor_fn=None) -> ResultadoDecision:
+                 memo_macro: str = "", repropuesta_fn=None, reevaluar_auditor_fn=None,
+                 zonas_por_ticker: dict[str, str] | None = None) -> ResultadoDecision:
         hoy = hoy or date.today()
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
         precios = {t.upper(): p for t, p in (precios or {}).items()}
@@ -147,7 +149,7 @@ class OrquestadorDecision:
             res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, decision.acciones),
                                     pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
                                     no_action=False, alertas=["PM no opera ahora (operar_ahora=False)"])
-            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
+            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
             return res
 
         res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
@@ -173,7 +175,7 @@ class OrquestadorDecision:
                                             pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
                                             no_action=False, reevaluado_por_auditor=True, auditoria=res.auditoria,
                                             alertas=["PM reevaluó tras el Auditor y decidió NO operar ahora"])
-                    self._registrar(res, nueva, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
+                    self._registrar(res, nueva, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
                     return res
                 res = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro)
                 decision = nueva
@@ -184,7 +186,7 @@ class OrquestadorDecision:
         # ALTA en la auditoría final → demora los aumentos (como antes).
         if res.auditoria and any(o.severidad == "alta" for o in res.auditoria.objeciones):
             res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
-        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker)
+        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
@@ -300,9 +302,11 @@ class OrquestadorDecision:
             caja_cand = round(1.0 - sum(cand.values()), 6)
 
         clip = "agregada" if caidos else ("local_simple" if clip_local else "none")
+        # r11 P1-4: aumentos admitidos que NO estaban en zona COMPRA (entrada fuera de zona, doc 80 §H).
+        fuera_zona = sorted(tk for tk in ok if candado_on and not comprable.get(tk, False))
         res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, decision.acciones),
                                 pesos_finales=cand, caja_final=caja_cand, clip=clip, no_action=caidos,
-                                alertas=alertas, holguras=holguras)
+                                alertas=alertas, holguras=holguras, entradas_fuera_de_zona=fuera_zona)
         for tk in res.pesos_finales:
             if tk in cartera and _inadmisible(contexto.get(tk), self.ips):
                 res.alertas.append(f"{tk}: posición existente quedó inadmisible (market cap/ADV) — "
@@ -344,8 +348,10 @@ class OrquestadorDecision:
                              peso_max_nombre=float(g("peso_max_nombre", 1.0)))
         return "\n\n" + render_sizing(an, g("sizing_modo", "sombra"), cap_bucket=cap_b, cap_cluster=cap_c)
 
-    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo, bull=None) -> None:
+    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo, bull=None, zonas=None) -> None:
         bull = bull or {}
+        zonas = zonas or {}
+        fuera = set(getattr(res, "entradas_fuera_de_zona", []) or [])
         for i, a in enumerate(decision.acciones):
             tk = a.ticker.upper()
             resultante = res.pesos_finales.get(tk, 0.0)
@@ -355,7 +361,8 @@ class OrquestadorDecision:
                 ciclo=ciclo, peso_resultante=resultante, ejecutada=ejecutada, clip=res.clip,
                 precio=precios.get(tk), verif_veredicto=verifs.get(tk), ips_hash=self.ips.hash(),
                 prompt_version=decision.meta.prompt_version, model=decision.meta.model,
-                auditoria=res.auditoria if i == 0 else None, bull=bull.get(tk)))
+                auditoria=res.auditoria if i == 0 else None, bull=bull.get(tk),
+                fuera_de_zona=(tk in fuera), zona_al_entrar=zonas.get(tk)))
 
     @staticmethod
     def _id_append(res: ResultadoDecision, did: str) -> None:

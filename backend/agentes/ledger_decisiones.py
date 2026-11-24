@@ -69,6 +69,10 @@ class RegistroDecision(BaseModel):
     falsador_fecha_limite: str                # YYYY-MM-DD
     conviccion_0_1: float
     ejecutada: bool = True                     # ¿la acción movió el libro? (False = intención/bloqueada)
+    # r11 P1-4 — entrada fuera de zona COMPRA (doc 80 §H): se MIDE aparte (shadow pm_solo_en_zona).
+    zona_al_entrar: str | None = None          # zona de la ficha al entrar (COMPRA/MANTENER/RECORTE/SALIDA)
+    fuera_de_zona: bool = False                 # el aumento se admitió NO estando en zona COMPRA
+    justificacion_zona: str | None = None       # el por_qué del PM cuando entró fuera de zona
     precio: float | None = None
     dossier_hash: str | None = None
     verif_veredicto: str | None = None        # pass/review/fail
@@ -158,7 +162,8 @@ class LedgerDecisiones:
                             clip: ClipTipo = "none", precio: float | None = None,
                             verif_veredicto: str | None = None, ips_hash: str = "",
                             prompt_version: str = "", model: str = "",
-                            auditoria: AuditReport | None = None, bull: dict | None = None) -> str:
+                            auditoria: AuditReport | None = None, bull: dict | None = None,
+                            fuera_de_zona: bool = False, zona_al_entrar: str | None = None) -> str:
         """Append de una decisión del PM. Devuelve `decision_id`. `peso_resultante` = objetivo si no hubo clip.
 
         La convicción (P tesis se sostiene, insumo del Brier) la lleva la propia `PMAccion`. `bull` = snapshot
@@ -175,6 +180,8 @@ class LedgerDecisiones:
             falsador_afirmacion=accion.falsador.afirmacion,
             falsador_fecha_limite=accion.falsador.fecha_limite,
             conviccion_0_1=accion.conviccion_0_1, precio=precio, dossier_hash=accion.dossier_hash,
+            zona_al_entrar=zona_al_entrar, fuera_de_zona=fuera_de_zona,
+            justificacion_zona=(accion.por_que_ese_tamano if fuera_de_zona else None),
             verif_veredicto=verif_veredicto, ips_hash=ips_hash,
             prompt_version=prompt_version, model=model, objeciones_auditor=objeciones,
             prob_bull=b.get("prob"), prob_bull_implicita=b.get("prob_implicita"),

@@ -2,7 +2,34 @@
 
 > **Fuente viva del estado.** Reemplaza al doc 32 (que describe el estado v1). Si algo acá contradice a un
 > doc más viejo sobre *qué está hecho / qué sigue*, gana este. Directiva: doc 51 · arquitectura/plan: doc 52.
-> Última actualización: **2026-11-05** (r6 + r7 Bloque 1/§3 + r7a #1/#2/#4).
+> Última actualización: **2026-11-24** (r11 P0/P1-4 + mapa-clasificador construido y RETIRADO).
+
+## Actualización 2026-11-24 — r11 (loop autónomo) + mapa vivo: construido, red-teameado y RETIRADO
+
+**Sistema autónomo EN VIVO** (host reiniciado 2026-11-20 14:56; 6 jobs registrados: poller horario, ciclo diario
+16:50 ET, comité semanal dom 18:00, backup, snapshot/mtm). Revisión externa **r11** sobre el loop — bugs VIVOS
+verificados contra el código antes de corregir:
+- **P0-1 (commit 5b12566):** `ciclo_diario._ejecutar_salidas` cerraba la sesión SIN commit → rollback → la
+  salida tier A (quiebra/restatement) se PERDÍA y quedaba marcada como hecha (nunca se reintentaba). Fix +
+  2 tests de integración con ledger real.
+- **P0-2 (commit fcf7bc5):** falsadores numéricos sin `valor_fn` → SUSPECTED siempre → despertaba al PM a
+  DIARIO. Fix: `valor_fn_falsadores()` lee el XBRL real + `_dedup_motivos` (no repetir en 7d) + texto honesto
+  (CONFIRMED vs SUSPECTED, antes decía "cumplido").
+- **P1-4 (commit 1ebc680):** medir las entradas FUERA de zona COMPRA — ledger registra zona/fuera_de_zona/
+  justificación + sombra `pm_solo_en_zona`.
+- **Pendiente r11:** P0-2d (costo del despertar en /costos) · P1-3 (doc 77 con exposición, necesita corridas)
+  · P1-5 (scan 10-K going-concern/material-weakness — validar que es barato) · resto de P2-6.
+
+**MAPA VIVO — construido, red-teameado (3 IAs) y RETIRADO el mismo frente (commits 0911231→0d89f32).** Se armó
+el MVP (clasificar_estado económico confirmado/promesa + atribución + pre-screen de deeps). **El red-team + un
+backtest sobre la serie REAL de MP lo refutó:** el gate económico es PRO-CÍCLICO (dice "evitar" en el piso del
+ciclo 2024-25 cuando MP estaba a $12-17 = la compra, y "ok" en el pico 2022 +69% = comprar arriba/vender abajo),
+redundante con `futuro.py`, y el dato que usaba estaba stale (FY vs trimestre). **Decisión del operador: sacarlo
+(como el Bear).** QUEDA VIVO: el cuello como **estructura de búsqueda del discovery** (nx_* + `descubrimiento`) +
+`senal_disolucion` (capacidad a nivel industria). La "vista de industria" rica, si se quiere, la da el Analista/
+Macro (Opus+web) como output estructurado — no un clasificador determinista (decisión: NO construir el modelo de
+demanda forward; el analista Opus+web ya lo razona, doc 49). Docs 89/90 quedan como registro del diseño + su
+refutación. ~972 tests verdes.
 
 ## Actualización 2026-11-05 (r7a) — revisión externa r7a: deployment coherente + archivo + menores
 

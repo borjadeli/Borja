@@ -66,9 +66,11 @@ corre: `fuente_xbrl` (datos point-in-time) + calculadoras (runway/dilución) →
 (`paper_pm.py` sobre el ledger fiel). **Sistema nervioso autónomo (doc 85):** poller horario · event monitor
 8-K · reglas de salida (solo tier A auto) · Research Queue + input del operador (`ops.solicitar`) + SOLICITAR_DEEP
 del PM · drenaje (cola→MISMO comité→ficha) · run_cycle diario · comité semanal + DESPERTAR solo-PM. Agendado en
-el scheduler (⚠️ toma efecto al **reiniciar el host**). **Primera compra real: el PM compró OKLO 3% en el smoke #2.**
-Suite: **~953 tests verdes.** Lo vivo y el "qué falta" (P0-3 ya hecho; P1-5 hecho; doc 77 pendiente) están en el
-doc 53. (El framing v1 "el determinismo decide" quedó invertido; el método v1 se conserva como herramienta.)
+el scheduler (host reiniciado 2026-11-20 — EN VIVO). **Primera compra real: el PM compró OKLO 3% en el smoke #2.**
+**Revisión r11 (2026-11-24):** bugs vivos del loop corregidos (P0-1 salida tier A que no persistía · P0-2 despertar
+diario espurio · P1-4 medir entradas fuera de zona). **Mapa:** se construyó un clasificador económico de cuellos y
+se RETIRÓ (backtest lo refutó: pro-cíclico); el cuello queda como estructura de búsqueda del discovery. Ver doc 53.
+Suite: **~972 tests verdes.** (El framing v1 "el determinismo decide" quedó invertido; el método v1 se conserva.)
 
 ## 5. Mapa del código
 - `backend/nucleo/` — **motor de evidencia + calculadoras CONSERVADOS** (fact_store, extractor_citado,

@@ -430,6 +430,23 @@ def main() -> int:
                             gigante_barato_fn=gig_fn, cupo_gigantes=cupo_gig, precios_meta=precios_meta,
                             eventos_solo_posiciones=args.universo, cupo_oportunidad=int(ips.cfg.get("cupo_oportunidad", 4)),
                             solo_pm=args.solo_pm, scores_oportunidad=scores_op)
+        # r12 #5: el comité ESCRIBE fichas (mismo camino que la cola) → se puede COMPRAR lo recién analizado;
+        # un FAIL marca la ficha ROTA. En solo-PM (DESPERTAR) no hay research → no escribe nada.
+        if not args.solo_pm:
+            from backend.agentes.ficha_store import escribir_ficha_desde_dossier
+            from ops.backfill_fichas import _datos_de_pack
+            n_fichas = 0
+            for d in res.research.decisiones:
+                if getattr(d, "dossier", None) is None or getattr(d, "verif", None) is None:
+                    continue
+                try:
+                    vered = d.verif.veredicto
+                    escribir_ficha_desde_dossier(d.ticker, d.dossier, vered,
+                                                 datos=(_datos_de_pack(d.ticker) if vered != "fail" else None))
+                    n_fichas += 1
+                except Exception as e:  # noqa: BLE001 — una ficha que falla no tumba el ciclo
+                    print(f"  aviso: no pude escribir ficha de {d.ticker}: {e}")
+            print(f"comité → fichas escritas/actualizadas: {n_fichas}")
         paper.commit()
         _registrar_sombras(paper, precios, res)      # Fase 5: snapshot pm/ew_pass/ETFs del ciclo
     finally:

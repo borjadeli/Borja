@@ -43,6 +43,30 @@ class StoreFichas:
         return dict(self._f)
 
 
+def escribir_ficha_desde_dossier(ticker: str, dossier, veredicto: str, *, datos: dict | None = None,
+                                 store: "StoreFichas | None" = None) -> Ficha | None:
+    """UN solo camino de creación de ficha (r12 #5), para la cola Y el comité semanal. PASS/REVIEW → backfill +
+    set; FAIL → ficha ROTA (si existía una previa, para NO comprometer capital con una tesis que no pasó).
+    Devuelve la Ficha resultante (o la ROTA/None en FAIL). Persiste el store."""
+    store = store or StoreFichas()
+    tk = ticker.upper()
+    if (veredicto or "").lower() == "fail":
+        prev = store.get(tk)
+        if prev is not None:
+            prev.estado = "ROTA"
+            store.set(prev)
+            store.guardar()
+        return prev
+    datos = datos or {}
+    f = backfill_desde_dossier(tk, dossier, deuda_neta=float(datos.get("deuda_neta") or 0.0),
+                               acciones=float(datos.get("acciones") or 0.0) or 1.0, precio=datos.get("precio"),
+                               caja=datos.get("caja"), cuello=datos.get("cuello"),
+                               datos_conflicted=bool(datos.get("datos_conflicted")))
+    store.set(f)
+    store.guardar()
+    return f
+
+
 def backfill_fichas(cache_entries: dict, *, datos_fn: Callable[[str], dict | None],
                     store: StoreFichas | None = None, hoy: date | None = None, **pol) -> list[Ficha]:
     """Arma fichas desde el cache de dossiers (`{ticker: entry}` con `.dossier`/`.hash`). `datos_fn(ticker)` →

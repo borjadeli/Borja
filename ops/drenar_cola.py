@@ -60,18 +60,14 @@ def _deep_real(ticker: str, *, ciego: bool = False) -> dict:
     verif = verificar(r.dossier, r.fuentes, pack={p.metric: p for p in pack.puntos},
                       ultimo_filing_periodico=max(knowns) if knowns else None, hoy=hoy)
     costo += float(getattr(verif.meta, "cost_usd", 0.0) or 0.0)
-    if verif.veredicto == "fail":     # FAIL → NO vigente: no se compromete capital con un dossier que no pasó
+    from backend.agentes.ficha_store import escribir_ficha_desde_dossier
+    if verif.veredicto == "fail":     # FAIL → ROTA (r12 #5: ahora SÍ marca la ficha previa, no solo devuelve)
+        escribir_ficha_desde_dossier(ticker, r.dossier, "fail")
         return {"estado_ficha": "ROTA", "zona": None, "costo": costo, "veredicto": "fail", "modo": modo}
     cache.guardar(ticker, h, r.dossier, verif, hoy)   # persiste → el dossier llega al wake y es base del próximo delta
     datos = _datos_de_pack(ticker, as_of=hoy) or {}
-    f = backfill_desde_dossier(ticker, r.dossier, deuda_neta=float(datos.get("deuda_neta") or 0.0),
-                               acciones=float(datos.get("acciones") or 0.0) or 1.0, precio=datos.get("precio"),
-                               caja=datos.get("caja"), cuello=datos.get("cuello"),
-                               datos_conflicted=bool(datos.get("datos_conflicted")))
-    store = StoreFichas()
-    store.set(f)
-    store.guardar()
-    zona = f.latido.zona if f.latido else None
+    f = escribir_ficha_desde_dossier(ticker, r.dossier, verif.veredicto, datos=datos)   # UN solo camino
+    zona = f.latido.zona if (f and f.latido) else None
     return {"estado_ficha": f.estado, "zona": zona, "costo": costo, "veredicto": verif.veredicto, "modo": modo}
 
 

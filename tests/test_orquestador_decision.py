@@ -475,3 +475,29 @@ def test_r12_2_factor_cuenta_posicion_existente(tmp_path):
                        cargas_por_ticker={"AAA": {"f": 1.0}, "BBB": {"f": 1.0}})
     assert "BBB" not in res.pesos_finales       # contando AAA, el factor excede → bloqueado
     assert res.pesos_finales.get("AAA") == 0.20  # la existente queda (reducciones nunca se fuerzan)
+
+
+def test_piso_sube_stub_a_5pct(tmp_path):
+    # operador 2026-11-24: una compra chica (3%) se sube al piso 5% (no stubs)
+    orq = OrquestadorDecision(_ips(peso_min_nombre=0.05), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    res = orq.procesar(_decision([_accion("OKLO", 0.03, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales.get("OKLO") == 0.05
+    assert any("piso" in a for a in res.alertas)
+
+
+def test_piso_no_toca_posicion_que_ya_pesa(tmp_path):
+    orq = OrquestadorDecision(_ips(peso_min_nombre=0.05), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    res = orq.procesar(_decision([_accion("OKLO", 0.08, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales.get("OKLO") == 0.08
+
+
+def test_piso_no_alcanzable_bajo_cap_no_abre(tmp_path):
+    # flag de supervivencia no resuelto → cap_flag 0.04 < piso 0.05 → no se abre (no stub forzado)
+    orq = OrquestadorDecision(_ips(peso_min_nombre=0.05, cap_flag_supervivencia=0.04),
+                              LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    res = orq.procesar(_decision([_accion("OKLO", 0.08, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                       contexto=_ctx(), ciclo="c", flags_por_ticker={"OKLO": ["going_concern"]})
+    assert "OKLO" not in res.pesos_finales
+    assert any("no se abre (no stubs)" in a for a in res.alertas)

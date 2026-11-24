@@ -212,6 +212,7 @@ class OrquestadorDecision:
               admis_duro: dict[str, bool] | None = None,
               clase_tk: dict[str, str] | None = None) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
+        piso = float(self.ips.cfg.get("peso_min_nombre", 0.0))   # piso por posición (no stubs) — operador 2026-11-24
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
         banda = float(self.ips.cfg.get("banda_peso_existente", 0.03))
         clase_tk = clase_tk or {}      # r12 #1: clase efectiva por ticker (cap duro)
@@ -272,8 +273,16 @@ class OrquestadorDecision:
             if _flag_no_resuelto(tk, flags.get(tk, []), decision.respuestas_flags):
                 tope = min(tope, cap_flag)
                 alertas.append(f"{tk}: flag de supervivencia no resuelto → tope {tope:.0%}")
-            if tgt > tope + 1e-9:
+            if tgt > tope + 1e-9:                     # clip al techo PRIMERO
                 tgt, clip_local = tope, True
+            # PISO por posición (operador 2026-11-24): el tamaño FINAL debe ser ≥ piso o 0 (no stubs 1-2%).
+            if piso > 0 and 1e-9 < tgt < piso:
+                if tope + 1e-9 >= piso:               # el techo deja llegar al piso → el PM pidió poco: subir
+                    tgt, clip_local = piso, True
+                    alertas.append(f"{tk}: subido al piso {piso:.0%} (mínimo por posición, no stubs)")
+                else:                                 # un cap (clase/flag) fuerza bajo el piso → no se puede tener ≥piso
+                    alertas.append(f"{tk}: cap {tope:.0%} < piso {piso:.0%} — no se abre (no stubs)")
+                    continue
             ok[tk] = tgt
 
         # 3. Drift trim de existentes (banda).
@@ -397,7 +406,8 @@ class OrquestadorDecision:
                 precio=precios.get(tk), verif_veredicto=verifs.get(tk), ips_hash=self.ips.hash(),
                 prompt_version=decision.meta.prompt_version, model=decision.meta.model,
                 auditoria=res.auditoria if i == 0 else None, bull=bull.get(tk),
-                fuera_de_zona=(tk in fuera), zona_al_entrar=zonas.get(tk)))
+                fuera_de_zona=(tk in fuera), zona_al_entrar=zonas.get(tk),
+                reevaluado=getattr(res, "reevaluado_por_auditor", False)))
 
     @staticmethod
     def _id_append(res: ResultadoDecision, did: str) -> None:

@@ -61,6 +61,17 @@ def render_digest(*, ciclo: str, equity: float, caja_pct: float, posiciones: lis
             L.append(f"      tesis: {d.tesis}")
         if d.falsador_afirmacion:
             L.append(f"      falsador: {d.falsador_afirmacion} (límite {d.falsador_fecha_limite})")
+        # AUDITOR (para la evaluación, pedido del operador): objeciones + si el PM modificó o reconfirmó.
+        objs = getattr(d, "objeciones_auditor", None) or []
+        if objs:
+            for o in objs:
+                sev = getattr(o, "severidad", None) or (o.get("severidad") if isinstance(o, dict) else "?")
+                tipo = getattr(o, "tipo", None) or (o.get("tipo") if isinstance(o, dict) else "?")
+                det = getattr(o, "detalle", None) or (o.get("detalle") if isinstance(o, dict) else "")
+                L.append(f"      auditor [{sev}] {tipo}: {det}")
+            L.append("      → el PM REEVALUÓ y modificó/reconfirmó tras la objeción"
+                     if getattr(d, "reevaluado_por_auditor", False)
+                     else "      → el PM MANTUVO la decisión (objeción no media+ / reconfirmada)")
 
     L.append("")
     L.append("POR QUÉ (dossier verificado):")

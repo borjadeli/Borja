@@ -8,6 +8,7 @@ fecha: "2026-10-26"
 # --- Límites de cartera (decisiones del operador 2026-10-26; max_posiciones 12→20 en r7a #1) ---
 max_posiciones: 20             # r7a #1: 12→20. NO cuenta los ETFs de estacionamiento (ver abajo)
 peso_max_nombre: 0.20          # 20% por nombre
+peso_min_nombre: 0.05          # PISO 5% por posición (decisión operador 2026-11-24): nada de stubs 1-2% — si la abrís, que pese
 max_por_sector: 0.30
 max_por_cuello: 0.35           # requiere mapa poblado (nx_nodo) — ya está
 caja_min: 0.0

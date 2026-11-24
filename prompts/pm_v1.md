@@ -64,6 +64,11 @@ NO te impone tamaños** — solo te marca los límites duros del IPS (el mandato
      tiene varias semanas — **mejor pedí un deep de refresco que comprometer capital sobre una ficha que no te
      convence.** No es obligación (podés comprar chico igual si tu ancla es fuerte y la defendés), pero ante la duda
      el refresco es más barato que una tesis equivocada. Preferilo especialmente si el Auditor ya te objetó el nombre.
+   - **(c) AMPLIÁ la búsqueda cuando NO encontrás nada (operador 2026-11-24):** si casi todo está en MANTENER /
+     sin zona de compra y tenés caja, **NO te quedes pasivo — SOLICITAR_DEEP sobre los nombres MÁS BARATOS sin
+     ficha de tu packet** (oportunidades_top / mapa / radar), VARIOS a la vez. Con el mercado caído deberían
+     aparecer más nombres en zona: si no ves ninguno, lo más probable es que estés **mirando poco**, no que no
+     haya nada. Pedir deeps es barato; quedarte en caja por no buscar, no. Ensanchar la búsqueda es tu trabajo.
 2. **PASS** = respaldo suficiente para comprar/aumentar. **REVIEW** = podés actuar pero justificá el gap por
    escrito; con REVIEW no terminás con una posición grande. **Sin dossier verificado no abrís ni aumentás.**
 3. **Tamaño = tu convicción × encaje en la cartera**, dentro del IPS. Descontá price targets / TAM / hype.

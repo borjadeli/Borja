@@ -17,6 +17,7 @@ max_ops_semana: 2              # por SEMANA CALENDARIO (se cuenta desde el ledge
 banda_peso_existente: 0.03     # una posición que derivó sobre el cap se recorta solo si supera cap + banda
 
 # --- Embudo de análisis (doc 64 + decisión del operador sobre earnings) ---
+cupo_oportunidad: 6            # deeps por OPORTUNIDAD/semana (barato por score, no por evento) — subido 4→6 (operador 2026-11-24: ampliar la búsqueda)
 cupo_forzados: 8               # tope del carril forzado por evento para NO-posiciones (doc 76); rankea por
                                #   prioridad de cuello y arrastra el overflow (las posiciones no cuentan acá)
 cupo_gigantes: 2               # gigantes (>market_cap_max) que CAYERON fuerte → se analizan (carril chico)

@@ -130,7 +130,7 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
             continue
         pack.oportunidades_top.append({"ticker": fs.ticker.upper(), "score": fs.score, "cluster": fs.cluster,
                                        "v": fs.v, "m": fs.m, "c": fs.c, "a": fs.a})
-        if len(pack.oportunidades_top) >= 10:
+        if len(pack.oportunidades_top) >= 15:     # 10→15 (operador 2026-11-24): más candidatos para ampliar
             break
     return pack
 
@@ -152,7 +152,7 @@ def render_packet(pack: PaquetePM) -> str:
     if pack.oportunidades_top:
         L.append("\nOPORTUNIDADES NUEVAS (sin ficha, abajo del corte de auto-deep) — si alguna te interesa, "
                  "SOLICITAR_DEEP (no se puede comprar sin ficha):")
-        for o in pack.oportunidades_top[:8]:
+        for o in pack.oportunidades_top[:12]:
             L.append(f"- {o['ticker']} score {o['score']} [{o['cluster']}]")
     if pack.alertas:
         L.append("\nALERTAS:")

@@ -16,7 +16,7 @@ _REPO = Path(__file__).resolve().parent.parent.parent
 
 
 def disparar_comite(*, universo: bool = True, contratos: bool = True, solo_pm: bool = False,
-                    timeout: int = 2400) -> dict:
+                    con_macro: bool = False, timeout: int = 2400) -> dict:
     """Corre `ops.correr_semana_v2` como subproceso. Devuelve {ok, returncode, resumen}. Fail-safe: nunca lanza.
 
     `solo_pm=True` (r10 P0-3 / doc 85 DESPERTAR): el PM decide sobre su packet SIN comité (barato). En ese modo
@@ -29,6 +29,8 @@ def disparar_comite(*, universo: bool = True, contratos: bool = True, solo_pm: b
             cmd.append("--universo")
         if contratos:
             cmd.append("--contratos")
+        if con_macro:                       # r12 #7: el Macro corre → el memo llega al PM y al Auditor
+            cmd.append("--con-macro")
     _log.info("disparando comité: %s", " ".join(cmd[2:]))
     try:
         p = subprocess.run(cmd, cwd=str(_REPO), capture_output=True, text=True, timeout=timeout)

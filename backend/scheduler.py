@@ -106,7 +106,7 @@ def register_jobs(scheduler: BackgroundScheduler) -> None:
     # la semana). Es la corrida que re-evalúa la cartera como un todo. GASTA LLM (acotado por el presupuesto).
     from backend.agentes.disparar_comite import disparar_comite
     scheduler.add_job(
-        func=_safe_run(lambda: disparar_comite(universo=True, contratos=True), "comite_semanal"),
+        func=_safe_run(lambda: disparar_comite(universo=True, contratos=True, con_macro=True), "comite_semanal"),
         trigger=CronTrigger(day_of_week="sun", hour=18, minute=0, timezone="America/New_York"),
         id="comite_semanal", replace_existing=True,
     )

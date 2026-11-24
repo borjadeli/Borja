@@ -107,6 +107,7 @@ class Ficha:
     bajo_caja: bool = False             # E[V] < caja neta/acción → sospechoso (negocio destruye caja o escenarios malos; caso NNDM)
     instrumentos: list[Instrumento] = field(default_factory=list)   # inventario de capital (doc 83 F2)
     falsadores: list[dict] = field(default_factory=list)
+    factores_carga: dict = field(default_factory=dict)   # {factor: intensidad 0/0.5/1} (F4/r12 #2: cap por factor toda la cartera)
     conocido_hasta: str | None = None   # known_at del hecho más nuevo que vio la tesis (vigencia por evento)
     datos_conflicted: bool = False      # r9: banderas CONFLICTED (acciones feed≠XBRL, etc.) → NO comprable sin re-verificar
     # reloj RÁPIDO (del código) — None hasta recalcular
@@ -408,6 +409,7 @@ def backfill_desde_dossier(ticker: str, dossier, *, deuda_neta: float, acciones:
         escenarios=escen, dilucion_total=dil, deuda_neta=deuda_neta, acciones=acciones, caja=caja,
         instrumentos=instrumentos,
         falsadores=falsadores, conocido_hasta=conocido_hasta, datos_conflicted=datos_conflicted,
+        factores_carga={c.factor: c.intensidad for c in (getattr(dossier, "factores_carga", None) or [])},
         historial=[{"fecha": hoy.isoformat(), "evento": "backfill", "motivo_codigo": "DESDE_DOSSIER"}])
     if precio is not None:
         recalcular(ficha, precio=precio, deuda_neta=deuda_neta, acciones=acciones, **pol)

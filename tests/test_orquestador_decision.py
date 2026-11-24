@@ -446,3 +446,32 @@ def test_r12_1_core_sizea_libre(tmp_path):
                                   caja_actual=1.0, contexto=_ctx(), ciclo="c",
                                   clase_por_ticker={"OKLO": "core"})
     assert res.pesos_finales.get("OKLO") == 0.15
+
+
+def _ctx3():
+    # cada nombre en su propio sector/cuello → los caps de sector/cuello NO disparan (aísla el factor)
+    return {"AAA": ContextoTicker(sector="sa", cuello="ca", market_cap=5e9, adv_usd=10e6),
+            "BBB": ContextoTicker(sector="sb", cuello="cb", market_cap=5e9, adv_usd=10e6),
+            "CCC": ContextoTicker(sector="sc", cuello="cc", market_cap=5e9, adv_usd=10e6)}
+
+
+def test_r12_2_factor_fail_closed_sin_cargas(tmp_path):
+    # r12 #2 (repro): AAA+BBB+CCC, con cargas SOLO de CCC → AAA/BBB (sin cargas) se bloquean fail-closed.
+    orq = OrquestadorDecision(_ips(max_por_factor=0.30), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    dec = _decision([_accion("AAA", 0.20), _accion("BBB", 0.20), _accion("CCC", 0.15)])
+    res = orq.procesar(dec, cartera_actual={}, caja_actual=1.0, contexto=_ctx3(), ciclo="c",
+                       cargas_por_ticker={"CCC": {"ai_datacenter_capex": 1.0}})
+    assert "AAA" not in res.pesos_finales and "BBB" not in res.pesos_finales   # sin cargas → fail-closed
+    assert res.pesos_finales.get("CCC") == 0.15                                # con cargas → pasa
+    assert any("sin cargas de factor" in a for a in res.alertas)
+
+
+def test_r12_2_factor_cuenta_posicion_existente(tmp_path):
+    # el cap de factor cuenta la posición EXISTENTE (no solo lo re-analizado): AAA 20% (f=1) ya en cartera +
+    # abrir BBB 20% (f=1) → factor f llegaría a 40% > 30% → BBB bloqueado.
+    orq = OrquestadorDecision(_ips(max_por_factor=0.30), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    res = orq.procesar(_decision([_accion("BBB", 0.20)]), cartera_actual={"AAA": 0.20}, caja_actual=0.80,
+                       contexto=_ctx3(), ciclo="c",
+                       cargas_por_ticker={"AAA": {"f": 1.0}, "BBB": {"f": 1.0}})
+    assert "BBB" not in res.pesos_finales       # contando AAA, el factor excede → bloqueado
+    assert res.pesos_finales.get("AAA") == 0.20  # la existente queda (reducciones nunca se fuerzan)

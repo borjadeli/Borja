@@ -328,6 +328,10 @@ class RunnerSemanal:
                 admis_duro_tk = _admis(_fichas)   # zona COMPRA blanda: el requisito duro es VIGENTE+datos limpios
                 zonas_tk = {tk: f.latido.zona for tk, f in _fichas.items() if getattr(f, "latido", None)}  # P1-4
                 clase_tk_ficha = {tk: f.clase_d4 for tk, f in _fichas.items() if getattr(f, "clase_d4", None)}  # r12 #1
+                for tk, f in _fichas.items():        # r12 #2: cargas de factor de TODA la cartera (no solo lo re-analizado)
+                    fc = getattr(f, "factores_carga", None)
+                    if fc and tk.upper() not in cargas_por_ticker:
+                        cargas_por_ticker[tk.upper()] = dict(fc)
             except Exception as e:  # noqa: BLE001 — si no se puede computar, el gate recibe {} (fail-closed p/ compras)
                 _log.warning("no pude computar comprable (candado fail-closed): %s", e)
                 comprable_tk, admis_duro_tk = {}, {}

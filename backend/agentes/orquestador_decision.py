@@ -302,7 +302,15 @@ class OrquestadorDecision:
         # 4bis. Agregado por FACTOR común (F4, doc 83 §3): exposición ponderada por driver (cargas 0/0.5/1) sobre
         # un cap duro → bloquea SOLO los aumentos que cargan un factor excedido (mismo patrón 1c que sector/cuello).
         cap_f = float(self.ips.cfg.get("max_por_factor", 1.0))
-        if cargas and cap_f < 1.0:
+        if cap_f < 1.0:
+            # r12 #2 — FAIL-CLOSED: un aumento SIN cargas de factor no se puede verificar (no sabés qué driver
+            # carga) → no se abre/aumenta. Así un nombre no clasificado no mete exposición invisible.
+            for tk in list(ok):
+                if tk not in cargas:
+                    alertas.append(f"{tk}: sin cargas de factor — fail-closed, no se aumenta hasta clasificar el driver")
+                    del ok[tk]
+                    caidos = True
+            cand = {t: w for t, w in {**tras_red, **ok}.items() if w > 0}
             from backend.agentes.auditoria_cartera import factores_excedidos
             fac_over, holg_fac = factores_excedidos(cand, cargas, cap=cap_f)
             if fac_over:

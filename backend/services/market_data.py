@@ -237,6 +237,70 @@ def precio_a_usd(precio: float | None, currency: str | None, *, fx_fn=None) -> f
     return float(precio) * fx if fx else None
 
 
+_YQ: dict = {"session": None, "crumb": None}
+
+
+def _yahoo_quote_session():
+    """Sesión + crumb de Yahoo (cacheados). None si el handshake falla (Yahoo pelea el scraping) — fail-safe."""
+    if _YQ["crumb"]:
+        return _YQ["session"], _YQ["crumb"]
+    try:
+        s = cffi_requests.Session(impersonate="chrome")
+        s.get("https://fc.yahoo.com", timeout=15)
+        crumb = s.get("https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=15).text.strip()
+        if crumb and "<" not in crumb and len(crumb) < 40:
+            _YQ["session"], _YQ["crumb"] = s, crumb
+            return s, crumb
+    except Exception as e:  # noqa: BLE001
+        log.warning("yahoo crumb handshake falló: %s", e)
+    return None, None
+
+
+def financials_yahoo(ticker: str) -> dict | None:
+    """Financials (ANUAL/TTM, convertidos a USD) de un ticker — incl. EXTRANJERO sin SEC — vía Yahoo
+    quoteSummary (crumb). MENOR CONFIANZA que XBRL: NO es point-in-time ni verificable por filing. `None` si el
+    crumb falla o no hay datos (el caller cae a solo-precio). Fuente FRÁGIL (Yahoo puede romper el crumb)."""
+    s, crumb = _yahoo_quote_session()
+    if not crumb:
+        return None
+    try:
+        r = s.get(f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{ticker}",
+                  params={"modules": "financialData,defaultKeyStatistics,incomeStatementHistory", "crumb": crumb},
+                  timeout=20)
+        if r.status_code != 200:
+            return None
+        d = r.json()["quoteSummary"]["result"][0]
+    except Exception as e:  # noqa: BLE001
+        log.warning("quoteSummary(%s) falló: %s", ticker, e)
+        return None
+    fd = d.get("financialData") or {}
+    ks = d.get("defaultKeyStatistics") or {}
+    ish = (d.get("incomeStatementHistory") or {}).get("incomeStatementHistory") or []
+
+    def raw(node, key):
+        return (node.get(key) or {}).get("raw")
+
+    cur = fd.get("financialCurrency") or "USD"
+    fx = (fx_a_usd(cur) or 1.0) if cur != "USD" else 1.0        # USD por unidad local → MULTIPLICAR
+
+    def usd(v):
+        return round(v * fx, 2) if (v is not None) else None
+
+    rev, opm, gpm = raw(fd, "totalRevenue"), raw(fd, "operatingMargins"), raw(fd, "grossMargins")
+    out = {
+        "currency": cur, "fx": fx,
+        "revenue": usd(rev),
+        "operating_income_loss": usd(rev * opm) if (rev is not None and opm is not None) else None,
+        "gross_profit": usd(rev * gpm) if (rev is not None and gpm is not None) else None,
+        "cash": usd(raw(fd, "totalCash")),
+        "total_debt": usd(raw(fd, "totalDebt")),
+        "shares": raw(ks, "sharesOutstanding"),
+    }
+    if len(ish) >= 2:
+        out["revenue_fy_prev"] = usd(raw(ish[1], "totalRevenue"))
+    return out
+
+
 def market_cap_usd(ticker: str) -> float | None:
     """Market cap del ticker en USD (convierte desde la moneda de cotización). None si no hay dato/FX.
     Determinista — base del gate de banda para extranjeros (y verificación del null que manda el LLM)."""

@@ -532,10 +532,43 @@ FuenteDerivada = Callable[[str, date, list[DataPoint]], list[DataPoint]]
 
 # Fuentes ORIGINAL (traen datos crudos) y DERIVADAS (calculadoras sobre esos datos). Dos fases: las
 # derivadas reciben los puntos ya reunidos (consumen DataPoints del pack, no re-pegan a la fuente; doc 59).
+def fuente_financials_yahoo(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[DataPoint]:
+    """FALLBACK para tickers SIN XBRL (extranjeros sin SEC): financials ANUALES vía Yahoo quoteSummary. Solo
+    llena las métricas financieras que NO vinieron del XBRL → NO-OP para US (y sin red). Fuente de MENOR
+    confianza: NO point-in-time, NO verificable por filing (el Verificador la clasifica como débil por la Source)."""
+    presentes = {p.metric for p in puntos if p.value is not None}
+    if {"revenue", "operating_income_loss", "gross_profit", "liquidez", "long_term_debt"} & presentes:
+        return []                                    # ya hay backbone XBRL → no tocar (no-op)
+    from backend.services.market_data import financials_yahoo
+    fy = financials_yahoo(ticker.upper())
+    if not fy:
+        return []
+    tk = ticker.upper()
+    src = Source(name="Yahoo quoteSummary", document_type="api")
+    nota = (f"ANUAL/TTM — NO point-in-time, SIN verificación XBRL (ticker extranjero sin SEC; "
+            f"moneda origen {fy.get('currency')}, convertido a USD)")
+    out: list[DataPoint] = []
+
+    def add(metric, value, unit="USD"):
+        if value is not None:
+            out.append(DataPoint(entity=tk, metric=metric, value=float(value), unit=unit, currency="USD",
+                                 kind=DataKind.ORIGINAL, source=src, known_at=as_of, note=nota))
+    add("revenue", fy.get("revenue"))
+    add("revenue_fy_prev", fy.get("revenue_fy_prev"))
+    add("operating_income_loss", fy.get("operating_income_loss"))
+    add("gross_profit", fy.get("gross_profit"))
+    add("liquidez", fy.get("cash"))
+    add("long_term_debt", fy.get("total_debt"))
+    if fy.get("shares") and "shares_outstanding" not in presentes:
+        add("shares_outstanding", fy.get("shares"), "shares")
+    return out
+
+
 FUENTES_DEFAULT: list[Fuente] = [fuente_mercado, fuente_xbrl]
 # Orden: calculadoras (liquidez/runway) → valuación (usa liquidez para el EV) → consistencia AL FINAL
 # (consume los puntos de todas las demás).
-FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_calculadoras, fuente_valuacion, fuente_consistencia]
+FUENTES_DERIVADAS_DEFAULT: list[FuenteDerivada] = [fuente_financials_yahoo, fuente_calculadoras,
+                                                   fuente_valuacion, fuente_consistencia]
 
 
 def ensamblar(ticker: str, *, as_of: date | None = None, fuentes: list[Fuente] | None = None,

@@ -22,6 +22,10 @@ tiers:
 # Tope por ARQUETIPO (IA2, resuelto 2026-11-25): la pieza que más protege el norte — capea cíclicas e infra a 10% y
 # PROHÍBE pre-revenue en núcleo (solo opcionalidad). Gana el más restrictivo entre este y el tier/banda/evidencia.
 cap_por_arquetipo: {compounder: 0.15, ciclica: 0.10, infra: 0.10, pre_revenue: 0.0}
+# Caps de DINERO NUEVO por banda (IA2 §1) y por evidencia en opcionalidad (IA2 §1.opcionalidad). El tamaño final =
+# min(tier, arquetipo, banda, evidencia, + caps existentes de liquidez/superv/sector/cuello). Nada compensa nada.
+cap_por_banda: {COMPRA_FUERTE: 0.15, COMPRA: 0.10, MANTENER: 0.0, RECORTE: 0.0}
+cap_por_evidencia_opcionalidad: {PASS: 0.025, REVIEW: 0.015, FAIL: 0.0}
 optionality:
   max_positions: 4             # ~8% agregado / 2.5% por nombre ≈ 3-4 plazas
   max_aggregate_weight: 0.08   # cap AGREGADO (operador 2026-11-25: punto medio IA1 6% / IA2 15%); al tocarlo, se congela

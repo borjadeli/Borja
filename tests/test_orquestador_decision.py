@@ -130,6 +130,16 @@ def test_p0_2_falsador_estructurado_del_dossier_se_guarda(tmp_path):
     assert regs[-1].falsador_afirmacion == "a"                       # el texto del PM queda como nota (diff visible)
 
 
+def test_p0_4_invariante_post_trade_caza_stub_sub_piso(tmp_path):
+    # P0.4 (doc 91): una REDUCCIÓN parcial que deja la posición bajo el piso (0<w<piso) — que antes nadie
+    # chequeaba — ahora la caza el invariante post-trade (la señala para el PM/Auditor; no la auto-corrige).
+    orq = OrquestadorDecision(_ips(peso_min_nombre=0.05), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    res = orq.procesar(_decision([_accion("OKLO", 0.02, "aumentar")]),   # 0.10 → 0.02 = reducción a stub
+                       cartera_actual={"OKLO": 0.10}, caja_actual=0.90, contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales.get("OKLO") == 0.02                       # la reducción se aplica
+    assert any("INVARIANTE POST-TRADE" in a and "OKLO" in a for a in res.alertas)   # pero queda SEÑALADO
+
+
 def test_objecion_media_vuelve_al_pm_y_reevalua(tmp_path):
     # doc 85 + directiva operador: una objeción MEDIA del Auditor le VUELVE al PM → re-decide. Acá el PM, al
     # reevaluar, MODIFICA (achica OKLO 0.1→0.04). El resultado final refleja la decisión revisada.

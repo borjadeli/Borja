@@ -360,6 +360,18 @@ class OrquestadorDecision:
             cand = {t: w for t, w in tras_red.items() if w > 0}
             caja_cand = round(1.0 - sum(cand.values()), 6)
 
+        # P0.4 (doc 91) — INVARIANTE POST-TRADE: la cartera FINAL no debe quedar con stubs sub-piso (0<w<piso).
+        # Nadie chequeaba el estado final (IA1+IA2): una REDUCCIÓN parcial podía dejar un stub (el piso solo se
+        # aplicaba a aumentos). Se SEÑALA; NO se auto-corrige (reducir-a-stub → salida total es política de
+        # atomicidad, diferida a P1). El Auditor recibe esta alerta.
+        if piso > 0:
+            _parking = tickers_parking(self.ips.cfg)
+            _stubs = sorted(tk for tk, w in cand.items() if 1e-9 < w < piso - 1e-9 and tk not in _parking)
+            if _stubs:
+                alertas.append("INVARIANTE POST-TRADE: stubs sub-piso en el estado final — "
+                               + ", ".join(f"{tk} {cand[tk]:.1%}" for tk in _stubs)
+                               + f" (piso {piso:.0%}; no se auto-corrige, lo revisa el PM/Auditor)")
+
         clip = "agregada" if caidos else ("local_simple" if clip_local else "none")
         # r11 P1-4: aumentos admitidos que NO estaban en zona COMPRA (entrada fuera de zona, doc 80 §H).
         fuera_zona = sorted(tk for tk in ok if candado_on and not comprable.get(tk, False))

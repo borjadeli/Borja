@@ -402,7 +402,8 @@ class OrquestadorDecision:
         return self.auditor.auditar(
             decision, cartera_actual=cartera, caja_actual=caja_actual,
             memo_macro=memo_macro, verif_por_ticker=verifs, ips_violaciones=viol,
-            cartera_analisis=cartera_analisis)
+            cartera_analisis=cartera_analisis,
+            controles_deterministas=list(getattr(res, "alertas", []) or []))   # P1.4: capa 1 → el auditor
 
     def _sizing_shadow(self, pesos: dict, clasif: dict | None, factores: dict | None) -> str:
         """D4 en modo SOMBRA (doc 74): señal de banda por clasificación + caps agregados para el Auditor. No

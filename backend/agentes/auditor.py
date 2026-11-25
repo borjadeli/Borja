@@ -64,11 +64,19 @@ class Auditor:
     def auditar(self, decision: PMDecision, *, cartera_actual: dict[str, float], caja_actual: float,
                 memo_macro: str = "", verif_por_ticker: dict[str, str] | None = None,
                 ips_violaciones: list[Violacion] | None = None, cartera_analisis: str = "",
-                max_tokens: int = 2048) -> AuditReport:
+                controles_deterministas: list[str] | None = None, max_tokens: int = 2048) -> AuditReport:
         cartera_txt = ("\n".join(f"- {t}: {w:.1%}" for t, w in sorted(cartera_actual.items()))
                        or "(cartera vacía)")
-        fails = [t for t, v in (verif_por_ticker or {}).items() if v == "fail"]
+        _v = {t: (v or "").lower() for t, v in (verif_por_ticker or {}).items()}
+        fails = [t for t, v in _v.items() if v == "fail"]
         fails_txt = ", ".join(fails) if fails else "(ninguno con FAIL)"
+        # P1.4 (doc 91): surface los REVIEW (parcial) — el PM NO debe tratarlos como PASS (caso EXE/VST/EME).
+        reviews = [t for t, v in _v.items() if v == "review"]
+        reviews_txt = ", ".join(reviews) if reviews else "(ninguno en REVIEW)"
+        # P1.4 — CONTROLES DETERMINISTAS (capa 1): lo que el código YA detectó en el gate (bloqueos por verificación,
+        # stubs sub-piso, datos no reconciliados, entradas fuera de zona). El auditor NO debe ignorarlos.
+        ctrl_txt = ("\n".join(f"- {c}" for c in controles_deterministas)
+                    if controles_deterministas else "(el código no reportó controles disparados)")
         viol_txt = ("\n".join(f"- {x.regla}: {x.detalle} ({x.tipo})" for x in ips_violaciones)
                     if ips_violaciones else "(sin violaciones del IPS)")
         user = (
@@ -78,9 +86,15 @@ class Auditor:
             f"=== DECISIÓN DEL PM (operar_ahora={decision.operar_ahora}) ===\n{_render_decision(decision)}\n"
             f"Timing: {decision.razon_timing}\n\n"
             f"=== NOMBRES CON VERIFICACIÓN FALLIDA (FAIL) ===\n{fails_txt}\n\n"
+            f"=== NOMBRES EN REVIEW (verificación PARCIAL — el PM NO debe tratarlos como PASS) ===\n{reviews_txt}\n\n"
+            f"=== CONTROLES DETERMINISTAS (capa 1 — el código YA los detectó; NO los ignores) ===\n{ctrl_txt}\n\n"
             f"=== VIOLACIONES DEL IPS DETECTADAS POR EL CÓDIGO ===\n{viol_txt}\n\n"
             f"=== ANÁLISIS DE CARTERA (concentración por factor de tesis · tesis cambiadas) ===\n"
             f"{cartera_analisis or '(sin señales de cartera)'}\n\n"
+            f"ANTES de concluir 'sin objeciones', confirmá que revisaste los CONTROLES DETERMINISTAS y los REVIEW: "
+            f"si el PM actuó (abrió/aumentó) sobre un nombre en FAIL/REVIEW, o lo llamó PASS, o dejó un control "
+            f"disparado sin justificar, ESO es una objeción material. Aplicá la MISMA vara económica a todos los "
+            f"nombres (no normalices agresivo a uno y no a otro).\n"
             f"Buscá en la web PARA REFUTAR (checklist: eventos vinculantes ≤90d, cláusulas de filings, cambios "
             f"de guidance/capex, acuerdos/competidor). Después llamá a emitir_auditoria. No vetás: objetás con "
             f"predicciones falsables; máx {_MAX_OBJECIONES}, cada una material (cambia un número de D1, un "

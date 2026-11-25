@@ -32,6 +32,19 @@ def test_auditor_emite_objecion_y_devuelve():
     assert rep.objeciones[0].tipo == "concentracion" and rep.objeciones[0].severidad == "alta"
 
 
+def test_p1_4_auditor_recibe_controles_deterministas_y_reviews():
+    # P1.4 (doc 91): el auditor dejaba de ser ciego — recibe los CONTROLES DETERMINISTAS (capa 1, lo que el gate
+    # ya detectó) y los REVIEW (que el PM no debe tratar como PASS). Así puede objetar que el PM los pasó por alto.
+    cli = ScriptedLLM([resp_tool("emitir_auditoria", {"objeciones": [], "devuelve_al_pm": False}, _U)])
+    aud = Auditor(Agente("auditor", "auditor_v1", "claude-sonnet-5-5", cliente=cli))
+    aud.auditar(_decision([_accion("VST")]), cartera_actual={}, caja_actual=1.0,
+                verif_por_ticker={"VST": "review"},
+                controles_deterministas=["VST: Verificador REVIEW — entrada/aumento MARCADO"])
+    prompt = cli.llamadas[0]["messages"][0]["content"]
+    assert "CONTROLES DETERMINISTAS" in prompt and "MARCADO" in prompt
+    assert "REVIEW" in prompt and "VST" in prompt
+
+
 def test_auditor_sin_objeciones_no_devuelve():
     aud = _auditor({"objeciones": [], "devuelve_al_pm": False})
     rep = aud.auditar(_decision([_accion()]), cartera_actual={"MP": 0.1}, caja_actual=0.9)

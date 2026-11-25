@@ -9,6 +9,27 @@ fecha: "2026-10-26"
 max_posiciones: 20             # r7a #1: 12→20. NO cuenta los ETFs de estacionamiento (ver abajo)
 peso_max_nombre: 0.20          # 20% por nombre
 peso_min_nombre: 0.05          # PISO 5% por posición (decisión operador 2026-11-24): nada de stubs 1-2% — si la abrís, que pese
+
+# --- IPS por TIERS (P1.3, doc 91 §7 — reemplaza al piso rígido con 4 categorías ECONÓMICAS) ---
+# IA1 it.2: la opcionalidad es una categoría distinta, NO un CORE chico → NO hay tier 3-5% (evita que toda posición
+# chica sea una excepción al piso). El tier NO da derecho a usar todo su rango: siempre gana el cap más restrictivo
+# (liquidez/supervivencia/sector/cuello). Implementado test-driven (18 tests de aceptación en el acumulador).
+tiers:
+  OPTIONALITY:    {min: 0.01, max: 0.03}   # asimetría alta con incertidumbre material
+  CORE:           {min: 0.05, max: 0.10}   # tesis con margen de seguridad
+  HIGH_CONVICTION: {min_exclusive: 0.10, max: 0.15}   # oportunidad excepcional con evidencia robusta
+  EXCEPTIONAL:    {min_exclusive: 0.15, max: 0.20}   # concentración extraordinaria
+optionality:
+  max_positions: 3             # máx plazas de la manga de opcionalidad
+  max_aggregate_weight: 0.06   # cap AGREGADO (< 3×3%: no las tres al máximo)
+  requires_verified_dossier: true       # excepción al TAMAÑO mínimo, NO a la calidad de evidencia
+  requires_economic_justification: true
+residual_weights:
+  passive_drift: ALLOW_AND_FLAG         # caída pasiva por precio → permitido, se señala, sin operación forzada
+  invalid_voluntary_target: REJECT      # reducción voluntaria a peso inválido → REJECT + alternativas (el PM decide)
+  invalid_projected_clip: REJECT        # el clip determinista deja un residual voluntario inválido → REJECT
+  unexpected_partial_fill: FLAG_AND_REVIEW
+  auto_liquidate: false                 # NUNCA liquidación automática gatillada solo por el peso
 max_por_sector: 0.30
 max_por_cuello: 0.35           # requiere mapa poblado (nx_nodo) — ya está
 caja_min: 0.0

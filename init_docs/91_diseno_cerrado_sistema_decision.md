@@ -123,3 +123,35 @@ P0.1 primero (gate de ejecución: la convergencia #1 y el único fix técnico qu
 restantes), P2.1 (contrafactual de rotación: barato y es la validación elegida), y recién después P1 (el trabajo de
 diseño económico, que es el grande). **Construir lo mínimo, medir si cambia una decisión del PM, recién después
 automatizar del todo** (principio del doc 89/90).
+
+**ESTADO (2026-11-25):** P0.1–P0.5 ✅ · P2.1 ✅ · P1.4 (auditor capa 1) ✅ — commiteados, 999 tests. P1 económico:
+**diseño CERRADO** (iteración 2 con IA1, convergente con IA2) — detalle implementable en `data/corridas/
+evaluacion_hallazgos.md` (config YAML + 18 tests de aceptación). Falta implementar.
+
+## 7. P1 económico — diseño cerrado (IA1 it.2) + la TABLA DE AUTORIDAD
+El corazón del diseño (define el futuro de BORJA):
+
+| El DETERMINISMO tiene autoridad sobre… | El PM tiene autoridad sobre… |
+|---|---|
+| Integridad de los datos | Interpretación económica |
+| Existencia de evidencia suficiente | Atractivo de esa evidencia |
+| Consistencia de la valuación | Plausibilidad de los escenarios |
+| Límites de riesgo | Convicción |
+| Permisos de ejecución | Selección de inversiones |
+| Validez del peso objetivo | Asignación dentro del rango permitido |
+
+Piezas (todas sin agentes nuevos, reutilizando la máquina existente): **IPS 4 tiers** (OPTIONALITY 1-3% · CORE 5-10% ·
+HIGH_CONVICTION >10-15% · EXCEPTIONAL >15-20%; sin el 3-5% — opcionalidad es categoría económica, no CORE chico; manga
+3 plazas/6% agregado; residuales: drift pasivo ALLOW · voluntario inválido REJECT+alternativas · auto_liquidate=false)
+· **4 arquetipos** (COMPOUNDER→ROIC incr · CYCLICAL→owner-FCF normalizado/acción · CONTRACTED_INFRA→FCFE estabilizado/
+acción · PRE_REVENUE→funding gap; código propone, Analista confirma/override; falta métrica → `underwriting_status:
+INCOMPLETE` → no abre/aumenta, SIN threshold universal) · **schema PM = `proposal`(PM) + `authorization`(código)**, el
+PM NO reescribe hechos del dossier · **execution_permission 4 estados** (FULL/REDUCE_ONLY/EXIT_ONLY/BLOCKED;
+REVIEW→REDUCE_ONLY; FAIL/valuación rota NO impide VENDER) · **atomicidad** (ventas STANDALONE indep · ROTATION vinculada ·
+compras = batch sobre cartera proyectada, invalid_batch=REJECT) · **comparación de rotación** (1 pregunta: "¿con el
+capital de A en caja, A o B?"; schema estructurado; carga de la prueba en la transacción, default KEEP).
+
+**★ DIRECTIVA DE CONGELAMIENTO (IA1):** una vez implementado esto → **congelar la arquitectura ≥90 días de paper.** No
+porque 90d prueben alpha, sino para observar decisiones reales SIN cambiar el método que se evalúa. Corregir bugs sí;
+agregar reglas económicas nuevas por cada inversión que salga mal, NO. **El próximo salto de calidad debe venir de la
+EVIDENCIA EMPÍRICA, no de seguir diseñando.** Implementar test-driven con los 18 tests de aceptación del acumulador.

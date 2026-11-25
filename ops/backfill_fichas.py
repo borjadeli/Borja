@@ -37,7 +37,10 @@ def _datos_de_pack(ticker: str, *, as_of: date, cuello_fn=None) -> dict | None:
     conflicted = bool(feed_sh and xbrl_sh and abs(feed_sh - xbrl_sh) / max(feed_sh, xbrl_sh) > 0.25)
     # Balance desactualizado (8-K 2.01/2.03/1.01 post-XBRL): deuda/acciones del pack posiblemente vencidas
     # (adquisición/deuda fuera de companyfacts) → también NO comprable sin reconciliar (hallazgo IESC/DBM).
-    if any(p.metric == "flag_balance_desactualizado" for p in puntos):
+    # P0.5 (doc 91): flags de VALUACIÓN ROTA (market cap que no reconcilia con precio×acciones, o escala errada)
+    # → datos_conflicted. IA2: la falta de reconciliación del equity debe BLOQUEAR la valuación/compra (caso GLXY).
+    _duros = {"flag_balance_desactualizado", "flag_market_cap_no_reconcilia", "flag_market_cap_escala"}
+    if any(p.metric in _duros for p in puntos):
         conflicted = True
     acciones = feed_sh if conflicted else (xbrl_sh or feed_sh)
     if not acciones:

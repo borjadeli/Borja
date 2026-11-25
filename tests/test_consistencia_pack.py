@@ -34,6 +34,30 @@ def test_market_cap_escala_sospechosa():
     assert "flag_market_cap_escala" in _flags(puntos)
 
 
+def test_p0_5_market_cap_no_reconcilia_con_precio_x_acciones():
+    # P0.5 (doc 91): el feed de GLXY daba market cap de TODAS las clases ($6.75B) pero shares_outstanding solo
+    # clase A (189M) → mc/precio = 584M ≠ 189M. Se caza SIN XBRL (inconsistencia interna del feed).
+    puntos = [DataPoint(entity="X", metric="market_cap", value=6.75e9, unit="USD", source=_FEED, known_at=HOY, currency="USD"),
+              DataPoint(entity="X", metric="precio", value=11.55, unit="USD", source=_FEED, known_at=HOY, currency="USD"),
+              _p("shares_outstanding", 189e6, source=_FEED)]
+    assert "flag_market_cap_no_reconcilia" in _flags(puntos)
+
+
+def test_p0_5_market_cap_reconcilia_no_marca():
+    puntos = [DataPoint(entity="X", metric="market_cap", value=11.55 * 189e6, unit="USD", source=_FEED, known_at=HOY, currency="USD"),
+              DataPoint(entity="X", metric="precio", value=11.55, unit="USD", source=_FEED, known_at=HOY, currency="USD"),
+              _p("shares_outstanding", 189e6, source=_FEED)]
+    assert "flag_market_cap_no_reconcilia" not in _flags(puntos)    # mc = precio×acciones → consistente
+
+
+def test_p0_5_moneda_distinta_no_marca():
+    # precio KRW, market cap USD (extranjera convertida) → NO es inconsistencia, es FX → no debe marcar.
+    puntos = [DataPoint(entity="X", metric="market_cap", value=16e9, unit="USD", source=_FEED, known_at=HOY, currency="USD"),
+              DataPoint(entity="X", metric="precio", value=40000.0, unit="KRW", source=_FEED, known_at=HOY, currency="KRW"),
+              _p("shares_outstanding", 640e6, source=_FEED)]
+    assert "flag_market_cap_no_reconcilia" not in _flags(puntos)
+
+
 def test_datos_xbrl_viejos():
     viejo = HOY - timedelta(days=500)
     puntos = [_p("cash", 1e9, source=_XBRL, known_at=viejo, unit="USD")]

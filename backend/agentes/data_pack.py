@@ -468,6 +468,22 @@ def fuente_consistencia(ticker: str, as_of: date, puntos: list[DataPoint],
     if mc is not None and 0 < mc < 1e6:
         flag("market_cap_escala", f"market cap ${mc:,.0f} sospechosamente chico → ¿error de escala/moneda?")
 
+    # 2b) MARKET CAP INTERNO (P0.5, doc 91): market_cap vs precio×acciones del MISMO feed. Divergencia → estructura
+    # multi-clase o error de escala → el EV/valuación NO es confiable (caso GLXY: el market cap cuenta TODAS las
+    # clases y shares_outstanding es solo clase A → mc/precio=584M vs 189M reportadas). Lo caza sin XBRL. Solo cuando
+    # precio y market_cap están en la MISMA moneda (si difieren es conversión FX, no inconsistencia — las extranjeras
+    # ya son 2ª clase de datos). IA2: la falta de reconciliación del equity debe BLOQUEAR la valuación.
+    p_precio = next((p for p in puntos if p.metric == "precio" and p.value), None)
+    p_mc = next((p for p in puntos if p.metric == "market_cap" and p.value is not None), None)
+    if (p_precio and p_mc and feed_sh and feed_sh > 0 and p_precio.value > 0
+            and getattr(p_precio, "currency", None) == getattr(p_mc, "currency", None)):
+        implied = p_mc.value / p_precio.value
+        div_mc = abs(implied - feed_sh) / max(implied, feed_sh)
+        if div_mc > 0.25:
+            flag("market_cap_no_reconcilia", f"market cap ${p_mc.value:,.0f} implica ~{implied:,.0f} acciones a "
+                 f"${p_precio.value:,.2f}, pero el feed reporta {feed_sh:,.0f} (dif {div_mc:.0%}) → multi-clase o "
+                 f"error de escala; EV/valuación NO confiable (reconciliar antes de valuar/comprar)")
+
     # 3) FRESCURA: el último filing XBRL es viejo → los fundamentales pueden estar vencidos.
     knowns = [p.known_at for p in puntos if p.known_at and _es_xbrl(p)]
     if knowns and (as_of - max(knowns)).days > 400:

@@ -132,8 +132,11 @@ class OrquestadorDecision:
                  admisible_duro_por_ticker: dict[str, bool] | None = None,
                  memo_macro: str = "", repropuesta_fn=None, reevaluar_auditor_fn=None,
                  zonas_por_ticker: dict[str, str] | None = None,
-                 clase_por_ticker: dict[str, str] | None = None) -> ResultadoDecision:
+                 clase_por_ticker: dict[str, str] | None = None,
+                 falsador_dossier_por_ticker: dict[str, dict] | None = None) -> ResultadoDecision:
         hoy = hoy or date.today()
+        # P0.2 (doc 91): falsador ESTRUCTURADO del dossier por ticker (fuente de verdad, no el texto libre del PM).
+        fals_dossier = {t.upper(): v for t, v in (falsador_dossier_por_ticker or {}).items()}
         cartera = {t.upper(): w for t, w in cartera_actual.items() if w > 0}
         precios = {t.upper(): p for t, p in (precios or {}).items()}
         hashes = {t.upper(): h for t, h in (dossier_hash_por_ticker or {}).items()}
@@ -164,7 +167,7 @@ class OrquestadorDecision:
             res = ResultadoDecision(pesos_objetivo=aplicar_decision(cartera, decision.acciones),
                                     pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
                                     no_action=False, alertas=["PM no opera ahora (operar_ahora=False)"])
-            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
+            self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker, fals_dossier=fals_dossier)
             return res
 
         res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk, verifs)
@@ -190,7 +193,7 @@ class OrquestadorDecision:
                                             pesos_finales=dict(cartera), caja_final=caja_actual, clip="none",
                                             no_action=False, reevaluado_por_auditor=True, auditoria=res.auditoria,
                                             alertas=["PM reevaluó tras el Auditor y decidió NO operar ahora"])
-                    self._registrar(res, nueva, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
+                    self._registrar(res, nueva, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker, fals_dossier=fals_dossier)
                     return res
                 res = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk)
                 decision = nueva
@@ -201,7 +204,7 @@ class OrquestadorDecision:
         # ALTA en la auditoría final → demora los aumentos (como antes).
         if res.auditoria and any(o.severidad == "alta" for o in res.auditoria.objeciones):
             res.demoradas = [a.ticker.upper() for a in decision.acciones if a.accion in _AUMENTOS]
-        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
+        self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker, fals_dossier=fals_dossier)
         return res
 
     def _gate(self, decision: PMDecision, cartera: dict[str, float],
@@ -404,9 +407,11 @@ class OrquestadorDecision:
                              peso_max_nombre=float(g("peso_max_nombre", 1.0)))
         return "\n\n" + render_sizing(an, g("sizing_modo", "sombra"), cap_bucket=cap_b, cap_cluster=cap_c)
 
-    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo, bull=None, zonas=None) -> None:
+    def _registrar(self, res, decision, cartera, precios, hashes, verifs, ciclo, bull=None, zonas=None,
+                   fals_dossier=None) -> None:
         bull = bull or {}
         zonas = zonas or {}
+        fals_dossier = fals_dossier or {}   # P0.2: falsador estructurado del dossier por ticker (fuente de verdad)
         fuera = set(getattr(res, "entradas_fuera_de_zona", []) or [])
         for i, a in enumerate(decision.acciones):
             tk = a.ticker.upper()
@@ -419,7 +424,8 @@ class OrquestadorDecision:
                 prompt_version=decision.meta.prompt_version, model=decision.meta.model,
                 auditoria=res.auditoria if i == 0 else None, bull=bull.get(tk),
                 fuera_de_zona=(tk in fuera), zona_al_entrar=zonas.get(tk),
-                reevaluado=getattr(res, "reevaluado_por_auditor", False)))
+                reevaluado=getattr(res, "reevaluado_por_auditor", False),
+                falsador_dossier=fals_dossier.get(tk)))
 
     @staticmethod
     def _id_append(res: ResultadoDecision, did: str) -> None:

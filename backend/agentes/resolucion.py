@@ -32,8 +32,12 @@ def pendientes(ledger, hoy: date | None = None) -> list[Pendiente]:
     hoy = hoy or date.today()
     out: list[Pendiente] = []
     for d in ledger.pendientes(hoy):                 # falsadores vencidos
+        # P0.2 (doc 91): mostrar la condición de muerte CORRECTAMENTE FIRMADA del dossier (el analista la escribió
+        # bien), no el texto libre del PM —que puede venir con el signo invertido y arruinar la resolución—.
+        fd = d.falsador_dossier or {}
+        desc = fd.get("que_lo_mataria") or fd.get("afirmacion") or d.falsador_afirmacion
         out.append(Pendiente(d.decision_id, d.ticker, "falsador", d.falsador_fecha_limite,
-                             d.falsador_afirmacion, default_sugerido="disparado"))
+                             desc, default_sugerido="disparado"))
     for d in ledger.pendientes_bull(hoy):            # bull vencidos (resolución explícita: materialización no es silencio)
         out.append(Pendiente(d.decision_id, d.ticker, "bull", d.horizonte_bull_fecha or "",
                              f"P(bull)={d.prob_bull:.0%} a {d.horizonte_bull_fecha}", default_sugerido=""))

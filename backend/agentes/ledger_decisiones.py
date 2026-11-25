@@ -65,8 +65,12 @@ class RegistroDecision(BaseModel):
     peso_resultante: float                    # tras el clip del IPS (= objetivo si no hubo clip)
     clip: ClipTipo = "none"
     tesis: str
-    falsador_afirmacion: str
+    falsador_afirmacion: str                  # texto del PM (nota legible; puede diferir del dossier → diff visible)
     falsador_fecha_limite: str                # YYYY-MM-DD
+    # P0.2 (doc 91) — falsador ESTRUCTURADO del dossier (fuente de verdad, correctamente firmado: lo escribió el
+    # Analista con {metrica,operador,umbral,consecuencia,vara_externa}). El PM NO lo reescribe → no se invierte el
+    # signo. La resolución ex-post debe evaluar ESTE predicado, no el texto libre del PM. None = legacy.
+    falsador_dossier: dict | None = None
     conviccion_0_1: float
     ejecutada: bool = True                     # ¿la acción movió el libro? (False = intención/bloqueada)
     reevaluado_por_auditor: bool = False       # el PM re-decidió tras una objeción media+ del Auditor (modificación vs reconfirmación)
@@ -165,7 +169,7 @@ class LedgerDecisiones:
                             prompt_version: str = "", model: str = "",
                             auditoria: AuditReport | None = None, bull: dict | None = None,
                             fuera_de_zona: bool = False, zona_al_entrar: str | None = None,
-                            reevaluado: bool = False) -> str:
+                            reevaluado: bool = False, falsador_dossier: dict | None = None) -> str:
         """Append de una decisión del PM. Devuelve `decision_id`. `peso_resultante` = objetivo si no hubo clip.
 
         La convicción (P tesis se sostiene, insumo del Brier) la lleva la propia `PMAccion`. `bull` = snapshot
@@ -181,6 +185,7 @@ class LedgerDecisiones:
             clip=clip, ejecutada=ejecutada, reevaluado_por_auditor=reevaluado, tesis=accion.tesis,
             falsador_afirmacion=accion.falsador.afirmacion,
             falsador_fecha_limite=accion.falsador.fecha_limite,
+            falsador_dossier=falsador_dossier,
             conviccion_0_1=accion.conviccion_0_1, precio=precio, dossier_hash=accion.dossier_hash,
             zona_al_entrar=zona_al_entrar, fuera_de_zona=fuera_de_zona,
             justificacion_zona=(accion.por_que_ese_tamano if fuera_de_zona else None),

@@ -167,6 +167,7 @@ class RunnerSemanal:
         hashes: dict[str, str] = {}
         verifs: dict[str, str] = {}
         flags: dict[str, list[str]] = {}
+        fals_dossier: dict[str, dict] = {}   # P0.2 (doc 91): falsador ESTRUCTURADO del dossier por ticker
 
         # 1. Dossiers verificados por nombre. Dos caminos:
         #  - semanal/evento (default): corre el COMITÉ bajo presupuesto (Analista→Bear→Verificador). Los filtros
@@ -185,6 +186,8 @@ class RunnerSemanal:
                         flags[tk] = list(e.verif.flags_supervivencia)
                     if e.hash:
                         hashes[tk] = e.hash
+                    if getattr(e.dossier, "falsador", None):
+                        fals_dossier[tk] = e.dossier.falsador.model_dump()
                     dossiers.append((e.dossier, e.verif))
             research = ResultadoSemana(memo=None)   # sin comité → clasif/bull shadow quedan vacíos (OK para un wake)
             memo_txt = self.nota_macro
@@ -206,6 +209,8 @@ class RunnerSemanal:
                 if d.hash:
                     hashes[tk] = d.hash
                 if d.verif.veredicto in ("pass", "review"):          # FAIL no justifica compra/aumento
+                    if getattr(d.dossier, "falsador", None):
+                        fals_dossier[tk] = d.dossier.falsador.model_dump()
                     dossiers.append((d.dossier, d.verif))
 
         # D4 (doc 74 + r5 item 2): clasificación por nombre para la señal de sizing (sombra). El techo de hechos
@@ -349,7 +354,8 @@ class RunnerSemanal:
             cargas_por_ticker=cargas_por_ticker,
             memo_macro=memo_txt, repropuesta_fn=lambda holg: _pm(feedback=_fmt_holguras(holg)),
             reevaluar_auditor_fn=lambda objs: _pm(feedback=_fmt_objeciones(objs)),
-            zonas_por_ticker=zonas_tk, clase_por_ticker=clase_tk_ficha)
+            zonas_por_ticker=zonas_tk, clase_por_ticker=clase_tk_ficha,
+            falsador_dossier_por_ticker=fals_dossier)
 
         # 4bis. Estacionamiento (r7a #1): el residual que el PM NO desplegó en nombres con margen de seguridad
         # se aparca en ETFs temáticos (ponderados por los clusters del mapa), NUNCA en nombres caros. Solo si

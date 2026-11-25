@@ -116,6 +116,20 @@ def test_p0_1_sin_verif_backward_compat(tmp_path):
     assert res.pesos_finales.get("OKLO") == 0.1
 
 
+def test_p0_2_falsador_estructurado_del_dossier_se_guarda(tmp_path):
+    # P0.2 (doc 91): el falsador ESTRUCTURADO del dossier (correctamente firmado) se guarda en el registro como
+    # fuente de verdad — el PM no lo reescribe en texto libre (donde invertía el signo y corrompía el Brier).
+    orq = _orq(tmp_path)
+    fals_dossier = {"metrica": "gross_profit", "operador": "<", "umbral": 0.0, "tipo": "DURO",
+                    "consecuencia": "SALIDA", "afirmacion": "la tesis se cae si el margen bruto sigue <0",
+                    "que_lo_mataria": "gross_profit_q < 0 en el 4T"}
+    orq.procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                 contexto=_ctx(), ciclo="c", falsador_dossier_por_ticker={"OKLO": fals_dossier})
+    regs = [r for r in orq.ledger.decisiones() if r.ticker == "OKLO"]
+    assert regs and regs[-1].falsador_dossier == fals_dossier        # el predicado del dossier quedó guardado
+    assert regs[-1].falsador_afirmacion == "a"                       # el texto del PM queda como nota (diff visible)
+
+
 def test_objecion_media_vuelve_al_pm_y_reevalua(tmp_path):
     # doc 85 + directiva operador: una objeción MEDIA del Auditor le VUELVE al PM → re-decide. Acá el PM, al
     # reevaluar, MODIFICA (achica OKLO 0.1→0.04). El resultado final refleja la decisión revisada.

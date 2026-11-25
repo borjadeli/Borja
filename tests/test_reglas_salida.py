@@ -21,9 +21,12 @@ def test_solo_posiciones():
     assert acc == []
 
 
-def test_tier_C_salida_ceo_despierta():
+def test_tier_C_5_02_despierta_sin_afirmar_salida():
+    # P0.3 (doc 91): el 5.02 DESPIERTA al PM, pero la etiqueta NO afirma "salida de CEO/CFO" (cubre también
+    # nombramientos y compensación — el 5.02 de IESC era PSUs). Sin cuerpo del 8-K no se asume una salida.
     acc = evaluar_reglas_salida([_ev("EXE", ["5.02"], tier="REVISION")], posiciones={"EXE"})
     assert acc[0].accion == "DESPERTAR" and acc[0].tier == "C"
+    assert "salida de CEO/CFO" not in acc[0].motivo and "verificar" in acc[0].motivo
 
 
 def test_tier_B_falsador_duro_despierta_no_auto_vende():

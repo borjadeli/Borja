@@ -2,7 +2,7 @@
 
 Decisión del operador (r10): la ÚNICA salida que se ejecuta sola es la catastrófica e inequívoca (tier A: quiebra
 1.03 · restatement/non-reliance 4.02) — es risk-off puro, parte del IPS. TODO lo demás (falsador DURO, going
-concern, salida de CEO, material weakness, aviso de deslistado, zona SALIDA) **DESPIERTA al PM** con respuesta
+concern, cambio en management (5.02), material weakness, aviso de deslistado, zona SALIDA) **DESPIERTA al PM** con respuesta
 obligatoria; el PM + el Auditor deciden. No hay auto-trim determinista por nivel ni por precio.
 
 El poller (F1) clasifica filings; este módulo mapea solo los catastróficos a SALIDA_TOTAL automática y el resto a
@@ -15,7 +15,12 @@ from dataclasses import dataclass
 # 8-K por ítem → tier (r10). Tier A = SOLO lo catastrófico e inequívoco (auto). 4.01 (cambio de auditor) NO es
 # duro por sí solo — sin desacuerdos es rutina → DESPERTAR (tier C), no salida total.
 _ITEMS_TIER_A = {"1.03": "quiebra", "4.02": "non-reliance/restatement"}
-_ITEMS_TIER_C = {"5.02": "salida de CEO/CFO", "3.01": "aviso de deslistado / precio mínimo",
+# P0.3 (doc 91): el Item 5.02 cubre salida DE directores/ejecutivos, nombramientos Y arreglos de compensación.
+# A esta altura (poller) no hay cuerpo del 8-K para distinguirlos → la etiqueta NO afirma una salida (eso inyectaba
+# una señal falsa al PM: el 5.02 de IESC era compensación/PSUs, no una salida). Queda como prompt de verificación;
+# el deep lee el cuerpo y determina qué es. (Fiel a "ausencia de dato ≠ veto".)
+_ITEMS_TIER_C = {"5.02": "cambio en directorio/management (5.02) — verificar si es salida, nombramiento o compensación",
+                 "3.01": "aviso de deslistado / precio mínimo",
                  "4.01": "cambio de auditor (revisar si hay desacuerdos)"}
 
 ACCIONES = ("SALIDA_TOTAL", "DESPERTAR")   # r10: tier B/C → DESPERTAR (sin auto-trim); solo tier A auto-ejecuta

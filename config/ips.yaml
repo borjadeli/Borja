@@ -15,13 +15,16 @@ peso_min_nombre: 0.05          # PISO 5% por posición (decisión operador 2026-
 # chica sea una excepción al piso). El tier NO da derecho a usar todo su rango: siempre gana el cap más restrictivo
 # (liquidez/supervivencia/sector/cuello). Implementado test-driven (18 tests de aceptación en el acumulador).
 tiers:
-  OPTIONALITY:    {min: 0.01, max: 0.03}   # asimetría alta con incertidumbre material
+  OPTIONALITY:    {min: 0.015, max: 0.025}  # asimetría alta con incertidumbre material (max 2.5% = half-Kelly, IA2)
   CORE:           {min: 0.05, max: 0.10}   # tesis con margen de seguridad
   HIGH_CONVICTION: {min_exclusive: 0.10, max: 0.15}   # oportunidad excepcional con evidencia robusta
   EXCEPTIONAL:    {min_exclusive: 0.15, max: 0.20}   # concentración extraordinaria
+# Tope por ARQUETIPO (IA2, resuelto 2026-11-25): la pieza que más protege el norte — capea cíclicas e infra a 10% y
+# PROHÍBE pre-revenue en núcleo (solo opcionalidad). Gana el más restrictivo entre este y el tier/banda/evidencia.
+cap_por_arquetipo: {compounder: 0.15, ciclica: 0.10, infra: 0.10, pre_revenue: 0.0}
 optionality:
-  max_positions: 3             # máx plazas de la manga de opcionalidad
-  max_aggregate_weight: 0.06   # cap AGREGADO (< 3×3%: no las tres al máximo)
+  max_positions: 4             # ~8% agregado / 2.5% por nombre ≈ 3-4 plazas
+  max_aggregate_weight: 0.08   # cap AGREGADO (operador 2026-11-25: punto medio IA1 6% / IA2 15%); al tocarlo, se congela
   requires_verified_dossier: true       # excepción al TAMAÑO mínimo, NO a la calidad de evidencia
   requires_economic_justification: true
 residual_weights:

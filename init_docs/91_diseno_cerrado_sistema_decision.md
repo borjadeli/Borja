@@ -155,3 +155,42 @@ capital de A en caja, A o B?"; schema estructurado; carga de la prueba en la tra
 porque 90d prueben alpha, sino para observar decisiones reales SIN cambiar el método que se evalúa. Corregir bugs sí;
 agregar reglas económicas nuevas por cada inversión que salga mal, NO. **El próximo salto de calidad debe venir de la
 EVIDENCIA EMPÍRICA, no de seguir diseñando.** Implementar test-driven con los 18 tests de aceptación del acumulador.
+
+## 8. P1 — REWORK post-review (IA1 + IA2 corrieron el código, 2026-11-25)
+Las dos IAs reconstruyeron/ejecutaron los 6 módulos. Veredicto: **mantener en sombra, NO dar autoridad.** Defecto
+raíz **sistémico: FAIL-OPEN** (un dato faltante/desconocido AGRANDA el permiso/cap en vez de achicarlo). El demo
+"funcionó" en parte por inputs puestos a mano (circular) y en parte por bugs. Arquitectura 8/10 · implementación
+observable 5.5/10 · harness 3/10. Es un **patch acotado, NO otra ronda de diseño** (ambas IAs). Detalle completo en
+`data/corridas/evaluacion_hallazgos.md`.
+
+**★ TABLA DE AUTORIDAD (IA2, "la resolución más importante"):** DURA → validación de datos · verificación · liquidez/
+supervivencia/concentración · elegibilidad de tiers · límites de TAMAÑO · atomicidad de rotaciones vinculadas.
+INFORMATIVA → arquetipo propuesto. DEFINE MÉTODO → arquetipo confirmado. GATE DE DINERO NUEVO (una vez validada) →
+banda. **JUICIO DEL PM → comparación retorno/riesgo + severidad económica relativa (dentro del IPS).**
+
+**★ PRINCIPIO DE ORO (el norte, IA2 §8):** **NO-compensatorio para supervivencia/riesgo de cartera; COMPENSATORIO
+para la economía de la inversión.** El error que mata el alpha: meter la racionalidad económica en el CÓDIGO (vetos
+no-compensatorios) → se compran solo empresas cuyo éxito ya es evidente. Una empresa NO compensa una violación de
+liquidez con upside; SÍ compensa mayor incertidumbre económica con retorno extraordinario + posición MENOR.
+
+**PLAN DE 5 COMMITS (patch, driven por el test fail-closed de IA1 + correcciones de diseño de IA2):**
+1. **Autoridad** — eliminar defaults permisivos, enums cerrados, acción desconocida→BLOQUEAR, salida mecánica exige
+   evidencia + pasa controles OPERATIVOS (no saltea todo), REVIEW una sola regla canónica (P0/P1/Auditor/harness).
+2. **Caps y tiers** — ✅ caps fail-closed (HECHO, commit 1/5); falta: persistir el tier (no inferir del peso), separar
+   tenencia de dinero nuevo (`max_target_weight` + `can_add`), remover EXCEPTIONAL como tier de entrada.
+3. **Underwriting** — arquetipo ESTRUCTURAL (no depende del precio: infra sin `contratado/EV`), métricas comparables,
+   banda infra = FCFE/acción (la cobertura IG informa RIESGO, no la banda), recalcular las variables DEPENDIENTES del
+   precio (dos relojes: lento=analista / rápido=motor), señales robustas (revenue key, signo del capex, None≠pre_revenue).
+4. **Rotación y atomicidad** — separar VALIDEZ de la comparación (código) del MÉRITO económico (PM); aflojar el veto
+   (economía compensatoria); ventas discrecionales por EVENTO-invalidación no por ciclo; atomicidad de pares.
+5. **Harness real** — consumir el dossier ESTRUCTURADO del Analista (NO extraer de narrativa con regex/LLM), sin inputs
+   inventados, registrar contrafactuales permitidos Y BLOQUEADOS, agregar Doosan, correr los tests integrales.
+
+**Decisiones económicas extra (IA2):** NO forzar que todo falsador sea DURO sobre la métrica exacta (ligado al
+mecanismo + observable + regla de resolución; consecuencia dura si mata la tesis, revisión si solo baja el bull) ·
+conservar `sizing_reason` del PM (una frase del por qué del tamaño dentro del cap; sin convicción numérica no calibrada).
+
+**FIN DE LA SOMBRA (IA2, no solo calendario):** todos los tests críticos pasan · replay consume evidencia REAL sin
+defaults de aprobación · ≥1 permitido y ≥1 bloqueado por cada gate · ninguna apertura con datos portantes desconocidos ·
+revisar a mano las primeras 20 decisiones donde P1 cambiaría la propuesta del PM. Después: autoridad en paper → freeze 90d
+(congelar bordes/parámetros, NO los fixes fail-closed).

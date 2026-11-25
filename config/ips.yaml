@@ -82,6 +82,13 @@ turnover_max_semana: 0.25      # rotación máxima semanal (suma de |Δpeso|) �
 presupuesto_usd_mes: 100.0    # subido de 40 → 100 (2026-11-16): fase de construcción, el operador autoriza gastar más
 presupuesto_bootstrap_usd: 25.0     # tope PROPIO de la primera pasada del universo (separado del mensual)
 
+# --- Nota macro del OPERADOR (reemplaza al agente Macro, 2026-11-25) ---
+# El agente Macro (Opus+web) se SACÓ del circuito: su memo rico se descartaba (solo llegaba el `resumen`),
+# re-derivaba un marco que ya es del operador vía el IPS, y empujaba el concepto de `cuello` que el backtest
+# refutó (pro-cíclico). El marco macro ahora lo escribís VOS acá: este texto se inyecta en el MISMO punto donde
+# entraba el memo (al Analista, al PM y al Auditor). Dejalo "" si no querés dar marco. Parco y concreto.
+nota_macro: ""
+
 # --- Estacionamiento en ETFs temáticos (r7a #1) ---
 # El residual que NO encuentra nombres con margen de seguridad se aparca acá (ponderado por los clusters del
 # mapa), NUNCA en nombres caros para llegar al 90%. La caja alta sigue exigiendo tesis macro. Los ETFs de esta

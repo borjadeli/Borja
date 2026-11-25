@@ -169,13 +169,15 @@ class ResultadoSemana:
 
 class Orquestador:
     def __init__(self, *, triage, analista, bear, ledger: LedgerPresupuesto,
-                 verificar_fn: Callable = _verificar_det, macro=None, cache: CacheDossiers | None = None,
+                 verificar_fn: Callable = _verificar_det, nota_macro: str = "", cache: CacheDossiers | None = None,
                  data_pack_fn: Callable[[str], DataPack], contexto_fn: Callable[[str], str] | None = None):
         self.triage = triage
         self.analista = analista
         self.bear = bear
         self.verificar_fn = verificar_fn
-        self.macro = macro
+        # El agente Macro se SACÓ (2026-11-25): el marco macro ahora es la nota del operador (ips.nota_macro),
+        # inyectada en el MISMO punto donde entraba el memo del agente. Ver ResultadoSemana.memo abajo.
+        self.nota_macro = nota_macro
         self.ledger = ledger
         self.cache = cache or CacheDossiers()
         self.data_pack_fn = data_pack_fn
@@ -193,8 +195,10 @@ class Orquestador:
         prometedor nunca entre (auditoría P0.3). `bootstrap=True`: promueve TODOS los nuevos (primera pasada
         del universo); el gasto lo acota igual el ledger de presupuesto (su propio tope)."""
         hoy = hoy or date.today()
-        memo = memo_macro or (self.macro.evaluar() if self.macro else None)
-        memo_txt = memo.resumen if memo else ""
+        # Fuente del marco macro: un MacroMemo pasado explícito (compat / tests) o, si no, la nota del operador
+        # (ips.nota_macro). El agente Macro se retiró del circuito (2026-11-25).
+        memo = memo_macro
+        memo_txt = (memo.resumen if memo else "") or self.nota_macro
 
         # 1. Triage de todos los candidatos.
         triages: list[tuple[SenalesTriage, str, TriageDecision]] = []

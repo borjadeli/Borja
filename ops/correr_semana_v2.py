@@ -1,14 +1,13 @@
 """Corre un ciclo semanal del PM-IA v2 end-to-end con DATOS REALES (el harness del SMOKE REAL).
 
-Cablea research (Macro→Triage→Analista→Bear→Verificador, bajo presupuesto) → PM (sizea bajo IPS) →
+Cablea research (Triage→Analista→Bear→Verificador, bajo presupuesto; marco macro = ips.nota_macro) → PM (sizea bajo IPS) →
 orquestador de decisión (gate IPS + Auditor + ledger) → paper nuevo (fills contra el ledger fiel
 `data/paper_v2.db`). Usa precios/market-cap/ADV de market_data y sector/cuello del ledger `nx_*`.
 
 ⚠️ GASTA DINERO REAL (llamadas a Opus/Sonnet + web search). Pensado para el smoke sobre pocos nombres.
 
 Uso:
-  .venv/bin/python -m ops.correr_semana_v2 OKLO MP RKLB            # 3 nombres, sin macro
-  .venv/bin/python -m ops.correr_semana_v2 --con-macro OKLO        # incluye el memo macro (otro Opus+web)
+  .venv/bin/python -m ops.correr_semana_v2 OKLO MP RKLB            # 3 nombres
   .venv/bin/python -m ops.correr_semana_v2 --capital 100000 OKLO   # capital inicial del paper (1a vez)
 """
 from __future__ import annotations
@@ -20,7 +19,6 @@ from datetime import date
 from backend.agentes import analista as m_analista
 from backend.agentes import auditor as m_auditor
 from backend.agentes import bear as m_bear
-from backend.agentes import macro as m_macro
 from backend.agentes import pm as m_pm
 from backend.agentes import triage as m_triage
 from backend.agentes.auditor import Auditor
@@ -31,7 +29,6 @@ from backend.agentes.data_pack import ensamblar
 from backend.agentes.datos_reales import abrir_paper, contexto_de, precios_de, recolectar_snapshots
 from backend.agentes.ips import IPS
 from backend.agentes.ledger_decisiones import LedgerDecisiones
-from backend.agentes.macro import Macro
 from backend.agentes.orquestador import CacheDossiers, Orquestador, _CACHE_PATH
 from backend.agentes.orquestador_decision import OrquestadorDecision
 from backend.agentes.pm import PM
@@ -256,7 +253,6 @@ def _registrar_sombras(paper, precios, res) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Smoke real del ciclo semanal v2")
     ap.add_argument("tickers", nargs="*", default=["OKLO"], help="nombres a correr (default OKLO)")
-    ap.add_argument("--con-macro", action="store_true", help="incluir el memo macro (otro Opus+web)")
     ap.add_argument("--capital", type=float, default=100_000.0, help="capital inicial del paper (1a vez)")
     ap.add_argument("--cupo", type=int, default=0, help="cupo de cobertura: nombres nuevos a promover")
     ap.add_argument("--bootstrap", action="store_true", help="primera pasada: promueve todos los nuevos")
@@ -290,14 +286,14 @@ def main() -> int:
     triage = Triage(Agente("triage", m_triage.PROMPT_VERSION, M_HAIKU))
     analista = Analista(Agente("analista", m_analista.PROMPT_VERSION, M_OPUS))
     bear = Bear(Agente("bear", m_bear.PROMPT_VERSION, M_SONNET))
-    macro = Macro(Agente("macro", m_macro.PROMPT_VERSION, M_OPUS)) if args.con_macro else None
     pm = PM(Agente("pm", m_pm.PROMPT_VERSION, M_OPUS), ips)
+    nota_macro = str(ips.cfg.get("nota_macro", "") or "")   # marco macro del operador (reemplaza al agente Macro)
     # Auditor en modelo DISTINTO del Analista (Opus) → errores descorrelacionados (D5, IA2: así funcionó la
     # triangulación de 3 IAs). Sonnet alcanza para la búsqueda adversarial dirigida por checklist.
     auditor = Auditor(Agente("auditor", m_auditor.PROMPT_VERSION, M_SONNET))
 
     research = Orquestador(
-        triage=triage, analista=analista, bear=bear, macro=macro,
+        triage=triage, analista=analista, bear=bear, nota_macro=nota_macro,
         ledger=ledger_pres,                              # tope mensual persistente / bootstrap (P0.4)
         cache=CacheDossiers(_CACHE_PATH),                # reutilización PERSISTENTE a disco (P0.2b)
         data_pack_fn=lambda tk: ensamblar(tk),
@@ -318,7 +314,7 @@ def main() -> int:
     _fresco = PipelineEstado().fresco("poller")
     print(f"pipeline_fresco (dead-man's-switch): {_fresco}")
     runner = RunnerSemanal(research=research, pm=pm, decision=decision, verif_ciego_fn=_verif_ciego,
-                           candado_on=True, pipeline_fresco=_fresco)
+                           candado_on=True, pipeline_fresco=_fresco, nota_macro=nota_macro)
 
     # --- datos reales ---
     snaps = recolectar_snapshots(tickers)

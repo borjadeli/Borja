@@ -69,10 +69,11 @@ class ResultadoRunner:
 class RunnerSemanal:
     def __init__(self, *, research: Orquestador, pm: PM, decision: OrquestadorDecision,
                  alertas_path: Path | str | None = _ALERTAS_PATH, verif_ciego_fn=None,
-                 candado_on: bool = False, pipeline_fresco: bool = True):
+                 candado_on: bool = False, pipeline_fresco: bool = True, nota_macro: str = ""):
         self.research = research
         self.pm = pm
         self.decision = decision          # su `.ledger` es el ledger de decisiones (fuente del hit-rate)
+        self.nota_macro = nota_macro      # marco macro del operador (reemplaza al agente Macro, 2026-11-25)
         self.alertas_path = Path(alertas_path) if alertas_path else None   # None → sin persistencia (tests)
         # F3 (doc 83 §4): verificación ciega de los aumentos. OPT-IN explícito (gasta LLM+red): None → apagada
         # (tests + default). El caller real pasa `verif_ciego_fn(aumentos, fichas, cutoff) -> {tk: VerificacionCiega}`.
@@ -186,7 +187,7 @@ class RunnerSemanal:
                         hashes[tk] = e.hash
                     dossiers.append((e.dossier, e.verif))
             research = ResultadoSemana(memo=None)   # sin comité → clasif/bull shadow quedan vacíos (OK para un wake)
-            memo_txt = ""
+            memo_txt = self.nota_macro
         else:
             research = self.research.correr_semana(candidatos, memo_macro=memo_macro, hoy=hoy,
                                                    cupo_cobertura=cupo_cobertura, bootstrap=bootstrap,
@@ -194,7 +195,7 @@ class RunnerSemanal:
                                                    gigante_barato_fn=gigante_barato_fn, cupo_gigantes=cupo_gigantes,
                                                    eventos_solo_posiciones=eventos_solo_posiciones,
                                                    cupo_oportunidad=cupo_oportunidad)
-            memo_txt = research.memo.resumen if research.memo else ""
+            memo_txt = (research.memo.resumen if research.memo else "") or self.nota_macro
             for d in research.decisiones:
                 if d.dossier is None or d.verif is None:
                     continue

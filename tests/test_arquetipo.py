@@ -36,3 +36,21 @@ def test_compounder_necesita_fcf_y_roic_sostenidos():
 def test_datos_insuficientes_es_unclassified():
     assert clasificar_arquetipo({}) is None
     assert clasificar_arquetipo({"revenue_ltm": 5e9}) is None     # rev alto, sin otras señales → el Analista decide
+
+
+# ── robustez de insumos (review IA1) ──
+def test_clasificador_no_depende_del_nombre_de_la_clave_revenue():
+    # infra leía 'revenue' y pre_revenue 'revenue_ltm'. Con solo revenue_ltm, CIFR caía en pre_revenue.
+    cifr = {"contratado_firme": 14.6e9, "ev": 7.8e9, "capex": 2.0e9, "revenue_ltm": 0.27e9, "ocf_ltm": -10e6, "runway_meses": 14}
+    assert clasificar_arquetipo(cifr) == "infra"
+
+
+def test_capex_negativo_del_cash_flow_no_apaga_infra():
+    cifr = {"contratado_firme": 14.6e9, "ev": 7.8e9, "capex": -2.0e9, "revenue": 0.27e9}
+    assert clasificar_arquetipo(cifr) == "infra"
+
+
+def test_infra_no_evaluable_no_cae_silenciosamente_a_pre_revenue():
+    # contratado_firme=None (no escaneado) ≠ 0. Con None: UNCLASSIFIED, no pre_revenue (la vía OCF solapa con infra).
+    d = {"ev": 7.8e9, "capex": 2.0e9, "revenue": 0.27e9, "revenue_ltm": 0.27e9, "ocf_ltm": -10e6, "runway_meses": 14}
+    assert clasificar_arquetipo(d) is None

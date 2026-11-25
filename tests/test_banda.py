@@ -37,3 +37,10 @@ def test_dispatcher_y_datos_faltantes():
     assert calcular_banda("ciclica", {"precio": 30, "valor_mitad_ciclo_bajo": 40, "valor_mitad_ciclo_alto": 80}) == "COMPRA_FUERTE"
     assert calcular_banda("ciclica", {"precio": 30}) is None            # faltan los rangos → None (no inventa banda)
     assert calcular_banda("infra", {"cobertura_ig_bajo": 0.9}) == "COMPRA"
+
+
+def test_rango_invertido_o_nan_es_none():
+    from backend.agentes.banda import banda_ciclica, banda_compounder
+    assert banda_ciclica(60, 80, 40) is None            # bajo > alto → None (antes daba COMPRA_FUERTE)
+    assert banda_ciclica(60, float("nan"), 80) is None
+    assert banda_compounder(0.10, 0.12, 0.08) is None    # g_sost invertido → None

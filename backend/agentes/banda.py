@@ -11,8 +11,18 @@ de sistema). Determinista, $0.
 """
 from __future__ import annotations
 
+import math
+
 BANDAS = ("COMPRA_FUERTE", "COMPRA", "MANTENER", "RECORTE")
 _G_HOLGURA = 0.03   # 3pp: margen extra de COMPRA_FUERTE del compounder (versionado)
+
+
+def _rango_valido(bajo, alto) -> bool:
+    """El rango del analista debe ser finito y bajo ≤ alto (un rango invertido/NaN daría una banda falsa)."""
+    for v in (bajo, alto):
+        if v is None or not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v):
+            return False
+    return bajo <= alto
 
 
 def banda_infra(cobertura_ig_bajo: float | None) -> str | None:
@@ -29,8 +39,8 @@ def banda_infra(cobertura_ig_bajo: float | None) -> str | None:
 
 
 def banda_ciclica(precio: float | None, valor_bajo: float | None, valor_alto: float | None) -> str | None:
-    if precio is None or valor_bajo is None or valor_alto is None:
-        return None
+    if precio is None or not _rango_valido(valor_bajo, valor_alto):
+        return None                               # rango invertido / NaN / incompleto → sin banda (no inventa)
     medio = (valor_bajo + valor_alto) / 2.0
     if precio < valor_bajo:
         return "COMPRA_FUERTE"
@@ -42,7 +52,7 @@ def banda_ciclica(precio: float | None, valor_bajo: float | None, valor_alto: fl
 
 
 def banda_compounder(g_exigido: float | None, g_sost_bajo: float | None, g_sost_alto: float | None) -> str | None:
-    if g_exigido is None or g_sost_bajo is None or g_sost_alto is None:
+    if g_exigido is None or not isinstance(g_exigido, (int, float)) or not _rango_valido(g_sost_bajo, g_sost_alto):
         return None
     if g_exigido < g_sost_bajo - _G_HOLGURA:
         return "COMPRA_FUERTE"

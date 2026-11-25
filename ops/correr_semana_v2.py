@@ -438,7 +438,7 @@ def main() -> int:
                 try:
                     vered = d.verif.veredicto
                     escribir_ficha_desde_dossier(d.ticker, d.dossier, vered,
-                                                 datos=(_datos_de_pack(d.ticker) if vered != "fail" else None))
+                                                 datos=(_datos_de_pack(d.ticker, as_of=date.today()) if vered != "fail" else None))
                     n_fichas += 1
                 except Exception as e:  # noqa: BLE001 — una ficha que falla no tumba el ciclo
                     print(f"  aviso: no pude escribir ficha de {d.ticker}: {e}")

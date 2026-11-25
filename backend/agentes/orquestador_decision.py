@@ -167,13 +167,13 @@ class OrquestadorDecision:
             self._registrar(res, decision, cartera, precios, hashes, verifs, ciclo, bull=bull_por_ticker, zonas=zonas_por_ticker)
             return res
 
-        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk)
+        res = self._gate(decision, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk, verifs)
 
         # 1d: re-propuesta UNA vez con las holguras exactas; si no hay válida, NO_ACTION sobre esos aumentos.
         if res.no_action and repropuesta_fn is not None:
             nueva = repropuesta_fn(res.holguras)
             if nueva is not None:
-                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk)
+                res2 = self._gate(nueva, cartera, contexto, flags, hoy, ciego, cargas, comprable, pipeline_fresco, admis_duro, clase_tk, verifs)
                 res, decision = res2, nueva
 
         # El Auditor cuestiona la decisión que pasó el gate.
@@ -210,7 +210,8 @@ class OrquestadorDecision:
               cargas: dict[str, dict[str, float]] | None = None,
               comprable: dict[str, bool] | None = None, pipeline_fresco: bool = True,
               admis_duro: dict[str, bool] | None = None,
-              clase_tk: dict[str, str] | None = None) -> ResultadoDecision:
+              clase_tk: dict[str, str] | None = None,
+              verifs: dict[str, str] | None = None) -> ResultadoDecision:
         peso_max = float(self.ips.cfg.get("peso_max_nombre", 1.0))
         piso = float(self.ips.cfg.get("peso_min_nombre", 0.0))   # piso por posición (no stubs) — operador 2026-11-24
         cap_flag = float(self.ips.cfg.get("cap_flag_supervivencia", peso_max))
@@ -234,8 +235,10 @@ class OrquestadorDecision:
                 aumentos[tk] = tgt
         tras_red = {t: w for t, w in pesos.items() if w > 0}
 
-        # 2. Clip de aumentos: CANDADO (F1/doc 85 + r10) + verificación ciega (F3) + admisibilidad + cap + flag.
+        # 2. Clip de aumentos: AUTORIDAD DE VERIFICACIÓN (P0.1, doc 91) + CANDADO (F1/doc 85 + r10) +
+        #    verificación ciega (F3) + admisibilidad + cap + flag.
         ciego = ciego or {}
+        verifs = {t.upper(): (v or "").lower() for t, v in (verifs or {}).items()}
         admis = admis_duro if admis_duro is not None else comprable
         candado_on = comprable is not None   # opt-in: solo aplica si el caller pasó comprable_por_ticker
         if candado_on and not pipeline_fresco:   # DEAD MAN'S SWITCH: sin poller vivo no se confía en ninguna vigencia
@@ -251,6 +254,15 @@ class OrquestadorDecision:
             if ciego.get(tk) == "FAIL":     # F3 (doc 83 §4): el canal ciego no reconcilió la evidencia primaria
                 alertas.append(f"{tk}: verificación ciega FAIL — no confiable hasta reconciliar, NO se abre/aumenta")
                 continue
+            # P0.1 (doc 91) — AUTORIDAD DE VERIFICACIÓN: el veredicto del Verificador manda, el PM no lo anula.
+            # FAIL → bloqueo DURO (el PM no puede tratarlo como PASS). REVIEW → se MARCA (BORJA permite actuar con
+            # REVIEW pero "no terminás con una posición grande"). La apertura sin dossier ya la cubre el CANDADO.
+            v = verifs.get(tk, "")
+            if v == "fail":
+                alertas.append(f"{tk}: Verificador FAIL — autoridad de verificación: NO se abre/aumenta (el PM no lo anula)")
+                continue
+            if v == "review":
+                alertas.append(f"{tk}: Verificador REVIEW — entrada/aumento MARCADO (no termina en posición grande)")
             if _inadmisible(contexto.get(tk), self.ips):
                 alertas.append(f"{tk}: inadmisible (market cap/ADV) — no se abre/aumenta")
                 continue

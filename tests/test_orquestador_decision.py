@@ -92,6 +92,30 @@ def test_f1_zona_compra_blanda_entra_libre_pero_marcada(tmp_path):
     assert any("FUERA de zona COMPRA" in a and "MARCADA" in a for a in res.alertas)   # pero MARCADA para el Auditor
 
 
+def test_p0_1_autoridad_verificacion_fail_bloquea(tmp_path):
+    # P0.1 (doc 91): el veredicto del Verificador es AUTORIDAD determinista — un FAIL bloquea el aumento aunque
+    # el PM lo trate como PASS. (Agujero cazado por la validación externa IA1+IA2 sobre la corrida 2026-11-25.)
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c", verif_por_ticker={"OKLO": "fail"})
+    assert "OKLO" not in res.pesos_finales
+    assert any("Verificador FAIL" in a and "autoridad" in a for a in res.alertas)
+
+
+def test_p0_1_review_entra_pero_marcado(tmp_path):
+    # REVIEW: BORJA permite actuar, pero queda MARCADO (el PM no termina en posición grande; cap a cargo del operador).
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c", verif_por_ticker={"OKLO": "review"})
+    assert res.pesos_finales.get("OKLO") == 0.1
+    assert any("Verificador REVIEW" in a and "MARCADO" in a for a in res.alertas)
+
+
+def test_p0_1_sin_verif_backward_compat(tmp_path):
+    # sin verif_por_ticker (callers/tests viejos) → la autoridad no bloquea nada (opt-in por presencia del veredicto).
+    res = _orq(tmp_path).procesar(_decision([_accion("OKLO", 0.1, "comprar")]), cartera_actual={}, caja_actual=1.0,
+                                  contexto=_ctx(), ciclo="c")
+    assert res.pesos_finales.get("OKLO") == 0.1
+
+
 def test_objecion_media_vuelve_al_pm_y_reevalua(tmp_path):
     # doc 85 + directiva operador: una objeción MEDIA del Auditor le VUELVE al PM → re-decide. Acá el PM, al
     # reevaluar, MODIFICA (achica OKLO 0.1→0.04). El resultado final refleja la decisión revisada.

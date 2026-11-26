@@ -240,5 +240,20 @@ peso 6%})` → EJECUTAR). Rediseño por **CONFIRMACIÓN POSITIVA**, test-driven 
 
 **Lo que NO forzó el spec (queda como refinamiento, NO bloquea Gate 0):** el contrato económico de unión-discriminada
 de IA2 (Rango{bajo,alto,fuente} + clases UW por arquetipo con `status` COMPUTADO). Los tests pasan con el `Underwriting`
-plano actual (+`precio_referencia`). **Próximo: Gate 0 ($0 — ensayo seco con fixtures + mutaciones + log útil), sin
-autoridad viva; piloto del Analista arranca 1-dic.**
+plano actual (+`precio_referencia`).
+
+**GATE 0 ✅ HECHO (2026-11-26, commit 03464c5, $0, SIN autoridad viva):**
+- **Tests de mutación** (`tests/test_p1_mutaciones.py`): propiedad contra el fail-open — partiendo de un input válido,
+  CUALQUIER mutación (clave portante ausente, NaN/inf, %/fracción, precio 0, rango invertido, typo, tipo no-string)
+  NUNCA da un resultado más permisivo. Cazó un crash real (`accion` no-string → AttributeError → ahora BLOQUEAR).
+- **Log útil** (`shadow_log`, correcciones review-2 IA2): append FALLA VISIBLE (`registrar_corrida` chequea
+  registros==decisiones) · 'cambiaría' mira el TAMAÑO (ACHICA: ejecuta con cap<peso) · motivos con CATEGORÍA
+  DATO/ECONOMÍA/IPS/VERIF · peso_permitido · clave anti-duplicados.
+- **Ensayo en seco** (`ops/gate0_dryrun.py`): fixtures (un Underwriting COMPLETO por arquetipo + legacy) por
+  harness→orquestador→log; verifica precio del PACK, los 4 arquetipos EJECUTAN, el legacy BLOQUEA, la ATOMICIDAD de
+  pares (compra de B bloqueada → venta de A DIFIERE), e invariante del log. **Suite 1225 verdes.**
+
+**PRÓXIMO: piloto del Analista (3-5 nombres, arranca 1-dic)** — extender el schema del Analista para que EMITA el
+bloque `Underwriting` estructurado (arquetipo, rango de banda, métrica obligatoria, falsador ligado + `precio_referencia`);
+medir tasa de null/errores/fuentes/costo. Recién después: wiring real → sombra por cantidad de decisiones → autoridad
+por etapas → freeze 90d. **Gated por el operador: revocar el PAT.**

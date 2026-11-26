@@ -69,7 +69,8 @@ class ResultadoRunner:
 class RunnerSemanal:
     def __init__(self, *, research: Orquestador, pm: PM, decision: OrquestadorDecision,
                  alertas_path: Path | str | None = _ALERTAS_PATH, verif_ciego_fn=None,
-                 candado_on: bool = False, pipeline_fresco: bool = True, nota_macro: str = ""):
+                 candado_on: bool = False, pipeline_fresco: bool = True, nota_macro: str = "",
+                 sombra_p1_on: bool = False):
         self.research = research
         self.pm = pm
         self.decision = decision          # su `.ledger` es el ledger de decisiones (fuente del hit-rate)
@@ -82,6 +83,10 @@ class RunnerSemanal:
         # pipeline según el último poller; en el caller real viene de la tabla de estado). Default: apagado/fresco.
         self.candado_on = candado_on
         self.pipeline_fresco = pipeline_fresco
+        # P1 (doc 91 §8.ter) — pasada en SOMBRA de la capa fail-closed: computa "qué habría decidido P1" por cada
+        # acción del PM y lo loguea append-only. NO toca autoridad, NO aplica. OPT-IN (default OFF): dormido hasta que
+        # el operador lo prenda para el piloto. Requiere dossiers con el bloque `underwriting` para dar señal útil.
+        self.sombra_p1_on = sombra_p1_on
 
     def _cargar_alertas(self) -> list[str]:
         if self.alertas_path and self.alertas_path.exists():
@@ -290,6 +295,19 @@ class RunnerSemanal:
                                    ops_semana_previas=ops_previas, alertas_previas=alertas_previas,
                                    packet_txt=packet_txt, feedback=feedback)
         decision = _pm()
+
+        # 3-sombra. Pasada P1 en SOMBRA (doc 91 §8.ter): registra qué habría decidido la capa fail-closed por cada
+        # acción del PM, append-only, SIN tocar autoridad. OPT-IN (self.sombra_p1_on) + best-effort (no tumba el ciclo).
+        if self.sombra_p1_on:
+            try:
+                from backend.agentes.harness_sombra import registrar_decision_en_sombra
+                dossier_por_tk = {d.ticker.upper(): d for d, _v in dossiers}
+                res_sombra = registrar_decision_en_sombra(
+                    ciclo=hoy.isoformat(), acciones=decision.acciones, dossier_por_ticker=dossier_por_tk,
+                    verif_por_ticker=verifs, precios=precios, cfg=self.decision.ips.cfg)
+                _log.info("sombra P1: %s", res_sombra["resumen"])
+            except Exception as e:  # noqa: BLE001 — la sombra NUNCA debe tumbar el ciclo del comité
+                _log.warning("pasada P1 en sombra falló (no afecta la decisión): %s", e)
 
         # 3-bucle. SOLICITAR_DEEP (F2, doc 85 §4): el PM pide investigar nombres de su packet sin ficha vigente →
         # a la Research Queue (origen PM, P2). El motivo se guarda pero NO se le pasa al Analista (pedido ciego).

@@ -109,6 +109,39 @@ def test_ciclo_completo_compra_y_registra(tmp_path, sesion):
     assert "insuficiente" in res.hit_rate_resumen
 
 
+def test_sombra_p1_opt_in_registra_sin_tocar_autoridad(tmp_path, sesion, monkeypatch):
+    # la perilla ON corre la pasada en sombra y escribe el log; NO cambia la decisión (mismo fill que sin sombra).
+    import backend.agentes.shadow_log as sl
+    spath = tmp_path / "shadow_p1.jsonl"
+    monkeypatch.setattr(sl, "_PATH", spath)
+    pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",
+                   cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([_accion()]), _U)])), _ips())
+    decision = OrquestadorDecision(_ips(), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision, alertas_path=None,
+                           sombra_p1_on=True)
+    res = runner.correr([], session=sesion, precios={"OKLO": 50.0},
+                        contexto={"OKLO": ContextoTicker(sector="energia", cuello="smr", market_cap=5e9, adv_usd=10e6)},
+                        hoy=F, ciclo="2026-10-27")
+    import json
+    recs = [json.loads(l) for l in spath.read_text().splitlines()]
+    assert any(r["ticker"] == "OKLO" for r in recs)                      # se registró la sombra
+    assert res.paper.fills == [{"ticker": "OKLO", "lado": "buy", "shares": 200, "precio": 50.0}]  # autoridad intacta
+
+
+def test_sombra_p1_off_por_default_no_escribe(tmp_path, sesion, monkeypatch):
+    import backend.agentes.shadow_log as sl
+    spath = tmp_path / "shadow_p1.jsonl"
+    monkeypatch.setattr(sl, "_PATH", spath)
+    pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",
+                   cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([_accion()]), _U)])), _ips())
+    decision = OrquestadorDecision(_ips(), LedgerDecisiones(path=tmp_path / "ld.jsonl"))
+    runner = RunnerSemanal(research=_StubResearch(_research_con()), pm=pm, decision=decision, alertas_path=None)
+    runner.correr([], session=sesion, precios={"OKLO": 50.0},
+                  contexto={"OKLO": ContextoTicker(sector="energia", cuello="smr", market_cap=5e9, adv_usd=10e6)},
+                  hoy=F, ciclo="2026-10-27")
+    assert not spath.exists()                                            # perilla off → ni toca el log
+
+
 def test_pm_sin_accion_no_opera(tmp_path, sesion):
     pm = PM(Agente("pm", "pm_v1", "claude-opus-5-5",
                    cliente=ScriptedLLM([resp_tool("emitir_decision", _decision_payload([], operar=False), _U)])),

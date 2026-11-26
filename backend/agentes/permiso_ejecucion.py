@@ -135,8 +135,8 @@ def _reduccion_deja_stub(ctx: dict) -> bool:
 
 
 def execution_permission(ctx: dict) -> tuple[str, list[str]]:
-    accion = (ctx.get("accion") or "").strip().lower()
-    motivo = (ctx.get("motivo_accion") or "").strip().lower()
+    accion = str(ctx.get("accion") or "").strip().lower()     # no-string (int/None) → "" → enum lo rechaza, no crashea
+    motivo = str(ctx.get("motivo_accion") or "").strip().lower()
 
     # 0. Enum CERRADO: acción desconocida/typo/vacía → BLOQUEAR.
     if accion not in _ACCIONES:

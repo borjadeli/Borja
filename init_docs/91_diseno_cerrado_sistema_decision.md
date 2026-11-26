@@ -194,3 +194,27 @@ conservar `sizing_reason` del PM (una frase del por qué del tamaño dentro del 
 defaults de aprobación · ≥1 permitido y ≥1 bloqueado por cada gate · ninguna apertura con datos portantes desconocidos ·
 revisar a mano las primeras 20 decisiones donde P1 cambiaría la propuesta del PM. Después: autoridad en paper → freeze 90d
 (congelar bordes/parámetros, NO los fixes fail-closed).
+
+### 8.bis — Estado del rework (2026-11-26, avance autónomo)
+**Los 5 commits del rework ESTÁN HECHOS (código), 1065 tests verdes + los 24 tests fail-closed de IA1 pasan (antes
+fallaban 23):** commit 1 caps fail-closed (02d458a) · 2 permiso fail-closed desde hechos crudos (8f33b38) · 3 arquetipo
+robusto + banda con guardas (3417afe) · 4 rotación VALIDEZ-vs-MÉRITO (4ec7a0e) · 5 orquestador `evaluar_sombra` +
+demo HONESTO sin inputs inventados + Doosan (5c97640). El demo honesto confirma: con los dossiers HISTÓRICOS (sin
+campos económicos estructurados) P1 fail-closed BLOQUEA las compras y DIFIERE las ventas sin comparación — correcto.
+
+**GATED POR EL OPERADOR (no se tocó autónomo — son cambios de autoridad VIVA o decisiones de schema):**
+- **Conflictos P0 en el gate VIVO:** P0.1 `verifs.get(tk,"")` deja pasar "" como no-FAIL + REVIEW solo alerta (puede
+  entrar a núcleo) · P0.4 el invariante de stubs usa el piso rígido 5% → marcaría toda OPTIONALITY como stub. Son
+  cambios de comportamiento del gate con autoridad → requieren OK del operador (no se cambian a ciegas con él ausente).
+- **El HARNESS REAL:** extender el schema del Analista para que EMITA los campos económicos estructurados (arquetipo,
+  rango de banda/valor por acción, métrica obligatoria, falsador estructurado) → el orquestador los CONSUME (no los
+  extrae de narrativa). Loguear "qué cambiaría" + registrar contrafactuales BLOQUEADOS. Es la pieza que falta para el
+  replay real y la medición del edge. Decisión de diseño del operador.
+- **Refinamientos de diseño de IA2 (fase del schema):** infra ESTRUCTURAL (no `contratado/EV`, que depende del precio) ·
+  banda infra = FCFE/acción (cobertura IG → riesgo, no banda) · dos relojes (recalcular las variables dependientes del
+  precio) · `sizing_reason` del PM (una frase) · falsador NO obligado a ser DURO sobre la métrica exacta · remover
+  EXCEPTIONAL como tier de entrada (ya es inalcanzable) · separar `max_target_weight` de `can_add` (no liquidar MANTENER).
+
+**FIN DE SOMBRA (IA2):** no activar hasta que el harness consuma evidencia REAL, ≥1 permitido y ≥1 bloqueado por gate,
+ninguna apertura con datos portantes desconocidos, y revisión manual de las primeras 20 decisiones donde P1 cambiaría
+la propuesta. Después: autoridad en paper → freeze 90d.

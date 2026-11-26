@@ -44,3 +44,14 @@ def test_rango_invertido_o_nan_es_none():
     assert banda_ciclica(60, 80, 40) is None            # bajo > alto → None (antes daba COMPRA_FUERTE)
     assert banda_ciclica(60, float("nan"), 80) is None
     assert banda_compounder(0.10, 0.12, 0.08) is None    # g_sost invertido → None
+
+
+def test_dominios_numericos_invalidos_son_none():
+    from backend.agentes.banda import banda_infra, banda_ciclica, banda_compounder, pre_revenue_elegible_opcionalidad
+    assert banda_infra(float("inf")) is None            # cobertura inf → None (antes COMPRA_FUERTE)
+    assert banda_infra(-0.5) is None                    # cobertura negativa → None
+    assert banda_ciclica(-1, 40, 80) is None            # precio negativo → None (antes COMPRA_FUERTE)
+    assert banda_ciclica(float("nan"), 40, 80) is None
+    assert banda_compounder(float("-inf"), 0.10, 0.20) is None
+    assert pre_revenue_elegible_opcionalidad(-0.5, 1.5) is False   # probabilidades fuera de [0,1] → False
+    assert pre_revenue_elegible_opcionalidad(0.15, 0.25) is True   # sigue andando el caso válido

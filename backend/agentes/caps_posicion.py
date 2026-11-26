@@ -30,8 +30,9 @@ def cap_posicion(*, tier: str, arquetipo: str | None, banda: str | None, verific
         liga = "evidencia" if ev <= tier_max else "tier"
         if arquetipo == "pre_revenue":
             return cap, liga                                # pre_revenue es elegible por p_implícita, no por banda
-        if banda in (None, "RECORTE"):
-            return 0.0, "banda_no_elegible_opcionalidad"    # fail-closed: sin banda elegible, no entra
+        # WHITELIST (review-2 IA1): solo bandas CONOCIDAS y elegibles; RECORTE/None/desconocida ("FOO") → 0 (fail-closed).
+        if banda not in ("COMPRA_FUERTE", "COMPRA", "MANTENER"):
+            return 0.0, "banda_no_elegible_opcionalidad"
         return cap, liga
 
     # ── NÚCLEO: cap = min(tier, arquetipo, banda de dinero nuevo). Desconocido → 0. ──

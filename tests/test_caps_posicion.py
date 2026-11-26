@@ -67,3 +67,8 @@ def test_nucleo_liga_el_mas_restrictivo():
     assert cap_posicion(tier="CORE", arquetipo="compounder", banda="MANTENER", verificacion="PASS", cfg=_CFG) == (0.0, "banda")
     assert cap_posicion(tier="CORE", arquetipo="pre_revenue", banda="COMPRA", verificacion="PASS", cfg=_CFG) == (0.0, "arquetipo")
     assert cap_posicion(tier="HIGH_CONVICTION", arquetipo="compounder", banda="COMPRA_FUERTE", verificacion="PASS", cfg=_CFG)[0] == 0.15
+
+
+def test_opcionalidad_rechaza_banda_desconocida_no_solo_recorte():
+    # review-2 IA1: una banda desconocida ("FOO") daba 2.5%. Ahora solo COMPRA_FUERTE/COMPRA/MANTENER son elegibles.
+    assert cap_posicion(tier="OPTIONALITY", arquetipo="infra", banda="FOO", verificacion="PASS", cfg=_CFG)[0] == 0.0

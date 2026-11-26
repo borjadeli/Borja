@@ -11,22 +11,19 @@ de sistema). Determinista, $0.
 """
 from __future__ import annotations
 
-import math
+from backend.agentes.numeros import finito, no_negativo, positivo, probabilidad
 
 BANDAS = ("COMPRA_FUERTE", "COMPRA", "MANTENER", "RECORTE")
 _G_HOLGURA = 0.03   # 3pp: margen extra de COMPRA_FUERTE del compounder (versionado)
 
 
 def _rango_valido(bajo, alto) -> bool:
-    """El rango del analista debe ser finito y bajo ≤ alto (un rango invertido/NaN daría una banda falsa)."""
-    for v in (bajo, alto):
-        if v is None or not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v):
-            return False
-    return bajo <= alto
+    """Rango del analista: finito y bajo ≤ alto (un rango invertido/NaN daría una banda falsa)."""
+    return finito(bajo) is not None and finito(alto) is not None and bajo <= alto
 
 
 def banda_infra(cobertura_ig_bajo: float | None) -> str | None:
-    c = cobertura_ig_bajo                       # extremo BAJO (desfavorable) del rango de cobertura
+    c = no_negativo(cobertura_ig_bajo)          # extremo BAJO (desfavorable); cobertura finita ≥ 0 (inf/neg → None)
     if c is None:
         return None
     if c >= 1.0:
@@ -39,8 +36,10 @@ def banda_infra(cobertura_ig_bajo: float | None) -> str | None:
 
 
 def banda_ciclica(precio: float | None, valor_bajo: float | None, valor_alto: float | None) -> str | None:
-    if precio is None or not _rango_valido(valor_bajo, valor_alto):
-        return None                               # rango invertido / NaN / incompleto → sin banda (no inventa)
+    precio = positivo(precio)                     # precio finito y > 0 (un precio negativo/NaN no es válido)
+    if precio is None or no_negativo(valor_bajo) is None or no_negativo(valor_alto) is None \
+            or not _rango_valido(valor_bajo, valor_alto):
+        return None                               # fuera de dominio / rango inválido → sin banda (no inventa)
     medio = (valor_bajo + valor_alto) / 2.0
     if precio < valor_bajo:
         return "COMPRA_FUERTE"
@@ -52,7 +51,8 @@ def banda_ciclica(precio: float | None, valor_bajo: float | None, valor_alto: fl
 
 
 def banda_compounder(g_exigido: float | None, g_sost_bajo: float | None, g_sost_alto: float | None) -> str | None:
-    if g_exigido is None or not isinstance(g_exigido, (int, float)) or not _rango_valido(g_sost_bajo, g_sost_alto):
+    g_exigido = finito(g_exigido)                 # crecimiento exigido finito (±inf/NaN → None)
+    if g_exigido is None or not _rango_valido(g_sost_bajo, g_sost_alto):
         return None
     if g_exigido < g_sost_bajo - _G_HOLGURA:
         return "COMPRA_FUERTE"
@@ -65,9 +65,10 @@ def banda_compounder(g_exigido: float | None, g_sost_bajo: float | None, g_sost_
 
 def pre_revenue_elegible_opcionalidad(p_implicita_alto: float | None, p_razonada_bajo: float | None) -> bool:
     """pre_revenue NO va a núcleo; solo a opcionalidad si el precio implica MENOS éxito del razonado (margen)."""
-    if p_implicita_alto is None or p_razonada_bajo is None:
+    pi, pr = probabilidad(p_implicita_alto), probabilidad(p_razonada_bajo)   # probabilidades en [0,1]
+    if pi is None or pr is None:
         return False
-    return p_implicita_alto < p_razonada_bajo
+    return pi < pr
 
 
 def calcular_banda(arquetipo: str, datos: dict) -> str | None:

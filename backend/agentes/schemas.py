@@ -228,6 +228,25 @@ class CargaFactor(BaseModel):
     intensidad: float = Field(ge=0, le=1)     # 1.0 = dependencia central · 0.5 = material no dominante
 
 
+class Underwriting(BaseModel):
+    """P1 (doc 91 §8) — bloque económico ESTRUCTURADO que el Analista EMITE y el harness CONSUME (no lo extrae de
+    narrativa). El código PROPONE el arquetipo (clasificar_arquetipo); el Analista CONFIRMA/override con fuente y
+    emite la métrica obligatoria + los insumos de banda del arquetipo. None en cualquier campo portante → fail-closed
+    (no se autoriza). `banda_inputs` lleva las claves que consume `calcular_banda` por arquetipo (cobertura_ig_bajo ·
+    valor_mitad_ciclo_bajo/alto + precio · g_exigido + g_sost_bajo/alto · p_implicita_alto + p_razonada_bajo).
+    Todo opcional = dossier legacy (sin bloque → el harness lo marca incompleto)."""
+    arquetipo_propuesto: str | None = None             # lo pone el código (informativo)
+    arquetipo_confirmado: str | None = None            # el Analista confirma/override → DEFINE el método
+    override_razon: str | None = None
+    metrica_obligatoria_nombre: str | None = None      # incremental_roic / normalized_owner_fcf_per_share / stabilized_fcfe_per_share / funding_gap
+    metrica_obligatoria_bajo: float | None = None      # rango [bajo, alto] (se usa el extremo desfavorable)
+    metrica_obligatoria_alto: float | None = None
+    banda_inputs: dict[str, float] = Field(default_factory=dict)
+    financing_gap: float | None = None                 # pre_revenue: capital hasta breakeven de caja
+    permanent_loss_mechanism: str | None = None
+    status: Literal["COMPLETE", "INCOMPLETE", "UNKNOWN"] = "INCOMPLETE"
+
+
 class Dossier(BaseModel):
     meta: AgentMeta
     ticker: str
@@ -249,6 +268,7 @@ class Dossier(BaseModel):
     factores_carga: list[CargaFactor] = Field(default_factory=list)        # drivers comunes (doc 83 F4)
     caja_neta_terminal: float | None = None        # caja − deuda estimada del año terminal (equity = EV + esto)
     dilucion_esperada_pct: float | None = None     # dilución acumulada al terminal (PISO determinista de Tier A)
+    underwriting: Underwriting | None = None        # P1 (doc 91 §8): bloque económico estructurado; None = legacy
     conviccion_0_1: float = Field(ge=0, le=1)
 
 

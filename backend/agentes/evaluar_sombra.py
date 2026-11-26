@@ -33,7 +33,8 @@ class VeredictoSombra:
 def evaluar_sombra(d: dict, *, cfg: dict) -> VeredictoSombra:
     """`d` = una decisión con lo que el sistema REALMENTE sabe (señales de arquetipo, verif, acción propuesta, etc.).
     No se completan defaults permisivos: lo que falta queda None → el permiso lo trata fail-closed."""
-    arq = clasificar_arquetipo(d.get("sig") or {})
+    # el arquetipo CONFIRMADO por el Analista define el método; si no, lo PROPONE el código desde las señales.
+    arq = d.get("arquetipo_confirmado") or clasificar_arquetipo(d.get("sig") or {})
     banda = calcular_banda(arq, d.get("banda_in") or {}) if arq else None
     # tier: IA2 — es una propiedad DECLARADA por el PM, no se infiere del peso. Para el histórico se propone y se marca.
     tier = d.get("tier_declarado") or ("OPTIONALITY" if (arq == "pre_revenue" or d.get("flag_alta")) else _NUCLEO_DEFAULT)

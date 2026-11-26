@@ -31,7 +31,7 @@ class HechosUniverso:
     es_adr: bool = False
     market_cap: float | None = None
     adv_usd: float | None = None          # volumen promedio diario en USD (ver registro 14: def. exacta)
-    tiene_nodo: bool = False              # vínculo con un nodo del mapa (Art. 2.1)
+    tiene_nodo: bool = False              # vínculo con un nodo del mapa — INFORMATIVO (ya no gatea la entrada, 2026-11-26)
     instrumento_permitido: bool = True    # common equity (no SPAC/warrant/pref/ETF) — lo resuelve upstream
     mercado_operable: bool = True         # operable por IBKR, no halted/delisting — lo resuelve upstream
 
@@ -55,8 +55,9 @@ def evaluar_universo(h: HechosUniverso) -> ResultadoUniverso:
     if h.adv_usd is None or h.adv_usd < LIQUIDEZ_SCREENER:
         liq = f"${h.adv_usd/1e6:.1f}M" if h.adv_usd is not None else "N/D"
         motivos.append(f"liquidez {liq}/día < ${LIQUIDEZ_SCREENER/1e6:.1f}M/día")
-    if not h.tiene_nodo:
-        motivos.append("sin vínculo con nodo del mapa")
+    # NOTA (2026-11-26, operador): el vínculo con un nodo del mapa YA NO es requisito de entrada. El diseño cerrado
+    # (docs 88/89) dejó el cuello como INSUMO del PM + estructura de búsqueda del discovery, NO como pata de entrada
+    # (el clasificador de cuellos se retiró: pro-cíclico). `tiene_nodo` se conserva como dato informativo, no gatea.
     if not h.instrumento_permitido:
         motivos.append("instrumento no permitido (SPAC/warrant/pref/ETF/no common equity)")
     if not h.mercado_operable:

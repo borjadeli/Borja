@@ -34,7 +34,6 @@ def test_universo_admisible():
     (dict(es_adr=True), "ADR"),
     (dict(market_cap=10e6), "market cap"),
     (dict(adv_usd=100e3), "liquidez"),
-    (dict(tiene_nodo=False), "nodo"),
     (dict(instrumento_permitido=False), "instrumento"),
     (dict(mercado_operable=False), "mercado"),
 ])
@@ -186,13 +185,13 @@ def test_reemision_por_nodo_revive_descartada(sesion):
     assert emp.reentradas_usadas == 0
 
 
-def test_flujo_deriva_tiene_nodo_de_nodo_id(sesion):
-    # universo dice tiene_nodo=True pero nodo_id=None → flujo lo corrige → fuera_universo
+def test_flujo_sin_nodo_entra_igual(sesion):
+    # 2026-11-26 (operador): el nodo del mapa YA NO gatea la entrada → sin nodo_id entra igual (es insumo, no pata).
     r = flujo.ingresar(sesion, ticker="ACME", fecha=date(2026, 1, 1), nodo_id=None,
-                       universo=_universo_ok(tiene_nodo=True),
+                       universo=_universo_ok(tiene_nodo=False),
                        filtro0=HechosFiltro0(crecimiento_yoy=0.3, margen_bruto=0.45))
-    assert r["resultado"] == "fuera_universo"
-    assert any("nodo" in m for m in r["motivos"])
+    assert r["resultado"] != "fuera_universo"                   # entra (lo ubica el veredicto del Filtro 0)
+    assert sesion.get(NxEmpresa, "ACME") is not None            # se creó la Candidata sin nodo
 
 
 def test_reemision_no_revive_descarte_duro(sesion):

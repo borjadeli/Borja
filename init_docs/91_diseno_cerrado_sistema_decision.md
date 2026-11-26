@@ -253,7 +253,15 @@ plano actual (+`precio_referencia`).
   harness→orquestador→log; verifica precio del PACK, los 4 arquetipos EJECUTAN, el legacy BLOQUEA, la ATOMICIDAD de
   pares (compra de B bloqueada → venta de A DIFIERE), e invariante del log. **Suite 1225 verdes.**
 
-**PRÓXIMO: piloto del Analista (3-5 nombres, arranca 1-dic)** — extender el schema del Analista para que EMITA el
-bloque `Underwriting` estructurado (arquetipo, rango de banda, métrica obligatoria, falsador ligado + `precio_referencia`);
-medir tasa de null/errores/fuentes/costo. Recién después: wiring real → sombra por cantidad de decisiones → autoridad
-por etapas → freeze 90d. **Gated por el operador: revocar el PAT.**
+**ANALISTA YA EMITE EL BLOQUE (2026-11-26, commit e7247d3):** `prompts/analista_v1.md` tiene la sección "ARQUETIPO Y
+BANDA" (emite `underwriting`: arquetipo_confirmado + banda_inputs por arquetipo + métrica obligatoria + precio_referencia
++ status) y el Analista setea `falsador.id` (`Falsador.id` nuevo en el schema — gap que los fixtures tapaban: el harness
+lee `falsador.id` y el Falsador real no lo tenía). SEAM con el tipo REAL (`Dossier` pydantic) probado end-to-end
+(`tests/test_harness_dossier_real.py`): un Dossier COMPLETO ejecuta, sin underwriting fail-closed BLOQUEA. **Suite 1228.**
+
+**PRÓXIMO (gated por el operador, 2 decisiones):** (1) **el HOOK en vivo** — dónde/ cuándo el runner del comité corre la
+pasada en sombra (`evaluar_decision_sombra` + `construir_shadow_decision` + `registrar_corrida`) por cada decisión real,
+append-only, SIN tocar autoridad (la superficie es `orquestador.py`/el runner del PM; es cambio del path vivo aunque solo
+loguee → decisión del operador). (2) **piloto del Analista (3-5 nombres, 1-dic)** — correr el Analista con el prompt
+nuevo, medir tasa de null/errores/fuentes/costo del bloque `underwriting`. Después: sombra por cantidad de decisiones
+(≥20 con Underwriting, ≥5 ventas) → autoridad por etapas → freeze 90d. **Pendiente operador: revocar el PAT.**

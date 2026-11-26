@@ -218,3 +218,27 @@ campos económicos estructurados) P1 fail-closed BLOQUEA las compras y DIFIERE l
 **FIN DE SOMBRA (IA2):** no activar hasta que el harness consuma evidencia REAL, ≥1 permitido y ≥1 bloqueado por gate,
 ninguna apertura con datos portantes desconocidos, y revisión manual de las primeras 20 decisiones donde P1 cambiaría
 la propuesta. Después: autoridad en paper → freeze 90d.
+
+### 8.ter — Review 2 CERRADA: fail-closed INTEGRAL por confirmación positiva (2026-11-26, commit bfd06eb)
+Las dos IAs EJECUTARON el código del rework (§8.bis) y convergieron: la integración seguía **fail-open**. El patrón:
+los chequeos eran NEGATIVOS (`if ctx.get("campo_malo"): bloquear`) → una clave AUSENTE es falsy → no bloqueaba →
+"bloquear todo" se volvía "ejecutar todo" cuando el caller olvidaba un campo (`execution_permission({abrir,PASS,CORE,
+peso 6%})` → EJECUTAR). Rediseño por **CONFIRMACIÓN POSITIVA**, test-driven contra el spec combinado (24 tests de IA1 +
+58 de IA2 = `tests/test_p1_fail_closed_v2.py`, los 82 verdes; suite 1162):
+- **permiso**: apertura ejecuta SOLO con contexto completo (verif + tier con su banda de peso vía `tiers_cfg` +
+  falsador ligado a la métrica + los 4 hechos operativos EXPLÍCITOS). Clave ausente = BLOQUEAR. Asimetría fail-closed:
+  reducir/salir DIFIEREN ante info faltante (no atrapan). Evidencia mecánica = dict verificable. comparacion = enum
+  cerrado. Stub bajo el mínimo del tier → BLOQUEAR. Rotación: `par_compra_bloqueada` explícito (atomicidad). pre_revenue
+  exige margen p_implícita<p_razonada.
+- **banda**: validación de UNIDAD (cobertura ∈[0,3]; precio/valor-medio ∈[0.2,5]; g como fracción) → unidad incoherente = None.
+- **comparacion_rotacion**: 3 estados (PERMITIDA / BLOQUEADA — inválida o B DOMINADA / INDETERMINADA — falta info →
+  difiere). El mérito NO lo veta el código (power-law).
+- **evaluar_sombra**: arma el ExecutionContext tipado y lo COMPUTA; malformado → BLOQUEAR (no tumba la corrida); un
+  override de arquetipo NO agranda el cap.
+- **harness_sombra**: falsador debe medir un INSUMO del arquetipo; `falsador_id` estructurado; banda con el precio del
+  DÍA, descarta insumos dependientes del precio si se movió >10%.
+
+**Lo que NO forzó el spec (queda como refinamiento, NO bloquea Gate 0):** el contrato económico de unión-discriminada
+de IA2 (Rango{bajo,alto,fuente} + clases UW por arquetipo con `status` COMPUTADO). Los tests pasan con el `Underwriting`
+plano actual (+`precio_referencia`). **Próximo: Gate 0 ($0 — ensayo seco con fixtures + mutaciones + log útil), sin
+autoridad viva; piloto del Analista arranca 1-dic.**

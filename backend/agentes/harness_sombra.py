@@ -79,3 +79,36 @@ def insumos_de_dossier(dossier, *, verif: str, accion: str, motivo: str = "discr
 def evaluar_decision_sombra(dossier, *, cfg: dict, verif: str, accion: str, **kw) -> VeredictoSombra:
     """Conveniencia: mapea el dossier y corre el orquestador en un paso."""
     return evaluar_sombra(insumos_de_dossier(dossier, verif=verif, accion=accion, **kw), cfg=cfg)
+
+
+# El PM habla en comprar/vender/recortar/caja; el permiso en abrir/aumentar/reducir/salir. Sin este mapeo el
+# shadow vería una acción desconocida y BLOQUEARÍA todo.
+ACCION_PM_A_PERMISO = {"comprar": "abrir", "aumentar": "aumentar", "vender": "salir",
+                       "recortar": "reducir", "mantener": "mantener", "caja": "salir"}
+
+
+def registrar_decision_en_sombra(*, ciclo: str, acciones, dossier_por_ticker: dict, verif_por_ticker: dict,
+                                 precios: dict, cfg: dict, path=None) -> dict:
+    """HOOK listo para el runner (doc 91 §8.ter): por cada PMAccion construye el veredicto P1 en sombra
+    (harness→orquestador) y lo loguea append-only. NO toca autoridad; NO aplica nada. Pensado para llamarse
+    best-effort (envolver en try/except en el runner: la sombra no debe tumbar el ciclo). Devuelve resumen + registros.
+
+    `acciones` = iterable de PMAccion (usa .ticker/.accion/.peso_objetivo) · `dossier_por_ticker` = {TK: Dossier} ·
+    `verif_por_ticker` = {TK: 'pass'/'review'/'fail'} · `precios` = {TK: precio del día}."""
+    # import local para no crear ciclo (shadow_log no importa nada de agentes)
+    from backend.agentes.shadow_log import construir_shadow_decision, registrar_corrida, resumen_sombra
+
+    registros: list[dict] = []
+    for a in acciones:
+        tk = str(getattr(a, "ticker", "") or "").upper()
+        dossier = dossier_por_ticker.get(tk)
+        if dossier is None:                               # sin dossier no hay nada que evaluar en sombra
+            continue
+        accion = ACCION_PM_A_PERMISO.get(getattr(a, "accion", ""), getattr(a, "accion", ""))
+        peso = getattr(a, "peso_objetivo", None)
+        ver = evaluar_decision_sombra(dossier, cfg=cfg, verif=verif_por_ticker.get(tk), accion=accion,
+                                      motivo="discrecional", peso_objetivo=peso, precio_pack=precios.get(tk))
+        registros.append(construir_shadow_decision(ciclo=ciclo, ticker=tk, accion_pm=accion, veredicto=ver,
+                                                   peso_propuesto=peso))
+    registrar_corrida(registros, path=path)               # invariante registros==decisiones (falla VISIBLE)
+    return {"resumen": resumen_sombra(registros), "registros": registros}

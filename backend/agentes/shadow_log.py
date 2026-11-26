@@ -100,11 +100,11 @@ def registrar_corrida(records: list[dict], *, path: Path | str | None = None) ->
     el append debe fallar VISIBLE). Devuelve cuántas líneas se agregaron; levanta si no coincide."""
     p = Path(path or _PATH)
     p.parent.mkdir(parents=True, exist_ok=True)
-    antes = sum(1 for _ in p.open(encoding="utf-8")) if p.exists() else 0
+    _contar = lambda: sum(1 for _ in p.open(encoding="utf-8")) if p.exists() else 0
+    antes = _contar()
     for r in records:
         registrar_shadow(r, path=p)
-    despues = sum(1 for _ in p.open(encoding="utf-8"))
-    escritos = despues - antes
+    escritos = _contar() - antes
     if escritos != len(records):
         raise RuntimeError(f"shadow log perdió registros: escritos={escritos} != decisiones={len(records)}")
     return escritos

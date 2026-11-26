@@ -166,6 +166,8 @@ class Falsador(BaseModel):
     afirmacion: str
     fecha_limite: str                        # YYYY-MM-DD
     que_lo_mataria: str
+    id: str | None = None                    # id ESTRUCTURADO estable (P1 doc 91 §8.ter): el harness lo usa como
+                                             # falsador_id; NO el texto libre de `afirmacion` (que el PM reescribe)
     vara_externa: VaraExterna | None = None
     # ESTRUCTURA (doc 85 F2) — para la regla de salida determinista. Si es verificable por máquina → tipo DURO.
     metrica: str | None = None               # p.ej. "revenue_2027" | "aurora_online" | "going_concern"

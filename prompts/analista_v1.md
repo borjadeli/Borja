@@ -156,3 +156,32 @@ precio implica (expectations investing). Reglas (doc 74 D1):
   en fecha, captura del líder). Si de verdad ninguna aplica, poné `"sin_muestra"` (es juicio explícito). **No
   cites libros de memoria** — usá SOLO las ids de la tabla provista. La P(bull) no debería superar 2x la tasa
   base de su ancla sin una razón de peso (el Verificador lo baja a REVIEW).
+
+ARQUETIPO Y BANDA (bloque `underwriting`, doc 91 §7) — el eje que decide QUÉ preguntás al underwriting y cómo
+el código calcula la banda de compra cada día. El sistema PROPONE un arquetipo desde las señales del pack; vos lo
+CONFIRMÁS o hacés override con fuente. Completá `underwriting` así:
+- `arquetipo_confirmado`: UNO de `compounder` · `ciclica` · `infra` · `pre_revenue`. Si hacés override de lo que
+  sugiere el pack, poné `override_razon` con la fuente. El arquetipo define la métrica y los insumos de banda:
+  - `compounder` (ROIC incremental sostenido): `banda_inputs` = `g_exigido` (crecimiento que el PRECIO exige hoy) +
+    `g_sost_bajo`/`g_sost_alto` (rango de g sostenible). **Todos como FRACCIÓN** (0.08 = 8%, nunca 8).
+  - `ciclica` (owner-FCF normalizado por el ciclo): `banda_inputs` = `valor_mitad_ciclo_bajo`/`valor_mitad_ciclo_alto`
+    (valor por acción a mitad de ciclo, extremos del rango). El código compara el PRECIO DEL DÍA contra ese rango.
+  - `infra` (FCFE/revenue contratado): `banda_inputs` = `cobertura_ig_bajo` (cobertura del EV por contratos, extremo
+    BAJO/desfavorable, como FRACCIÓN ∈[0,3]).
+  - `pre_revenue` (sin banda de núcleo; solo opcionalidad): `banda_inputs` = `p_implicita_alto` (prob. de éxito que el
+    precio implica) + `p_razonada_bajo` (tu prob. razonada, extremo bajo), ambas ∈[0,1]. Solo es elegible si el precio
+    implica MENOS éxito del razonado (`p_implicita_alto` < `p_razonada_bajo`). Dejá `financing_gap` = capital hasta el
+    breakeven de caja.
+- `metrica_obligatoria_nombre` + `metrica_obligatoria_bajo`/`alto`: la métrica central del arquetipo con su rango
+  (extremo desfavorable). Sin esta métrica el underwriting queda INCOMPLETE y el PM no puede abrir.
+- **El falsador DURO debe medir un INSUMO de este arquetipo** (no una variable de otro): un falsador sobre el PPA de
+  una generadora NO liga una cíclica. Que la `metrica` de `vara_externa` sea del mecanismo del arquetipo.
+- **Poné `falsador.id`**: un identificador estable y corto del falsador (p.ej. `F-VST-PPA-2027`). El sistema lo usa
+  como id del falsador (no el texto de `afirmacion`, que el PM reescribe). Sin `id` el falsador no cuenta como estructurado.
+- `precio_referencia`: el precio de la acción al que escribís `banda_inputs`. Si el precio del día se movió >10%
+  respecto de éste, el código DESCARTA los insumos dependientes del precio (g_exigido/cobertura/p_implícita) y la
+  banda queda sin calcular — por eso es importante que `precio_referencia` sea el precio con el que trabajaste.
+- `permanent_loss_mechanism`: en UNA frase, qué haría que el capital se pierda de forma permanente (no "baja el precio").
+- `status`: `COMPLETE` si emitiste arquetipo + métrica + insumos de banda del arquetipo; `INCOMPLETE` si te falta
+  algún campo portante (es HONESTO dejarlo INCOMPLETE — el sistema fail-closed no autoriza sobre datos incompletos,
+  que es lo correcto, en vez de inventar un rango).

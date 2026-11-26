@@ -13,6 +13,8 @@ ausencia de info). Determinista, $0.
 """
 from __future__ import annotations
 
+_BANDAS = ("COMPRA_FUERTE", "COMPRA", "MANTENER", "RECORTE")
+
 
 def comparar_rotacion(a: dict, b: dict) -> tuple[str, list[str]]:
     # ── Venta a CAJA: válida solo si A perdió el capital por una razón CLARA (no por ruido de REVIEW). ──
@@ -31,8 +33,9 @@ def comparar_rotacion(a: dict, b: dict) -> tuple[str, list[str]]:
         motivos.append("B tiene nulls portantes")
     if not b.get("dossier_del_ciclo", False):                 # fail-closed: debe ser del ciclo explícitamente
         motivos.append("el dossier de B no es del ciclo")
-    if a.get("banda") is None or b.get("banda") is None:
-        motivos.append("banda de A o B desconocida — comparación inválida (no se premia la ausencia de info)")
+    # las bandas deben ser CONOCIDAS, no solo no-None (review-2 IA1: 'foo'/'bar' daba PERMITIDA).
+    if a.get("banda") not in _BANDAS or b.get("banda") not in _BANDAS:
+        motivos.append("banda de A o B desconocida/inválida — comparación inválida (no se premia la ausencia de info)")
     if motivos:
         return "BLOQUEADA", motivos
     # Comparación VÁLIDA: el PM juzga si la ventaja económica compensa el costo/riesgo (dentro de los límites del IPS).

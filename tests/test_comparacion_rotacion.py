@@ -55,3 +55,8 @@ def test_venta_a_caja_con_banda_de_A_desconocida_por_review_no_se_permite():
     # REVIEW ruidoso → pierde elegibilidad → TRANSICIÓN, no venta a caja.
     a = {"banda": None, "no_elegible_tier": True, "motivo_no_elegible": "REVIEW"}
     assert comparar_rotacion(a, {"es_caja": True})[0] == "BLOQUEADA"
+
+
+def test_bandas_invalidas_no_son_comparables():
+    # review-2 IA1: bandas desconocidas ('foo'/'bar') daban PERMITIDA → ahora BLOQUEADA.
+    assert comparar_rotacion({"banda": "foo"}, {"banda": "bar", "verificacion": "PASS", "dossier_del_ciclo": True})[0] == "BLOQUEADA"

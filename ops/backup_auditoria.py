@@ -101,12 +101,20 @@ def construir(ciclo: str | None = None) -> str:
     shadow = _shadow(dossiers, decs)
 
     L: list[str] = []
-    L.append(f"# BORJA — Paquete de AUDITORÍA del sistema · ciclo {ciclo}\n")
-    L.append("> Para IAs independientes. Auditá en 4 ejes: **(1) código** (¿funciona todo el sistema, el cableado "
-             "entre etapas es correcto?), **(2) sistema de inversión** (¿la estructura de agentes agrega valor o "
-             "empata a un Opus+web?), **(3) análisis de empresas** (¿los dossiers son buenos?), **(4) selección** "
-             "(¿el PM optimiza la cartera en el tiempo, de la mejor manera posible?). El código es la fuente de "
-             "verdad; esto orienta.\n")
+    L.append(f"# BORJA — Auditoría del UNIVERSO y del MODUS OPERANDI del PM · ciclo {ciclo}\n")
+    L.append("> **Foco acotado (NO re-auditar todo).** La calidad del comité (Analista/Verificador/dossiers) y las "
+             "decisiones de UNA corrida ya se triangularon (doc 91). Acá queremos auditar la capa que NO revisamos: "
+             "**cómo se administra el universo** y **cómo opera el PM** — en particular, **¿el PM tiene acceso a toda "
+             "la información que necesita para elegir bien?**. Preguntas concretas para el auditor:\n")
+    L.append("- **Universo**: ¿tiene sentido cómo entran/salen las empresas? ¿El pool que el PM 've' es el correcto, "
+             "o hay buenas oportunidades que nunca llegan a su mesa? ¿La ambigüedad nx_empresa vs fichas es un problema?")
+    L.append("- **Selección de deep**: ¿el Triage (señales deterministas) + el score de oportunidad eligen bien a "
+             "quién investigar, o dejan afuera nombres que deberían subir?")
+    L.append("- **Insumo del PM**: ¿ve lo suficiente (dossiers deepeados + fichas + shortlist con score + cartera), o "
+             "le falta contexto para comparar oportunidades entre sí y no derivar a value cíclico?")
+    L.append("- **Alertas**: ¿es razonable que las mejoras (precio a zona COMPRA, filing material) disparen revisión, "
+             "pero una mejora de fundamentals fuera de un filing no? ¿Falta algo?\n")
+    L.append("> El código es la fuente de verdad (repo en GitHub); esto orienta. Lo de abajo son DATOS REALES del sistema.\n")
 
     L.append("## 0. Arquitectura del pipeline (dónde mirar en el código)\n")
     L.append("```\nUNIVERSO (nx_empresa) → señales deterministas → TRIAGE (elige deep) → comité "
@@ -169,14 +177,19 @@ def construir(ciclo: str | None = None) -> str:
                      f"(arq {s['arquetipo']}, banda {s['banda']}, cap {s['cap']:.1%}) · faltan: {s['faltan']}")
     L.append("")
 
-    L.append("## 6. Hallazgos abiertos de la última triangulación (contexto para el auditor)\n")
+    L.append("## 6. Lo que YA sabemos (para que el auditor NO lo repita) y lo que queremos de él\n")
+    L.append("**Ya triangulado (doc 91) — no hace falta re-auditar:** el comité no le gana a un Opus+web solo; falta "
+             "comparación económica entre oportunidades; deriva a value cíclico; falsadores mal diseñados; el edge no "
+             "está demostrado. Eso ya lo tenemos.\n")
+    L.append("**Lo que SÍ queremos auditar acá (nuevo):**")
     for h in [
-        "El comité NO le gana a un solo Opus+web en profundidad (doc 82) → ¿la maquinaria agrega valor?",
-        "Falta COMPARACIÓN ECONÓMICA entre oportunidades ('¿es el mejor destino del próximo dólar?') — el eslabón faltante.",
-        "Riesgo estratégico: BORJA detecta RIESGO bien y OPORTUNIDAD mal → deriva a value cíclico con tema tech.",
-        "Falsadores: mezclan falsador/catalizador/condición-de-entrada; rediseñar.",
-        "El edge NO está demostrado: hit-rate/Brier no mide alpha → faltan contrafácticos/ablaciones.",
-        "Ambigüedad 'universo' (nx_empresa vs fichas) + máquina de estados que no se mueve.",
+        "ADMINISTRACIÓN DEL UNIVERSO: entrada (gate), salida (estados), costo, y la ambigüedad nx_empresa vs fichas. "
+        "¿La máquina de estados que no se mueve (todo 'Candidata') es un bug o es inocuo?",
+        "VISIBILIDAD DEL PM: ¿el PM ve lo suficiente para decidir bien? Un nombre nunca-deepeado y que el score no "
+        "sube a la shortlist es INVISIBLE para él. ¿Ese filtro (Triage + score) es el cuello de botella de la calidad?",
+        "FLUJO operador→universo: las altas del operador van a la cola→ficha, NO a nx_empresa. ¿Deberían conectarse?",
+        "ALERTAS: simétricas en precio (zona COMPRA alerta) pero una mejora de fundamentals fuera de un filing no "
+        "dispara nada. ¿Falta un gatillo de mejora fundamental?",
     ]:
         L.append(f"- {h}")
     L.append("")

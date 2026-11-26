@@ -70,7 +70,7 @@ def _señal_pre_revenue(d: dict, *, infra_evaluable: bool) -> bool:
 
 
 def _señal_ciclica(d: dict) -> bool:
-    if (d.get("sector") or "").strip().lower() in SECTORES_CICLICOS:
+    if str(d.get("sector") or "").strip().lower() in SECTORES_CICLICOS:   # sector puede venir no-string
         return True
     cv = _num(d.get("cv_margen_op_10a"))
     if cv is not None and cv > 0.5:

@@ -32,14 +32,33 @@ class VeredictoSombra:
 
 def evaluar_sombra(d: dict, *, cfg: dict) -> VeredictoSombra:
     """`d` = una decisión con lo que el sistema REALMENTE sabe (señales de arquetipo, verif, acción propuesta, etc.).
-    No se completan defaults permisivos: lo que falta queda None → el permiso lo trata fail-closed."""
+    Es el ÚNICO lugar que arma el ExecutionContext tipado y lo COMPUTA desde el dossier; un input malformado NUNCA
+    tumba la corrida (se atrapa → BLOQUEAR). No se completan defaults permisivos en los hechos portantes."""
+    try:
+        return _evaluar_sombra(d, cfg)
+    except Exception as e:                         # un string donde va un número no debe tumbar la corrida → BLOQUEAR
+        return VeredictoSombra(arquetipo=None, banda=None, tier="?", cap=0.0, liga="error",
+                               permiso="BLOQUEAR", motivos=[f"excepción evaluando en sombra: {type(e).__name__}"],
+                               missing_fields=["input malformado"])
+
+
+def _evaluar_sombra(d: dict, cfg: dict) -> VeredictoSombra:
     # el arquetipo CONFIRMADO por el Analista define el método; si no, lo PROPONE el código desde las señales.
-    arq = d.get("arquetipo_confirmado") or clasificar_arquetipo(d.get("sig") or {})
+    arq_pack = clasificar_arquetipo(d.get("sig") or {})
+    arq_conf = d.get("arquetipo_confirmado")
+    arq = arq_conf or arq_pack
     banda = calcular_banda(arq, d.get("banda_in") or {}) if arq else None
     # tier: IA2 — es una propiedad DECLARADA por el PM, no se infiere del peso. Para el histórico se propone y se marca.
     tier = d.get("tier_declarado") or ("OPTIONALITY" if (arq == "pre_revenue" or d.get("flag_alta")) else _NUCLEO_DEFAULT)
     cap, liga = cap_posicion(tier=tier, arquetipo=arq, banda=banda, verificacion=d.get("verif"), cfg=cfg)
+    # un OVERRIDE de arquetipo del Analista NO puede AGRANDAR el cap respecto del que soporta la señal del pack
+    # (caso E&P cíclica → 'compounder': el tope sigue siendo el de la cíclica). Liga el más restrictivo.
+    if arq_conf and arq_pack and arq_conf != arq_pack:
+        cap_pack, _ = cap_posicion(tier=tier, arquetipo=arq_pack, banda=banda, verificacion=d.get("verif"), cfg=cfg)
+        if cap_pack < cap:
+            cap, liga = cap_pack, "override_arquetipo_no_agranda_cap"
 
+    banda_in = d.get("banda_in") or {}
     missing: list[str] = []
     if arq is None:
         missing.append("arquetipo")
@@ -51,16 +70,21 @@ def evaluar_sombra(d: dict, *, cfg: dict) -> VeredictoSombra:
         missing.append("métrica obligatoria del arquetipo")
     if d.get("tier_declarado") is None:
         missing.append("tier declarado por el PM")
+    if arq == "pre_revenue" and (banda_in.get("p_implicita_alto") is None or banda_in.get("p_razonada_bajo") is None):
+        missing.append("p_implícita/p_razonada (margen de la opcionalidad pre_revenue)")
 
     ctx = {
         "accion": d.get("accion"), "motivo_accion": d.get("motivo"),
-        "verificacion": d.get("verif"), "tier": tier,
-        "peso_objetivo": d.get("peso_objetivo"), "cap": cap,
+        "verificacion": d.get("verif"), "tier": tier, "tiers_cfg": cfg.get("tiers"),
+        "arquetipo": arq, "peso_objetivo": d.get("peso_objetivo"), "cap": cap,
         "falsador_id": d.get("falsador_id"),
         "falsador_sobre_metrica": bool(d.get("falsador_sobre_metrica")),
         "metrica_obligatoria_null": not d.get("metrica_obligatoria_presente", False),
-        "flags_alta_sin_responder": d.get("flags_alta_sin_responder", False),
-        "bloqueo_datos": d.get("bloqueo_datos"),
+        "flags_alta_sin_responder": bool(d.get("flags_alta_sin_responder", False)),
+        "crea_stub_o_viola_ips": bool(d.get("crea_stub_o_viola_ips", False)),
+        "bloqueo_datos": d.get("bloqueo_datos") if "bloqueo_datos" in d else [],
+        "p_implicita_alto": banda_in.get("p_implicita_alto"),
+        "p_razonada_bajo": banda_in.get("p_razonada_bajo"),
         "comparacion": d.get("comparacion"),
         "metrica_A_null": banda is None,
         "dossier_del_ciclo": d.get("dossier_del_ciclo", True),

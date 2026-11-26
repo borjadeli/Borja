@@ -11,19 +11,16 @@ de sistema). Determinista, $0.
 """
 from __future__ import annotations
 
-from backend.agentes.numeros import finito, no_negativo, positivo, probabilidad
+from backend.agentes.numeros import en_rango, fraccion, no_negativo, positivo, probabilidad
 
 BANDAS = ("COMPRA_FUERTE", "COMPRA", "MANTENER", "RECORTE")
 _G_HOLGURA = 0.03   # 3pp: margen extra de COMPRA_FUERTE del compounder (versionado)
-
-
-def _rango_valido(bajo, alto) -> bool:
-    """Rango del analista: finito y bajo ≤ alto (un rango invertido/NaN daría una banda falsa)."""
-    return finito(bajo) is not None and finito(alto) is not None and bajo <= alto
+_COB_MAX = 3.0      # cobertura del EV: fracción en [0, 3] (30 = %, no fracción → unidad incoherente)
+_RATIO_LO, _RATIO_HI = 0.2, 5.0   # precio/valor-medio: fuera de [0.2, 5] = escala distinta (review-2 IA2)
 
 
 def banda_infra(cobertura_ig_bajo: float | None) -> str | None:
-    c = no_negativo(cobertura_ig_bajo)          # extremo BAJO (desfavorable); cobertura finita ≥ 0 (inf/neg → None)
+    c = en_rango(cobertura_ig_bajo, 0.0, _COB_MAX)   # extremo BAJO; FRACCIÓN finita en [0,3] (30/True/4.0 → None)
     if c is None:
         return None
     if c >= 1.0:
@@ -36,24 +33,28 @@ def banda_infra(cobertura_ig_bajo: float | None) -> str | None:
 
 
 def banda_ciclica(precio: float | None, valor_bajo: float | None, valor_alto: float | None) -> str | None:
-    precio = positivo(precio)                     # precio finito y > 0 (un precio negativo/NaN no es válido)
-    if precio is None or no_negativo(valor_bajo) is None or no_negativo(valor_alto) is None \
-            or not _rango_valido(valor_bajo, valor_alto):
+    precio = positivo(precio)                     # precio finito y > 0 (un precio negativo/NaN/0 no es válido)
+    lo, hi = no_negativo(valor_bajo), no_negativo(valor_alto)
+    if precio is None or lo is None or hi is None or lo > hi:
         return None                               # fuera de dominio / rango inválido → sin banda (no inventa)
-    medio = (valor_bajo + valor_alto) / 2.0
-    if precio < valor_bajo:
+    medio = (lo + hi) / 2.0
+    if medio <= 0 or not (_RATIO_LO <= precio / medio <= _RATIO_HI):
+        return None                               # escala incoherente (precio 95 vs rango 40.000) → sin banda
+    if precio < lo:
         return "COMPRA_FUERTE"
     if precio <= medio:
         return "COMPRA"
-    if precio <= valor_alto:
+    if precio <= hi:
         return "MANTENER"
     return "RECORTE"                            # precio por ENCIMA del rango de mitad de ciclo (caso EXE a la curva)
 
 
 def banda_compounder(g_exigido: float | None, g_sost_bajo: float | None, g_sost_alto: float | None) -> str | None:
-    g_exigido = finito(g_exigido)                 # crecimiento exigido finito (±inf/NaN → None)
-    if g_exigido is None or not _rango_valido(g_sost_bajo, g_sost_alto):
+    g_exigido = fraccion(g_exigido)               # g exigido como FRACCIÓN finita |x|≤1 (8 = %, no fracción → None)
+    lo, hi = fraccion(g_sost_bajo), fraccion(g_sost_alto)
+    if g_exigido is None or lo is None or hi is None or lo > hi:
         return None
+    g_sost_bajo, g_sost_alto = lo, hi
     if g_exigido < g_sost_bajo - _G_HOLGURA:
         return "COMPRA_FUERTE"
     if g_exigido < g_sost_bajo:

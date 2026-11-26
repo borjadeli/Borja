@@ -242,6 +242,8 @@ class Underwriting(BaseModel):
     metrica_obligatoria_bajo: float | None = None      # rango [bajo, alto] (se usa el extremo desfavorable)
     metrica_obligatoria_alto: float | None = None
     banda_inputs: dict[str, float] = Field(default_factory=dict)
+    precio_referencia: float | None = None             # precio al que el Analista escribió los insumos dependientes
+                                                       # del precio; si el del día se movió >10%, el harness los descarta
     financing_gap: float | None = None                 # pre_revenue: capital hasta breakeven de caja
     permanent_loss_mechanism: str | None = None
     status: Literal["COMPLETE", "INCOMPLETE", "UNKNOWN"] = "INCOMPLETE"

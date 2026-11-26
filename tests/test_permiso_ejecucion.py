@@ -5,6 +5,11 @@ import pytest
 from backend.agentes.permiso_ejecucion import execution_permission
 
 FALSADOR_OK = {"falsador_id": "f1", "falsador_sobre_metrica": True}
+# contexto COMPLETO de una apertura (review-2: confirmación positiva — los hechos operativos deben venir explícitos).
+TIERS = {"CORE": {"min": 0.05, "max": 0.10}}
+APERTURA_FULL = {"accion": "abrir", "verificacion": "PASS", "tier": "CORE", "tiers_cfg": TIERS, "arquetipo": "ciclica",
+                 "peso_objetivo": 0.07, "cap": 0.10, "metrica_obligatoria_null": False,
+                 "flags_alta_sin_responder": False, "bloqueo_datos": [], "crea_stub_o_viola_ips": False, **FALSADOR_OK}
 
 
 # ── enums cerrados ──
@@ -24,7 +29,9 @@ def test_salida_mecanica_sin_evidencia_no_es_mecanica():
 
 
 def test_salida_mecanica_con_evidencia_ejecuta():
-    ctx = {"accion": "salir", "motivo_accion": "falsador_duro", "evidencia_mecanica": "RES-VST-2027-12-31"}
+    # review-2 (IA2): la evidencia se PRUEBA — dict {id,ticker,gatillado,consecuencia} del ticker, no un string.
+    ev = {"id": "RES-VST-2027-12-31", "ticker": "VST", "gatillado": True, "consecuencia": "SALIDA"}
+    ctx = {"accion": "salir", "motivo_accion": "falsador_duro", "ticker": "VST", "evidencia_mecanica": ev}
     assert execution_permission(ctx)[0] == "EJECUTAR"
 
 
@@ -54,8 +61,8 @@ def test_peso_sobre_cap_bloquea_calculado_por_el_modulo():
 
 
 def test_apertura_limpia_ejecuta():
-    ctx = {"accion": "abrir", "verificacion": "PASS", "tier": "CORE", "peso_objetivo": 0.07, "cap": 0.10, **FALSADOR_OK}
-    assert execution_permission(ctx)[0] == "EJECUTAR"
+    # review-2: una apertura ejecuta SOLO con el contexto completo (tiers_cfg + los 4 hechos operativos explícitos).
+    assert execution_permission(APERTURA_FULL) == ("EJECUTAR", [])
 
 
 def test_apertura_sin_cap_bloquea():
@@ -80,6 +87,7 @@ def test_comparacion_bloqueada_bloquea_la_venta():
 
 
 def test_venta_discrecional_valida_ejecuta():
+    # review-2: una venta necesita peso objetivo explícito y destino de fondos (caja aquí → sin par que bloquee).
     ctx = {"accion": "salir", "motivo_accion": "discrecional", "comparacion": "PERMITIDA", "metrica_A_null": False,
-           "dossier_del_ciclo": True}
+           "dossier_del_ciclo": True, "peso_objetivo": 0.0, "fondos": "caja", "bloqueo_datos": []}
     assert execution_permission(ctx)[0] == "EJECUTAR"

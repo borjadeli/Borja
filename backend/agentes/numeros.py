@@ -34,3 +34,15 @@ def probabilidad(x) -> float | None:
     """Finito y en [0, 1]."""
     v = finito(x)
     return v if (v is not None and 0.0 <= v <= 1.0) else None
+
+
+def fraccion(x) -> float | None:
+    """Finito y |x| ≤ 1 (crecimiento/márgenes expresados como FRACCIÓN, no %)."""
+    v = finito(x)
+    return v if (v is not None and -1.0 <= v <= 1.0) else None
+
+
+def en_rango(x, lo: float, hi: float) -> float | None:
+    """Finito y en [lo, hi]."""
+    v = finito(x)
+    return v if (v is not None and lo <= v <= hi) else None

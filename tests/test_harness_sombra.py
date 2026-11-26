@@ -11,18 +11,18 @@ _CFG = {"tiers": {"OPTIONALITY": {"min": 0.015, "max": 0.025}, "CORE": {"min": 0
 
 
 def _dossier(uw=None, con_vara=True):
+    # review-2: la métrica de la vara liga la cíclica (owner-FCF normalizado) y el falsador trae id ESTRUCTURADO.
     vara = SimpleNamespace(metrica="normalized_owner_fcf_per_share") if con_vara else None
-    fals = SimpleNamespace(afirmacion="HH<3 en 12m", vara_externa=vara)
+    fals = SimpleNamespace(id="F-1", afirmacion="HH<3 en 12m", vara_externa=vara)
     return SimpleNamespace(falsador=fals, underwriting=uw)
 
 
 def test_dossier_completo_se_puede_autorizar():
-    # el Analista confirmó arquetipo + métrica + rango de banda → el harness lo consume → EJECUTAR.
+    # el Analista confirmó arquetipo + métrica + rango de banda → el harness lo consume (con el precio del día) → EJECUTAR.
     uw = Underwriting(arquetipo_confirmado="ciclica", metrica_obligatoria_bajo=1.8e9, metrica_obligatoria_alto=2.2e9,
-                      banda_inputs={"precio": 30, "valor_mitad_ciclo_bajo": 40, "valor_mitad_ciclo_alto": 80},
-                      status="COMPLETE")
+                      banda_inputs={"valor_mitad_ciclo_bajo": 40, "valor_mitad_ciclo_alto": 80}, status="COMPLETE")
     r = evaluar_decision_sombra(_dossier(uw), cfg=_CFG, verif="PASS", accion="abrir",
-                                peso_objetivo=0.07, tier_declarado="CORE")
+                                peso_objetivo=0.07, tier_declarado="CORE", precio_pack=30)
     assert r.arquetipo == "ciclica" and r.banda == "COMPRA_FUERTE" and r.permiso == "EJECUTAR" and r.missing_fields == []
 
 

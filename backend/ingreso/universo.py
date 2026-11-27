@@ -11,17 +11,21 @@ from dataclasses import dataclass, field
 
 from backend.nucleo.constantes import LIQUIDEZ_SCREENER
 
-# Piso de market cap (sin techo — el filtrado por tamaño lo hace el pipeline, Art. 2.3).
-MIN_MARKET_CAP = 50_000_000
+# Rango de market cap (operador 2026-11-27): $150M–$60B (piso del import + techo del IPS; antes el gate tenía piso
+# $50M sin techo, incoherente con los otros caminos de entrada — ahora UNA sola regla).
+MIN_MARKET_CAP = 150_000_000
+MAX_MARKET_CAP = 60_000_000_000
 
-# Jurisdicciones permitidas (Art. 2.1): EE.UU., Canadá, Europa, Asia tech. China afuera.
-# [DEFERIDO — registro 14] normalizar upstream: definir si es país de listing vs.
-# incorporación, y usar códigos ISO consistentes. Hoy el adapter solo produce "US"
-# (EDGAR), así que la imperfección de esta lista no muerde todavía.
+# Jurisdicciones permitidas — WHITELIST POSITIVA del operador (2026-11-27): los países donde quiere trabajar.
+# EE.UU., Canadá, Brasil, Europa (amplia), Taiwán, Japón, Corea + Australia (tierras raras: LYC.AX ya está).
+# [DEFERIDO — registro 14] normalizar upstream (país de listing vs. incorporación, ISO consistente).
 JURISDICCIONES_PERMITIDAS = frozenset({
-    "US", "CA",                       # Norteamérica
-    "UK", "GB", "DE", "FR", "NL", "SE", "CH",  # Europa (GB = alias de UK)
-    "JP", "KR", "TW",                 # Asia tech relevante
+    "US", "CA",                                                                    # Norteamérica
+    "BR",                                                                          # Brasil
+    "GB", "UK", "DE", "FR", "NL", "SE", "CH", "IT", "ES", "FI", "NO", "DK",        # Europa
+    "BE", "AT", "IE", "PT", "PL",
+    "JP", "KR", "TW",                                                              # Asia tech
+    "AU",                                                                          # Australia (tierras raras)
 })
 
 
@@ -52,6 +56,8 @@ def evaluar_universo(h: HechosUniverso) -> ResultadoUniverso:
     if h.market_cap is None or h.market_cap < MIN_MARKET_CAP:
         cap = f"${h.market_cap/1e6:.0f}M" if h.market_cap is not None else "N/D"
         motivos.append(f"market cap {cap} < ${MIN_MARKET_CAP/1e6:.0f}M")
+    elif h.market_cap > MAX_MARKET_CAP:
+        motivos.append(f"market cap ${h.market_cap/1e9:.0f}B > ${MAX_MARKET_CAP/1e9:.0f}B (no es small/mid cap)")
     if h.adv_usd is None or h.adv_usd < LIQUIDEZ_SCREENER:
         liq = f"${h.adv_usd/1e6:.1f}M" if h.adv_usd is not None else "N/D"
         motivos.append(f"liquidez {liq}/día < ${LIQUIDEZ_SCREENER/1e6:.1f}M/día")

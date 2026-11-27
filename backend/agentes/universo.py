@@ -28,6 +28,26 @@ def tickers_universo(session: Session) -> list[str]:
     return [t for t, e in rows if (e or "").lower() not in _ESTADOS_INACTIVOS]
 
 
+def asegurar_candidata(session: Session, ticker: str, *, fuente: str = "solicitud") -> bool:
+    """Garantiza que `ticker` sea una Candidata en nx_empresa (auditoría 2026-11-27: un alta del operador/PM iba a la
+    cola→ficha pero NO al universo → tres registros que no se hablan; hubo fichas huérfanas, p.ej. MRVL/RXRX). El alta
+    explícita del operador/PM es un OVERRIDE del screening (el gate de admisión/IPS igual aplica para COMPRAR).
+    Idempotente: devuelve True solo si la creó."""
+    from datetime import date
+
+    from backend.ledger.entidades import crear_candidata
+    tk = ticker.upper()
+    if session.get(NxEmpresa, tk) is not None:
+        return False
+    crear_candidata(session, ticker=tk, fecha=date.today(), fuente_ingreso=fuente)
+    return True
+
+
+def fichas_huerfanas(fichas_tickers, universo_tickers) -> set[str]:
+    """Invariante (auditoría): toda ficha debe estar en el universo activo. Devuelve las que NO (huérfanas)."""
+    return {t.upper() for t in fichas_tickers} - {t.upper() for t in universo_tickers}
+
+
 def contexto_mapa(session: Session, ticker: str) -> str:
     """Contexto del CUELLO desde `nx_*` para el Analista (r3 #5): nodo primario (nombre, cluster, factor
     macro, estado de confirmación) + las empresas vinculadas al mismo nodo (dependencias/competencia).

@@ -315,6 +315,11 @@ class RunnerSemanal:
             try:
                 from backend.agentes.research_queue import ResearchQueue
                 ResearchQueue().encolar(sd.ticker, origen="PM", prioridad="P2", motivo=sd.motivo)
+                # ① (auditoría): el pedido del PM también entra al universo (antes iba solo a la cola→ficha).
+                from backend.agentes.universo import asegurar_candidata
+                from backend.database import session_scope
+                with session_scope() as s:
+                    asegurar_candidata(s, sd.ticker, fuente="pm_deep")
             except Exception as e:  # noqa: BLE001 — encolar no debe tumbar el ciclo
                 _log.warning("no pude encolar SOLICITAR_DEEP %s: %s", getattr(sd, "ticker", "?"), e)
 

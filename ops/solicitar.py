@@ -32,6 +32,15 @@ def main() -> int:
     prioridad, desc = _COMANDOS[cmd]
     q = ResearchQueue()
     req = q.encolar(ticker, origen="OPERADOR", prioridad=prioridad, motivo=motivo or desc)
+    # ① (auditoría): el alta del operador también entra al universo (nx_empresa) — antes iba solo a la cola→ficha.
+    try:
+        from backend.agentes.universo import asegurar_candidata
+        from backend.database import session_scope
+        with session_scope() as s:
+            if asegurar_candidata(s, ticker, fuente="operador"):
+                print(f"  (creada Candidata {ticker} en el universo)")
+    except Exception as e:  # noqa: BLE001 — no debe tumbar el encolado
+        print(f"  aviso: no pude crear la Candidata en el universo: {e}")
     print(f"{cmd.upper()} {ticker} → cola (id {req.id}, {prioridad}, origen {req.origen}). "
           f"Se analiza en el próximo drenaje; para COMPRARLO tiene que pasar liquidez + IPS.")
     print(f"pendientes: {[(r.ticker, r.prioridad) for r in q.pendientes()]}")

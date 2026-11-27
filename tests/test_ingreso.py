@@ -43,9 +43,17 @@ def test_universo_rechaza(kw, motivo):
     assert any(motivo in m for m in r.motivos)
 
 
-def test_universo_sin_techo_de_market_cap():
-    # Una mega-cap NO se rechaza por tamaño (Art. 2.3).
-    assert evaluar_universo(_universo_ok(market_cap=3_000_000e6)).admisible
+def test_universo_rango_de_market_cap():
+    # operador 2026-11-27: rango $150M–$60B. Una mega-cap ($3T) se rechaza; una mid-cap ($50B) entra.
+    assert not evaluar_universo(_universo_ok(market_cap=3_000_000e6)).admisible   # $3T > $60B
+    assert evaluar_universo(_universo_ok(market_cap=50_000e6)).admisible          # $50B OK
+
+
+def test_universo_jurisdiccion_whitelist():
+    # whitelist positiva: Brasil/Australia entran; China/India NO.
+    assert evaluar_universo(_universo_ok(jurisdiccion="BR")).admisible
+    assert evaluar_universo(_universo_ok(jurisdiccion="AU")).admisible
+    assert not evaluar_universo(_universo_ok(jurisdiccion="IN")).admisible
 
 
 # ------------------------------- Filtro 0 -------------------------------
@@ -207,3 +215,13 @@ def test_reemision_no_revive_descarte_duro(sesion):
                                       crecimiento_yoy=0.40, margen_bruto=0.50)})
     assert "ACME" not in res  # NO se re-evalúa un descarte duro
     assert e.estado_desde_log(sesion, "ACME") == Estado.DESCARTADA.value
+
+
+def test_asegurar_candidata_e_invariante_fichas(sesion):
+    # ① (auditoría): un alta del operador crea la Candidata en el universo; es idempotente.
+    from backend.agentes.universo import asegurar_candidata, fichas_huerfanas, tickers_universo
+    assert asegurar_candidata(sesion, "ACME", fuente="operador") is True       # la crea
+    assert asegurar_candidata(sesion, "ACME", fuente="operador") is False      # idempotente
+    assert "ACME" in tickers_universo(sesion)
+    # invariante: una ficha cuyo ticker NO está en el universo es huérfana.
+    assert fichas_huerfanas(["ACME", "RXRX"], tickers_universo(sesion)) == {"RXRX"}

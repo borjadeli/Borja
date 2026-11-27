@@ -47,3 +47,14 @@ def pollear(fichas: dict, *, filings_fn, hoy: date | None = None) -> ResultadoPo
             f.estado = "EN_REVISION"
             res.en_revision.append(tk.upper())
     return res
+
+
+def revalidaciones_a_encolar(en_revision, *, posiciones, cap: int = 3) -> list[str]:
+    """De las fichas que pasaron a EN_REVISION, cuáles mandar a REVALIDACIÓN (delta-deep barato). Auditoría 2026-11-27:
+    hoy una no-tenencia que pasa a EN_REVISION sale del packet del PM y NADIE la re-analiza → la MEJORA de fundamentals
+    (que llega por 10-Q/8-K) deja al nombre afuera, mientras el deterioro sí llega vía caída de precio. Fix: encolar las
+    NO-tenencias (las tenencias ya las cubre la regla de salida), hasta `cap` por corrida (tope de costo). v1: FIFO; la
+    priorización por materialidad/distancia a zona es un refinamiento posterior."""
+    pos = {t.upper() for t in (posiciones or set())}
+    cand = [t.upper() for t in (en_revision or []) if t.upper() not in pos]
+    return cand[:max(0, cap)]

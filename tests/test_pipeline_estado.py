@@ -66,3 +66,11 @@ def test_poller_invalida_vigencia_y_junta_duros():
     assert "MP" in res.en_revision and fichas["MP"].estado == "EN_REVISION"
     assert fichas["OK"].estado == "VIGENTE"                     # 9.01 se ignora
     assert len(res.duros) == 1 and res.duros[0].ticker == "WOLF" and res.duros[0].items == ["1.03"]
+
+
+def test_revalidaciones_encola_no_tenencias_con_cap():
+    from backend.agentes.poller import revalidaciones_a_encolar
+    # MP es tenencia → la cubre la regla de salida; el resto (no-tenencia) se revalida, capeado a 2.
+    out = revalidaciones_a_encolar(["MP", "AXTI", "CRDO", "WOLF"], posiciones={"MP"}, cap=2)
+    assert "MP" not in out and out == ["AXTI", "CRDO"]
+    assert revalidaciones_a_encolar([], posiciones=set()) == []

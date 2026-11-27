@@ -146,6 +146,17 @@ def correr(drenar_presupuesto: float = 6.0, con_drenaje: bool = True, despertar_
             store.guardar()
             PipelineEstado().marcar("poller")
             from ops.poller import _posiciones
+            # REVALIDACIÓN (auditoría 2026-11-27): una ficha NO-tenencia que pasa a EN_REVISION se encola para re-análisis
+            # barato → la mejora de fundamentals vuelve a la mesa del PM (hoy desaparecía). Best-effort + tope de costo.
+            try:
+                from backend.agentes.poller import revalidaciones_a_encolar
+                from backend.agentes.research_queue import ResearchQueue
+                q = ResearchQueue()
+                for tk in revalidaciones_a_encolar(rp.en_revision, posiciones=_posiciones()):
+                    q.encolar(tk, origen="REVALIDACION", prioridad="P2",
+                              motivo="ficha pasó a EN_REVISION por filing material (revalidar fundamentals)")
+            except Exception as e:  # noqa: BLE001 — encolar no debe tumbar el ciclo
+                print(f"  aviso: no pude encolar revalidaciones: {e}")
             salidas = evaluar_reglas_salida(
                 rp.eventos, posiciones=_posiciones(),
                 falsadores_confirmados=confirmados_para_salida(

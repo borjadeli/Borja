@@ -44,6 +44,9 @@ def test_pre_revenue_rpo_computa_pero_multiplos_no():
     assert out["ev_rpo"].estado == "COMPUTED"
     assert out["ev_revenue"].estado == "MISSING"
     assert out["fcf_yield"].estado == "MISSING"
+    # auditoría: pre-revenue con RPO ahora SÍ emite valor_contratado (margen supuesto) → score ≠ None → visible al PM.
+    assert out["valor_contratado_ajustado"].value == 8e8 * 0.40          # RPO × margen supuesto
+    assert "SUPUESTO" in (out["valor_contratado_ajustado"].note or "")   # el supuesto queda declarado
 
 
 def test_revenue_cero_es_not_applicable():

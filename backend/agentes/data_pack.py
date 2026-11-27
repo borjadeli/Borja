@@ -113,6 +113,9 @@ _MKT_SEC_NONCURRENT = ["DebtSecuritiesAvailableForSaleExcludingAccruedInterestNo
                        "MarketableSecuritiesNoncurrent", "LongTermInvestments"]
 # deuda de largo plazo (r5 item 3: parte del set dorado; también insumo futuro del equity bridge).
 _DEUDA_LP = ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations"]
+# Margen bruto SUPUESTO para ajustar el RPO de un pre-revenue sin ventas (versionado; conservador). El valor queda
+# declarado en la nota del punto → el PM/Verificador ve que es un supuesto, no un dato.
+_MARGEN_PRE_REVENUE = 0.40
 
 
 def _d(s: str | None) -> date | None:
@@ -420,6 +423,12 @@ def fuente_valuacion(ticker: str, as_of: date, puntos: list[DataPoint]) -> list[
         margen = gross_v / rev_v
         emit("valor_contratado_ajustado", round(rpo_v * margen, 0), "USD", "valor_contratado:v1",
              [rpo, gross, rev], note=f"RPO {rpo_v:,.0f} × margen bruto {margen:.0%}")
+    elif rpo_v and (not rev_v or rev_v <= 0):
+        # PRE-REVENUE con contrato firme (RPO) pero SIN ventas para derivar margen → margen SUPUESTO declarado.
+        # Auditoría 2026-11-27: sin esto un pre-revenue con backlog quedaba sin valor_contratado → score None →
+        # invisible al PM (justo la cola power-law: SMR/espacio/biotech). El margen asumido queda explícito en la nota.
+        emit("valor_contratado_ajustado", round(rpo_v * _MARGEN_PRE_REVENUE, 0), "USD", "valor_contratado:v1",
+             [rpo], note=f"RPO {rpo_v:,.0f} × margen SUPUESTO {_MARGEN_PRE_REVENUE:.0%} (pre-revenue, sin ventas)")
     elif rpo_v:
         emit("valor_contratado_ajustado", None, "USD", "valor_contratado:v1", [rpo, gross, rev],
              estado="MISSING", note="RPO presente pero sin margen bruto (gross/revenue) para ajustar")

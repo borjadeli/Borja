@@ -41,6 +41,7 @@ class PaquetePM:
     posiciones: list[ResumenPosicion] = field(default_factory=list)
     concentraciones: dict = field(default_factory=dict)        # eje → {clave: peso}
     banca_en_zona: list[ResumenPosicion] = field(default_factory=list)   # candidatas a ENTRADA (ficha en COMPRA)
+    radar: list[ResumenPosicion] = field(default_factory=list)           # VIGENTE no-tenencia FUERA de zona COMPRA
     oportunidades_top: list[dict] = field(default_factory=list)          # top score ficha-less (nuevas)
     alertas: list[dict] = field(default_factory=list)                    # recorte/rotación/deterioro/falsador
     decisiones_previas: list[dict] = field(default_factory=list)         # última acción del PM + por qué
@@ -109,12 +110,15 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
                                  "detalle": f"{tk}: E[V] por DEBAJO de la caja neta/acción — revisar escenarios "
                                             f"(múltiplos muy bajos / recompras no modeladas) o es un cash-box barato"})
 
-    # BANCA en zona de compra (candidatas a ENTRADA) — fichas vigentes, no tenencias, en COMPRA.
+    # BANCA en zona de compra (candidatas a ENTRADA) + RADAR (VIGENTE no-tenencia FUERA de zona) — fichas vigentes.
+    # Auditoría 2026-11-27: antes, una ficha VIGENTE en MANTENER 3% arriba del gatillo NO aparecía en ningún lado
+    # (el prompt le hablaba al PM de un "radar" que el packet nunca armaba). El RADAR la pone en la mesa.
     for tk, f in fichas.items():
         tku = tk.upper()
         if tku in pos_u or f.estado != "VIGENTE":
             continue
-        if f.latido and f.latido.zona == "COMPRA":
+        zona = f.latido.zona if f.latido else None
+        if zona == "COMPRA":
             if getattr(f, "datos_conflicted", False):    # doc 80: datos no confiables → re-verificar, NO entrada
                 pack.alertas.append({"ticker": tku, "tipo": "datos",
                                      "detalle": f"{tku} en zona COMPRA pero DATOS CONFLICTED (acciones feed≠XBRL) "
@@ -122,6 +126,10 @@ def construir_packet(*, fichas: dict, posiciones: dict[str, float], caja_pct: fl
             else:
                 pack.banca_en_zona.append(_resumen_de_ficha(f, peso=0.0))
                 pack.alertas.append({"ticker": tku, "tipo": "entrada", "detalle": f"{tku} ficha en zona COMPRA"})
+        elif zona in ("MANTENER", "RECORTE"):
+            pack.radar.append(_resumen_de_ficha(f, peso=0.0))
+    # RADAR ordenado por CERCANÍA al gatillo de compra (lo más cerca de entrar, primero).
+    pack.radar.sort(key=lambda r: (r.precio / r.gatillo_compra) if (r.precio and r.gatillo_compra) else 9e9)
 
     # Oportunidades NUEVAS (ficha-less) — top del score de P1.
     con_ficha = {t.upper() for t in fichas}
@@ -149,11 +157,19 @@ def render_packet(pack: PaquetePM) -> str:
         L.append("\nBANCA EN ZONA DE COMPRA (candidatas a entrada, tesis vigente):")
         for r in pack.banca_en_zona:
             L.append(f"- {r.ticker} precio {r.precio} ≤ compra {r.gatillo_compra} · ret_esp {r.retorno_esperado}")
+    if pack.radar:
+        L.append("\nRADAR (fichas VIGENTE fuera de zona de compra — cuánto falta para entrar, ordenado por cercanía):")
+        for r in pack.radar:
+            dist = f"+{(r.precio / r.gatillo_compra - 1) * 100:.0f}%" if (r.precio and r.gatillo_compra) else "—"
+            L.append(f"- {r.ticker} [{r.zona}] precio {r.precio} vs compra {r.gatillo_compra} ({dist} del gatillo) · "
+                     f"ret_esp {r.retorno_esperado if r.retorno_esperado is not None else '—'} · "
+                     f"bear {r.perdida_bear if r.perdida_bear is not None else '—'}")
     if pack.oportunidades_top:
         L.append("\nOPORTUNIDADES NUEVAS (sin ficha, abajo del corte de auto-deep) — si alguna te interesa, "
                  "SOLICITAR_DEEP (no se puede comprar sin ficha):")
-        for o in pack.oportunidades_top[:12]:
-            L.append(f"- {o['ticker']} score {o['score']} [{o['cluster']}]")
+        for o in pack.oportunidades_top:
+            L.append(f"- {o['ticker']} score {o['score']} [{o.get('cluster')}] · "
+                     f"V {o.get('v')} · M {o.get('m')} · C {o.get('c')} · A {o.get('a')}")
     if pack.alertas:
         L.append("\nALERTAS:")
         for a in pack.alertas:

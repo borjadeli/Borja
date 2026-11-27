@@ -61,6 +61,16 @@ def test_packet_arma_posiciones_banca_y_alertas():
     assert [o["ticker"] for o in pack.oportunidades_top] == ["NUEVA"]   # ficha-less top score
 
 
+def test_radar_muestra_vigentes_fuera_de_zona_compra():
+    # auditoría: una ficha VIGENTE que NO es tenencia y NO está en COMPRA aparece en el RADAR (antes desaparecía).
+    radar_f = _ficha("CRDO", 50.0)                   # caro → zona MANTENER/RECORTE (no COMPRA)
+    assert radar_f.latido.zona in ("MANTENER", "RECORTE")
+    pack = construir_packet(fichas={"CRDO": radar_f}, posiciones={}, caja_pct=0.9, equity=100000.0)
+    assert [r.ticker for r in pack.radar] == ["CRDO"]
+    assert [r.ticker for r in pack.banca_en_zona] == []        # no está en COMPRA → no es banca
+    assert "RADAR" in render_packet(pack)
+
+
 def test_packet_marca_tesis_no_vigente():
     held = _ficha("MP", 50.0)
     held.estado = "VENCIDA"

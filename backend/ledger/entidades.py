@@ -36,8 +36,10 @@ class Estado(str, Enum):
 
 # Transiciones permitidas (Art. 5.2). Claves/valores como strings.
 TRANSICIONES: dict[str, set[str]] = {
+    # ARCHIVADA (auditoría 2026-11-27): una Candidata nunca analizada se puede archivar para hacer lugar cuando el
+    # universo llega al tope (el reemplazo de discovery) — antes tiraba ValueError y congelaba el universo en 160.
     Estado.CANDIDATA.value: {Estado.DESCARTADA.value, Estado.ESPERANDO_EVIDENCIA.value,
-                             Estado.EN_DEEP_RESEARCH.value},
+                             Estado.EN_DEEP_RESEARCH.value, Estado.ARCHIVADA.value},
     Estado.ESPERANDO_EVIDENCIA.value: {Estado.EN_DEEP_RESEARCH.value, Estado.DESCARTADA.value,
                                        Estado.ARCHIVADA.value},
     Estado.EN_DEEP_RESEARCH.value: {Estado.ELEGIBLE.value, Estado.DESCARTADA.value,

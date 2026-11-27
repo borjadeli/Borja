@@ -47,6 +47,14 @@ def test_transicion_valida_actualiza_estado_y_log(sesion):
     assert _n_eventos(sesion, "ACME") == 3
 
 
+def test_candidata_se_puede_archivar_para_hacer_lugar(sesion):
+    # auditoría: el reemplazo de discovery archiva la peor Candidata al llegar a 160; antes tiraba ValueError.
+    e.crear_candidata(sesion, ticker="ACME", fecha=date(2026, 1, 1))
+    emp = e.transicionar(sesion, ticker="ACME", estado_nuevo=Estado.ARCHIVADA,
+                         disparado_por="regla", fecha=date(2026, 1, 2))
+    assert emp.estado == Estado.ARCHIVADA.value
+
+
 def test_transicion_invalida_rechaza(sesion):
     e.crear_candidata(sesion, ticker="ACME", fecha=date(2026, 1, 1))
     with pytest.raises(ValueError, match="no permitida"):

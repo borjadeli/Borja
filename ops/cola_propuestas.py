@@ -86,6 +86,7 @@ def _reemplazo_directo_si_lleno(s, nuevo: str) -> str | None:
     if nuevo.upper() in actuales or len(actuales) < cap:
         return None
     from backend.ledger import core
+    from backend.agentes.datos_reales import abrir_paper   # auditoría: faltaba el import → NameError al llegar a 160
     paper = abrir_paper()
     try:
         posiciones = {t for t, p in core.proyectar(paper, {})["posiciones"].items() if p.shares > 0}

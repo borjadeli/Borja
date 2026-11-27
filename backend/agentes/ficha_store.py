@@ -61,6 +61,9 @@ def escribir_ficha_desde_dossier(ticker: str, dossier, veredicto: str, *, datos:
     f = backfill_desde_dossier(tk, dossier, deuda_neta=float(datos.get("deuda_neta") or 0.0),
                                acciones=float(datos.get("acciones") or 0.0) or 1.0, precio=datos.get("precio"),
                                caja=datos.get("caja"), cuello=datos.get("cuello"),
+                               # 4b (auditoría 2026-11-27): sin esto la ficha queda con conocido_hasta=None → el poller
+                               # la marca EN_REVISION ante cualquier filing (incluido el 10-Q que el dossier acaba de leer).
+                               conocido_hasta=datos.get("conocido_hasta"),
                                datos_conflicted=bool(datos.get("datos_conflicted")))
     store.set(f)
     store.guardar()

@@ -50,9 +50,10 @@ def test_universo_rango_de_market_cap():
 
 
 def test_universo_jurisdiccion_whitelist():
-    # whitelist positiva: Brasil/Australia entran; China/India NO.
-    assert evaluar_universo(_universo_ok(jurisdiccion="BR")).admisible
-    assert evaluar_universo(_universo_ok(jurisdiccion="AU")).admisible
+    # whitelist positiva: Brasil/Australia/HongKong/Israel entran; China continental/India NO.
+    for j in ("BR", "AU", "HK", "IL"):
+        assert evaluar_universo(_universo_ok(jurisdiccion=j)).admisible, j
+    assert not evaluar_universo(_universo_ok(jurisdiccion="CN")).admisible   # China continental afuera
     assert not evaluar_universo(_universo_ok(jurisdiccion="IN")).admisible
 
 

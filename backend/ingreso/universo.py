@@ -24,7 +24,8 @@ JURISDICCIONES_PERMITIDAS = frozenset({
     "BR",                                                                          # Brasil
     "GB", "UK", "DE", "FR", "NL", "SE", "CH", "IT", "ES", "FI", "NO", "DK",        # Europa
     "BE", "AT", "IE", "PT", "PL",
-    "JP", "KR", "TW",                                                              # Asia tech
+    "JP", "KR", "TW", "HK",                                                        # Asia tech (HK ≠ China continental)
+    "IL",                                                                          # Israel (defensa/tech)
     "AU",                                                                          # Australia (tierras raras)
 })
 

@@ -74,3 +74,24 @@ def test_revalidaciones_encola_no_tenencias_con_cap():
     out = revalidaciones_a_encolar(["MP", "AXTI", "CRDO", "WOLF"], posiciones={"MP"}, cap=2)
     assert "MP" not in out and out == ["AXTI", "CRDO"]
     assert revalidaciones_a_encolar([], posiciones=set()) == []
+
+
+def test_revalidaciones_por_tiempo_solo_extranjeros_viejos():
+    from datetime import date as _d
+    from types import SimpleNamespace as _NS
+
+    from backend.agentes.poller import revalidaciones_por_tiempo
+
+    def _f(estado, ch):
+        return _NS(estado=estado, conocido_hasta=ch)
+
+    fichas = {
+        "BESI.AS": _f("VIGENTE", "2026-09-01"),   # extranjero viejo (>30d) → TTL (pero es tenencia abajo)
+        "7826.T": _f("VIGENTE", None),            # extranjero sin fecha → se trata como viejo → TTL
+        "KSPI": _f("VIGENTE", "2026-11-20"),      # extranjero FRESCO (<30d) → NO
+        "MP": _f("VIGENTE", "2026-01-01"),        # US (lo cubre el poller por evento) → NO
+        "DLO": _f("EN_REVISION", "2026-01-01"),   # no VIGENTE → NO
+    }
+    out = revalidaciones_por_tiempo(fichas, posiciones={"BESI.AS"}, hoy=_d(2026, 11, 27), dias=30, cap=5)
+    assert "7826.T" in out and "KSPI" not in out and "MP" not in out and "DLO" not in out
+    assert "BESI.AS" not in out               # es tenencia → la cubre la regla de salida

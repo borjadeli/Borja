@@ -58,3 +58,34 @@ def revalidaciones_a_encolar(en_revision, *, posiciones, cap: int = 3) -> list[s
     pos = {t.upper() for t in (posiciones or set())}
     cand = [t.upper() for t in (en_revision or []) if t.upper() not in pos]
     return cand[:max(0, cap)]
+
+
+def _es_extranjero(ticker: str) -> bool:
+    """Heurística: ticker con punto (mercado no-US) o numérico → sin filings SEC → el poller por EVENTO no lo alcanza."""
+    t = (ticker or "").upper()
+    return ("." in t) or t[:1].isdigit()
+
+
+def revalidaciones_por_tiempo(fichas, *, posiciones, hoy, dias: int = 30, cap: int = 2) -> list[str]:
+    """TTL para los nombres que el poller por EVENTO NO puede ver (EXTRANJEROS sin filings SEC): una ficha VIGENTE
+    no-tenencia cuya evidencia (`conocido_hasta`) tiene más de `dias` → revalidar por tiempo. Auditoría 2026-11-27:
+    sin esto la ficha de un extranjero nunca se refresca (su vigencia es por evento, y el evento es un filing SEC que
+    no existe). ~42% de las altas del operador son extranjeras. Las US las cubre el poller por evento."""
+    pos = {t.upper() for t in (posiciones or set())}
+    try:
+        hoy_d = hoy if hasattr(hoy, "year") else date.fromisoformat(str(hoy)[:10])
+    except Exception:  # noqa: BLE001
+        return []
+    out: list[str] = []
+    for tk, f in (fichas or {}).items():
+        tku = tk.upper()
+        if tku in pos or not _es_extranjero(tku) or getattr(f, "estado", None) != "VIGENTE":
+            continue
+        ch = getattr(f, "conocido_hasta", None)
+        try:
+            viejo = ch is None or (hoy_d - date.fromisoformat(str(ch)[:10])).days >= dias
+        except Exception:  # noqa: BLE001 — fecha ilegible → tratar como vieja (fail-closed hacia revalidar)
+            viejo = True
+        if viejo:
+            out.append(tku)
+    return out[:max(0, cap)]

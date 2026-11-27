@@ -31,8 +31,11 @@ MAP_PATH = _SEED / "map" / "industry_map.yaml"
 UNIV_PATH = _SEED / "universe" / "companies.yaml"
 
 # Rango de market cap del IPS (decisión del operador 2026-10-26). En Fase 4 pasa a config/ips.yaml.
-CAP_MIN = 150_000_000.0          # $150M
-CAP_MAX = 60_000_000_000.0       # $60B
+# ② (auditoría): el rango de cap y la whitelist de jurisdicciones salen de la REGLA ÚNICA (ingreso/universo) —
+# así el import, el gate y el discovery comparten la misma política en vez de tenerla cada uno por su lado.
+from backend.ingreso.universo import JURISDICCIONES_PERMITIDAS, MAX_MARKET_CAP, MIN_MARKET_CAP
+CAP_MIN = MIN_MARKET_CAP         # $150M
+CAP_MAX = MAX_MARKET_CAP         # $60B
 
 
 def _nota_nodo(node: dict) -> str:
@@ -91,6 +94,11 @@ def importar_empresas(session: Session, sqid_to_id: dict[str, int], *, aplicar_c
             if not (cap_min <= mc <= cap_max):
                 res["descartadas_cap"].append((ticker, mc))
                 continue
+        # ② jurisdicción: aplica la whitelist si el país viene en el yaml (vacío/desconocido = no bloquea → US de EDGAR).
+        pais = (c.get("country") or "").upper()
+        if pais and pais not in JURISDICCIONES_PERMITIDAS:
+            res.setdefault("descartadas_jurisdiccion", []).append((ticker, pais))
+            continue
         if session.get(NxEmpresa, ticker) is None:
             entidades.crear_candidata(
                 session, ticker=ticker, fecha=hoy, nombre=c.get("name"),

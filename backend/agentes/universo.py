@@ -20,7 +20,7 @@ from backend.agentes.triage import SenalesTriage
 from backend.ledger.models import NxEmpresa
 
 # Estados de nx_empresa que NO entran al embudo (fuera de juego). El resto (Candidata, etc.) se screenea.
-_ESTADOS_INACTIVOS = {"descartada", "cerrada", "salida", "vendida"}
+_ESTADOS_INACTIVOS = {"descartada", "cerrada", "salida", "vendida", "archivada"}   # archivada FALTABA (auditoría)
 
 
 def tickers_universo(session: Session) -> list[str]:

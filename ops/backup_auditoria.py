@@ -101,34 +101,57 @@ def construir(ciclo: str | None = None) -> str:
     shadow = _shadow(dossiers, decs)
 
     L: list[str] = []
-    L.append(f"# BORJA — Auditoría del UNIVERSO y del MODUS OPERANDI del PM · ciclo {ciclo}\n")
-    L.append("> **Foco acotado (NO re-auditar todo).** La calidad del comité (Analista/Verificador/dossiers) y las "
-             "decisiones de UNA corrida ya se triangularon (doc 91). Acá queremos auditar la capa que NO revisamos: "
-             "**cómo se administra el universo** y **cómo opera el PM** — en particular, **¿el PM tiene acceso a toda "
-             "la información que necesita para elegir bien?**. Preguntas concretas para el auditor:\n")
-    L.append("- **Universo**: ¿tiene sentido cómo entran/salen las empresas? ¿El pool que el PM 've' es el correcto, "
-             "o hay buenas oportunidades que nunca llegan a su mesa? ¿La ambigüedad nx_empresa vs fichas es un problema?")
-    L.append("- **Selección de deep**: ¿el Triage (señales deterministas) + el score de oportunidad eligen bien a "
-             "quién investigar, o dejan afuera nombres que deberían subir?")
-    L.append("- **Insumo del PM**: ¿ve lo suficiente (dossiers deepeados + fichas + shortlist con score + cartera), o "
-             "le falta contexto para comparar oportunidades entre sí y no derivar a value cíclico?")
-    L.append("- **Alertas**: ¿es razonable que las mejoras (precio a zona COMPRA, filing material) disparen revisión, "
-             "pero una mejora de fundamentals fuera de un filing no? ¿Falta algo?\n")
-    L.append("> El código es la fuente de verdad (repo en GitHub); esto orienta. Lo de abajo son DATOS REALES del sistema.\n")
+    L.append(f"# BORJA — Triangulación del NÚCLEO: ¿es la MEJOR manera de operar? · ciclo {ciclo}\n")
+    L.append("> **Esto es el CORAZÓN del sistema y queremos que esté óptimo — no solo que 'funcione'.** El flujo es: "
+             "universo → se monitorea → se prioriza quién se investiga a fondo (deep) → el PM decide. Una review previa "
+             "(una sola IA) cazó HUECOS; ahora queremos una 2ª voz que juzgue la **CALIDAD DEL DISEÑO** y valide el "
+             "camino feliz. Sé escéptico y concreto; el código es la fuente de verdad (repo en GitHub).\n")
+    L.append("**Las preguntas que importan (respondé cada una con 'sí/no, por qué, y qué haría distinto'):**")
+    L.append("1. **¿Es la MEJOR manera de ADMINISTRAR el universo?** Entrada ($150M–$60B + whitelist de países), salida, "
+             "tamaño (hoy ~191, tope 500), costo. ¿El pool que llega al PM es el correcto o se pierden oportunidades?")
+    L.append("2. **¿Es la MEJOR manera de MONITOREAR las empresas?** Precio (z-score) + filings nuevos para TODO el "
+             "universo cada ciclo; ZONA de compra/venta solo para las que tienen ficha (deep). ¿Alcanza? ¿Qué falta?")
+    L.append("3. **¿Es la MEJOR manera de PRIORIZAR quién va a deep?** Triage (señales deterministas + Haiku) → embudo → "
+             "cupo + presupuesto. ¿Elige bien a quién gastar el Opus caro, o deja afuera lo que debería subir?")
+    L.append("4. **¿El PM tiene la MEJOR información posible para decidir?** Ve: dossiers deepeados + fichas vivas + RADAR "
+             "(fichas fuera de zona) + shortlist con score de las sin-ficha + cartera. Compra SOLO con ficha (candado). "
+             "¿Le falta algo para comparar oportunidades entre sí y no derivar a value cíclico?")
+    L.append("5. **Validá el CAMINO FELIZ (no solo los huecos):** ¿el candado (comprar exige ficha VIGENTE) y el tope de "
+             "presupuesto son correctos y robustos? ¿Hay un mejor diseño del control?\n")
+    L.append("> **Ya aplicamos 7 fixes de la 1ª review** (abajo, §7) — revisalos: ¿están bien?, ¿rompen algo?\n")
 
     L.append("## 0. Arquitectura del pipeline (dónde mirar en el código)\n")
     L.append("```\nUNIVERSO (nx_empresa) → señales deterministas → TRIAGE (elige deep) → comité "
              "[Analista(Opus+web)→Verificador] → dossier+verif (cache) → PM decide → gate IPS → Auditor → paper\n"
              "                                            ↘ cola de research (operador/PM/discovery) → ficha\n"
              "                                                                        ↘ SOMBRA P1 (fail-closed, loguea, no aplica)\n```")
-    L.append("- Universo + señales: `backend/agentes/universo.py` · entrada: `backend/ingreso/` (gate: market cap "
-             "≥$50M, liquidez, jurisdicción; el nodo del mapa YA NO gatea — es insumo).")
+    L.append("- Universo + señales: `backend/agentes/universo.py` · entrada: `backend/ingreso/universo.py` (REGLA ÚNICA: "
+             "market cap $150M–$60B + whitelist de jurisdicciones; el nodo del mapa es insumo, no gatea).")
     L.append("- Triage/comité: `backend/agentes/orquestador.py` · Analista: `backend/agentes/analista.py` + "
              "`prompts/analista_v1.md` · Verificador: `backend/agentes/verificador.py`.")
     L.append("- PM: `backend/agentes/pm.py` + `prompts/pm_v1.md` · runner: `backend/agentes/runner_semanal.py` · "
              "gate IPS: `backend/agentes/orquestador_decision.py` · ledger: `backend/ledger/`.")
     L.append("- Capa de decisión fail-closed (P1, en sombra): `backend/agentes/{permiso_ejecucion,banda,arquetipo,"
              "caps_posicion,comparacion_rotacion,evaluar_sombra,harness_sombra}.py` (doc 91 §8.ter).\n")
+
+    L.append("## 0.bis Mecánica del núcleo — VERIFICADA en código (lo que el auditor debe juzgar si es ÓPTIMO)\n")
+    L.append("1. **MONITOREO (todas las del universo, cada ciclo):** `universo.py:189` → `for tk in tickers_universo(): "
+             "ph = precio_hist_fn(tk); señales_ticker(..., precio_hist=ph, filings=filings_fn(tk))`. O sea: baja "
+             "precio (z-score) + filings de EDGAR de **CADA** nombre, cada ciclo. Costo = RED (no LLM). ¿Escala? ¿mejor forma?")
+    L.append("2. **PRIORIZACIÓN:** `orquestador.py:204-240` → el Triage (Haiku) juzga TODOS → `seleccionar_para_deep()` "
+             "(embudo) elige quién va a deep → el ledger de presupuesto lo capea (`modo=='corte'` → se saltea). El deep "
+             "(Opus, lo CARO) se hace sobre un puñado/semana. ¿Es la mejor forma de gastar el Opus?")
+    L.append("3. **DEEP → FICHA:** el comité (Analista+Verificador) produce un dossier → `escribir_ficha_desde_dossier` "
+             "arma la FICHA (tesis + escenarios + zonas de compra/venta). 'Tener deep' = 'tener ficha'.")
+    L.append("4. **ZONA (compra/venta) solo de las que tienen ficha:** `poller.py:30` → `pollear(fichas, ...)` itera SOLO "
+             "fichas. La zona (COMPRA/RECORTE → alertas al PM) se computa de los escenarios del dossier. Las sin-ficha no "
+             "tienen zona. **Dos relojes:** la tesis (lenta, del deep) + el precio del día (rápido, recalcula la zona).")
+    L.append("5. **EL PM:** `pm.py` recibe: dossiers deepeados + fichas vivas + RADAR (fichas fuera de zona) + shortlist "
+             "con score de las sin-ficha (puede pedir SOLICITAR_DEEP) + cartera. **Candado** (`orquestador_decision.py:"
+             "253`): para COMPRAR exige ficha VIGENTE + datos limpios (sin deep NO compra); la zona COMPRA es BLANDA "
+             "(entra fuera de zona, marcado). Las VENTAS nunca se bloquean (risk-off).")
+    L.append("6. **COSTO:** el $ (Opus) NO escala con el tamaño del universo — lo capea el presupuesto ($100/mes) + cupos. "
+             "Lo que escala con el tamaño es la RED del monitoreo (punto 1).\n")
 
     L.append("## 1. Universo (el pool que el Triage recorre)\n")
     L.append(f"- **{uni['total']} empresas** · por estado: {uni['por_estado']}")
@@ -177,21 +200,28 @@ def construir(ciclo: str | None = None) -> str:
                      f"(arq {s['arquetipo']}, banda {s['banda']}, cap {s['cap']:.1%}) · faltan: {s['faltan']}")
     L.append("")
 
-    L.append("## 6. Lo que YA sabemos (para que el auditor NO lo repita) y lo que queremos de él\n")
-    L.append("**Ya triangulado (doc 91) — no hace falta re-auditar:** el comité no le gana a un Opus+web solo; falta "
-             "comparación económica entre oportunidades; deriva a value cíclico; falsadores mal diseñados; el edge no "
-             "está demostrado. Eso ya lo tenemos.\n")
-    L.append("**Lo que SÍ queremos auditar acá (nuevo):**")
+    L.append("## 6. Contexto ya triangulado (doc 91) — NO lo repitas\n")
+    L.append("El comité no le gana a un Opus+web solo; falta comparación económica entre oportunidades; deriva a value "
+             "cíclico; falsadores mal diseñados; el edge no está demostrado. Eso ya lo tenemos. Acá el foco es el NÚCLEO "
+             "(universo/monitoreo/priorización/información del PM), no la calidad del dossier individual.\n")
+
+    L.append("## 7. Los 7 fixes de la 1ª review YA aplicados (revisá si están bien y si rompen algo)\n")
     for h in [
-        "ADMINISTRACIÓN DEL UNIVERSO: entrada (gate), salida (estados), costo, y la ambigüedad nx_empresa vs fichas. "
-        "¿La máquina de estados que no se mueve (todo 'Candidata') es un bug o es inocuo?",
-        "VISIBILIDAD DEL PM: ¿el PM ve lo suficiente para decidir bien? Un nombre nunca-deepeado y que el score no "
-        "sube a la shortlist es INVISIBLE para él. ¿Ese filtro (Triage + score) es el cuello de botella de la calidad?",
-        "FLUJO operador→universo: las altas del operador van a la cola→ficha, NO a nx_empresa. ¿Deberían conectarse?",
-        "ALERTAS: simétricas en precio (zona COMPRA alerta) pero una mejora de fundamentals fuera de un filing no "
-        "dispara nada. ¿Falta un gatillo de mejora fundamental?",
+        "4b: la ficha conservaba mal `conocido_hasta` → 18/28 fichas EN_REVISION espurio → invisibles al PM. Corregido.",
+        "Revalidación: una ficha no-tenencia que pasa a EN_REVISION ahora se re-encola (antes nadie la re-analizaba).",
+        "RADAR: el packet ahora muestra fichas VIGENTE fuera de zona COMPRA (el prompt lo prometía, no existía).",
+        "Pre-revenue: un nombre con backlog (RPO) pero sin ventas ahora entra al score (margen supuesto declarado) — "
+        "antes era invisible (la cola power-law: SMR/espacio/biotech).",
+        "Extranjeros: revalidación por TIEMPO (TTL) — el poller es EDGAR-only y nunca revalidaba a los no-US (42% de las "
+        "altas del operador).",
+        "mult_ref por mediana del cuello (antes 4x fijo para todo sector → empujaba a value cíclico).",
+        "Universo: regla ÚNICA de admisión ($150M–$60B + whitelist) + las altas del operador/PM ahora entran a nx_empresa "
+        "(antes iban solo a la cola→ficha → fichas huérfanas). universo_max 160→500.",
     ]:
         L.append(f"- {h}")
+    L.append("\n**Pregunta final para el auditor:** con TODO esto a la vista, ¿este núcleo es la MEJOR manera de operar "
+             "para un fondo de small/mid caps de industrias del futuro, o hay un diseño claramente superior? Priorizá lo "
+             "que cambia una DECISIÓN, no lo cosmético.")
     L.append("")
     return "\n".join(L)
 

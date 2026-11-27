@@ -152,12 +152,15 @@ def _seleccion_oportunidad(*, met: dict, cuellos: dict, posiciones: set, ips, co
     except Exception:  # noqa: BLE001 — sin mapa igual rankea (estado default)
         pass
     contratos = contratos or {}
+    # #5 (auditoría): el múltiplo de salida EV/ventas por cuello = mediana del cuello (no 4x fijo para todo sector).
+    from backend.agentes.oportunidad import medianas_mult_ref
+    medianas = medianas_mult_ref(met, cuellos)
     cand = []
     for tk, m in met.items():
         if tk.upper() in con_ficha or tk.upper() in posiciones:
             continue
         c = candidato_desde_metricas(tk, cluster=cuellos.get(tk), metricas=m, cuello_estado=estados.get(tk.upper()),
-                                     runway_meses=m.get("cash_runway_months"),
+                                     runway_meses=m.get("cash_runway_months"), mult_ref=medianas.get(cuellos.get(tk), 4.0),
                                      dilucion_overhang=bool(m.get("dilucion_overhang")), hurdle=hurdle)
         cf = contratos.get(tk.upper())
         if cf is not None:

@@ -88,6 +88,22 @@ def g_exigido(*, ev: float | None, revenue: float | None, mult_ref: float = 4.0,
     return round(ratio ** (1.0 / anios) - 1.0, 4) if ratio > 0 else None
 
 
+def medianas_mult_ref(metricas_por_tk: dict, cuellos: dict, *, fallback: float = 4.0, min_peers: int = 3) -> dict:
+    """mult_ref (múltiplo de salida EV/ventas) por CUELLO = mediana del EV/ventas de sus pares con ventas. Auditoría
+    2026-11-27: hardcodear 4x para TODOS los sectores exige CAGR absurdos a los cíclicos (EV/ventas bajo) y regala a
+    los de múltiplo alto → empuja el ranking a value cíclico. Un cuello con <`min_peers` nombres con dato → `fallback`
+    (lo decide el caller al leer el dict). Puro, $0."""
+    from collections import defaultdict
+    from statistics import median
+    grupos: dict[str, list[float]] = defaultdict(list)
+    for tk, m in (metricas_por_tk or {}).items():
+        ev, rev = m.get("enterprise_value"), m.get("revenue")
+        c = cuellos.get(tk) or cuellos.get(tk.upper())
+        if c and ev and rev and rev > 0:
+            grupos[c].append(ev / rev)
+    return {c: round(median(v), 2) for c, v in grupos.items() if len(v) >= min_peers}
+
+
 def candidato_desde_metricas(ticker: str, *, cluster: str | None, metricas: dict,
                              cuello_estado: str | None = None, cuello_rol: str | None = None,
                              prioridad_macro: float = 0.75, runway_meses: float | None = None,

@@ -1,7 +1,19 @@
 """Motor de oportunidad (r9, doc 80 §D · P1): score ficha-less + compuerta de supervivencia + carriles."""
 from backend.agentes.oportunidad import (CandidatoOportunidad, asignar_carriles, candidato_desde_metricas,
-                                         compuerta_supervivencia, cuello_score, g_exigido, percentiles_cluster,
-                                         rankear_oportunidades, score_ficha_less)
+                                         compuerta_supervivencia, cuello_score, g_exigido, medianas_mult_ref,
+                                         percentiles_cluster, rankear_oportunidades, score_ficha_less)
+
+
+def test_medianas_mult_ref_por_cuello():
+    # #5 (auditoría): el múltiplo de salida sale de la mediana EV/ventas del cuello, no de un 4x fijo.
+    met = {"SW1": {"enterprise_value": 10e9, "revenue": 1e9},   # 10x
+           "SW2": {"enterprise_value": 8e9, "revenue": 1e9},    # 8x
+           "SW3": {"enterprise_value": 12e9, "revenue": 1e9},   # 12x  → mediana software = 10x
+           "MIN1": {"enterprise_value": 2e9, "revenue": 1e9},   # 2x (cuello con <3 pares → fallback)
+           "X": {"enterprise_value": 5e9}}                      # sin ventas → se ignora
+    cuellos = {"SW1": "software_ia", "SW2": "software_ia", "SW3": "software_ia", "MIN1": "cobre", "X": "software_ia"}
+    med = medianas_mult_ref(met, cuellos)
+    assert med["software_ia"] == 10.0 and "cobre" not in med    # cobre tiene 1 solo par → cae a fallback (no en el dict)
 
 
 def test_g_exigido_y_brecha():
